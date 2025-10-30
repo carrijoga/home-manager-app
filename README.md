@@ -144,11 +144,11 @@ Por padrão, a aplicação usa **dados mockados** localmente. Para alterar:
 **Arquivo `.env`:**
 ```env
 # Modo mock (dados locais)
-REACT_APP_DATA_MODE=mock
+VITE_DATA_MODE=mock
 
 # Modo API (dados de servidor externo)
-REACT_APP_DATA_MODE=api
-REACT_APP_API_URL=http://localhost:3001/api
+VITE_DATA_MODE=api
+VITE_API_URL=http://localhost:3001/api
 ```
 
 ### Integração com API Externa
@@ -156,7 +156,7 @@ REACT_APP_API_URL=http://localhost:3001/api
 Os serviços já estão preparados para consumir uma API REST. Quando implementar o backend:
 
 1. Configure a URL da API no arquivo `.env`
-2. Altere `REACT_APP_DATA_MODE` para `api`
+2. Altere `VITE_DATA_MODE` para `api`
 3. Implemente os endpoints correspondentes no backend
 
 **Endpoints esperados:**

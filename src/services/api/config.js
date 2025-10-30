@@ -8,7 +8,7 @@
  */
 export const API_CONFIG = {
   // URL base da API (será configurada quando implementar a API real)
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:3001/api',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3001/api',
 
   // Timeout para requisições (em milissegundos)
   timeout: 10000,
@@ -33,9 +33,9 @@ export const API_ENDPOINTS = {
 
 /**
  * Modo de operação: 'mock' usa dados locais, 'api' usa API externa
- * Configure via variável de ambiente REACT_APP_DATA_MODE
+ * Configure via variável de ambiente VITE_DATA_MODE
  */
-export const DATA_MODE = process.env.REACT_APP_DATA_MODE || 'mock';
+export const DATA_MODE = import.meta.env.VITE_DATA_MODE || 'mock';
 
 /**
  * Helper para fazer requisições HTTP

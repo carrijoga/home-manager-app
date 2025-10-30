@@ -1,7 +1,7 @@
 {
-  "name": "home-manager-app",
+  "name": "ninho",
   "version": "1.0.0",
-  "description": "Aplicativo de gerenciamento doméstico com múltiplos módulos para organização familiar",
+  "description": "Ninho - Seu lar, organizado. Aplicativo completo de gerenciamento doméstico para toda a família.",
   "private": true,
   "type": "module",
   "scripts": {
@@ -28,13 +28,15 @@
     "prettier": "^3.2.5"
   },
   "keywords": [
+    "ninho",
     "home",
-    "manager",
-    "household",
-    "organization",
-    "tasks",
-    "expenses",
-    "shopping-list"
+    "lar",
+    "casa",
+    "organização",
+    "família",
+    "tarefas",
+    "despesas",
+    "lista-compras"
   ],
   "author": "",
   "license": "MIT"

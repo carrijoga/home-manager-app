@@ -1,10 +1,12 @@
-# 🏠 Gerenciador da Casa
+# 🪺 Ninho
 
-Aplicativo de gerenciamento doméstico completo para organização familiar, com múltiplos módulos integrados para facilitar o dia a dia.
+**Seu lar, organizado.**
+
+Aplicativo completo de gerenciamento doméstico para toda a família. Com múltiplos módulos integrados, o Ninho facilita o dia a dia, centralizando tarefas, despesas, compras e muito mais em um único lugar.
 
 ## 📋 Sobre o Projeto
 
-O Gerenciador da Casa é uma aplicação web desenvolvida em React que centraliza a gestão doméstica em um único lugar. Com interface intuitiva e moderna, permite gerenciar tarefas, despesas, compras e muito mais.
+**Ninho** é uma aplicação web desenvolvida em React que ajuda você a construir e manter a organização do seu lar. Assim como os pássaros constroem seus ninhos com cuidado, o Ninho oferece as ferramentas para você cuidar da sua casa com praticidade e eficiência.
 
 ## ✨ Funcionalidades
 
@@ -49,7 +51,7 @@ O Gerenciador da Casa é uma aplicação web desenvolvida em React que centraliz
 O projeto foi refatorado seguindo os princípios de **Clean Architecture** e **Separation of Concerns**:
 
 ```
-home-manager-app/
+ninho/
 ├── src/
 │   ├── components/          # Componentes React
 │   │   ├── common/         # Componentes reutilizáveis
@@ -104,7 +106,7 @@ home-manager-app/
 1. Clone o repositório:
 ```bash
 git clone <url-do-repositorio>
-cd home-manager-app
+cd ninho
 ```
 
 2. Instale as dependências:

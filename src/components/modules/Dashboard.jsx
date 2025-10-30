@@ -33,33 +33,6 @@ const Dashboard = ({ notices, tasks, shoppingList, expenses, onAddNotice }) => {
 
   return (
     <div className="space-y-6">
-      {/* Quadro de Avisos */}
-      <Card title="Quadro de Avisos" headerAction={
-        <button className="text-blue-600 hover:text-blue-700">
-          <Plus size={24} />
-        </button>
-      }>
-        <div className="space-y-3">
-          {notices.map(notice => (
-            <div key={notice.id} className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
-              <p className="text-gray-800">{notice.text}</p>
-              <div className="flex justify-between items-center mt-2 text-sm text-gray-600">
-                <span>Por: {notice.author}</span>
-                <span>{new Date(notice.date).toLocaleDateString('pt-BR')}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="mt-4">
-          <Input
-            placeholder="Adicionar novo aviso..."
-            value={newNotice}
-            onChange={(e) => setNewNotice(e.target.value)}
-            onKeyPress={handleKeyPress}
-          />
-        </div>
-      </Card>
-
       {/* Cards de Estatísticas */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
@@ -76,20 +49,54 @@ const Dashboard = ({ notices, tasks, shoppingList, expenses, onAddNotice }) => {
         </Card>
       </div>
 
-      {/* Minhas Tarefas */}
-      <Card title="Minhas Tarefas">
-        <div className="space-y-2">
-          {myTasks.map(task => (
-            <div key={task.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <div className="flex items-center space-x-3">
-                <input type="checkbox" className="w-5 h-5" />
-                <span className="text-gray-800">{task.title}</span>
-              </div>
-              <span className="text-sm text-gray-600">{task.assignedTo}</span>
+      {/* Quadro de Avisos e Minhas Tarefas lado a lado */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Quadro de Avisos - Ocupa 2 colunas */}
+        <div className="lg:col-span-2">
+          <Card title="Quadro de Avisos" headerAction={
+            <button className="text-blue-600 hover:text-blue-700">
+              <Plus size={24} />
+            </button>
+          }>
+            <div className="space-y-3">
+              {notices.map(notice => (
+                <div key={notice.id} className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+                  <p className="text-gray-800">{notice.text}</p>
+                  <div className="flex justify-between items-center mt-2 text-sm text-gray-600">
+                    <span>Por: {notice.author}</span>
+                    <span>{new Date(notice.date).toLocaleDateString('pt-BR')}</span>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
+            <div className="mt-4">
+              <Input
+                placeholder="Adicionar novo aviso..."
+                value={newNotice}
+                onChange={(e) => setNewNotice(e.target.value)}
+                onKeyPress={handleKeyPress}
+              />
+            </div>
+          </Card>
         </div>
-      </Card>
+
+        {/* Minhas Tarefas - Ocupa 1 coluna */}
+        <div className="lg:col-span-1">
+          <Card title="Minhas Tarefas">
+            <div className="space-y-2">
+              {myTasks.map(task => (
+                <div key={task.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <input type="checkbox" className="w-5 h-5" />
+                    <span className="text-gray-800">{task.title}</span>
+                  </div>
+                  <span className="text-sm text-gray-600">{task.assignedTo}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 };

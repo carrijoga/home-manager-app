@@ -16,13 +16,13 @@ const Button = ({
   const baseClasses = 'py-2 px-4 rounded-lg transition font-medium focus:outline-none focus:ring-2 focus:ring-offset-2';
 
   const variantClasses = {
-    primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500',
-    secondary: 'bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500',
-    success: 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500',
+    primary: 'bg-ninho-500 text-white hover:bg-ninho-600 focus:ring-ninho-400',
+    secondary: 'bg-serenidade-500 text-white hover:bg-serenidade-600 focus:ring-serenidade-400',
+    success: 'bg-natureza-500 text-white hover:bg-natureza-600 focus:ring-natureza-400',
     danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
-    warning: 'bg-orange-600 text-white hover:bg-orange-700 focus:ring-orange-500',
+    warning: 'bg-aconchego-500 text-white hover:bg-aconchego-600 focus:ring-aconchego-400',
     purple: 'bg-purple-600 text-white hover:bg-purple-700 focus:ring-purple-500',
-    outline: 'border-2 border-blue-600 text-blue-600 hover:bg-blue-50 focus:ring-blue-500'
+    outline: 'border-2 border-ninho-500 text-ninho-600 hover:bg-ninho-50 focus:ring-ninho-400'
   };
 
   const widthClass = fullWidth ? 'w-full' : '';

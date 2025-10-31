@@ -72,7 +72,7 @@ const ShoppingList = ({ shoppingList, onAddItem, onToggleItem, onDeleteItem }) =
                 <div
                   key={item.id}
                   className={`flex items-center justify-between p-3 rounded-lg ${
-                    item.checked ? 'bg-green-50 opacity-60' : 'bg-gray-50'
+                    item.checked ? 'bg-natureza-50 opacity-60' : 'bg-gray-50'
                   }`}
                 >
                   <div className="flex items-center space-x-3 flex-1">

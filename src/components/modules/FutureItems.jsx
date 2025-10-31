@@ -28,8 +28,8 @@ const FutureItems = ({ futureItems, onAddItem, onDeleteItem }) => {
 
   const priorityColors = {
     'alta': 'border-red-500 bg-red-50',
-    'média': 'border-yellow-500 bg-yellow-50',
-    'baixa': 'border-green-500 bg-green-50'
+    'média': 'border-aconchego-500 bg-aconchego-50',
+    'baixa': 'border-natureza-500 bg-natureza-50'
   };
 
   return (

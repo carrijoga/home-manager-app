@@ -61,7 +61,7 @@ const Tasks = ({ tasks, onAddTask, onToggleTask, onDeleteTask }) => {
           {pendingTasks.map(task => (
             <div
               key={task.id}
-              className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border-l-4 border-blue-500"
+              className="flex items-center justify-between p-4 bg-serenidade-50 rounded-lg border-l-4 border-serenidade-500"
             >
               <div className="flex items-center space-x-3 flex-1">
                 <input
@@ -93,7 +93,7 @@ const Tasks = ({ tasks, onAddTask, onToggleTask, onDeleteTask }) => {
           {completedTasks.map(task => (
             <div
               key={task.id}
-              className="flex items-center justify-between p-4 bg-green-50 rounded-lg border-l-4 border-green-500 opacity-60"
+              className="flex items-center justify-between p-4 bg-natureza-50 rounded-lg border-l-4 border-natureza-500 opacity-60"
             >
               <div className="flex items-center space-x-3 flex-1">
                 <input

@@ -1,7 +1,8 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 
 /**
- * Componente de botão reutilizável
+ * Componente de botão reutilizável com animações Framer Motion
  */
 const Button = ({
   children,
@@ -28,18 +29,23 @@ const Button = ({
   const widthClass = fullWidth ? 'w-full' : '';
   const disabledClass = disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer';
 
+  const MotionButton = motion.button;
+
   return (
-    <button
+    <MotionButton
       type={type}
       onClick={onClick}
       disabled={disabled}
+      whileHover={disabled ? {} : { scale: 1.02, y: -1 }}
+      whileTap={disabled ? {} : { scale: 0.98 }}
+      transition={{ type: "spring", stiffness: 400, damping: 17 }}
       className={`${baseClasses} ${variantClasses[variant]} ${widthClass} ${disabledClass} ${className}`}
     >
       <span className="flex items-center justify-center space-x-2">
         {Icon && <Icon size={18} />}
         <span>{children}</span>
       </span>
-    </button>
+    </MotionButton>
   );
 };
 

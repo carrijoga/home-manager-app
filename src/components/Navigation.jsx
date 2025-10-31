@@ -16,7 +16,7 @@ const Navigation = ({ currentModule, onModuleChange }) => {
   ];
 
   return (
-    <nav className="bg-white dark:bg-ninho-800 shadow-sm sticky top-0 z-10 transition-colors">
+    <nav className="bg-white dark:bg-dark-bg-secondary shadow-sm border-b border-gray-100 dark:border-dark-border-default sticky top-0 z-10 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex space-x-2 overflow-x-auto py-3 scrollbar-hide">
           {modules.map((module, index) => {
@@ -27,8 +27,8 @@ const Navigation = ({ currentModule, onModuleChange }) => {
                 onClick={() => onModuleChange(module.id)}
                 className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-lg whitespace-nowrap transition-all duration-300 stagger-item hover-lift ${
                   currentModule === module.id
-                    ? 'bg-ninho-600 dark:bg-aconchego-500 text-white shadow-lg'
-                    : 'bg-ninho-50 dark:bg-ninho-700 text-ninho-700 dark:text-aconchego-200 hover:bg-ninho-100 dark:hover:bg-ninho-600'
+                    ? 'bg-ninho-600 dark:bg-dark-accent-ninho text-white dark:text-dark-text-primary shadow-lg'
+                    : 'bg-ninho-50 dark:bg-dark-bg-elevated text-ninho-700 dark:text-dark-text-secondary hover:bg-ninho-100 dark:hover:bg-dark-bg-hover'
                 }`}
                 style={{ animationDelay: `${index * 0.05}s` }}
               >

@@ -96,6 +96,38 @@ export default {
           800: '#92400E',
           900: '#78350F',
         },
+        // Dark Mode - Paleta específica para modo escuro
+        dark: {
+          // Backgrounds suaves e quentes
+          bg: {
+            primary: '#1A1512',    // Marrom muito escuro e quente
+            secondary: '#241C17',  // Marrom escuro com toque de aconchego
+            tertiary: '#2D241E',   // Marrom médio-escuro
+            elevated: '#362B23',   // Para cards elevados
+            hover: '#403328',      // Hover states
+          },
+          // Textos com boa legibilidade
+          text: {
+            primary: '#F5EDE7',    // Quase branco com toque bege
+            secondary: '#D4C4B8',  // Bege suave
+            tertiary: '#A89582',   // Marrom claro
+            muted: '#7A6B5D',      // Texto desbotado
+          },
+          // Borders sutis
+          border: {
+            subtle: '#362B23',     // Border quase imperceptível
+            default: '#4A3D33',    // Border padrão
+            emphasis: '#5C4D40',   // Border com ênfase
+          },
+          // Acentos para dark mode (versões mais suaves)
+          accent: {
+            ninho: '#A67355',      // Marrom principal mais claro
+            aconchego: '#E8C35A',  // Amarelo mais suave
+            natureza: '#6BC89A',   // Verde mais vibrante
+            serenidade: '#96B8CC', // Azul mais claro
+            aviso: '#F5B547',      // Amarelo aviso mais suave
+          },
+        },
       },
     },
   },

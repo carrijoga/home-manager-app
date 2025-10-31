@@ -7,13 +7,13 @@ import ThemeToggle from './ThemeToggle';
  */
 const Header = ({ useLogo = true }) => {
   return (
-    <header className="bg-white dark:bg-ninho-900 shadow-md transition-colors">
+    <header className="bg-white dark:bg-dark-bg-secondary shadow-md border-b border-gray-100 dark:border-dark-border-default transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
         <div>
           {useLogo ? (
             <Logo size="default" showText={true} />
           ) : (
-            <h1 className="text-3xl font-bold text-ninho-500 dark:text-aconchego-400">🪺 Ninho</h1>
+            <h1 className="text-3xl font-bold text-ninho-500 dark:text-dark-accent-aconchego">🪺 Ninho</h1>
           )}
         </div>
         <ThemeToggle />

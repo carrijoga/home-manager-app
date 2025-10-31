@@ -50,10 +50,10 @@ const Logo = ({ size = 'default', showText = true }) => {
       {/* Texto do Logo */}
       {showText && (
         <div className="flex flex-col">
-          <span className={`${text} font-bold text-ninho-500`}>
+          <span className={`${text} font-bold text-ninho-500 dark:text-dark-accent-ninho transition-colors duration-300`}>
             Ninho
           </span>
-          <span className={`${tagline} text-gray-500 italic -mt-1`}>
+          <span className={`${tagline} text-gray-500 dark:text-dark-text-tertiary italic -mt-1 transition-colors duration-300`}>
             Seu lar, organizado
           </span>
         </div>

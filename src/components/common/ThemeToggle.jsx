@@ -11,7 +11,7 @@ const ThemeToggle = () => {
   return (
     <button
       onClick={toggleTheme}
-      className="p-2 rounded-lg bg-ninho-100 dark:bg-ninho-800 text-ninho-700 dark:text-aconchego-400 hover:bg-ninho-200 dark:hover:bg-ninho-700 transition-colors-smooth focus-ring"
+      className="p-2 rounded-lg bg-ninho-100 dark:bg-dark-bg-elevated text-ninho-700 dark:text-dark-accent-aconchego hover:bg-ninho-200 dark:hover:bg-dark-bg-hover transition-all duration-300 focus-ring border border-transparent dark:border-dark-border-default"
       aria-label={`Alternar para tema ${theme === 'light' ? 'escuro' : 'claro'}`}
       title={`Tema ${theme === 'light' ? 'claro' : 'escuro'} ativo`}
     >

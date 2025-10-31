@@ -195,11 +195,13 @@ const App = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-aconchego-50 via-ninho-50 to-serenidade-100">
+    <div className="min-h-screen bg-gradient-to-br from-aconchego-50 via-ninho-50 to-serenidade-100 dark:from-ninho-900 dark:via-ninho-800 dark:to-serenidade-900 transition-colors">
       <Header />
       <Navigation currentModule={currentModule} onModuleChange={setCurrentModule} />
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        {renderCurrentModule()}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <div className="animate-fade-in">
+          {renderCurrentModule()}
+        </div>
       </main>
     </div>
   );

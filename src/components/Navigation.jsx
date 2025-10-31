@@ -16,23 +16,24 @@ const Navigation = ({ currentModule, onModuleChange }) => {
   ];
 
   return (
-    <nav className="bg-white shadow-sm sticky top-0 z-10">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex space-x-2 overflow-x-auto py-3">
-          {modules.map((module) => {
+    <nav className="bg-white dark:bg-ninho-800 shadow-sm sticky top-0 z-10 transition-colors">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex space-x-2 overflow-x-auto py-3 scrollbar-hide">
+          {modules.map((module, index) => {
             const Icon = module.icon;
             return (
               <button
                 key={module.id}
                 onClick={() => onModuleChange(module.id)}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-lg whitespace-nowrap transition ${
+                className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-lg whitespace-nowrap transition-all duration-300 stagger-item hover-lift ${
                   currentModule === module.id
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-ninho-600 dark:bg-aconchego-500 text-white shadow-lg'
+                    : 'bg-ninho-50 dark:bg-ninho-700 text-ninho-700 dark:text-aconchego-200 hover:bg-ninho-100 dark:hover:bg-ninho-600'
                 }`}
+                style={{ animationDelay: `${index * 0.05}s` }}
               >
                 <Icon size={18} />
-                <span>{module.name}</span>
+                <span className="text-sm sm:text-base">{module.name}</span>
               </button>
             );
           })}

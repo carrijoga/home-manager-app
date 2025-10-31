@@ -137,7 +137,7 @@ const App = () => {
     if (loading) {
       return (
         <div className="flex items-center justify-center py-12">
-          <div className="text-lg text-gray-600">Carregando...</div>
+          <div className="text-lg text-ninho-600 dark:text-dark-text-secondary">Carregando...</div>
         </div>
       );
     }
@@ -195,11 +195,13 @@ const App = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <Header title="🪺 Ninho" />
+    <div className="min-h-screen bg-gradient-to-br from-aconchego-50 via-ninho-50 to-serenidade-100 dark:bg-gradient-to-br dark:from-dark-bg-primary dark:via-dark-bg-secondary dark:to-dark-bg-tertiary transition-colors duration-300">
+      <Header />
       <Navigation currentModule={currentModule} onModuleChange={setCurrentModule} />
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        {renderCurrentModule()}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <div className="animate-fade-in">
+          {renderCurrentModule()}
+        </div>
       </main>
     </div>
   );

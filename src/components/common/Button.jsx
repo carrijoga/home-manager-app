@@ -1,7 +1,8 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 
 /**
- * Componente de botão reutilizável
+ * Componente de botão reutilizável com animações Framer Motion
  */
 const Button = ({
   children,
@@ -16,30 +17,35 @@ const Button = ({
   const baseClasses = 'py-2 px-4 rounded-lg transition font-medium focus:outline-none focus:ring-2 focus:ring-offset-2';
 
   const variantClasses = {
-    primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500',
-    secondary: 'bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500',
-    success: 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500',
-    danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
-    warning: 'bg-orange-600 text-white hover:bg-orange-700 focus:ring-orange-500',
-    purple: 'bg-purple-600 text-white hover:bg-purple-700 focus:ring-purple-500',
-    outline: 'border-2 border-blue-600 text-blue-600 hover:bg-blue-50 focus:ring-blue-500'
+    primary: 'bg-ninho-500 dark:bg-dark-accent-ninho text-white dark:text-dark-text-primary hover:bg-ninho-600 dark:hover:bg-opacity-90 focus:ring-ninho-400 dark:focus:ring-dark-accent-ninho',
+    secondary: 'bg-serenidade-500 dark:bg-dark-accent-serenidade text-white dark:text-dark-text-primary hover:bg-serenidade-600 dark:hover:bg-opacity-90 focus:ring-serenidade-400 dark:focus:ring-dark-accent-serenidade',
+    success: 'bg-natureza-500 dark:bg-dark-accent-natureza text-white dark:text-dark-text-primary hover:bg-natureza-600 dark:hover:bg-opacity-90 focus:ring-natureza-400 dark:focus:ring-dark-accent-natureza',
+    danger: 'bg-red-600 dark:bg-red-500 text-white dark:text-dark-text-primary hover:bg-red-700 dark:hover:bg-red-600 focus:ring-red-500 dark:focus:ring-red-400',
+    warning: 'bg-aconchego-500 dark:bg-dark-accent-aconchego text-white dark:text-dark-bg-primary hover:bg-aconchego-600 dark:hover:bg-opacity-90 focus:ring-aconchego-400 dark:focus:ring-dark-accent-aconchego',
+    purple: 'bg-purple-600 dark:bg-purple-500 text-white dark:text-dark-text-primary hover:bg-purple-700 dark:hover:bg-purple-600 focus:ring-purple-500 dark:focus:ring-purple-400',
+    outline: 'border-2 border-ninho-500 dark:border-dark-accent-ninho text-ninho-600 dark:text-dark-text-primary hover:bg-ninho-50 dark:hover:bg-dark-bg-hover focus:ring-ninho-400 dark:focus:ring-dark-accent-ninho'
   };
 
   const widthClass = fullWidth ? 'w-full' : '';
   const disabledClass = disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer';
 
+  const MotionButton = motion.button;
+
   return (
-    <button
+    <MotionButton
       type={type}
       onClick={onClick}
       disabled={disabled}
+      whileHover={disabled ? {} : { scale: 1.02, y: -1 }}
+      whileTap={disabled ? {} : { scale: 0.98 }}
+      transition={{ type: "spring", stiffness: 400, damping: 17 }}
       className={`${baseClasses} ${variantClasses[variant]} ${widthClass} ${disabledClass} ${className}`}
     >
       <span className="flex items-center justify-center space-x-2">
         {Icon && <Icon size={18} />}
         <span>{children}</span>
       </span>
-    </button>
+    </MotionButton>
   );
 };
 

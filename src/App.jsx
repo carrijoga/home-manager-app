@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import Header from './components/common/Header';
 import Navigation from './components/Navigation';
 import Dashboard from './components/modules/Dashboard';
 import Tasks from './components/modules/Tasks';
@@ -8,6 +7,7 @@ import Financial from './components/modules/Financial';
 import FutureItems from './components/modules/FutureItems';
 import Calendar from './components/modules/Calendar';
 import { ModuleIds } from './models/types';
+import { useTheme } from './contexts/ThemeContext';
 
 // Serviços
 import * as noticeService from './services/noticeService';
@@ -20,6 +20,9 @@ import * as futureItemsService from './services/futureItemsService';
  * Componente principal da aplicação Home Manager
  */
 const App = () => {
+  // Tema
+  const { theme, setTheme } = useTheme();
+
   // Estado do módulo atual
   const [currentModule, setCurrentModule] = useState(ModuleIds.DASHBOARD);
 
@@ -196,8 +199,12 @@ const App = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-aconchego-50 via-ninho-50 to-serenidade-100 dark:bg-gradient-to-br dark:from-dark-bg-primary dark:via-dark-bg-secondary dark:to-dark-bg-tertiary transition-colors duration-300">
-      <Header />
-      <Navigation currentModule={currentModule} onModuleChange={setCurrentModule} />
+      <Navigation
+        currentModule={currentModule}
+        onModuleChange={setCurrentModule}
+        currentTheme={theme}
+        onThemeChange={setTheme}
+      />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <div className="animate-fade-in">
           {renderCurrentModule()}

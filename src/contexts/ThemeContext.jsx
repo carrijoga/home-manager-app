@@ -14,27 +14,46 @@ export const ThemeProvider = ({ children }) => {
   // Verifica preferência do sistema ou localStorage
   const [theme, setTheme] = useState(() => {
     const savedTheme = localStorage.getItem('ninho-theme');
-    if (savedTheme) {
+    if (savedTheme && ['light', 'dark', 'system'].includes(savedTheme)) {
       return savedTheme;
     }
-    // Verifica preferência do sistema
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      return 'dark';
-    }
-    return 'light';
+    return 'system';
   });
+
+  // Função para obter o tema efetivo baseado na preferência
+  const getEffectiveTheme = (themeValue) => {
+    if (themeValue === 'system') {
+      return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light';
+    }
+    return themeValue;
+  };
 
   useEffect(() => {
     const root = window.document.documentElement;
+    const effectiveTheme = getEffectiveTheme(theme);
 
     // Remove a classe anterior
     root.classList.remove('light', 'dark');
 
     // Adiciona a nova classe
-    root.classList.add(theme);
+    root.classList.add(effectiveTheme);
 
     // Salva no localStorage
     localStorage.setItem('ninho-theme', theme);
+
+    // Listener para mudanças na preferência do sistema
+    if (theme === 'system') {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const handleChange = (e) => {
+        root.classList.remove('light', 'dark');
+        root.classList.add(e.matches ? 'dark' : 'light');
+      };
+
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    }
   }, [theme]);
 
   const toggleTheme = () => {
@@ -45,7 +64,7 @@ export const ThemeProvider = ({ children }) => {
     theme,
     setTheme,
     toggleTheme,
-    isDark: theme === 'dark'
+    isDark: getEffectiveTheme(theme) === 'dark'
   };
 
   return (

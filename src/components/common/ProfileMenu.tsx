@@ -1,24 +1,31 @@
-import React from 'react';
-import { User as UserIcon, Settings, LogOut, Sun, Moon, Monitor } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger,
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { cn } from '@/lib/utils';
-import type { User } from '@/types';
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
+import type { User } from "@/types";
+import {
+  LogOut,
+  Monitor,
+  Moon,
+  Settings,
+  Sun,
+  User as UserIcon,
+} from "lucide-react";
+import React from "react";
 
 interface ProfileMenuProps {
   user: User;
-  currentTheme?: 'light' | 'dark' | 'system';
-  onThemeChange?: (theme: 'light' | 'dark' | 'system') => void;
+  currentTheme?: "light" | "dark" | "system";
+  onThemeChange?: (theme: "light" | "dark" | "system") => void;
   onProfileClick?: () => void;
   onSettingsClick?: () => void;
   onLogoutClick?: () => void;
@@ -29,7 +36,7 @@ interface ProfileMenuProps {
  */
 const ProfileMenu: React.FC<ProfileMenuProps> = ({
   user,
-  currentTheme = 'system',
+  currentTheme = "system",
   onThemeChange,
   onProfileClick,
   onSettingsClick,
@@ -37,17 +44,17 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
 }) => {
   const getInitials = (name: string) => {
     return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
       .toUpperCase()
       .substring(0, 2);
   };
 
   const themeOptions = [
-    { value: 'light' as const, label: 'Claro', icon: Sun },
-    { value: 'dark' as const, label: 'Escuro', icon: Moon },
-    { value: 'system' as const, label: 'Sistema', icon: Monitor },
+    { value: "light" as const, label: "Claro", icon: Sun },
+    { value: "dark" as const, label: "Escuro", icon: Moon },
+    { value: "system" as const, label: "Sistema", icon: Monitor },
   ];
 
   return (
@@ -55,15 +62,15 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
       <DropdownMenuTrigger asChild>
         <button
           className={cn(
-            'flex items-center gap-2 p-1 rounded-lg transition-all duration-200',
-            'hover:bg-ninho-50 dark:hover:bg-dark-bg-hover',
-            'focus:outline-none focus:ring-2 focus:ring-ninho-500 dark:focus:ring-dark-accent-ninho'
+            "flex items-center gap-2 p-1 rounded-lg transition-all duration-200",
+            "hover:bg-indigo-50 dark:hover:bg-dark-bg-hover",
+            "focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-dark-accent-indigo"
           )}
           aria-label="Menu do usuário"
         >
-          <Avatar className="h-8 w-8 border-2 border-ninho-200 dark:border-dark-border-default">
+          <Avatar className="h-8 w-8 border-2 border-indigo-200 dark:border-dark-border-default">
             <AvatarImage src={user.avatar} alt={user.name} />
-            <AvatarFallback className="bg-ninho-600 dark:bg-dark-accent-ninho text-white text-xs">
+            <AvatarFallback className="bg-indigo-600 dark:bg-dark-accent-indigo text-white text-xs">
               {getInitials(user.name)}
             </AvatarFallback>
           </Avatar>
@@ -101,12 +108,11 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
 
         <DropdownMenuSub>
           <DropdownMenuSubTrigger className="cursor-pointer dark:hover:bg-dark-bg-hover dark:focus:bg-dark-bg-hover dark:text-dark-text-secondary">
-            {themeOptions.find(t => t.value === currentTheme)?.icon && (
+            {themeOptions.find((t) => t.value === currentTheme)?.icon &&
               React.createElement(
-                themeOptions.find(t => t.value === currentTheme)!.icon,
-                { className: 'mr-2 h-4 w-4' }
-              )
-            )}
+                themeOptions.find((t) => t.value === currentTheme)!.icon,
+                { className: "mr-2 h-4 w-4" }
+              )}
             <span>Alterar Tema</span>
           </DropdownMenuSubTrigger>
           <DropdownMenuSubContent className="bg-white dark:bg-dark-bg-elevated border-gray-200 dark:border-dark-border-default">
@@ -117,14 +123,17 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
                   key={option.value}
                   onClick={() => onThemeChange?.(option.value)}
                   className={cn(
-                    'cursor-pointer dark:hover:bg-dark-bg-hover dark:focus:bg-dark-bg-hover dark:text-dark-text-secondary',
-                    currentTheme === option.value && 'bg-ninho-50 dark:bg-dark-bg-secondary'
+                    "cursor-pointer dark:hover:bg-dark-bg-hover dark:focus:bg-dark-bg-hover dark:text-dark-text-secondary",
+                    currentTheme === option.value &&
+                      "bg-indigo-50 dark:bg-dark-bg-secondary"
                   )}
                 >
                   <Icon className="mr-2 h-4 w-4" />
                   <span>{option.label}</span>
                   {currentTheme === option.value && (
-                    <span className="ml-auto text-ninho-600 dark:text-dark-accent-ninho">✓</span>
+                    <span className="ml-auto text-indigo-600 dark:text-dark-accent-indigo">
+                      ✓
+                    </span>
                   )}
                 </DropdownMenuItem>
               );

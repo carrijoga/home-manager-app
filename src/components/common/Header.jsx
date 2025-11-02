@@ -1,4 +1,3 @@
-import React from 'react';
 import Logo from './Logo';
 import ThemeToggle from './ThemeToggle';
 
@@ -13,7 +12,7 @@ const Header = ({ useLogo = true }) => {
           {useLogo ? (
             <Logo size="default" showText={true} />
           ) : (
-            <h1 className="text-3xl font-bold text-ninho-500 dark:text-dark-accent-aconchego">🪺 Ninho</h1>
+            <h1 className="text-3xl font-bold text-indigo-500 dark:text-indigo-400">🪺 Ninho</h1>
           )}
         </div>
         <ThemeToggle />

@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
 import { Trash2 } from 'lucide-react';
-import Card from '../common/Card';
-import Button from '../common/Button';
-import Input from '../common/Input';
+import { useState } from 'react';
 import { PriorityLevels } from '../../models/types';
+import Button from '../common/Button';
+import Card from '../common/Card';
+import Input from '../common/Input';
 
 /**
  * Módulo de Itens Futuros
@@ -35,9 +35,9 @@ const FutureItems = ({ futureItems, onAddItem, onDeleteItem }) => {
   };
 
   const priorityColors = {
-    'alta': 'border-red-500 bg-red-50',
-    'média': 'border-aconchego-500 bg-aconchego-50',
-    'baixa': 'border-natureza-500 bg-natureza-50'
+    'alta': 'border-rose-500 bg-rose-50',
+    'média': 'border-amber-500 bg-amber-50',
+    'baixa': 'border-emerald-500 bg-emerald-50'
   };
 
   return (

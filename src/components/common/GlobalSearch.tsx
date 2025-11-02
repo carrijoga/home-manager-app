@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Search, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import type { ModuleId } from '@/types';
+import { cn } from "@/lib/utils";
+import type { ModuleId } from "@/types";
+import { Search, X } from "lucide-react";
+import React, { useCallback, useEffect, useState } from "react";
 
 interface SearchResult {
   id: string;
@@ -23,27 +23,27 @@ interface GlobalSearchProps {
 const GlobalSearch: React.FC<GlobalSearchProps> = ({
   onSearch,
   onResultClick,
-  placeholder = 'Buscar... (Ctrl + K)',
+  placeholder = "Buscar... (Ctrl + K)",
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   // Atalho de teclado Ctrl/Cmd + K
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
         e.preventDefault();
-        setIsOpen(prev => !prev);
+        setIsOpen((prev) => !prev);
       }
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         setIsOpen(false);
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
 
   // Buscar quando o query mudar
@@ -60,13 +60,15 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({
   // Navegar pelos resultados com teclado
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      if (e.key === 'ArrowDown') {
+      if (e.key === "ArrowDown") {
         e.preventDefault();
-        setSelectedIndex(prev => (prev < results.length - 1 ? prev + 1 : prev));
-      } else if (e.key === 'ArrowUp') {
+        setSelectedIndex((prev) =>
+          prev < results.length - 1 ? prev + 1 : prev
+        );
+      } else if (e.key === "ArrowUp") {
         e.preventDefault();
-        setSelectedIndex(prev => (prev > 0 ? prev - 1 : 0));
-      } else if (e.key === 'Enter' && results[selectedIndex]) {
+        setSelectedIndex((prev) => (prev > 0 ? prev - 1 : 0));
+      } else if (e.key === "Enter" && results[selectedIndex]) {
         e.preventDefault();
         handleResultClick(results[selectedIndex]);
       }
@@ -77,12 +79,12 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({
   const handleResultClick = (result: SearchResult) => {
     onResultClick?.(result);
     setIsOpen(false);
-    setQuery('');
+    setQuery("");
     setResults([]);
   };
 
   const handleClear = () => {
-    setQuery('');
+    setQuery("");
     setResults([]);
     setSelectedIndex(0);
   };
@@ -102,13 +104,13 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           className={cn(
-            'w-full pl-10 pr-10 py-2 rounded-lg border transition-all duration-200',
-            'bg-white dark:bg-dark-bg-secondary',
-            'border-gray-200 dark:border-dark-border-default',
-            'text-gray-900 dark:text-dark-text-primary',
-            'placeholder-gray-400 dark:placeholder-dark-text-muted',
-            'focus:outline-none focus:ring-2 focus:ring-ninho-500 dark:focus:ring-dark-accent-ninho',
-            'focus:border-transparent'
+            "w-full pl-10 pr-10 py-2 rounded-lg border transition-all duration-200",
+            "bg-white dark:bg-dark-bg-secondary",
+            "border-gray-200 dark:border-dark-border-default",
+            "text-gray-900 dark:text-dark-text-primary",
+            "placeholder-gray-400 dark:placeholder-dark-text-muted",
+            "focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-dark-accent-indigo",
+            "focus:border-transparent"
           )}
         />
         {query && (
@@ -138,9 +140,10 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({
                 key={result.id}
                 onClick={() => handleResultClick(result)}
                 className={cn(
-                  'w-full text-left px-4 py-3 border-b border-gray-100 dark:border-dark-border-subtle last:border-b-0 transition-colors',
-                  'hover:bg-ninho-50 dark:hover:bg-dark-bg-hover',
-                  index === selectedIndex && 'bg-ninho-50 dark:bg-dark-bg-hover'
+                  "w-full text-left px-4 py-3 border-b border-gray-100 dark:border-dark-border-subtle last:border-b-0 transition-colors",
+                  "hover:bg-indigo-50 dark:hover:bg-dark-bg-hover",
+                  index === selectedIndex &&
+                    "bg-indigo-50 dark:bg-dark-bg-hover"
                 )}
               >
                 <div className="flex items-start justify-between gap-2">

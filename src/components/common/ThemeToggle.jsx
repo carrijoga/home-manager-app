@@ -1,6 +1,5 @@
-import React from 'react';
-import { Sun, Moon } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Moon, Sun } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 
 /**
@@ -15,7 +14,7 @@ const ThemeToggle = () => {
       whileHover={{ scale: 1.1, rotate: 5 }}
       whileTap={{ scale: 0.95, rotate: -5 }}
       transition={{ type: "spring", stiffness: 400, damping: 17 }}
-      className="p-2 rounded-lg bg-ninho-100 dark:bg-dark-bg-elevated text-ninho-700 dark:text-dark-accent-aconchego hover:bg-ninho-200 dark:hover:bg-dark-bg-hover transition-all duration-300 focus-ring border border-transparent dark:border-dark-border-default"
+      className="p-2 rounded-lg bg-indigo-100 dark:bg-dark-bg-elevated text-indigo-700 dark:text-indigo-400 hover:bg-indigo-200 dark:hover:bg-dark-bg-hover transition-all duration-300 focus-ring border border-transparent dark:border-dark-border-default"
       aria-label={`Alternar para tema ${theme === 'light' ? 'escuro' : 'claro'}`}
       title={`Tema ${theme === 'light' ? 'claro' : 'escuro'} ativo`}
     >

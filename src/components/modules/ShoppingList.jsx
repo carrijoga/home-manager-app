@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
 import { Trash2 } from 'lucide-react';
-import Card from '../common/Card';
+import { useState } from 'react';
 import Button from '../common/Button';
+import Card from '../common/Card';
 import Input from '../common/Input';
 
 /**
@@ -80,7 +80,7 @@ const ShoppingList = ({ shoppingList, onAddItem, onToggleItem, onDeleteItem }) =
                 <div
                   key={item.id}
                   className={`flex items-center justify-between p-3 rounded-lg ${
-                    item.checked ? 'bg-natureza-50 opacity-60' : 'bg-gray-50'
+                    item.checked ? 'bg-emerald-50 opacity-60' : 'bg-gray-50'
                   }`}
                 >
                   <div className="flex items-center space-x-3 flex-1">

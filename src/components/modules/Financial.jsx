@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
 import { Trash2 } from 'lucide-react';
-import Card from '../common/Card';
-import Button from '../common/Button';
-import Input from '../common/Input';
+import { useState } from 'react';
 import { ExpenseCategories } from '../../models/types';
+import Button from '../common/Button';
+import Card from '../common/Card';
+import Input from '../common/Input';
 
 /**
  * Módulo Financeiro
@@ -50,15 +50,15 @@ const Financial = ({ expenses, onAddExpense, onDeleteExpense }) => {
       <Card title="Financeiro da Casa">
         {/* Cards de Resumo */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="bg-gradient-to-br from-natureza-500 to-natureza-600 text-white rounded-lg p-4">
+          <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-lg p-4">
             <p className="text-sm opacity-90">Total de Gastos</p>
             <p className="text-3xl font-bold">R$ {totalExpenses.toFixed(2)}</p>
           </div>
-          <div className="bg-gradient-to-br from-serenidade-500 to-serenidade-600 text-white rounded-lg p-4">
+          <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 text-white rounded-lg p-4">
             <p className="text-sm opacity-90">Média Mensal</p>
             <p className="text-3xl font-bold">R$ {(totalExpenses / 1).toFixed(2)}</p>
           </div>
-          <div className="bg-gradient-to-br from-ninho-500 to-ninho-600 text-white rounded-lg p-4">
+          <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-lg p-4">
             <p className="text-sm opacity-90">Categorias</p>
             <p className="text-3xl font-bold">{Object.keys(totalByCategory).length}</p>
           </div>
@@ -104,7 +104,7 @@ const Financial = ({ expenses, onAddExpense, onDeleteExpense }) => {
           <h3 className="font-semibold text-gray-700 mb-3">Gastos por Categoria</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {Object.entries(totalByCategory).map(([category, total]) => (
-              <div key={category} className="bg-gray-50 p-3 rounded-lg border-l-4 border-natureza-500">
+              <div key={category} className="bg-gray-50 p-3 rounded-lg border-l-4 border-emerald-500">
                 <p className="text-sm text-gray-600">{category}</p>
                 <p className="text-xl font-bold text-gray-800">R$ {total.toFixed(2)}</p>
               </div>
@@ -124,7 +124,7 @@ const Financial = ({ expenses, onAddExpense, onDeleteExpense }) => {
                 </p>
               </div>
               <div className="flex items-center space-x-4">
-                <span className="text-lg font-bold text-natureza-600">R$ {expense.value.toFixed(2)}</span>
+                <span className="text-lg font-bold text-emerald-600">R$ {expense.value.toFixed(2)}</span>
                 <button
                   onClick={() => onDeleteExpense(expense.id)}
                   className="text-red-500 hover:text-red-700"

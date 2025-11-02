@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { FadeIn } from './components/common/FadeIn';
 import Calendar from './components/modules/Calendar';
 import Dashboard from './components/modules/Dashboard';
 import Financial from './components/modules/Financial';
@@ -6,10 +7,9 @@ import FutureItems from './components/modules/FutureItems';
 import ShoppingList from './components/modules/ShoppingList';
 import Tasks from './components/modules/Tasks';
 import Navigation from './components/Navigation';
+import { DashboardSkeleton, ExpenseListSkeleton, ShoppingListSkeleton, TaskListSkeleton } from './components/skeletons';
 import { useTheme } from './contexts/ThemeContext';
 import { ModuleIds } from './models/types';
-import { DashboardSkeleton, TaskListSkeleton, ShoppingListSkeleton, ExpenseListSkeleton } from './components/skeletons';
-import { FadeIn } from './components/common/FadeIn';
 
 // Serviços
 import * as financialService from './services/financialService';
@@ -244,7 +244,7 @@ const App = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-aconchego-50 via-ninho-50 to-serenidade-100 dark:bg-gradient-to-br dark:from-dark-bg-primary dark:via-dark-bg-secondary dark:to-dark-bg-tertiary transition-colors duration-300">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-cyan-50 dark:bg-gradient-to-br dark:from-dark-bg-primary dark:via-dark-bg-secondary dark:to-dark-bg-tertiary transition-colors duration-300">
       <Navigation
         currentModule={currentModule}
         onModuleChange={setCurrentModule}

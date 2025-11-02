@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Plus } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState } from 'react';
 import Card from '../common/Card';
 import Input from '../common/Input';
 
@@ -42,12 +42,12 @@ const Dashboard = ({ notices, tasks, shoppingList, expenses, onAddNotice }) => {
           transition={{ delay: 0.1, duration: 0.4 }}
         >
           <Card>
-            <h3 className="text-lg font-semibold text-ninho-700 dark:text-dark-text-primary mb-3">Tarefas Pendentes</h3>
+            <h3 className="text-lg font-semibold text-slate-700 dark:text-dark-text-primary mb-3">Tarefas Pendentes</h3>
             <motion.div
               key={pendingTasks}
               initial={{ scale: 1.2, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="text-3xl font-bold text-serenidade-600 dark:text-dark-accent-serenidade"
+              className="text-3xl font-bold text-indigo-600 dark:text-dark-accent-indigo"
             >
               {pendingTasks}
             </motion.div>
@@ -59,12 +59,12 @@ const Dashboard = ({ notices, tasks, shoppingList, expenses, onAddNotice }) => {
           transition={{ delay: 0.2, duration: 0.4 }}
         >
           <Card>
-            <h3 className="text-lg font-semibold text-ninho-700 dark:text-dark-text-primary mb-3">Gastos do Mês</h3>
+            <h3 className="text-lg font-semibold text-slate-700 dark:text-dark-text-primary mb-3">Gastos do Mês</h3>
             <motion.div
               key={totalExpenses}
               initial={{ scale: 1.2, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="text-3xl font-bold text-natureza-600 dark:text-dark-accent-natureza"
+              className="text-3xl font-bold text-emerald-600 dark:text-dark-accent-emerald"
             >
               R$ {totalExpenses.toFixed(2)}
             </motion.div>
@@ -76,12 +76,12 @@ const Dashboard = ({ notices, tasks, shoppingList, expenses, onAddNotice }) => {
           transition={{ delay: 0.3, duration: 0.4 }}
         >
           <Card>
-            <h3 className="text-lg font-semibold text-ninho-700 dark:text-dark-text-primary mb-3">Itens na Lista</h3>
+            <h3 className="text-lg font-semibold text-slate-700 dark:text-dark-text-primary mb-3">Itens na Lista</h3>
             <motion.div
               key={pendingItems}
               initial={{ scale: 1.2, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="text-3xl font-bold text-aconchego-600 dark:text-dark-accent-aconchego"
+              className="text-3xl font-bold text-cyan-600 dark:text-dark-accent-cyan"
             >
               {pendingItems}
             </motion.div>
@@ -94,7 +94,7 @@ const Dashboard = ({ notices, tasks, shoppingList, expenses, onAddNotice }) => {
         {/* Quadro de Avisos - Ocupa 2 colunas */}
         <div className="lg:col-span-2">
           <Card title="Quadro de Avisos" headerAction={
-            <button className="text-ninho-600 dark:text-dark-accent-ninho hover:text-ninho-700 dark:hover:text-dark-accent-aconchego transition-colors duration-300">
+            <button className="text-indigo-600 dark:text-dark-accent-indigo hover:text-indigo-700 dark:hover:text-purple-400 transition-colors duration-300">
               <Plus size={24} />
             </button>
           }>
@@ -112,9 +112,9 @@ const Dashboard = ({ notices, tasks, shoppingList, expenses, onAddNotice }) => {
                       opacity: { duration: 0.3 },
                       delay: index * 0.05
                     }}
-                    className="bg-aviso-50 dark:bg-dark-bg-tertiary border-l-4 border-aviso-400 dark:border-dark-accent-aviso p-4 rounded transition-colors duration-300"
+                    className="bg-amber-50 dark:bg-dark-bg-tertiary border-l-4 border-amber-400 dark:border-dark-accent-amber p-4 rounded transition-colors duration-300"
                   >
-                    <p className="text-ninho-800 dark:text-dark-text-primary">{notice.text}</p>
+                    <p className="text-slate-800 dark:text-dark-text-primary">{notice.text}</p>
                     <div className="flex justify-between items-center mt-2 text-sm text-gray-600 dark:text-dark-text-tertiary">
                       <span>Por: {notice.author}</span>
                       <span>{new Date(notice.date).toLocaleDateString('pt-BR')}</span>
@@ -151,11 +151,11 @@ const Dashboard = ({ notices, tasks, shoppingList, expenses, onAddNotice }) => {
                       opacity: { duration: 0.2 },
                       delay: index * 0.05
                     }}
-                    className="flex items-center justify-between p-3 bg-serenidade-50 dark:bg-dark-bg-tertiary rounded-lg border-l-2 border-serenidade-300 dark:border-dark-accent-serenidade transition-colors duration-300"
+                    className="flex items-center justify-between p-3 bg-indigo-50 dark:bg-dark-bg-tertiary rounded-lg border-l-2 border-indigo-300 dark:border-dark-accent-indigo transition-colors duration-300"
                   >
                     <div className="flex items-center space-x-3">
-                      <input type="checkbox" className="w-5 h-5 accent-serenidade-500 dark:accent-dark-accent-serenidade" />
-                      <span className="text-ninho-800 dark:text-dark-text-primary">{task.title}</span>
+                      <input type="checkbox" className="w-5 h-5 accent-indigo-500 dark:accent-dark-accent-indigo" />
+                      <span className="text-slate-800 dark:text-dark-text-primary">{task.title}</span>
                     </div>
                     <span className="text-sm text-gray-600 dark:text-dark-text-tertiary">{task.assignedTo}</span>
                   </motion.div>

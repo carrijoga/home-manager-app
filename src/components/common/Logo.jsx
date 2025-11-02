@@ -1,4 +1,3 @@
-import React from 'react';
 
 /**
  * Componente de Logo do Ninho
@@ -50,7 +49,7 @@ const Logo = ({ size = 'default', showText = true }) => {
       {/* Texto do Logo */}
       {showText && (
         <div className="flex flex-col">
-          <span className={`${text} font-bold text-ninho-500 dark:text-dark-accent-ninho transition-colors duration-300`}>
+          <span className={`${text} font-bold text-indigo-500 dark:text-dark-accent-indigo transition-colors duration-300`}>
             Ninho
           </span>
           <span className={`${tagline} text-gray-500 dark:text-dark-text-tertiary italic -mt-1 transition-colors duration-300`}>

@@ -65,7 +65,7 @@ const Financial = ({ expenses, onAddExpense, onDeleteExpense }) => {
         </div>
 
         {/* Formulário de Novo Gasto */}
-        <div className="mb-6 space-y-3 p-4 bg-gray-50 rounded-lg">
+        <div className="mb-6 space-y-3 p-4 bg-slate-50 dark:bg-dark-bg-secondary rounded-lg border border-slate-200 dark:border-dark-border-default">
           <Input
             placeholder="Descrição do gasto..."
             value={newExpense.description}
@@ -86,7 +86,7 @@ const Financial = ({ expenses, onAddExpense, onDeleteExpense }) => {
             <select
               value={newExpense.category}
               onChange={(e) => setNewExpense({ ...newExpense, category: e.target.value })}
-              className="p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="p-2 border border-slate-300 dark:border-dark-border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-white dark:bg-dark-bg-secondary text-slate-900 dark:text-dark-text-primary"
             >
               <option value="">Categoria...</option>
               {Object.values(ExpenseCategories).map(cat => (
@@ -101,12 +101,12 @@ const Financial = ({ expenses, onAddExpense, onDeleteExpense }) => {
 
         {/* Gastos por Categoria */}
         <div className="mb-6">
-          <h3 className="font-semibold text-gray-700 mb-3">Gastos por Categoria</h3>
+          <h3 className="font-semibold text-slate-700 dark:text-dark-text-primary mb-3">Gastos por Categoria</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {Object.entries(totalByCategory).map(([category, total]) => (
-              <div key={category} className="bg-gray-50 p-3 rounded-lg border-l-4 border-emerald-500">
-                <p className="text-sm text-gray-600">{category}</p>
-                <p className="text-xl font-bold text-gray-800">R$ {total.toFixed(2)}</p>
+              <div key={category} className="bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded-lg border-l-4 border-emerald-500 dark:border-emerald-400">
+                <p className="text-sm text-slate-600 dark:text-dark-text-secondary">{category}</p>
+                <p className="text-xl font-bold text-slate-800 dark:text-dark-text-primary">R$ {total.toFixed(2)}</p>
               </div>
             ))}
           </div>
@@ -114,20 +114,20 @@ const Financial = ({ expenses, onAddExpense, onDeleteExpense }) => {
 
         {/* Histórico de Gastos */}
         <div className="space-y-2">
-          <h3 className="font-semibold text-gray-700 mb-3">Histórico de Gastos</h3>
+          <h3 className="font-semibold text-slate-700 dark:text-dark-text-primary mb-3">Histórico de Gastos</h3>
           {sortedExpenses.map(expense => (
-            <div key={expense.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+            <div key={expense.id} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-dark-bg-secondary rounded-lg border border-slate-200 dark:border-dark-border-default hover:bg-slate-100 dark:hover:bg-dark-bg-tertiary transition-colors duration-200">
               <div className="flex-1">
-                <p className="text-gray-800 font-medium">{expense.description}</p>
-                <p className="text-sm text-gray-600">
+                <p className="text-slate-800 dark:text-dark-text-primary font-medium">{expense.description}</p>
+                <p className="text-sm text-slate-600 dark:text-dark-text-secondary">
                   {expense.category} • {new Date(expense.date).toLocaleDateString('pt-BR')}
                 </p>
               </div>
               <div className="flex items-center space-x-4">
-                <span className="text-lg font-bold text-emerald-600">R$ {expense.value.toFixed(2)}</span>
+                <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">R$ {expense.value.toFixed(2)}</span>
                 <button
                   onClick={() => onDeleteExpense(expense.id)}
-                  className="text-red-500 hover:text-red-700"
+                  className="text-rose-500 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 transition-colors"
                 >
                   <Trash2 size={18} />
                 </button>

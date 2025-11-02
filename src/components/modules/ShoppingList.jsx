@@ -13,15 +13,23 @@ const ShoppingList = ({ shoppingList, onAddItem, onToggleItem, onDeleteItem }) =
     quantity: '',
     category: ''
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleAddItem = () => {
-    if (newItem.name.trim()) {
-      onAddItem({
-        name: newItem.name,
-        quantity: newItem.quantity,
-        category: newItem.category || 'Geral'
-      });
-      setNewItem({ name: '', quantity: '', category: '' });
+  const handleAddItem = async () => {
+    if (newItem.name.trim() && !isSubmitting) {
+      setIsSubmitting(true);
+      try {
+        await onAddItem({
+          name: newItem.name,
+          quantity: newItem.quantity,
+          category: newItem.category || 'Geral'
+        });
+        setNewItem({ name: '', quantity: '', category: '' });
+      } catch (error) {
+        console.error('Erro ao adicionar item:', error);
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -58,7 +66,7 @@ const ShoppingList = ({ shoppingList, onAddItem, onToggleItem, onDeleteItem }) =
             value={newItem.category}
             onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
           />
-          <Button variant="purple" fullWidth onClick={handleAddItem}>
+          <Button variant="purple" fullWidth onClick={handleAddItem} loading={isSubmitting} disabled={isSubmitting}>
             Adicionar Item
           </Button>
         </div>

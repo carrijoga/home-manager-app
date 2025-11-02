@@ -15,16 +15,24 @@ const Financial = ({ expenses, onAddExpense, onDeleteExpense }) => {
     date: '',
     category: ''
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleAddExpense = () => {
-    if (newExpense.description.trim() && newExpense.value) {
-      onAddExpense({
-        description: newExpense.description,
-        value: parseFloat(newExpense.value),
-        date: newExpense.date || new Date().toISOString().split('T')[0],
-        category: newExpense.category || 'Geral'
-      });
-      setNewExpense({ description: '', value: '', date: '', category: '' });
+  const handleAddExpense = async () => {
+    if (newExpense.description.trim() && newExpense.value && !isSubmitting) {
+      setIsSubmitting(true);
+      try {
+        await onAddExpense({
+          description: newExpense.description,
+          value: parseFloat(newExpense.value),
+          date: newExpense.date || new Date().toISOString().split('T')[0],
+          category: newExpense.category || 'Geral'
+        });
+        setNewExpense({ description: '', value: '', date: '', category: '' });
+      } catch (error) {
+        console.error('Erro ao adicionar gasto:', error);
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -86,7 +94,7 @@ const Financial = ({ expenses, onAddExpense, onDeleteExpense }) => {
               ))}
             </select>
           </div>
-          <Button variant="success" fullWidth onClick={handleAddExpense}>
+          <Button variant="success" fullWidth onClick={handleAddExpense} loading={isSubmitting} disabled={isSubmitting}>
             Adicionar Gasto
           </Button>
         </div>

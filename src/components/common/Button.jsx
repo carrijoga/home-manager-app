@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { Spinner } from '../ui/spinner';
 
 /**
  * Componente de botão reutilizável com animações Framer Motion
@@ -12,7 +13,8 @@ const Button = ({
   className = '',
   disabled = false,
   fullWidth = false,
-  icon: Icon = null
+  icon: Icon = null,
+  loading = false
 }) => {
   const baseClasses = 'py-2 px-4 rounded-lg transition font-medium focus:outline-none focus:ring-2 focus:ring-offset-2';
 
@@ -27,7 +29,7 @@ const Button = ({
   };
 
   const widthClass = fullWidth ? 'w-full' : '';
-  const disabledClass = disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer';
+  const disabledClass = disabled || loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer';
 
   const MotionButton = motion.button;
 
@@ -35,14 +37,15 @@ const Button = ({
     <MotionButton
       type={type}
       onClick={onClick}
-      disabled={disabled}
-      whileHover={disabled ? {} : { scale: 1.02, y: -1 }}
-      whileTap={disabled ? {} : { scale: 0.98 }}
+      disabled={disabled || loading}
+      aria-busy={loading}
+      whileHover={disabled || loading ? {} : { scale: 1.02, y: -1 }}
+      whileTap={disabled || loading ? {} : { scale: 0.98 }}
       transition={{ type: "spring", stiffness: 400, damping: 17 }}
       className={`${baseClasses} ${variantClasses[variant]} ${widthClass} ${disabledClass} ${className}`}
     >
       <span className="flex items-center justify-center space-x-2">
-        {Icon && <Icon size={18} />}
+        {loading ? <Spinner size="sm" /> : Icon && <Icon size={18} />}
         <span>{children}</span>
       </span>
     </MotionButton>

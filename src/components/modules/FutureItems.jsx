@@ -14,15 +14,23 @@ const FutureItems = ({ futureItems, onAddItem, onDeleteItem }) => {
     priority: 'média',
     estimatedCost: ''
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleAddItem = () => {
-    if (newItem.name.trim()) {
-      onAddItem({
-        name: newItem.name,
-        priority: newItem.priority,
-        estimatedCost: newItem.estimatedCost
-      });
-      setNewItem({ name: '', priority: 'média', estimatedCost: '' });
+  const handleAddItem = async () => {
+    if (newItem.name.trim() && !isSubmitting) {
+      setIsSubmitting(true);
+      try {
+        await onAddItem({
+          name: newItem.name,
+          priority: newItem.priority,
+          estimatedCost: newItem.estimatedCost
+        });
+        setNewItem({ name: '', priority: 'média', estimatedCost: '' });
+      } catch (error) {
+        console.error('Erro ao adicionar item futuro:', error);
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -58,7 +66,7 @@ const FutureItems = ({ futureItems, onAddItem, onDeleteItem }) => {
               onChange={(e) => setNewItem({ ...newItem, estimatedCost: e.target.value })}
             />
           </div>
-          <Button variant="warning" fullWidth onClick={handleAddItem}>
+          <Button variant="warning" fullWidth onClick={handleAddItem} loading={isSubmitting} disabled={isSubmitting}>
             Adicionar Item
           </Button>
         </div>

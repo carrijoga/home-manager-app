@@ -1,20 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import Navigation from './components/Navigation';
+import { useEffect, useState } from 'react';
+import Calendar from './components/modules/Calendar';
 import Dashboard from './components/modules/Dashboard';
-import Tasks from './components/modules/Tasks';
-import ShoppingList from './components/modules/ShoppingList';
 import Financial from './components/modules/Financial';
 import FutureItems from './components/modules/FutureItems';
-import Calendar from './components/modules/Calendar';
-import { ModuleIds } from './models/types';
+import ShoppingList from './components/modules/ShoppingList';
+import Tasks from './components/modules/Tasks';
+import Navigation from './components/Navigation';
 import { useTheme } from './contexts/ThemeContext';
+import { ModuleIds } from './models/types';
+import { DashboardSkeleton, TaskListSkeleton, ShoppingListSkeleton, ExpenseListSkeleton } from './components/skeletons';
+import { FadeIn } from './components/common/FadeIn';
 
 // Serviços
-import * as noticeService from './services/noticeService';
-import * as taskService from './services/taskService';
-import * as shoppingService from './services/shoppingService';
 import * as financialService from './services/financialService';
 import * as futureItemsService from './services/futureItemsService';
+import * as noticeService from './services/noticeService';
+import * as shoppingService from './services/shoppingService';
+import * as taskService from './services/taskService';
 
 /**
  * Componente principal da aplicação Home Manager
@@ -138,60 +140,104 @@ const App = () => {
   // Renderiza o módulo atual
   const renderCurrentModule = () => {
     if (loading) {
-      return (
-        <div className="flex items-center justify-center py-12">
-          <div className="text-lg text-ninho-600 dark:text-dark-text-secondary">Carregando...</div>
-        </div>
-      );
+      // Mostra skeleton apropriado para cada módulo
+      switch (currentModule) {
+        case ModuleIds.DASHBOARD:
+          return <DashboardSkeleton />;
+        case ModuleIds.TASKS:
+          return (
+            <div className="space-y-4">
+              <div className="h-10 w-full" />
+              <TaskListSkeleton items={5} />
+            </div>
+          );
+        case ModuleIds.SHOPPING:
+          return (
+            <div className="space-y-4">
+              <div className="h-10 w-full" />
+              <ShoppingListSkeleton items={5} />
+            </div>
+          );
+        case ModuleIds.FINANCIAL:
+          return (
+            <div className="space-y-4">
+              <div className="h-10 w-full" />
+              <ExpenseListSkeleton items={5} />
+            </div>
+          );
+        case ModuleIds.FUTURE_ITEMS:
+          return (
+            <div className="space-y-4">
+              <div className="h-10 w-full" />
+              <ExpenseListSkeleton items={5} />
+            </div>
+          );
+        default:
+          return <DashboardSkeleton />;
+      }
     }
 
     switch (currentModule) {
       case ModuleIds.DASHBOARD:
         return (
-          <Dashboard
-            notices={notices}
-            tasks={tasks}
-            shoppingList={shoppingList}
-            expenses={expenses}
-            onAddNotice={handleAddNotice}
-          />
+          <FadeIn>
+            <Dashboard
+              notices={notices}
+              tasks={tasks}
+              shoppingList={shoppingList}
+              expenses={expenses}
+              onAddNotice={handleAddNotice}
+            />
+          </FadeIn>
         );
       case ModuleIds.TASKS:
         return (
-          <Tasks
-            tasks={tasks}
-            onAddTask={handleAddTask}
-            onToggleTask={handleToggleTask}
-            onDeleteTask={handleDeleteTask}
-          />
+          <FadeIn>
+            <Tasks
+              tasks={tasks}
+              onAddTask={handleAddTask}
+              onToggleTask={handleToggleTask}
+              onDeleteTask={handleDeleteTask}
+            />
+          </FadeIn>
         );
       case ModuleIds.SHOPPING:
         return (
-          <ShoppingList
-            shoppingList={shoppingList}
-            onAddItem={handleAddShoppingItem}
-            onToggleItem={handleToggleShoppingItem}
-            onDeleteItem={handleDeleteShoppingItem}
-          />
+          <FadeIn>
+            <ShoppingList
+              shoppingList={shoppingList}
+              onAddItem={handleAddShoppingItem}
+              onToggleItem={handleToggleShoppingItem}
+              onDeleteItem={handleDeleteShoppingItem}
+            />
+          </FadeIn>
         );
       case ModuleIds.FINANCIAL:
         return (
-          <Financial
-            expenses={expenses}
-            onAddExpense={handleAddExpense}
-            onDeleteExpense={handleDeleteExpense}
-          />
+          <FadeIn>
+            <Financial
+              expenses={expenses}
+              onAddExpense={handleAddExpense}
+              onDeleteExpense={handleDeleteExpense}
+            />
+          </FadeIn>
         );
       case ModuleIds.FUTURE:
         return (
-          <FutureItems
-            futureItems={futureItems}
-            onAddItem={handleAddFutureItem}
-            onDeleteItem={handleDeleteFutureItem}
-          />
+          <FadeIn>
+            <FutureItems
+              futureItems={futureItems}
+              onAddItem={handleAddFutureItem}
+              onDeleteItem={handleDeleteFutureItem}
+            />
+          </FadeIn>
         );
       case ModuleIds.CALENDAR:
-        return <Calendar />;
+        return (
+          <FadeIn>
+            <Calendar />
+          </FadeIn>
+        );
       default:
         return null;
     }

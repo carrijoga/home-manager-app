@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Trash2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import Card from '../common/Card';
+import { useState } from 'react';
 import Button from '../common/Button';
-import Input from '../common/Input';
+import Card from '../common/Card';
+// import Input from '../common/Input';
+import { DatePicker, Input } from '../ui';
 
 /**
  * Módulo de Tarefas
@@ -14,15 +15,23 @@ const Tasks = ({ tasks, onAddTask, onToggleTask, onDeleteTask }) => {
     assignedTo: '',
     dueDate: ''
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleAddTask = () => {
-    if (newTask.title.trim()) {
-      onAddTask({
-        title: newTask.title,
-        assignedTo: newTask.assignedTo || 'Geral',
-        dueDate: newTask.dueDate || new Date().toISOString().split('T')[0]
-      });
-      setNewTask({ title: '', assignedTo: '', dueDate: '' });
+  const handleAddTask = async () => {
+    if (newTask.title.trim() && !isSubmitting) {
+      setIsSubmitting(true);
+      try {
+        await onAddTask({
+          title: newTask.title,
+          assignedTo: newTask.assignedTo || 'Geral',
+          dueDate: newTask.dueDate || new Date().toISOString().split('T')[0]
+        });
+        setNewTask({ title: '', assignedTo: '', dueDate: '' });
+      } catch (error) {
+        console.error('Erro ao adicionar tarefa:', error);
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -45,13 +54,15 @@ const Tasks = ({ tasks, onAddTask, onToggleTask, onDeleteTask }) => {
               value={newTask.assignedTo}
               onChange={(e) => setNewTask({ ...newTask, assignedTo: e.target.value })}
             />
-            <Input
-              type="date"
+            <DatePicker
+              className='dark:bg-dark-bg-elevated dark:text-dark-text-primary dark:placeholder-dark-text-muted'
               value={newTask.dueDate}
-              onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })}
+              onChange={(date) => setNewTask({ ...newTask, dueDate: date })}
+              onChange={(date) => setNewTask({ ...newTask, dueDate: date?.toISOString().split('T')[0] || '' })}
+              defaultToToday
             />
           </div>
-          <Button variant="primary" fullWidth onClick={handleAddTask}>
+          <Button variant="primary" fullWidth onClick={handleAddTask} loading={isSubmitting} disabled={isSubmitting}>
             Adicionar Tarefa
           </Button>
         </div>

@@ -12,18 +12,21 @@ export const mockNotices = [
     id: 1,
     text: 'Lembrete: Reunião de condomínio sexta-feira às 19h',
     author: 'João',
+    createdBy: 'João',
     date: '2025-10-28'
   },
   {
     id: 2,
     text: 'Encanador virá terça-feira para verificar o chuveiro',
     author: 'Maria',
+    createdBy: 'Maria',
     date: '2025-10-29'
   },
   {
     id: 3,
     text: 'Lembrar de pagar a conta de água até dia 15',
     author: 'Pedro',
+    createdBy: 'Pedro',
     date: '2025-10-27'
   }
 ];

@@ -4,7 +4,7 @@
  */
 
 import { mockNotices } from '../mocks/data';
-import { DATA_MODE, apiRequest, API_ENDPOINTS } from './api/config';
+import { API_ENDPOINTS, DATA_MODE, apiRequest } from './api/config';
 
 /**
  * Busca todos os avisos
@@ -32,7 +32,9 @@ export async function addNotice(notice) {
     id: Date.now(),
     text: notice.text,
     author: notice.author || 'Você',
-    date: notice.date || new Date().toISOString().split('T')[0]
+    createdBy: notice.createdBy || notice.author || 'Você',
+    date: notice.date || new Date().toISOString().split('T')[0],
+    createdAt: new Date().toISOString()
   };
 
   if (DATA_MODE === 'mock') {

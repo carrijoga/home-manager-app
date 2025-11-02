@@ -72,6 +72,11 @@ const App = () => {
     setNotices([...notices, newNotice]);
   };
 
+  const handleRemoveNotice = async (id) => {
+    await noticeService.deleteNotice(id);
+    setNotices(notices.filter(notice => notice.id !== id));
+  };
+
   // Handlers de Tarefas
   const handleAddTask = async (task) => {
     const newTask = await taskService.addTask(task);
@@ -188,6 +193,11 @@ const App = () => {
               expenses={expenses}
               futureItems={futureItems}
               onAddNotice={handleAddNotice}
+              onRemoveNotice={handleRemoveNotice}
+              onAddTask={handleAddTask}
+              onToggleTask={handleToggleTask}
+              onDeleteTask={handleDeleteTask}
+              onNavigateToTasks={() => setCurrentModule(ModuleIds.TASKS)}
             />
           </FadeIn>
         );
@@ -245,7 +255,7 @@ const App = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-cyan-50 dark:bg-gradient-to-br dark:from-dark-bg-primary dark:via-dark-bg-secondary dark:to-dark-bg-tertiary transition-colors duration-300">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-cyan-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 transition-colors duration-300">
       <Navigation
         currentModule={currentModule}
         onModuleChange={setCurrentModule}

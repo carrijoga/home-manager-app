@@ -87,11 +87,12 @@ export enum FutureItemStatus {
  * Interface para Avisos do quadro
  */
 export interface Notice {
-  id: string;
+  id: number | string;
   text: string;
   author: string;
+  createdBy?: string;
   date: string; // ISO format (YYYY-MM-DD)
-  createdAt?: Date;
+  createdAt?: string | Date;
 }
 
 /**

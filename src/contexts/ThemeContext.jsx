@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 
 const ThemeContext = createContext();
 
@@ -20,6 +20,17 @@ export const ThemeProvider = ({ children }) => {
     return 'system';
   });
 
+  // Estado para o tema efetivo (resolvido)
+  const [effectiveTheme, setEffectiveTheme] = useState(() => {
+    const savedTheme = localStorage.getItem('ninho-theme') || 'system';
+    if (savedTheme === 'system') {
+      return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light';
+    }
+    return savedTheme;
+  });
+
   // Função para obter o tema efetivo baseado na preferência
   const getEffectiveTheme = (themeValue) => {
     if (themeValue === 'system') {
@@ -32,13 +43,16 @@ export const ThemeProvider = ({ children }) => {
 
   useEffect(() => {
     const root = window.document.documentElement;
-    const effectiveTheme = getEffectiveTheme(theme);
+    const newEffectiveTheme = getEffectiveTheme(theme);
+
+    // Atualiza o estado do tema efetivo
+    setEffectiveTheme(newEffectiveTheme);
 
     // Remove a classe anterior
     root.classList.remove('light', 'dark');
 
     // Adiciona a nova classe
-    root.classList.add(effectiveTheme);
+    root.classList.add(newEffectiveTheme);
 
     // Salva no localStorage
     localStorage.setItem('ninho-theme', theme);
@@ -47,8 +61,10 @@ export const ThemeProvider = ({ children }) => {
     if (theme === 'system') {
       const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
       const handleChange = (e) => {
+        const systemTheme = e.matches ? 'dark' : 'light';
+        setEffectiveTheme(systemTheme);
         root.classList.remove('light', 'dark');
-        root.classList.add(e.matches ? 'dark' : 'light');
+        root.classList.add(systemTheme);
       };
 
       mediaQuery.addEventListener('change', handleChange);
@@ -57,14 +73,22 @@ export const ThemeProvider = ({ children }) => {
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+    // Se estiver em modo system, muda para o oposto do tema atual efetivo
+    if (theme === 'system') {
+      const newTheme = effectiveTheme === 'dark' ? 'light' : 'dark';
+      setTheme(newTheme);
+    } else {
+      // Alterna entre light e dark
+      const newTheme = theme === 'light' ? 'dark' : 'light';
+      setTheme(newTheme);
+    }
   };
 
   const value = {
     theme,
     setTheme,
     toggleTheme,
-    isDark: getEffectiveTheme(theme) === 'dark'
+    isDark: effectiveTheme === 'dark'
   };
 
   return (

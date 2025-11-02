@@ -8,7 +8,7 @@ import {
   groupExpensesByMonth,
   groupTasksByMonth
 } from '@/utils/dashboardMetrics';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import {
   CheckCircle2,
   DollarSign,
@@ -18,32 +18,69 @@ import {
   TrendingUp
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 import Card from '../common/Card';
 import Input from '../common/Input';
 import MetricCard from '../common/MetricCard';
+import PostIt from '../common/PostIt';
+import DashboardTasksSection from './DashboardTasksSection';
 
 /**
  * Módulo Dashboard - Visão geral da casa
  */
-const Dashboard = ({ notices, tasks, shoppingList, expenses, futureItems, onAddNotice }) => {
+const Dashboard = ({ 
+  notices, 
+  tasks, 
+  shoppingList, 
+  expenses, 
+  futureItems, 
+  onAddNotice,
+  onRemoveNotice,
+  onAddTask,
+  onToggleTask,
+  onDeleteTask,
+  onNavigateToTasks
+}) => {
   const [newNotice, setNewNotice] = useState('');
+  const MAX_NOTICE_LENGTH = 200;
 
   const handleAddNotice = () => {
-    if (newNotice.trim()) {
-      onAddNotice({
-        text: newNotice,
-        author: 'Você',
-        date: new Date().toISOString().split('T')[0]
-      });
-      setNewNotice('');
+    const trimmedNotice = newNotice.trim();
+    
+    if (!trimmedNotice) {
+      toast.error('Digite um aviso para adicionar');
+      return;
     }
+    
+    if (trimmedNotice.length > MAX_NOTICE_LENGTH) {
+      toast.error(`O aviso deve ter no máximo ${MAX_NOTICE_LENGTH} caracteres`);
+      return;
+    }
+    
+    onAddNotice({
+      text: trimmedNotice,
+      author: 'Você',
+      createdBy: 'Você',
+      date: new Date().toISOString().split('T')[0]
+    });
+    
+    setNewNotice('');
+    toast.success('Aviso adicionado!');
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
       handleAddNotice();
     }
   };
+
+  const handleRemoveNotice = (id) => {
+    onRemoveNotice(id);
+    toast.success('Aviso removido!');
+  };
+
+  const remainingChars = MAX_NOTICE_LENGTH - newNotice.length;
 
   // Cálculos das métricas
   const metrics = useMemo(() => {
@@ -134,8 +171,6 @@ const Dashboard = ({ notices, tasks, shoppingList, expenses, futureItems, onAddN
       }
     };
   }, [expenses, tasks, shoppingList, futureItems]);
-
-  const myTasks = tasks.filter(t => !t.completed).slice(0, 3);
 
   return (
     <div className="space-y-6">
@@ -236,79 +271,92 @@ const Dashboard = ({ notices, tasks, shoppingList, expenses, futureItems, onAddN
       </div>
 
       {/* Quadro de Avisos e Minhas Tarefas lado a lado */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Quadro de Avisos - Ocupa 2 colunas */}
-        <div className="lg:col-span-2">
-          <Card title="Quadro de Avisos" headerAction={
-            <button className="text-indigo-600 dark:text-dark-accent-indigo hover:text-indigo-700 dark:hover:text-purple-400 transition-colors duration-300">
-              <Plus size={24} />
-            </button>
-          }>
-            <div className="space-y-3">
-              <AnimatePresence mode="popLayout">
-                {notices.map((notice, index) => (
-                  <motion.div
-                    key={notice.id}
-                    layout
-                    initial={{ opacity: 0, x: -50, scale: 0.95 }}
-                    animate={{ opacity: 1, x: 0, scale: 1 }}
-                    exit={{ opacity: 0, x: 50, scale: 0.9, height: 0 }}
-                    transition={{
-                      layout: { type: "spring", stiffness: 300, damping: 30 },
-                      opacity: { duration: 0.3 },
-                      delay: index * 0.05
-                    }}
-                    className="bg-amber-50 dark:bg-dark-bg-tertiary border-l-4 border-amber-400 dark:border-dark-accent-amber p-4 rounded transition-colors duration-300"
-                  >
-                    <p className="text-slate-800 dark:text-dark-text-primary">{notice.text}</p>
-                    <div className="flex justify-between items-center mt-2 text-sm text-gray-600 dark:text-dark-text-tertiary">
-                      <span>Por: {notice.author}</span>
-                      <span>{new Date(notice.date).toLocaleDateString('pt-BR')}</span>
-                    </div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Quadro de Avisos - Ocupa 1 coluna */}
+        <div className="lg:col-span-1">
+          <Card 
+            title="Quadro de Avisos" 
+            headerAction={
+              <button 
+                onClick={handleAddNotice}
+                disabled={!newNotice.trim()}
+                className="text-indigo-600 dark:text-dark-accent-indigo hover:text-indigo-700 dark:hover:text-purple-400 transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Adicionar aviso"
+              >
+                <Plus size={24} />
+              </button>
+            }
+          >
+            {/* Input para novo aviso */}
+            <div className="mb-6 space-y-2">
+              <div className="relative">
+                <Input
+                  placeholder="Digite um aviso... (pressione Enter para adicionar)"
+                  value={newNotice}
+                  onChange={(e) => setNewNotice(e.target.value.slice(0, MAX_NOTICE_LENGTH))}
+                  onKeyPress={handleKeyPress}
+                  className="pr-16"
+                />
+                <span 
+                  className={`absolute right-3 top-1/2 -translate-y-1/2 text-xs ${
+                    remainingChars < 20 
+                      ? 'text-red-500 dark:text-red-400 font-semibold' 
+                      : 'text-gray-400 dark:text-dark-text-tertiary'
+                  }`}
+                >
+                  {remainingChars}
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-xs text-gray-500 dark:text-dark-text-tertiary">
+                <span>📝 Digite até {MAX_NOTICE_LENGTH} caracteres</span>
+                <button
+                  onClick={handleAddNotice}
+                  disabled={!newNotice.trim()}
+                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 dark:bg-dark-accent-indigo dark:hover:bg-purple-600 text-white rounded-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-indigo-600 dark:disabled:hover:bg-dark-accent-indigo text-xs font-medium"
+                >
+                  + Novo Aviso
+                </button>
+              </div>
             </div>
-            <div className="mt-4">
-              <Input
-                placeholder="Adicionar novo aviso..."
-                value={newNotice}
-                onChange={(e) => setNewNotice(e.target.value)}
-                onKeyPress={handleKeyPress}
-              />
-            </div>
+
+            {/* Grid de Post-its */}
+            {notices.length === 0 ? (
+              <div className="text-center py-12 text-gray-500 dark:text-dark-text-tertiary">
+                <p className="text-lg mb-2">📝</p>
+                <p>Nenhum aviso no momento</p>
+                <p className="text-sm mt-1">Adicione o primeiro aviso acima!</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 auto-rows-fr">
+                <AnimatePresence mode="popLayout">
+                  {notices.map((notice, index) => (
+                    <PostIt
+                      key={notice.id}
+                      id={notice.id}
+                      text={notice.text}
+                      author={notice.author}
+                      date={notice.date}
+                      createdBy={notice.createdBy || notice.author}
+                      currentUser="Você"
+                      onRemove={handleRemoveNotice}
+                      index={index}
+                    />
+                  ))}
+                </AnimatePresence>
+              </div>
+            )}
           </Card>
         </div>
 
         {/* Minhas Tarefas - Ocupa 1 coluna */}
         <div className="lg:col-span-1">
-          <Card title="Minhas Tarefas">
-            <div className="space-y-2">
-              <AnimatePresence mode="popLayout">
-                {myTasks.map((task, index) => (
-                  <motion.div
-                    key={task.id}
-                    layout
-                    initial={{ opacity: 0, y: 20, scale: 0.9 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -20, scale: 0.9 }}
-                    transition={{
-                      layout: { type: "spring", stiffness: 300, damping: 30 },
-                      opacity: { duration: 0.2 },
-                      delay: index * 0.05
-                    }}
-                    className="flex items-center justify-between p-3 bg-indigo-50 dark:bg-dark-bg-tertiary rounded-lg border-l-2 border-indigo-300 dark:border-dark-accent-indigo transition-colors duration-300"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <input type="checkbox" className="w-5 h-5 accent-indigo-500 dark:accent-dark-accent-indigo" />
-                      <span className="text-slate-800 dark:text-dark-text-primary">{task.title}</span>
-                    </div>
-                    <span className="text-sm text-gray-600 dark:text-dark-text-tertiary">{task.assignedTo}</span>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
-          </Card>
+          <DashboardTasksSection
+            tasks={tasks}
+            onAddTask={onAddTask}
+            onToggleTask={onToggleTask}
+            onDeleteTask={onDeleteTask}
+            onNavigateToTasks={onNavigateToTasks}
+          />
         </div>
       </div>
     </div>

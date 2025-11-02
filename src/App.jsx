@@ -186,6 +186,7 @@ const App = () => {
               tasks={tasks}
               shoppingList={shoppingList}
               expenses={expenses}
+              futureItems={futureItems}
               onAddNotice={handleAddNotice}
             />
           </FadeIn>

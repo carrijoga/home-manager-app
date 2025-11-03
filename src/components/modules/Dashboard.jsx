@@ -18,7 +18,7 @@ import { AnimatePresence } from 'framer-motion';
 import {
   CheckCircle2,
   DollarSign,
-  Plus,
+  Pin,
   ShoppingCart,
   Sparkles,
   TrendingUp
@@ -368,7 +368,7 @@ const Dashboard = ({
                 className="text-indigo-600 dark:text-dark-accent-indigo hover:text-indigo-700 dark:hover:text-purple-400 transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label="Adicionar aviso"
               >
-                <Plus size={24} />
+                <Pin size={24} />
               </button>
             }
           >

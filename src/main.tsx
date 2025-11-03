@@ -1,25 +1,31 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import App from './App';
-import { ThemeProvider } from './contexts/ThemeContext';
-import './index.css';
-import './animations.css';
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
+import "./animations.css";
+import App from "./App";
+import { ThemeProvider } from "./contexts/ThemeContext";
+import "./index.css";
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <ThemeProvider>
-      <App />
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
     </ThemeProvider>
-  </React.StrictMode>,
+  </React.StrictMode>
 );
 
 // Registrar Service Worker para PWA
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register('/sw.js')
+      .register("/sw.js")
       .then((registration) => {
-        console.log('✅ Service Worker registrado com sucesso:', registration.scope);
+        console.log(
+          "✅ Service Worker registrado com sucesso:",
+          registration.scope
+        );
 
         // Verificar atualizações periodicamente
         setInterval(() => {
@@ -27,23 +33,23 @@ if ('serviceWorker' in navigator) {
         }, 60000); // Verifica a cada minuto
       })
       .catch((error) => {
-        console.error('❌ Falha ao registrar Service Worker:', error);
+        console.error("❌ Falha ao registrar Service Worker:", error);
       });
 
     // Detectar quando o app está pronto para instalação
     let deferredPrompt: any = null;
-    window.addEventListener('beforeinstallprompt', (e) => {
+    window.addEventListener("beforeinstallprompt", (e) => {
       e.preventDefault();
       deferredPrompt = e;
-      console.log('💡 App pronto para instalação');
+      console.log("💡 App pronto para instalação");
 
       // Você pode criar um botão de instalação aqui
       // e usar deferredPrompt.prompt() quando o usuário clicar
     });
 
     // Detectar quando o app foi instalado
-    window.addEventListener('appinstalled', () => {
-      console.log('🎉 PWA instalado com sucesso!');
+    window.addEventListener("appinstalled", () => {
+      console.log("🎉 PWA instalado com sucesso!");
       if (deferredPrompt) {
         deferredPrompt = null;
       }

@@ -1,3 +1,4 @@
+import { useApp } from '@/contexts/AppContext';
 import { Trash2 } from 'lucide-react';
 import { memo, useState } from 'react';
 import { PriorityLevels } from '../../models/types';
@@ -8,7 +9,10 @@ import Input from '../common/Input';
 /**
  * Módulo de Itens Futuros
  */
-const FutureItems = memo(({ futureItems, onAddItem, onDeleteItem }) => {
+const FutureItems = memo(() => {
+  // Obtém estados e ações do contexto global
+  const { futureItems, addFutureItem, deleteFutureItem } = useApp();
+  
   const [newItem, setNewItem] = useState({
     name: '',
     priority: 'média',
@@ -20,7 +24,7 @@ const FutureItems = memo(({ futureItems, onAddItem, onDeleteItem }) => {
     if (newItem.name.trim() && !isSubmitting) {
       setIsSubmitting(true);
       try {
-        await onAddItem({
+        await addFutureItem({
           name: newItem.name,
           priority: newItem.priority,
           estimatedCost: newItem.estimatedCost
@@ -92,7 +96,7 @@ const FutureItems = memo(({ futureItems, onAddItem, onDeleteItem }) => {
                       <p className="text-sm text-slate-600 dark:text-dark-text-secondary">{item.estimatedCost}</p>
                     </div>
                     <button
-                      onClick={() => onDeleteItem(item.id)}
+                      onClick={() => deleteFutureItem(item.id)}
                       className="text-rose-500 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 transition-colors"
                     >
                       <Trash2 size={18} />

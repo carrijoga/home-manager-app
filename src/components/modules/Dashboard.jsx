@@ -1,3 +1,4 @@
+import { useApp } from '@/contexts/AppContext';
 import {
   calculateAverage,
   calculateMonthlySavings,
@@ -43,19 +44,21 @@ import DashboardTasksSection from './DashboardTasksSection';
 /**
  * Módulo Dashboard - Visão geral da casa
  */
-const Dashboard = ({ 
-  notices, 
-  tasks, 
-  shoppingList, 
-  expenses, 
-  futureItems, 
-  onAddNotice,
-  onRemoveNotice,
-  onAddTask,
-  onToggleTask,
-  onDeleteTask,
-  onNavigateToTasks
-}) => {
+const Dashboard = () => {
+  // Obtém estados e ações do contexto global
+  const { 
+    notices, 
+    tasks, 
+    shoppingList, 
+    expenses, 
+    futureItems, 
+    addNotice,
+    deleteNotice,
+    addTask,
+    toggleTask,
+    deleteTask
+  } = useApp();
+  
   const [newNotice, setNewNotice] = useState('');
   const MAX_NOTICE_LENGTH = 200;
 
@@ -72,7 +75,7 @@ const Dashboard = ({
       return;
     }
 
-    onAddNotice({
+    addNotice({
       text: trimmedNotice,
       author: 'Você',
       createdBy: 'Você',
@@ -81,7 +84,7 @@ const Dashboard = ({
 
     setNewNotice('');
     toast.success('Aviso adicionado!');
-  }, [newNotice, onAddNotice]);
+  }, [newNotice, addNotice]);
 
   const handleKeyPress = useCallback((e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -91,9 +94,9 @@ const Dashboard = ({
   }, [handleAddNotice]);
 
   const handleRemoveNotice = useCallback((id) => {
-    onRemoveNotice(id);
+    deleteNotice(id);
     toast.success('Aviso removido!');
-  }, [onRemoveNotice]);
+  }, [deleteNotice]);
 
   const remainingChars = MAX_NOTICE_LENGTH - newNotice.length;
 
@@ -437,10 +440,9 @@ const Dashboard = ({
         <div className="lg:col-span-1">
           <DashboardTasksSection
             tasks={tasks}
-            onAddTask={onAddTask}
-            onToggleTask={onToggleTask}
-            onDeleteTask={onDeleteTask}
-            onNavigateToTasks={onNavigateToTasks}
+            onAddTask={addTask}
+            onToggleTask={toggleTask}
+            onDeleteTask={deleteTask}
           />
         </div>
       </div>

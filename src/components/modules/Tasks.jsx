@@ -1,3 +1,4 @@
+import { useApp } from '@/contexts/AppContext';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Trash2 } from 'lucide-react';
 import { memo, useMemo, useState } from 'react';
@@ -8,7 +9,10 @@ import { DatePicker, Input } from '../ui';
 /**
  * Módulo de Tarefas
  */
-const Tasks = memo(({ tasks, onAddTask, onToggleTask, onDeleteTask }) => {
+const Tasks = memo(() => {
+  // Obtém estados e ações do contexto global
+  const { tasks, addTask, toggleTask, deleteTask } = useApp();
+  
   const [newTask, setNewTask] = useState({
     title: '',
     assignedTo: '',
@@ -20,7 +24,7 @@ const Tasks = memo(({ tasks, onAddTask, onToggleTask, onDeleteTask }) => {
     if (newTask.title.trim() && !isSubmitting) {
       setIsSubmitting(true);
       try {
-        await onAddTask({
+        await addTask({
           title: newTask.title,
           assignedTo: newTask.assignedTo || 'Geral',
           dueDate: newTask.dueDate || new Date().toISOString().split('T')[0]
@@ -87,7 +91,7 @@ const Tasks = memo(({ tasks, onAddTask, onToggleTask, onDeleteTask }) => {
                   <input
                     type="checkbox"
                     checked={task.completed}
-                    onChange={() => onToggleTask(task.id)}
+                    onChange={() => toggleTask(task.id)}
                     className="w-5 h-5 cursor-pointer accent-blue-500 dark:accent-blue-600"
                   />
                   <div>
@@ -100,7 +104,7 @@ const Tasks = memo(({ tasks, onAddTask, onToggleTask, onDeleteTask }) => {
                 <motion.button
                   whileHover={{ scale: 1.1, rotate: 5 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => onDeleteTask(task.id)}
+                  onClick={() => deleteTask(task.id)}
                   className="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors duration-300"
                 >
                   <Trash2 size={18} />
@@ -132,7 +136,7 @@ const Tasks = memo(({ tasks, onAddTask, onToggleTask, onDeleteTask }) => {
                   <input
                     type="checkbox"
                     checked={task.completed}
-                    onChange={() => onToggleTask(task.id)}
+                    onChange={() => toggleTask(task.id)}
                     className="w-5 h-5 cursor-pointer accent-green-500 dark:accent-green-600"
                   />
                   <div>
@@ -143,7 +147,7 @@ const Tasks = memo(({ tasks, onAddTask, onToggleTask, onDeleteTask }) => {
                 <motion.button
                   whileHover={{ scale: 1.1, rotate: -5 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => onDeleteTask(task.id)}
+                  onClick={() => deleteTask(task.id)}
                   className="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors duration-300"
                 >
                   <Trash2 size={18} />

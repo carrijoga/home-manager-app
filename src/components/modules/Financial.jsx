@@ -1,3 +1,4 @@
+import { useApp } from '@/contexts/AppContext';
 import { Trash2 } from 'lucide-react';
 import { memo, useMemo, useState } from 'react';
 import { ExpenseCategories } from '../../models/types';
@@ -8,7 +9,10 @@ import Input from '../common/Input';
 /**
  * Módulo Financeiro
  */
-const Financial = memo(({ expenses, onAddExpense, onDeleteExpense }) => {
+const Financial = memo(() => {
+  // Obtém estados e ações do contexto global
+  const { expenses, addExpense, deleteExpense } = useApp();
+  
   const [newExpense, setNewExpense] = useState({
     description: '',
     value: '',
@@ -21,7 +25,7 @@ const Financial = memo(({ expenses, onAddExpense, onDeleteExpense }) => {
     if (newExpense.description.trim() && newExpense.value && !isSubmitting) {
       setIsSubmitting(true);
       try {
-        await onAddExpense({
+        await addExpense({
           description: newExpense.description,
           value: parseFloat(newExpense.value),
           date: newExpense.date || new Date().toISOString().split('T')[0],
@@ -133,7 +137,7 @@ const Financial = memo(({ expenses, onAddExpense, onDeleteExpense }) => {
               <div className="flex items-center space-x-4">
                 <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">R$ {expense.value.toFixed(2)}</span>
                 <button
-                  onClick={() => onDeleteExpense(expense.id)}
+                  onClick={() => deleteExpense(expense.id)}
                   className="text-rose-500 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 transition-colors"
                 >
                   <Trash2 size={18} />

@@ -1,3 +1,4 @@
+import { useApp } from '@/contexts/AppContext';
 import { Trash2 } from 'lucide-react';
 import { memo, useMemo, useState } from 'react';
 import Button from '../common/Button';
@@ -7,7 +8,10 @@ import { Input } from '../ui';
 /**
  * Módulo de Lista de Compras
  */
-const ShoppingList = memo(({ shoppingList, onAddItem, onToggleItem, onDeleteItem }) => {
+const ShoppingList = memo(() => {
+  // Obtém estados e ações do contexto global
+  const { shoppingList, addShoppingItem, toggleShoppingItem, deleteShoppingItem } = useApp();
+  
   const [newItem, setNewItem] = useState({
     name: '',
     quantity: '',
@@ -19,7 +23,7 @@ const ShoppingList = memo(({ shoppingList, onAddItem, onToggleItem, onDeleteItem
     if (newItem.name.trim() && !isSubmitting) {
       setIsSubmitting(true);
       try {
-        await onAddItem({
+        await addShoppingItem({
           name: newItem.name,
           quantity: newItem.quantity,
           category: newItem.category || 'Geral'
@@ -91,7 +95,7 @@ const ShoppingList = memo(({ shoppingList, onAddItem, onToggleItem, onDeleteItem
                     <input
                       type="checkbox"
                       checked={item.checked}
-                      onChange={() => onToggleItem(item.id)}
+                      onChange={() => toggleShoppingItem(item.id)}
                       className="w-5 h-5 cursor-pointer accent-emerald-500 dark:accent-emerald-400"
                     />
                     <div>
@@ -102,7 +106,7 @@ const ShoppingList = memo(({ shoppingList, onAddItem, onToggleItem, onDeleteItem
                     </div>
                   </div>
                   <button
-                    onClick={() => onDeleteItem(item.id)}
+                    onClick={() => deleteShoppingItem(item.id)}
                     className="text-rose-500 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 transition-colors"
                   >
                     <Trash2 size={18} />

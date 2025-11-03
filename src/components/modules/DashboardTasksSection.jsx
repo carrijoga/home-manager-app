@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle2, Edit, Eye, MoreVertical, Plus, Trash2 } from 'lucide-react';
 import { memo, useCallback, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 import Card from '../common/Card';
 import Input from '../common/Input';
 import {
@@ -119,9 +120,9 @@ const DashboardTasksSection = memo(({
   tasks, 
   onAddTask, 
   onToggleTask, 
-  onDeleteTask,
-  onNavigateToTasks 
+  onDeleteTask
 }) => {
+  const navigate = useNavigate();
   const [quickTaskInput, setQuickTaskInput] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newTask, setNewTask] = useState({
@@ -386,14 +387,14 @@ const DashboardTasksSection = memo(({
                       task={task}
                       onToggle={handleToggleTask}
                       onDelete={handleDeleteTask}
-                      onNavigate={onNavigateToTasks}
+                      onNavigate={() => navigate('/tasks')}
                     />
                   ))}
                 </AnimatePresence>
                 
                 {hasMorePendingTasks && (
                   <button
-                    onClick={onNavigateToTasks}
+                    onClick={() => navigate('/tasks')}
                     className="w-full py-2 text-sm text-indigo-600 dark:text-dark-accent-indigo hover:text-indigo-700 dark:hover:text-purple-400 font-medium transition-colors"
                   >
                     Ver mais ({pendingTasks.length - 5} tarefas)...
@@ -431,7 +432,7 @@ const DashboardTasksSection = memo(({
                       isCompleted
                       onToggle={handleToggleTask}
                       onDelete={handleDeleteTask}
-                      onNavigate={onNavigateToTasks}
+                      onNavigate={() => navigate('/tasks')}
                     />
                   ))}
                 </AnimatePresence>

@@ -10,7 +10,16 @@ Aplicativo completo de gerenciamento doméstico para toda a família. Com múlti
 
 ## ✨ Funcionalidades
 
-### 📊 Dashboard
+### � Login
+
+- Interface de login com Google OAuth (UI implementada)
+- Design moderno e responsivo
+- Suporte a dark mode
+- Estados de loading e erro
+- Preparado para integração futura com backend ASP.NET Core
+
+### �📊 Dashboard
+
 - Visão geral de todas as atividades da casa
 - Quadro de avisos para comunicação familiar
 - Resumo de tarefas pendentes
@@ -18,6 +27,7 @@ Aplicativo completo de gerenciamento doméstico para toda a família. Com múlti
 - Lista rápida de itens a comprar
 
 ### ✅ Tarefas
+
 - Criação e gerenciamento de tarefas domésticas
 - Atribuição de responsáveis
 - Definição de prazos
@@ -25,24 +35,28 @@ Aplicativo completo de gerenciamento doméstico para toda a família. Com múlti
 - Visualização separada de pendentes e concluídas
 
 ### 🛒 Lista de Compras
+
 - Organização de itens por categoria (Alimentos, Limpeza, etc.)
 - Definição de quantidades
 - Marcação de itens já comprados
 - Controle mensal de compras
 
 ### 💰 Financeiro
+
 - Registro de despesas com categorização
 - Visualização de gastos por categoria
 - Cálculo automático de totais e médias
 - Histórico completo de despesas
 
 ### 📦 Compras Futuras
+
 - Planejamento de compras maiores
 - Definição de prioridades (alta, média, baixa)
 - Estimativa de custos
 - Organização por prioridade
 
 ### 📅 Calendário
+
 - Espaço reservado para integração futura com Google Calendar
 - Sincronização de eventos familiares (em desenvolvimento)
 
@@ -58,12 +72,14 @@ ninho/
 │   │   │   ├── Button.jsx
 │   │   │   ├── Card.jsx
 │   │   │   ├── Input.jsx
-│   │   │   └── Header.jsx
-│   │   ├── ui/             # Componentes shadcn/ui
-│   │   │   ├── button.jsx
-│   │   │   ├── card.jsx
-│   │   │   ├── input.jsx
-│   │   │   └── dialog.jsx
+│   │   │   ├── Header.jsx
+│   │   │   └── Logo.jsx
+│   │   ├── ui/             # Componentes shadcn/ui (TypeScript)
+│   │   │   ├── button.tsx
+│   │   │   ├── card.tsx
+│   │   │   ├── input.tsx
+│   │   │   ├── dialog.tsx
+│   │   │   └── spinner.tsx
 │   │   ├── modules/        # Módulos principais
 │   │   │   ├── Dashboard.jsx
 │   │   │   ├── Tasks.jsx
@@ -71,9 +87,14 @@ ninho/
 │   │   │   ├── Financial.jsx
 │   │   │   ├── FutureItems.jsx
 │   │   │   └── Calendar.jsx
-│   │   └── Navigation.jsx
+│   │   ├── skeletons/      # Loading skeletons
+│   │   │   ├── DashboardSkeleton.tsx
+│   │   │   └── ListSkeleton.tsx
+│   │   └── Navigation.tsx  # Navegação por tabs
+│   ├── pages/             # Páginas com rotas próprias
+│   │   └── Login.tsx      # Tela de login
 │   ├── lib/               # Utilitários e helpers
-│   │   └── utils.js       # Função cn() para merge de classes
+│   │   └── utils.ts       # Função cn() para merge de classes
 │   ├── services/          # Camada de serviços
 │   │   ├── api/          # Configuração de API
 │   │   │   └── config.js
@@ -82,16 +103,19 @@ ninho/
 │   │   ├── shoppingService.js
 │   │   ├── financialService.js
 │   │   └── futureItemsService.js
-│   ├── models/           # Definições de tipos
+│   ├── types/            # Definições TypeScript
+│   │   └── index.ts      # Tipos centralizados
+│   ├── models/           # Tipos legados (deprecated)
 │   │   └── types.js
 │   ├── mocks/            # Dados mockados
 │   │   └── data.js
 │   ├── utils/            # Funções utilitárias
-│   │   └── formatters.js
+│   │   ├── formatters.js
+│   │   └── dashboardMetrics.ts
 │   ├── contexts/         # Contextos React
 │   │   └── ThemeContext.jsx
-│   ├── App.jsx           # Componente principal
-│   ├── main.jsx          # Entry point
+│   ├── App.jsx           # Componente principal com roteamento
+│   ├── main.tsx          # Entry point (TypeScript)
 │   └── index.css         # Estilos globais
 ├── public/               # Arquivos públicos
 │   ├── icons/           # Ícones PWA
@@ -100,17 +124,36 @@ ninho/
 ├── index.html           # HTML principal
 ├── package.json         # Dependências
 ├── jsconfig.json        # Configuração de aliases JS
-├── vite.config.js       # Configuração Vite
-├── tailwind.config.js   # Configuração Tailwind
+├── tsconfig.json        # Configuração TypeScript
+├── vite.config.ts       # Configuração Vite
+├── tailwind.config.ts   # Configuração Tailwind
 ├── components.json      # Configuração shadcn/ui
 └── README.md            # Documentação
 
 ```
 
+### 🔄 Sistema de Roteamento
+
+O app utiliza **React Router v6** com uma arquitetura híbrida:
+
+- **`/login`** - Tela de login (rota independente)
+- **`/*`** - Aplicação principal com navegação por estado
+  - Dashboard, Tarefas, Compras, Financeiro, Futuro, Calendário
+  - Troca de módulos via tabs sem mudança de URL
+  - Estado gerenciado no componente `HomeLayout`
+
+Este design permite:
+
+- ✅ Login com URL própria para deep linking
+- ✅ Navegação rápida entre módulos (sem reload)
+- ✅ Estado preservado ao trocar de módulo
+- ✅ Preparado para autenticação futura
+
 ## 🛠️ Tecnologias Utilizadas
 
 - **React 18.3** - Biblioteca JavaScript para interfaces
-- **TypeScript 5.9** - Superset JavaScript com tipagem estática
+- **TypeScript 5.9** - Superset JavaScript com tipagem estática (migração parcial)
+- **React Router 6** - Roteamento declarativo para React
 - **Vite 5.4** - Build tool e dev server
 - **Tailwind CSS 3.4** - Framework CSS utilitário
 - **shadcn/ui** - Sistema de componentes baseado em Radix UI
@@ -122,30 +165,38 @@ ninho/
 ## 📦 Instalação
 
 1. Clone o repositório:
+
 ```bash
 git clone <url-do-repositorio>
 cd ninho
 ```
 
 2. Instale as dependências:
+
 ```bash
 npm install
 ```
 
 3. Configure as variáveis de ambiente:
+
 ```bash
 cp .env.example .env
 ```
 
 4. Inicie o servidor de desenvolvimento:
+
 ```bash
 npm run dev
 ```
 
 5. Acesse no navegador:
+
 ```
-http://localhost:3000
+http://localhost:3000      # Página principal (Dashboard)
+http://localhost:3000/login # Tela de login
 ```
+
+**Nota**: A tela de login está implementada apenas com a interface (UI). A integração com autenticação Google OAuth será feita quando o backend ASP.NET Core estiver pronto.
 
 ## 🚀 Scripts Disponíveis
 
@@ -163,6 +214,7 @@ http://localhost:3000
 Por padrão, a aplicação usa **dados mockados** localmente. Para alterar:
 
 **Arquivo `.env`:**
+
 ```env
 # Modo mock (dados locais)
 VITE_DATA_MODE=mock
@@ -181,6 +233,7 @@ Os serviços já estão preparados para consumir uma API REST. Quando implementa
 3. Implemente os endpoints correspondentes no backend
 
 **Endpoints esperados:**
+
 - `GET /api/notices` - Lista avisos
 - `POST /api/notices` - Cria aviso
 - `GET /api/tasks` - Lista tarefas
@@ -193,19 +246,45 @@ Os serviços já estão preparados para consumir uma API REST. Quando implementa
 ⚠️ **Importante**: Se a API estiver em outro domínio, será necessário configurar CORS no backend:
 
 **Exemplo com Express.js:**
-```javascript
-const cors = require('cors');
 
-app.use(cors({
-  origin: 'http://localhost:3000', // URL do frontend
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
-}));
+```javascript
+const cors = require("cors");
+
+app.use(
+  cors({
+    origin: "http://localhost:3000", // URL do frontend
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+  })
+);
 ```
+
+### Autenticação (Em Desenvolvimento)
+
+A tela de login com Google OAuth já está implementada (`/login`), mas ainda não está integrada com o backend:
+
+**Status Atual**:
+
+- ✅ Interface de login completa e responsiva
+- ✅ Botão Google com ícone oficial
+- ✅ Estados de loading e erro
+- ✅ Suporte a dark mode
+- ⏳ Integração com backend ASP.NET Core (planejado)
+- ⏳ AuthContext para gerenciamento de sessão (planejado)
+- ⏳ ProtectedRoute para rotas privadas (planejado)
+
+**Próximos Passos**:
+
+1. Implementar backend ASP.NET Core com Google OAuth
+2. Criar AuthContext para gerenciar token e usuário
+3. Adicionar componente ProtectedRoute
+4. Integrar logout na Navigation
+5. Persistir sessão no localStorage
 
 ## 📱 Responsividade
 
 A aplicação é totalmente responsiva e se adapta a diferentes tamanhos de tela:
+
 - 📱 Mobile (< 768px)
 - 💻 Tablet (768px - 1024px)
 - 🖥️ Desktop (> 1024px)
@@ -241,6 +320,7 @@ O projeto utiliza [shadcn/ui](https://ui.shadcn.com) como sistema de componentes
 O projeto possui uma biblioteca completa de componentes UI baseados em shadcn/ui:
 
 #### Formulários
+
 - **Button** - Botões com 6 variantes e 4 tamanhos
 - **Input** - Campos de entrada de texto
 - **Textarea** - Área de texto multi-linha
@@ -249,13 +329,16 @@ O projeto possui uma biblioteca completa de componentes UI baseados em shadcn/ui
 - **DatePicker** - Seletor de data com calendário (formato DD/MM/YYYY)
 
 #### Layout
+
 - **Card** - Containers para conteúdo
 - **Separator** - Linha separadora
 
 #### Overlay
+
 - **Dialog** - Modais e diálogos
 
 #### Display
+
 - **Badge** - Tags e badges de status
 - **Avatar** - Avatares circulares com fallback
 
@@ -278,8 +361,8 @@ npx shadcn@latest add dropdown-menu avatar badge
 Os componentes são adicionados em `src/components/ui/` e podem ser importados em qualquer parte do projeto:
 
 ```jsx
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 function MeuComponente() {
   return (
@@ -309,6 +392,7 @@ O projeto está em processo de migração para TypeScript. A infraestrutura est�
 ### Status Atual
 
 ✅ **Concluído:**
+
 - Configuração TypeScript (tsconfig.json)
 - Tipos centralizados em `src/types/index.ts`
 - Componentes UI shadcn/ui em TypeScript
@@ -316,21 +400,22 @@ O projeto está em processo de migração para TypeScript. A infraestrutura est�
 - Build e type-check funcionando
 
 🔄 **Em Progresso:**
+
 - Migração gradual de componentes e serviços
 - Modo híbrido (JS/TS) habilitado para transição suave
 
 ### Como Usar Tipos
 
 ```typescript
-import { Task, Priority, Expense } from '@/types';
+import { Task, Priority, Expense } from "@/types";
 
 const newTask: Task = {
-  id: '1',
-  title: 'Limpar cozinha',
-  assignedTo: 'João',
+  id: "1",
+  title: "Limpar cozinha",
+  assignedTo: "João",
   completed: false,
-  dueDate: '2025-11-02',
-  priority: Priority.HIGH
+  dueDate: "2025-11-02",
+  priority: Priority.HIGH,
 };
 ```
 

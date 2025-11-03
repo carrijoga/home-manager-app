@@ -1,5 +1,5 @@
 import { Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { ExpenseCategories } from '../../models/types';
 import Button from '../common/Button';
 import Card from '../common/Card';
@@ -8,7 +8,7 @@ import Input from '../common/Input';
 /**
  * Módulo Financeiro
  */
-const Financial = ({ expenses, onAddExpense, onDeleteExpense }) => {
+const Financial = memo(({ expenses, onAddExpense, onDeleteExpense }) => {
   const [newExpense, setNewExpense] = useState({
     description: '',
     value: '',
@@ -36,14 +36,21 @@ const Financial = ({ expenses, onAddExpense, onDeleteExpense }) => {
     }
   };
 
-  // Calcula estatísticas
-  const totalByCategory = expenses.reduce((acc, exp) => {
-    acc[exp.category] = (acc[exp.category] || 0) + exp.value;
-    return acc;
-  }, {});
+  // Calcula estatísticas com useMemo para otimização
+  const totalByCategory = useMemo(() => {
+    return expenses.reduce((acc, exp) => {
+      acc[exp.category] = (acc[exp.category] || 0) + exp.value;
+      return acc;
+    }, {});
+  }, [expenses]);
 
-  const totalExpenses = expenses.reduce((sum, exp) => sum + exp.value, 0);
-  const sortedExpenses = [...expenses].sort((a, b) => new Date(b.date) - new Date(a.date));
+  const totalExpenses = useMemo(() => {
+    return expenses.reduce((sum, exp) => sum + exp.value, 0);
+  }, [expenses]);
+
+  const sortedExpenses = useMemo(() => {
+    return [...expenses].sort((a, b) => new Date(b.date) - new Date(a.date));
+  }, [expenses]);
 
   return (
     <div className="space-y-6">
@@ -138,6 +145,8 @@ const Financial = ({ expenses, onAddExpense, onDeleteExpense }) => {
       </Card>
     </div>
   );
-};
+});
+
+Financial.displayName = 'Financial';
 
 export default Financial;

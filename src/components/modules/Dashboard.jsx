@@ -1,21 +1,21 @@
 import {
-  calculateAverage,
-  calculatePercentageChange,
-  formatCurrency,
-  generateTrendData,
-  getCurrentMonth,
-  getPreviousMonth,
-  groupExpensesByMonth,
-  groupTasksByMonth
+    calculateAverage,
+    calculatePercentageChange,
+    formatCurrency,
+    generateTrendData,
+    getCurrentMonth,
+    getPreviousMonth,
+    groupExpensesByMonth,
+    groupTasksByMonth
 } from '@/utils/dashboardMetrics';
 import { AnimatePresence } from 'framer-motion';
 import {
-  CheckCircle2,
-  DollarSign,
-  Plus,
-  ShoppingCart,
-  Sparkles,
-  TrendingUp
+    CheckCircle2,
+    DollarSign,
+    Plus,
+    ShoppingCart,
+    Sparkles,
+    TrendingUp
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -82,12 +82,11 @@ const Dashboard = ({
 
   const remainingChars = MAX_NOTICE_LENGTH - newNotice.length;
 
-  // Cálculos das métricas
-  const metrics = useMemo(() => {
+  // Cálculos das métricas - Separados para melhor performance
+  const expenseMetrics = useMemo(() => {
     const currentMonth = getCurrentMonth();
     const previousMonth = getPreviousMonth();
     
-    // Gastos do mês
     const expensesByMonth = groupExpensesByMonth(expenses);
     const currentExpenses = expensesByMonth[currentMonth] || 0;
     const previousExpenses = expensesByMonth[previousMonth] || 0;
@@ -99,7 +98,18 @@ const Dashboard = ({
     const averageExpenses = calculateAverage(last6MonthsExpenses);
     const isAboveAverage = currentExpenses > averageExpenses;
     
-    // Tarefas
+    return {
+      current: currentExpenses,
+      change: expenseChange,
+      trend: expenseTrend,
+      isAboveAverage
+    };
+  }, [expenses]);
+
+  const taskMetrics = useMemo(() => {
+    const currentMonth = getCurrentMonth();
+    const previousMonth = getPreviousMonth();
+    
     const tasksByMonth = groupTasksByMonth(tasks);
     const currentTaskStats = tasksByMonth[currentMonth] || { total: 0, completed: 0, completionRate: 0 };
     const previousTaskStats = tasksByMonth[previousMonth] || { total: 0, completed: 0, completionRate: 0 };
@@ -112,7 +122,16 @@ const Dashboard = ({
     const completedTasks = tasks.filter(t => t.completed).length;
     const totalTasks = tasks.length;
     
-    // Lista de compras
+    return {
+      pending: pendingTasks,
+      completed: completedTasks,
+      total: totalTasks,
+      completionRate: currentTaskStats.completionRate,
+      change: taskCompletionChange
+    };
+  }, [tasks]);
+
+  const shoppingMetrics = useMemo(() => {
     const pendingItems = shoppingList.items.filter(i => !i.checked).length;
     const totalItems = shoppingList.items.length;
     const estimatedValue = shoppingList.items
@@ -128,7 +147,15 @@ const Dashboard = ({
       ? Object.entries(categoryCount).sort((a, b) => b[1] - a[1])[0][0]
       : 'Nenhuma';
     
-    // Compras futuras
+    return {
+      pending: pendingItems,
+      total: totalItems,
+      estimatedValue,
+      topCategory
+    };
+  }, [shoppingList.items]);
+
+  const futureMetrics = useMemo(() => {
     const prioritizedItems = futureItems?.filter(item => 
       item.priority === 'alta' && item.status !== 'purchased'
     ).length || 0;
@@ -145,32 +172,19 @@ const Dashboard = ({
     )?.name || 'Nenhum';
     
     return {
-      expenses: {
-        current: currentExpenses,
-        change: expenseChange,
-        trend: expenseTrend,
-        isAboveAverage
-      },
-      tasks: {
-        pending: pendingTasks,
-        completed: completedTasks,
-        total: totalTasks,
-        completionRate: currentTaskStats.completionRate,
-        change: taskCompletionChange
-      },
-      shopping: {
-        pending: pendingItems,
-        total: totalItems,
-        estimatedValue,
-        topCategory
-      },
-      future: {
-        prioritized: prioritizedItems,
-        totalValue: totalFutureValue,
-        topItem: highestPriorityItem
-      }
+      prioritized: prioritizedItems,
+      totalValue: totalFutureValue,
+      topItem: highestPriorityItem
     };
-  }, [expenses, tasks, shoppingList, futureItems]);
+  }, [futureItems]);
+
+  // Agrega todas as métricas
+  const metrics = useMemo(() => ({
+    expenses: expenseMetrics,
+    tasks: taskMetrics,
+    shopping: shoppingMetrics,
+    future: futureMetrics
+  }), [expenseMetrics, taskMetrics, shoppingMetrics, futureMetrics]);
 
   return (
     <div className="space-y-6">

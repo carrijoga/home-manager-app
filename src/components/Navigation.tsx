@@ -10,7 +10,8 @@ import {
   ShoppingCart,
   X,
 } from "lucide-react";
-import React, { useState } from "react";
+import type { FC } from "react";
+import { useMemo, useState } from "react";
 import { ModuleIds } from "../models/types";
 import GlobalSearch from "./common/GlobalSearch";
 import NotificationsMenu from "./common/NotificationsMenu";
@@ -27,13 +28,23 @@ interface NavigationProps {
 interface Module {
   id: string;
   name: string;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
+  icon: any;
 }
+
+// Módulos definidos fora do componente para evitar recriação
+const MODULES: Module[] = [
+  { id: ModuleIds.DASHBOARD, name: "Dashboard", icon: Home },
+  { id: ModuleIds.TASKS, name: "Tarefas", icon: CheckSquare },
+  { id: ModuleIds.SHOPPING, name: "Lista de Compras", icon: ShoppingCart },
+  { id: ModuleIds.FINANCIAL, name: "Financeiro", icon: DollarSign },
+  { id: ModuleIds.FUTURE, name: "Compras Futuras", icon: Package },
+  { id: ModuleIds.CALENDAR, name: "Calendário", icon: Calendar },
+];
 
 /**
  * Componente de navegação completo com logo, links, busca, notificações e perfil
  */
-const Navigation: React.FC<NavigationProps> = ({
+const Navigation: FC<NavigationProps> = ({
   currentModule,
   onModuleChange,
   user,
@@ -51,34 +62,30 @@ const Navigation: React.FC<NavigationProps> = ({
 
   const currentUser = user || defaultUser;
 
-  const modules: Module[] = [
-    { id: ModuleIds.DASHBOARD, name: "Dashboard", icon: Home },
-    { id: ModuleIds.TASKS, name: "Tarefas", icon: CheckSquare },
-    { id: ModuleIds.SHOPPING, name: "Lista de Compras", icon: ShoppingCart },
-    { id: ModuleIds.FINANCIAL, name: "Financeiro", icon: DollarSign },
-    { id: ModuleIds.FUTURE, name: "Compras Futuras", icon: Package },
-    { id: ModuleIds.CALENDAR, name: "Calendário", icon: Calendar },
-  ];
+  const modules: Module[] = MODULES;
 
-  // Mock de notificações (será substituído por dados reais)
-  const mockNotifications = [
-    {
-      id: "1",
-      type: "task" as const,
-      title: "Tarefa vencendo",
-      message: 'A tarefa "Comprar mantimentos" vence hoje',
-      timestamp: new Date(Date.now() - 3600000), // 1h atrás
-      read: false,
-    },
-    {
-      id: "2",
-      type: "notice" as const,
-      title: "Novo aviso",
-      message: "Gabriel adicionou um novo aviso no quadro",
-      timestamp: new Date(Date.now() - 7200000), // 2h atrás
-      read: false,
-    },
-  ];
+  // Mock de notificações com useMemo (será substituído por dados reais)
+  const mockNotifications = useMemo(
+    () => [
+      {
+        id: "1",
+        type: "task" as const,
+        title: "Tarefa vencendo",
+        message: 'A tarefa "Comprar mantimentos" vence hoje',
+        timestamp: new Date(Date.now() - 3600000), // 1h atrás
+        read: false,
+      },
+      {
+        id: "2",
+        type: "notice" as const,
+        title: "Novo aviso",
+        message: "Gabriel adicionou um novo aviso no quadro",
+        timestamp: new Date(Date.now() - 7200000), // 2h atrás
+        read: false,
+      },
+    ],
+    []
+  );
 
   // Função de busca (mock - será implementada com dados reais)
   const handleSearch = (_query: string) => {

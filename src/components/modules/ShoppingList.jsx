@@ -1,5 +1,5 @@
 import { Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import Button from '../common/Button';
 import Card from '../common/Card';
 import Input from '../common/Input';
@@ -7,7 +7,7 @@ import Input from '../common/Input';
 /**
  * Módulo de Lista de Compras
  */
-const ShoppingList = ({ shoppingList, onAddItem, onToggleItem, onDeleteItem }) => {
+const ShoppingList = memo(({ shoppingList, onAddItem, onToggleItem, onDeleteItem }) => {
   const [newItem, setNewItem] = useState({
     name: '',
     quantity: '',
@@ -33,12 +33,14 @@ const ShoppingList = ({ shoppingList, onAddItem, onToggleItem, onDeleteItem }) =
     }
   };
 
-  // Agrupa itens por categoria
-  const groupedItems = shoppingList.items.reduce((acc, item) => {
-    if (!acc[item.category]) acc[item.category] = [];
-    acc[item.category].push(item);
-    return acc;
-  }, {});
+  // Agrupa itens por categoria com useMemo para otimização
+  const groupedItems = useMemo(() => {
+    return shoppingList.items.reduce((acc, item) => {
+      if (!acc[item.category]) acc[item.category] = [];
+      acc[item.category].push(item);
+      return acc;
+    }, {});
+  }, [shoppingList.items]);
 
   return (
     <div className="space-y-6">
@@ -113,6 +115,8 @@ const ShoppingList = ({ shoppingList, onAddItem, onToggleItem, onDeleteItem }) =
       </Card>
     </div>
   );
-};
+});
+
+ShoppingList.displayName = 'ShoppingList';
 
 export default ShoppingList;

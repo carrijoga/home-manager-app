@@ -1,5 +1,5 @@
 import { Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import { PriorityLevels } from '../../models/types';
 import Button from '../common/Button';
 import Card from '../common/Card';
@@ -8,7 +8,7 @@ import Input from '../common/Input';
 /**
  * Módulo de Itens Futuros
  */
-const FutureItems = ({ futureItems, onAddItem, onDeleteItem }) => {
+const FutureItems = memo(({ futureItems, onAddItem, onDeleteItem }) => {
   const [newItem, setNewItem] = useState({
     name: '',
     priority: 'média',
@@ -106,6 +106,8 @@ const FutureItems = ({ futureItems, onAddItem, onDeleteItem }) => {
       </Card>
     </div>
   );
-};
+});
+
+FutureItems.displayName = 'FutureItems';
 
 export default FutureItems;

@@ -1,7 +1,8 @@
 import { cn } from "@/lib/utils";
 import type { ModuleId } from "@/types";
 import { Search, X } from "lucide-react";
-import React, { useCallback, useEffect, useState } from "react";
+import type { FC } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface SearchResult {
   id: string;
@@ -20,7 +21,7 @@ interface GlobalSearchProps {
 /**
  * Componente de busca global com atalho de teclado (Ctrl/Cmd + K)
  */
-const GlobalSearch: React.FC<GlobalSearchProps> = ({
+const GlobalSearch: FC<GlobalSearchProps> = ({
   onSearch,
   onResultClick,
   placeholder = "Buscar... (Ctrl + K)",
@@ -29,6 +30,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Atalho de teclado Ctrl/Cmd + K
   useEffect(() => {
@@ -46,16 +48,33 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Buscar quando o query mudar
+  // Buscar quando o query mudar - com debounce de 300ms
   useEffect(() => {
-    if (query.trim() && onSearch) {
-      const searchResults = onSearch(query);
-      setResults(searchResults);
-      setSelectedIndex(0);
+    // Limpa o timer anterior
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    if (query.trim()) {
+      // Configura novo timer de debounce
+      debounceTimerRef.current = setTimeout(() => {
+        if (onSearch) {
+          const searchResults = onSearch(query);
+          setResults(searchResults);
+          setSelectedIndex(0);
+        }
+      }, 300);
     } else {
       setResults([]);
     }
-  }, [query, onSearch]);
+
+    // Cleanup do timer quando o componente desmontar
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [query]); // Removido onSearch das dependências para evitar loops
 
   // Navegar pelos resultados com teclado
   const handleKeyDown = useCallback(

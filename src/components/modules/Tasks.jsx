@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import Button from '../common/Button';
 import Card from '../common/Card';
 // import Input from '../common/Input';
@@ -9,7 +9,7 @@ import { DatePicker, Input } from '../ui';
 /**
  * Módulo de Tarefas
  */
-const Tasks = ({ tasks, onAddTask, onToggleTask, onDeleteTask }) => {
+const Tasks = memo(({ tasks, onAddTask, onToggleTask, onDeleteTask }) => {
   const [newTask, setNewTask] = useState({
     title: '',
     assignedTo: '',
@@ -35,8 +35,8 @@ const Tasks = ({ tasks, onAddTask, onToggleTask, onDeleteTask }) => {
     }
   };
 
-  const pendingTasks = tasks.filter(t => !t.completed);
-  const completedTasks = tasks.filter(t => t.completed);
+  const pendingTasks = useMemo(() => tasks.filter(t => !t.completed), [tasks]);
+  const completedTasks = useMemo(() => tasks.filter(t => t.completed), [tasks]);
 
   return (
     <div className="space-y-6">
@@ -156,6 +156,8 @@ const Tasks = ({ tasks, onAddTask, onToggleTask, onDeleteTask }) => {
       </Card>
     </div>
   );
-};
+});
+
+Tasks.displayName = 'Tasks';
 
 export default Tasks;

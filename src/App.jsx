@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { FadeIn } from './components/common/FadeIn';
 import Calendar from './components/modules/Calendar';
 import Dashboard from './components/modules/Dashboard';
@@ -67,80 +67,80 @@ const App = () => {
   };
 
   // Handlers de Avisos
-  const handleAddNotice = async (notice) => {
+  const handleAddNotice = useCallback(async (notice) => {
     const newNotice = await noticeService.addNotice(notice);
-    setNotices([...notices, newNotice]);
-  };
+    setNotices(prev => [...prev, newNotice]);
+  }, []);
 
-  const handleRemoveNotice = async (id) => {
+  const handleRemoveNotice = useCallback(async (id) => {
     await noticeService.deleteNotice(id);
-    setNotices(notices.filter(notice => notice.id !== id));
-  };
+    setNotices(prev => prev.filter(notice => notice.id !== id));
+  }, []);
 
   // Handlers de Tarefas
-  const handleAddTask = async (task) => {
+  const handleAddTask = useCallback(async (task) => {
     const newTask = await taskService.addTask(task);
-    setTasks([...tasks, newTask]);
-  };
+    setTasks(prev => [...prev, newTask]);
+  }, []);
 
-  const handleToggleTask = (id) => {
-    setTasks(tasks.map(task =>
+  const handleToggleTask = useCallback((id) => {
+    setTasks(prev => prev.map(task =>
       task.id === id ? { ...task, completed: !task.completed } : task
     ));
-  };
+  }, []);
 
-  const handleDeleteTask = async (id) => {
+  const handleDeleteTask = useCallback(async (id) => {
     await taskService.deleteTask(id);
-    setTasks(tasks.filter(task => task.id !== id));
-  };
+    setTasks(prev => prev.filter(task => task.id !== id));
+  }, []);
 
   // Handlers de Lista de Compras
-  const handleAddShoppingItem = async (item) => {
+  const handleAddShoppingItem = useCallback(async (item) => {
     const newItem = await shoppingService.addShoppingItem(item);
-    setShoppingList({
-      ...shoppingList,
-      items: [...shoppingList.items, newItem]
-    });
-  };
+    setShoppingList(prev => ({
+      ...prev,
+      items: [...prev.items, newItem]
+    }));
+  }, []);
 
-  const handleToggleShoppingItem = (id) => {
-    setShoppingList({
-      ...shoppingList,
-      items: shoppingList.items.map(item =>
+  const handleToggleShoppingItem = useCallback((id) => {
+    setShoppingList(prev => ({
+      ...prev,
+      items: prev.items.map(item =>
         item.id === id ? { ...item, checked: !item.checked } : item
       )
-    });
-  };
+    }));
+  }, []);
 
-  const handleDeleteShoppingItem = async (id) => {
+  const handleDeleteShoppingItem = useCallback(async (id) => {
     await shoppingService.deleteShoppingItem(id);
-    setShoppingList({
-      ...shoppingList,
-      items: shoppingList.items.filter(item => item.id !== id)
-    });
-  };
+    setShoppingList(prev => ({
+      ...prev,
+      items: prev.items.filter(item => item.id !== id)
+    }));
+  }, []);
 
   // Handlers de Despesas
-  const handleAddExpense = async (expense) => {
+  const handleAddExpense = useCallback(async (expense) => {
     const newExpense = await financialService.addExpense(expense);
-    setExpenses([...expenses, newExpense]);
-  };
+    setExpenses(prev => [...prev, newExpense]);
+  }, []);
 
-  const handleDeleteExpense = async (id) => {
+  const handleDeleteExpense = useCallback(async (id) => {
     await financialService.deleteExpense(id);
-    setExpenses(expenses.filter(exp => exp.id !== id));
-  };
+    setExpenses(prev => prev.filter(exp => exp.id !== id));
+  }, []);
 
   // Handlers de Itens Futuros
-  const handleAddFutureItem = async (item) => {
+  const handleAddFutureItem = useCallback(async (item) => {
     const newItem = await futureItemsService.addFutureItem(item);
-    setFutureItems([...futureItems, newItem]);
-  };
+    setFutureItems(prev => [...prev, newItem]);
+  }, []);
 
-  const handleDeleteFutureItem = async (id) => {
+  const handleDeleteFutureItem = useCallback(async (id) => {
     await futureItemsService.deleteFutureItem(id);
-    setFutureItems(futureItems.filter(item => item.id !== id));
-  };
+    setFutureItems(prev => prev.filter(item => item.id !== id));
+  }, []);
 
   // Renderiza o módulo atual
   const renderCurrentModule = () => {

@@ -1,10 +1,16 @@
 import {
   calculateAverage,
+  calculateMonthlySavings,
   calculatePercentageChange,
   formatCurrency,
   generateTrendData,
   getCurrentMonth,
+  getDailyAverageExpense,
+  getDaysUntilNextBill,
+  getMonthlyExpenseProjection,
+  getOverdueTasks,
   getPreviousMonth,
+  getTopExpenseCategory,
   groupExpensesByMonth,
   groupTasksByMonth
 } from '@/utils/dashboardMetrics';
@@ -19,7 +25,16 @@ import {
 } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
+import {
+  DailyAverageCard,
+  MonthProjectionCard,
+  NextBillCard,
+  OverdueTasksCard,
+  SavingsCard,
+  TopCategoryCard
+} from '../common/AdditionalMetricCards';
 import Card from '../common/Card';
+import CarouselMetrics from '../common/CarouselMetrics';
 import Input from '../common/Input';
 import MetricCard from '../common/MetricCard';
 import PostIt from '../common/PostIt';
@@ -186,102 +201,158 @@ const Dashboard = ({
     future: futureMetrics
   }), [expenseMetrics, taskMetrics, shoppingMetrics, futureMetrics]);
 
+  // Métricas adicionais para o carrossel
+  const additionalMetrics = useMemo(() => {
+    const savings = calculateMonthlySavings(expenses);
+    const topCategory = getTopExpenseCategory(expenses);
+    const nextBill = getDaysUntilNextBill(expenses);
+    const overdueTasks = getOverdueTasks(tasks);
+    const dailyAverage = getDailyAverageExpense(expenses);
+    const monthProjection = getMonthlyExpenseProjection(expenses);
+
+    return {
+      savings,
+      topCategory,
+      nextBill,
+      overdueTasks,
+      dailyAverage,
+      monthProjection
+    };
+  }, [expenses, tasks]);
+
   return (
     <div className="space-y-6">
-      {/* Cards de Métricas Principais */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1: Total de Gastos do Mês */}
-        <MetricCard
-          icon={DollarSign}
-          title="Gastos do Mês"
-          value={formatCurrency(metrics.expenses.current)}
-          color="#10b981" // emerald-500
-          chartData={metrics.expenses.trend}
-          comparison={{
-            value: metrics.expenses.change,
-            label: 'vs mês anterior'
-          }}
-          alertType={metrics.expenses.isAboveAverage ? 'warning' : undefined}
-          animationDelay={0.1}
-          footer={
-            metrics.expenses.isAboveAverage && (
-              <div className="flex items-center space-x-1 text-xs text-amber-600 dark:text-amber-400">
-                <TrendingUp size={14} />
-                <span>Acima da média mensal</span>
-              </div>
-            )
-          }
-        />
-
-        {/* Card 2: Tarefas Concluídas */}
-        <MetricCard
-          icon={CheckCircle2}
-          title="Tarefas Concluídas"
-          value={`${metrics.tasks.completed}/${metrics.tasks.total}`}
-          color="#6366f1" // indigo-500
-          comparison={{
-            value: metrics.tasks.change,
-            label: 'taxa de conclusão'
-          }}
-          animationDelay={0.2}
-          footer={
-            <div className="space-y-2">
-              <div className="flex justify-between text-xs text-gray-600 dark:text-dark-text-tertiary">
-                <span>Progresso</span>
-                <span className="font-semibold">{metrics.tasks.completionRate}%</span>
-              </div>
-              <div className="w-full bg-gray-200 dark:bg-dark-bg-tertiary rounded-full h-2">
-                <div 
-                  className="bg-indigo-500 dark:bg-dark-accent-indigo h-2 rounded-full transition-all duration-500"
-                  style={{ width: `${metrics.tasks.completionRate}%` }}
-                />
-              </div>
-            </div>
-          }
-        />
-
-        {/* Card 3: Itens a Comprar */}
-        <MetricCard
-          icon={ShoppingCart}
-          title="Itens a Comprar"
-          value={metrics.shopping.pending}
-          color="#06b6d4" // cyan-500
-          animationDelay={0.3}
-          footer={
-            <div className="space-y-1 text-xs">
-              {metrics.shopping.estimatedValue > 0 && (
-                <div className="flex justify-between text-gray-600 dark:text-dark-text-tertiary">
-                  <span>Valor estimado:</span>
-                  <span className="font-semibold">{formatCurrency(metrics.shopping.estimatedValue)}</span>
+      {/* Carrossel de Métricas */}
+      <div className="group">
+        <CarouselMetrics autoPlayDelay={5000}>
+          {/* Card 1: Total de Gastos do Mês */}
+          <MetricCard
+            icon={DollarSign}
+            title="Gastos do Mês"
+            value={formatCurrency(metrics.expenses.current)}
+            color="#10b981" // emerald-500
+            chartData={metrics.expenses.trend}
+            comparison={{
+              value: metrics.expenses.change,
+              label: 'vs mês anterior'
+            }}
+            alertType={metrics.expenses.isAboveAverage ? 'warning' : undefined}
+            animationDelay={0.1}
+            footer={
+              metrics.expenses.isAboveAverage && (
+                <div className="flex items-center space-x-1 text-xs text-amber-600 dark:text-amber-400">
+                  <TrendingUp size={14} />
+                  <span>Acima da média mensal</span>
                 </div>
-              )}
-              <div className="flex justify-between text-gray-600 dark:text-dark-text-tertiary">
-                <span>Categoria principal:</span>
-                <span className="font-semibold">{metrics.shopping.topCategory}</span>
-              </div>
-            </div>
-          }
-        />
+              )
+            }
+          />
 
-        {/* Card 4: Compras Futuras */}
-        <MetricCard
-          icon={Sparkles}
-          title="Compras Futuras"
-          value={metrics.future.prioritized}
-          color="#a855f7" // purple-500
-          animationDelay={0.4}
-          footer={
-            <div className="space-y-1 text-xs">
-              <div className="flex justify-between text-gray-600 dark:text-dark-text-tertiary">
-                <span>Valor total:</span>
-                <span className="font-semibold">{formatCurrency(metrics.future.totalValue)}</span>
+          {/* Card 2: Tarefas Concluídas */}
+          <MetricCard
+            icon={CheckCircle2}
+            title="Tarefas Concluídas"
+            value={`${metrics.tasks.completed}/${metrics.tasks.total}`}
+            color="#6366f1" // indigo-500
+            comparison={{
+              value: metrics.tasks.change,
+              label: 'taxa de conclusão'
+            }}
+            animationDelay={0.2}
+            footer={
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs text-gray-600 dark:text-dark-text-tertiary">
+                  <span>Progresso</span>
+                  <span className="font-semibold">{metrics.tasks.completionRate}%</span>
+                </div>
+                <div className="w-full bg-gray-200 dark:bg-dark-bg-tertiary rounded-full h-2">
+                  <div 
+                    className="bg-indigo-500 dark:bg-dark-accent-indigo h-2 rounded-full transition-all duration-500"
+                    style={{ width: `${metrics.tasks.completionRate}%` }}
+                  />
+                </div>
               </div>
-              <div className="text-gray-600 dark:text-dark-text-tertiary">
-                <span className="font-semibold">Prioridade:</span> {metrics.future.topItem}
+            }
+          />
+
+          {/* Card 3: Itens a Comprar */}
+          <MetricCard
+            icon={ShoppingCart}
+            title="Itens a Comprar"
+            value={metrics.shopping.pending}
+            color="#06b6d4" // cyan-500
+            animationDelay={0.3}
+            footer={
+              <div className="space-y-1 text-xs">
+                {metrics.shopping.estimatedValue > 0 && (
+                  <div className="flex justify-between text-gray-600 dark:text-dark-text-tertiary">
+                    <span>Valor estimado:</span>
+                    <span className="font-semibold">{formatCurrency(metrics.shopping.estimatedValue)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-gray-600 dark:text-dark-text-tertiary">
+                  <span>Categoria principal:</span>
+                  <span className="font-semibold">{metrics.shopping.topCategory}</span>
+                </div>
               </div>
-            </div>
-          }
-        />
+            }
+          />
+
+          {/* Card 4: Compras Futuras */}
+          <MetricCard
+            icon={Sparkles}
+            title="Compras Futuras"
+            value={metrics.future.prioritized}
+            color="#a855f7" // purple-500
+            animationDelay={0.4}
+            footer={
+              <div className="space-y-1 text-xs">
+                <div className="flex justify-between text-gray-600 dark:text-dark-text-tertiary">
+                  <span>Valor total:</span>
+                  <span className="font-semibold">{formatCurrency(metrics.future.totalValue)}</span>
+                </div>
+                <div className="text-gray-600 dark:text-dark-text-tertiary">
+                  <span className="font-semibold">Prioridade:</span> {metrics.future.topItem}
+                </div>
+              </div>
+            }
+          />
+
+          {/* Cards Adicionais do Carrossel */}
+          <SavingsCard 
+            savings={additionalMetrics.savings.savings}
+            percentage={additionalMetrics.savings.percentage}
+            animationDelay={0.5}
+          />
+
+          <TopCategoryCard
+            category={additionalMetrics.topCategory.category}
+            value={additionalMetrics.topCategory.value}
+            animationDelay={0.6}
+          />
+
+          <NextBillCard
+            days={additionalMetrics.nextBill.days}
+            bill={additionalMetrics.nextBill.bill}
+            animationDelay={0.7}
+          />
+
+          <OverdueTasksCard
+            count={additionalMetrics.overdueTasks}
+            animationDelay={0.8}
+          />
+
+          <DailyAverageCard
+            average={additionalMetrics.dailyAverage}
+            animationDelay={0.9}
+          />
+
+          <MonthProjectionCard
+            projection={additionalMetrics.monthProjection}
+            current={metrics.expenses.current}
+            animationDelay={1.0}
+          />
+        </CarouselMetrics>
       </div>
 
       {/* Quadro de Avisos e Minhas Tarefas lado a lado */}

@@ -157,3 +157,129 @@ export function filterItemsByMonth(items: any[], month: string): any[] {
         return itemMonth === month;
     });
 }
+
+/**
+ * Calcula economia do mês (comparado ao mês anterior)
+ * @param expenses - Array de despesas
+ * @returns Objeto com economia e percentual
+ */
+export function calculateMonthlySavings(expenses: any[]): { savings: number; percentage: number } {
+    const currentMonth = getCurrentMonth();
+    const previousMonth = getPreviousMonth();
+
+    const expensesByMonth = groupExpensesByMonth(expenses);
+    const currentExpenses = expensesByMonth[currentMonth] || 0;
+    const previousExpenses = expensesByMonth[previousMonth] || 0;
+
+    const savings = previousExpenses - currentExpenses;
+    const percentage = previousExpenses > 0
+        ? Math.round((savings / previousExpenses) * 100)
+        : 0;
+
+    return { savings, percentage };
+}
+
+/**
+ * Identifica categoria com mais gastos no mês
+ * @param expenses - Array de despesas
+ * @returns Objeto com categoria e valor
+ */
+export function getTopExpenseCategory(expenses: any[]): { category: string; value: number } {
+    const currentMonth = getCurrentMonth();
+    const currentExpenses = expenses.filter(e => e.date.substring(0, 7) === currentMonth);
+
+    const categoryTotals: Record<string, number> = {};
+    currentExpenses.forEach(expense => {
+        categoryTotals[expense.category] = (categoryTotals[expense.category] || 0) + expense.value;
+    });
+
+    const entries = Object.entries(categoryTotals);
+    if (entries.length === 0) {
+        return { category: 'Nenhuma', value: 0 };
+    }
+
+    const [topCategory, topValue] = entries.reduce((max, current) =>
+        current[1] > max[1] ? current : max
+    );
+
+    return { category: topCategory, value: topValue };
+}
+
+/**
+ * Calcula dias até próxima conta vencer
+ * @param expenses - Array de despesas
+ * @returns Objeto com dias e descrição da conta
+ */
+export function getDaysUntilNextBill(expenses: any[]): { days: number; bill: string } {
+    const today = new Date();
+    const currentMonth = getCurrentMonth();
+
+    // Contas fixas típicas que vencem no mês
+    const fixedExpenses = expenses.filter(e =>
+        e.category === 'Fixo' && e.date.substring(0, 7) === currentMonth
+    );
+
+    if (fixedExpenses.length === 0) {
+        return { days: 0, bill: 'Nenhuma conta' };
+    }
+
+    // Encontra próxima conta a vencer
+    const upcomingBills = fixedExpenses
+        .map(e => ({
+            ...e,
+            dueDate: new Date(e.date)
+        }))
+        .filter(e => e.dueDate >= today)
+        .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
+
+    if (upcomingBills.length === 0) {
+        return { days: 0, bill: 'Nenhuma conta pendente' };
+    }
+
+    const nextBill = upcomingBills[0];
+    const diffTime = nextBill.dueDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    return { days: diffDays, bill: nextBill.description };
+}
+
+/**
+ * Conta tarefas vencidas (overdue)
+ * @param tasks - Array de tarefas
+ * @returns Número de tarefas vencidas
+ */
+export function getOverdueTasks(tasks: any[]): number {
+    const today = new Date().toISOString().split('T')[0];
+    return tasks.filter(t => !t.completed && t.dueDate < today).length;
+}
+
+/**
+ * Calcula média de gastos diários do mês
+ * @param expenses - Array de despesas
+ * @returns Média de gastos diários
+ */
+export function getDailyAverageExpense(expenses: any[]): number {
+    const currentMonth = getCurrentMonth();
+    const currentExpenses = expenses.filter(e => e.date.substring(0, 7) === currentMonth);
+
+    if (currentExpenses.length === 0) return 0;
+
+    const total = currentExpenses.reduce((sum, e) => sum + e.value, 0);
+    const today = new Date();
+    const daysInMonth = today.getDate(); // Dias decorridos no mês
+
+    return daysInMonth > 0 ? total / daysInMonth : 0;
+}
+
+/**
+ * Projeta gastos totais do mês com base na média diária
+ * @param expenses - Array de despesas
+ * @returns Projeção de gastos do mês
+ */
+export function getMonthlyExpenseProjection(expenses: any[]): number {
+    const dailyAverage = getDailyAverageExpense(expenses);
+    const today = new Date();
+    const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+
+    return dailyAverage * daysInMonth;
+}

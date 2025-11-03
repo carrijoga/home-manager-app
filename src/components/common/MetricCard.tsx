@@ -70,6 +70,7 @@ const MetricCard = ({
       transition={{ delay: animationDelay, duration: 0.4 }}
       className={cn(
         "bg-white dark:bg-dark-bg-secondary rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 p-5",
+        "h-full flex flex-col",
         alertType && alertBorderClass[alertType],
         className
       )}
@@ -145,9 +146,12 @@ const MetricCard = ({
         </div>
       )}
 
+      {/* Spacer para empurrar o footer para baixo */}
+      <div className="flex-1" />
+
       {/* Footer customizado */}
       {footer && (
-        <div className="pt-3 border-t border-gray-100 dark:border-dark-border-primary">
+        <div className="pt-3 border-t border-gray-100 dark:border-dark-border-primary mt-auto">
           {footer}
         </div>
       )}

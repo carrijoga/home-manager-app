@@ -1,15 +1,17 @@
-import { useCallback, useEffect, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { FadeIn } from './components/common/FadeIn';
-import Calendar from './components/modules/Calendar';
-import Dashboard from './components/modules/Dashboard';
-import Financial from './components/modules/Financial';
-import FutureItems from './components/modules/FutureItems';
-import ShoppingList from './components/modules/ShoppingList';
-import Tasks from './components/modules/Tasks';
 import Navigation from './components/Navigation';
 import { DashboardSkeleton, ExpenseListSkeleton, ShoppingListSkeleton, TaskListSkeleton } from './components/skeletons';
 import { useTheme } from './contexts/ThemeContext';
 import { ModuleIds } from './models/types';
+
+// Lazy loading dos módulos para code splitting
+const Dashboard = lazy(() => import('./components/modules/Dashboard'));
+const Tasks = lazy(() => import('./components/modules/Tasks'));
+const ShoppingList = lazy(() => import('./components/modules/ShoppingList'));
+const Financial = lazy(() => import('./components/modules/Financial'));
+const FutureItems = lazy(() => import('./components/modules/FutureItems'));
+const Calendar = lazy(() => import('./components/modules/Calendar'));
 
 // Serviços
 import * as financialService from './services/financialService';
@@ -185,69 +187,81 @@ const App = () => {
     switch (currentModule) {
       case ModuleIds.DASHBOARD:
         return (
-          <FadeIn>
-            <Dashboard
-              notices={notices}
-              tasks={tasks}
-              shoppingList={shoppingList}
-              expenses={expenses}
-              futureItems={futureItems}
-              onAddNotice={handleAddNotice}
-              onRemoveNotice={handleRemoveNotice}
-              onAddTask={handleAddTask}
-              onToggleTask={handleToggleTask}
-              onDeleteTask={handleDeleteTask}
-              onNavigateToTasks={() => setCurrentModule(ModuleIds.TASKS)}
-            />
-          </FadeIn>
+          <Suspense fallback={<DashboardSkeleton />}>
+            <FadeIn>
+              <Dashboard
+                notices={notices}
+                tasks={tasks}
+                shoppingList={shoppingList}
+                expenses={expenses}
+                futureItems={futureItems}
+                onAddNotice={handleAddNotice}
+                onRemoveNotice={handleRemoveNotice}
+                onAddTask={handleAddTask}
+                onToggleTask={handleToggleTask}
+                onDeleteTask={handleDeleteTask}
+                onNavigateToTasks={() => setCurrentModule(ModuleIds.TASKS)}
+              />
+            </FadeIn>
+          </Suspense>
         );
       case ModuleIds.TASKS:
         return (
-          <FadeIn>
-            <Tasks
-              tasks={tasks}
-              onAddTask={handleAddTask}
-              onToggleTask={handleToggleTask}
-              onDeleteTask={handleDeleteTask}
-            />
-          </FadeIn>
+          <Suspense fallback={<TaskListSkeleton />}>
+            <FadeIn>
+              <Tasks
+                tasks={tasks}
+                onAddTask={handleAddTask}
+                onToggleTask={handleToggleTask}
+                onDeleteTask={handleDeleteTask}
+              />
+            </FadeIn>
+          </Suspense>
         );
       case ModuleIds.SHOPPING:
         return (
-          <FadeIn>
-            <ShoppingList
-              shoppingList={shoppingList}
-              onAddItem={handleAddShoppingItem}
-              onToggleItem={handleToggleShoppingItem}
-              onDeleteItem={handleDeleteShoppingItem}
-            />
-          </FadeIn>
+          <Suspense fallback={<ShoppingListSkeleton />}>
+            <FadeIn>
+              <ShoppingList
+                shoppingList={shoppingList}
+                onAddItem={handleAddShoppingItem}
+                onToggleItem={handleToggleShoppingItem}
+                onDeleteItem={handleDeleteShoppingItem}
+              />
+            </FadeIn>
+          </Suspense>
         );
       case ModuleIds.FINANCIAL:
         return (
-          <FadeIn>
-            <Financial
-              expenses={expenses}
-              onAddExpense={handleAddExpense}
-              onDeleteExpense={handleDeleteExpense}
-            />
-          </FadeIn>
+          <Suspense fallback={<ExpenseListSkeleton />}>
+            <FadeIn>
+              <Financial
+                expenses={expenses}
+                onAddExpense={handleAddExpense}
+                onDeleteExpense={handleDeleteExpense}
+              />
+            </FadeIn>
+          </Suspense>
         );
       case ModuleIds.FUTURE:
         return (
-          <FadeIn>
-            <FutureItems
-              futureItems={futureItems}
-              onAddItem={handleAddFutureItem}
-              onDeleteItem={handleDeleteFutureItem}
-            />
-          </FadeIn>
+          <Suspense fallback={<ExpenseListSkeleton />}>
+            <FadeIn>
+              <FutureItems
+                futureItems={futureItems}
+                onAddItem={handleAddFutureItem}
+                onDeleteItem={handleDeleteFutureItem}
+              />
+            </FadeIn>
+          </Suspense>
         );
       case ModuleIds.CALENDAR:
         return (
-          <FadeIn>
-            <Calendar />
-          </FadeIn>
+          <Suspense fallback={<DashboardSkeleton />}>
+            <FadeIn>
+              <Calendar />
+            </FadeIn>
+          </Suspense>
         );
       default:
         return null;

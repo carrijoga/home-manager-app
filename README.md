@@ -18,7 +18,7 @@ Aplicativo completo de gerenciamento doméstico para toda a família. Com múlti
 - Estados de loading e erro
 - Preparado para integração futura com backend ASP.NET Core
 
-### �📊 Dashboard
+### 📊 Dashboard
 
 - Visão geral de todas as atividades da casa
 - Quadro de avisos para comunicação familiar

@@ -11,28 +11,34 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 The project is in **hybrid mode** - partially migrated to TypeScript:
 
 ### ✅ Migrated to TypeScript
+
 - Configuration files (`vite.config.ts`, `tailwind.config.ts`)
 - Type definitions (`src/types/index.ts`)
 - shadcn/ui components (`src/components/ui/*.tsx`)
+- Navigation component (`src/components/Navigation.tsx`)
+- Pages (`src/pages/Login.tsx`)
 - Utilities (`src/lib/utils.ts`)
 - Entry point (`src/main.tsx`)
 
 ### 🔄 Remaining in JavaScript
-- Most React components (`.jsx` files)
+
+- Most React components (`.jsx` files in `components/modules/` and `components/common/`)
+- Main App component (`src/App.jsx`)
 - Services (`src/services/*.js`)
 - Mocks and utilities
 
 **Important**: The `tsconfig.json` has `allowJs: true` and `checkJs: false`, allowing seamless imports between TS and JS files during the migration period.
 
 ### Type Usage
+
 All types are centralized in `src/types/index.ts`. Use them like this:
 
 ```typescript
-import { Task, Priority, Expense } from '@/types';
+import { Task, Priority, Expense } from "@/types";
 
 const task: Task = {
-  id: '1',
-  title: 'Example',
+  id: "1",
+  title: "Example",
   // ...
 };
 ```
@@ -42,6 +48,7 @@ For detailed migration guide, see `TYPESCRIPT.md`.
 ## Development Commands
 
 ### Essential Commands
+
 - `npm install` - Install dependencies
 - `npm run dev` - Start development server (runs on http://localhost:3000, opens automatically)
 - `npm run build` - Create production build (includes TypeScript type-check)
@@ -51,11 +58,40 @@ For detailed migration guide, see `TYPESCRIPT.md`.
 - `npm run format` - Format code with Prettier
 
 ### Testing & Quality
+
 - No test suite currently configured
 - Linting checks .jsx, .js, .tsx, and .ts files in src/
 - TypeScript type-checking enforces type safety
 
 ## Architecture
+
+### Routing Architecture
+
+The application uses **React Router v6** for navigation:
+
+**Route Structure**:
+
+```
+/ (root)
+├── /login → Login page (public)
+└── /* → HomeLayout (main app)
+    └── Module switching via state (Dashboard, Tasks, Shopping, etc.)
+```
+
+**Key Points**:
+
+- `App.jsx` manages top-level routing with `<Routes>` and `<Route>`
+- `/login` route renders the Login component (public access)
+- All other routes (`/*`) render `HomeLayout` component
+- **Module navigation** within HomeLayout uses **state-based switching**, not routes
+- This hybrid approach allows a separate login page while keeping the existing module system
+
+**Why Hybrid?**:
+
+- Login has its own URL for deep linking and bookmarking
+- Main app modules use state for faster transitions and simpler architecture
+- No URL changes when switching between Dashboard, Tasks, Shopping, etc.
+- Preserves existing module system without breaking changes
 
 ### Data Flow Architecture
 
@@ -68,10 +104,10 @@ The application uses a **service layer pattern** with dual-mode data access:
 
 ### State Management
 
-- **Global State**: Managed in `App.jsx` using React useState hooks
+- **Global State**: Managed in `HomeLayout` (inside `App.jsx`) using React useState hooks
 - **Context**: `ThemeContext` for dark/light theme management
-- All data flows down from App.jsx to module components via props
-- Callbacks flow up from modules to App.jsx for state updates
+- All data flows down from HomeLayout to module components via props
+- Callbacks flow up from modules to HomeLayout for state updates
 
 ### Layer Structure
 
@@ -110,19 +146,52 @@ Each domain has its own service file (`taskService.js`, `financialService.js`, e
 
 ### Module System
 
-The app uses a tab-based navigation system defined in `models/types.js`:
+The app uses a **hybrid routing system**:
 
-- **ModuleIds** enum defines all available modules
-- `App.jsx` manages the current module state
-- `Navigation.jsx` renders tabs and handles module switching
+**Top-Level Routes** (React Router):
+
+- `/login` - Login page with Google OAuth UI
+- `/*` - Main application (HomeLayout)
+
+**Module Switching** (State-based, inside HomeLayout):
+
+- **ModuleIds** enum defines all available modules (Dashboard, Tasks, Shopping, Financial, Future, Calendar)
+- `HomeLayout` component (inside `App.jsx`) manages the current module state
+- `Navigation.tsx` renders tabs and handles module switching via `setCurrentModule`
 - Each module is a self-contained feature component in `components/modules/`
+- Modules switch instantly without URL changes (better UX, preserves state)
+
+**Navigation Flow**:
+
+```
+User clicks tab → Navigation calls onModuleChange(moduleId)
+→ HomeLayout updates currentModule state
+→ renderCurrentModule() displays new module
+```
+
+### Authentication & Pages Structure
+
+**Pages Directory** (`src/pages/`):
+
+- `Login.tsx` - Login page with Google OAuth button (UI only, no backend integration yet)
+  - Responsive design with card layout
+  - Google icon (official SVG)
+  - Loading states (2-second simulation)
+  - Error message display
+  - Dark mode support
+  - TODO: Future integration with ASP.NET Core backend
+
+**Note**: Authentication logic, protected routes, and session management are planned for future implementation.
 
 ### Component Organization
 
-- `components/common/` - Reusable UI components (Button, Card, Input, Header, etc.)
+- `components/common/` - Reusable UI components (Button, Card, Input, Header, Logo, etc.)
+- `components/ui/` - shadcn/ui components (button, card, dialog, select, spinner, etc.)
 - `components/modules/` - Feature modules (Dashboard, Tasks, ShoppingList, Financial, FutureItems, Calendar)
-- `components/Navigation.jsx` - Tab-based navigation
-- Each component is a .jsx file with ES6+ syntax
+- `components/Navigation.tsx` - Tab-based navigation for module switching
+- `components/skeletons/` - Loading skeletons for async data
+- `pages/` - Standalone pages with their own routes (Login, etc.)
+- Each component follows React functional component pattern with hooks
 
 ## Styling System
 
@@ -131,6 +200,7 @@ The app uses a tab-based navigation system defined in `models/types.js`:
 The app uses a custom color palette defined in `tailwind.config.js`:
 
 **Theme Colors**:
+
 - `ninho` (brown/earth tones) - Primary brand color
 - `aconchego` (warm yellow) - Warmth and coziness
 - `natureza` (green) - Growth and life
@@ -138,6 +208,7 @@ The app uses a custom color palette defined in `tailwind.config.js`:
 - `aviso` (yellow) - Warnings
 
 **Dark Mode Colors**:
+
 - `dark.bg.*` - Background layers (primary, secondary, tertiary, elevated, hover)
 - `dark.text.*` - Text hierarchy (primary, secondary, tertiary, muted)
 - `dark.border.*` - Border variations (subtle, default, emphasis)
@@ -187,15 +258,27 @@ The app uses TypeScript for type safety (see `src/types/index.ts`):
 
 ```typescript
 // Enums
-ExpenseCategory, ShoppingCategory, Priority, ModuleId,
-PaymentMethod, PaymentStatus, FutureItemStatus
+(ExpenseCategory,
+  ShoppingCategory,
+  Priority,
+  ModuleId,
+  PaymentMethod,
+  PaymentStatus,
+  FutureItemStatus);
 
 // Interfaces
-Notice, Task, ShoppingItem, ShoppingList, Expense,
-FutureItem, User, Installment, Payment
+(Notice,
+  Task,
+  ShoppingItem,
+  ShoppingList,
+  Expense,
+  FutureItem,
+  User,
+  Installment,
+  Payment);
 
 // Type Aliases
-ISODate, Currency
+(ISODate, Currency);
 ```
 
 ## API Integration (Future)
@@ -203,6 +286,7 @@ ISODate, Currency
 The codebase is prepared for REST API integration:
 
 **Expected Endpoints** (see `src/services/api/config.js`):
+
 - `GET/POST /api/notices` - Notice board management
 - `GET/POST/PUT/PATCH/DELETE /api/tasks` - Task CRUD + toggle completion
 - `GET/POST/DELETE /api/shopping` - Shopping list operations
@@ -227,6 +311,7 @@ See `FIX.md` for comprehensive list of planned enhancements:
 ## Code Conventions
 
 ### General
+
 - Portuguese language for UI text, comments, and variable names
 - Functional components with hooks (no class components)
 - Props destructuring in component parameters
@@ -234,6 +319,7 @@ See `FIX.md` for comprehensive list of planned enhancements:
 - Async/await for asynchronous operations
 
 ### TypeScript
+
 - **TypeScript files**: Use `.ts` for utilities/services, `.tsx` for React components
 - **Type imports**: Import types from `@/types` (centralized)
 - **Interface naming**: PascalCase without 'I' prefix (e.g., `Task`, not `ITask`)
@@ -242,6 +328,7 @@ See `FIX.md` for comprehensive list of planned enhancements:
 - **Strict mode**: TypeScript strict mode is enabled
 
 ### During Migration
+
 - **Hybrid support**: Both `.js/.jsx` and `.ts/.tsx` files are supported
 - **New code**: Write all new code in TypeScript
 - **Refactoring**: Convert to TypeScript when touching existing files

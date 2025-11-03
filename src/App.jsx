@@ -1,4 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
+import { Route, Routes } from 'react-router-dom';
 import { FadeIn } from './components/common/FadeIn';
 import Navigation from './components/Navigation';
 import { DashboardSkeleton, ExpenseListSkeleton, ShoppingListSkeleton, TaskListSkeleton } from './components/skeletons';
@@ -12,6 +13,7 @@ const ShoppingList = lazy(() => import('./components/modules/ShoppingList'));
 const Financial = lazy(() => import('./components/modules/Financial'));
 const FutureItems = lazy(() => import('./components/modules/FutureItems'));
 const Calendar = lazy(() => import('./components/modules/Calendar'));
+const Login = lazy(() => import('./pages/Login'));
 
 // Serviços
 import * as financialService from './services/financialService';
@@ -22,8 +24,25 @@ import * as taskService from './services/taskService';
 
 /**
  * Componente principal da aplicação Home Manager
+ * Gerencia o roteamento e a lógica principal da aplicação
  */
 const App = () => {
+  return (
+    <Routes>
+      <Route path="/login" element={
+        <Suspense fallback={<DashboardSkeleton />}>
+          <Login />
+        </Suspense>
+      } />
+      <Route path="/*" element={<HomeLayout />} />
+    </Routes>
+  );
+};
+
+/**
+ * Layout principal para as páginas autenticadas
+ */
+const HomeLayout = () => {
   // Tema
   const { theme, setTheme } = useTheme();
 

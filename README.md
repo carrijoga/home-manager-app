@@ -10,7 +10,7 @@ Aplicativo completo de gerenciamento doméstico para toda a família. Com múlti
 
 ## ✨ Funcionalidades
 
-### � Login
+### 🔐 Login
 
 - Interface de login com Google OAuth (UI implementada)
 - Design moderno e responsivo

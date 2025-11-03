@@ -134,7 +134,7 @@ ninho/
 
 ### 🔄 Sistema de Roteamento
 
-O app utiliza **React Router v6** com uma arquitetura híbrida:
+O app utiliza **React Router v7** com uma arquitetura híbrida:
 
 - **`/login`** - Tela de login (rota independente)
 - **`/*`** - Aplicação principal com navegação por estado

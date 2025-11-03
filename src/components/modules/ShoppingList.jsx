@@ -49,7 +49,7 @@ const ShoppingList = memo(({ shoppingList, onAddItem, onToggleItem, onDeleteItem
         subtitle={shoppingList.month}
       >
         {/* Formulário de Novo Item */}
-        <div className="mb-6 space-y-3 p-4 bg-slate-50 dark:bg-dark-bg-secondary rounded-lg border border-slate-200 dark:border-dark-border-default">
+        <div className="mb-6 space-y-3 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg transition-colors duration-300">
           <div className="grid grid-cols-3 gap-3">
             <Input
               placeholder="Item..."

@@ -46,7 +46,7 @@ const MiniLineChart = ({
           stroke={lineColor}
           strokeWidth={2}
           dot={false}
-          animationDuration={500}
+          animationDuration={1500}
         />
       </LineChart>
     </ResponsiveContainer>

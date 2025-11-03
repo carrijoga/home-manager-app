@@ -1,21 +1,21 @@
 import {
-    calculateAverage,
-    calculatePercentageChange,
-    formatCurrency,
-    generateTrendData,
-    getCurrentMonth,
-    getPreviousMonth,
-    groupExpensesByMonth,
-    groupTasksByMonth
+  calculateAverage,
+  calculatePercentageChange,
+  formatCurrency,
+  generateTrendData,
+  getCurrentMonth,
+  getPreviousMonth,
+  groupExpensesByMonth,
+  groupTasksByMonth
 } from '@/utils/dashboardMetrics';
 import { AnimatePresence } from 'framer-motion';
 import {
-    CheckCircle2,
-    DollarSign,
-    Plus,
-    ShoppingCart,
-    Sparkles,
-    TrendingUp
+  CheckCircle2,
+  DollarSign,
+  Plus,
+  ShoppingCart,
+  Sparkles,
+  TrendingUp
 } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';

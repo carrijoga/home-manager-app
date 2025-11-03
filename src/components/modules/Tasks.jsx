@@ -3,7 +3,6 @@ import { Trash2 } from 'lucide-react';
 import { memo, useMemo, useState } from 'react';
 import Button from '../common/Button';
 import Card from '../common/Card';
-// import Input from '../common/Input';
 import { DatePicker, Input } from '../ui';
 
 /**

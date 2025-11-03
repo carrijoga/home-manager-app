@@ -1,35 +1,121 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle2, Edit, Eye, MoreVertical, Plus, Trash2 } from 'lucide-react';
-import { forwardRef, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import Card from '../common/Card';
 import Input from '../common/Input';
 import {
-    Accordion,
-    AccordionContent,
-    AccordionItem,
-    AccordionTrigger,
-    Badge,
-    Checkbox,
-    DatePicker,
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-    Select,
-    Textarea
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+  Badge,
+  Checkbox,
+  DatePicker,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  Select,
+  Textarea
 } from '../ui';
+
+/**
+ * Componente de item de tarefa - Memoizado e isolado para evitar re-renders
+ */
+const TaskItem = memo(({ task, isCompleted = false, onToggle, onDelete, onNavigate }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 10 }}
+    animate={{ 
+      opacity: isCompleted ? 0.7 : 1, 
+      y: 0
+    }}
+    exit={{ opacity: 0, x: -20 }}
+    transition={{
+      duration: 0.2,
+      ease: "easeOut"
+    }}
+    className={`flex items-center justify-between p-3 rounded-lg border transition-all duration-300 ${
+      isCompleted
+        ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800'
+        : 'bg-white dark:bg-dark-bg-tertiary border-gray-200 dark:border-dark-border-secondary hover:border-indigo-300 dark:hover:border-dark-accent-indigo'
+    }`}
+  >
+    <div className="flex items-center space-x-3 flex-1 min-w-0">
+      <Checkbox
+        checked={task.completed}
+        onCheckedChange={() => onToggle(task.id)}
+        className={isCompleted ? 'data-[state=checked]:bg-emerald-500' : ''}
+      />
+      <div className="flex-1 min-w-0">
+        <p className={`text-sm font-medium ${
+          isCompleted 
+            ? 'line-through text-gray-600 dark:text-gray-400' 
+            : 'text-gray-900 dark:text-dark-text-primary'
+        }`}>
+          {task.title}
+        </p>
+        <div className="flex items-center gap-2 mt-1">
+          <span className="text-xs text-gray-500 dark:text-dark-text-tertiary">
+            {task.assignedTo}
+          </span>
+          <span className="text-xs text-gray-400 dark:text-dark-text-tertiary">•</span>
+          <span className="text-xs text-gray-500 dark:text-dark-text-tertiary">
+            {new Date(task.dueDate).toLocaleDateString('pt-BR')}
+          </span>
+        </div>
+      </div>
+      {isCompleted && (
+        <Badge variant="success" className="ml-2">
+          Concluída
+        </Badge>
+      )}
+    </div>
+
+    {/* Menu de ações */}
+    <DropdownMenu>
+      <DropdownMenuTrigger className="ml-2 p-1 hover:bg-gray-100 dark:hover:bg-dark-bg-secondary rounded transition-colors">
+        <MoreVertical size={16} className="text-gray-500 dark:text-dark-text-tertiary" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={onNavigate}>
+          <Eye className="mr-2 h-4 w-4" />
+          Ver detalhes
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onNavigate}>
+          <Edit className="mr-2 h-4 w-4" />
+          Editar
+        </DropdownMenuItem>
+        {!task.completed && (
+          <DropdownMenuItem onClick={() => onToggle(task.id)}>
+            <CheckCircle2 className="mr-2 h-4 w-4" />
+            Marcar como concluída
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuItem 
+          onClick={() => onDelete(task.id)}
+          className="text-red-600 dark:text-red-400"
+        >
+          <Trash2 className="mr-2 h-4 w-4" />
+          Excluir
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  </motion.div>
+));
+
+TaskItem.displayName = 'TaskItem';
 
 /**
  * Componente de seção de Tarefas para o Dashboard
  * Com criação rápida, seções expansíveis e sincronização
  */
-const DashboardTasksSection = ({ 
+const DashboardTasksSection = memo(({ 
   tasks, 
   onAddTask, 
   onToggleTask, 
@@ -47,23 +133,26 @@ const DashboardTasksSection = ({
     category: ''
   });
 
-  // Filtrar tarefas
-  const pendingTasks = tasks.filter(t => !t.completed);
-  const completedTasks = tasks.filter(t => t.completed);
-  
-  // Limitar a 5 tarefas pendentes
-  const displayedPendingTasks = pendingTasks
-    .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
-    .slice(0, 5);
+  // Filtrar tarefas - Memoizado para evitar re-cálculo
+  const pendingTasks = useMemo(() => tasks.filter(t => !t.completed), [tasks]);
+  const completedTasks = useMemo(() => tasks.filter(t => t.completed), [tasks]);
+
+  // Limitar a 5 tarefas pendentes - Memoizado
+  const displayedPendingTasks = useMemo(() =>
+    pendingTasks
+      .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
+      .slice(0, 5),
+    [pendingTasks]
+  );
   const hasMorePendingTasks = pendingTasks.length > 5;
 
   /**
    * Criar tarefa rápida (Enter)
    */
-  const handleQuickTaskCreate = async (e) => {
+  const handleQuickTaskCreate = useCallback(async (e) => {
     if (e.key === 'Enter' && quickTaskInput.trim()) {
       e.preventDefault();
-      
+
       try {
         await onAddTask({
           title: quickTaskInput.trim(),
@@ -72,7 +161,7 @@ const DashboardTasksSection = ({
           description: '',
           priority: 'média'
         });
-        
+
         setQuickTaskInput('');
         toast.success('Tarefa criada!');
       } catch (error) {
@@ -80,12 +169,12 @@ const DashboardTasksSection = ({
         toast.error('Erro ao criar tarefa');
       }
     }
-  };
+  }, [quickTaskInput, onAddTask]);
 
   /**
    * Criar tarefa completa via dialog
    */
-  const handleFullTaskCreate = async () => {
+  const handleFullTaskCreate = useCallback(async () => {
     if (!newTask.title.trim()) {
       toast.error('Digite um título para a tarefa');
       return;
@@ -115,12 +204,12 @@ const DashboardTasksSection = ({
       console.error('Erro ao criar tarefa:', error);
       toast.error('Erro ao criar tarefa');
     }
-  };
+  }, [newTask, onAddTask]);
 
   /**
    * Alternar conclusão de tarefa com animação
    */
-  const handleToggleTask = async (taskId) => {
+  const handleToggleTask = useCallback(async (taskId) => {
     try {
       await onToggleTask(taskId);
       const task = tasks.find(t => t.id === taskId);
@@ -131,12 +220,12 @@ const DashboardTasksSection = ({
       console.error('Erro ao alternar tarefa:', error);
       toast.error('Erro ao atualizar tarefa');
     }
-  };
+  }, [onToggleTask, tasks]);
 
   /**
    * Excluir tarefa
    */
-  const handleDeleteTask = async (taskId) => {
+  const handleDeleteTask = useCallback(async (taskId) => {
     try {
       await onDeleteTask(taskId);
       toast.success('Tarefa excluída');
@@ -144,99 +233,7 @@ const DashboardTasksSection = ({
       console.error('Erro ao excluir tarefa:', error);
       toast.error('Erro ao excluir tarefa');
     }
-  };
-
-  /**
-   * Componente de item de tarefa
-   */
-  const TaskItem = forwardRef(({ task, isCompleted = false }, ref) => (
-    <motion.div
-      ref={ref}
-      layout
-      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-      animate={{ 
-        opacity: isCompleted ? 0.7 : 1, 
-        y: 0, 
-        scale: 1,
-        backgroundColor: task.completed 
-          ? 'rgba(34, 197, 94, 0.1)' 
-          : 'rgba(255, 255, 255, 0)'
-      }}
-      exit={{ opacity: 0, x: -20, scale: 0.9 }}
-      transition={{
-        layout: { type: "spring", stiffness: 300, damping: 30 },
-        backgroundColor: { duration: 0.5 }
-      }}
-      className={`flex items-center justify-between p-3 rounded-lg border transition-all duration-300 ${
-        isCompleted
-          ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800'
-          : 'bg-white dark:bg-dark-bg-tertiary border-gray-200 dark:border-dark-border-secondary hover:border-indigo-300 dark:hover:border-dark-accent-indigo'
-      }`}
-    >
-      <div className="flex items-center space-x-3 flex-1 min-w-0">
-        <Checkbox
-          checked={task.completed}
-          onCheckedChange={() => handleToggleTask(task.id)}
-          className={isCompleted ? 'data-[state=checked]:bg-emerald-500' : ''}
-        />
-        <div className="flex-1 min-w-0">
-          <p className={`text-sm font-medium ${
-            isCompleted 
-              ? 'line-through text-gray-600 dark:text-gray-400' 
-              : 'text-gray-900 dark:text-dark-text-primary'
-          }`}>
-            {task.title}
-          </p>
-          <div className="flex items-center gap-2 mt-1">
-            <span className="text-xs text-gray-500 dark:text-dark-text-tertiary">
-              {task.assignedTo}
-            </span>
-            <span className="text-xs text-gray-400 dark:text-dark-text-tertiary">•</span>
-            <span className="text-xs text-gray-500 dark:text-dark-text-tertiary">
-              {new Date(task.dueDate).toLocaleDateString('pt-BR')}
-            </span>
-          </div>
-        </div>
-        {isCompleted && (
-          <Badge variant="success" className="ml-2">
-            Concluída
-          </Badge>
-        )}
-      </div>
-
-      {/* Menu de ações */}
-      <DropdownMenu>
-        <DropdownMenuTrigger className="ml-2 p-1 hover:bg-gray-100 dark:hover:bg-dark-bg-secondary rounded transition-colors">
-          <MoreVertical size={16} className="text-gray-500 dark:text-dark-text-tertiary" />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={onNavigateToTasks}>
-            <Eye className="mr-2 h-4 w-4" />
-            Ver detalhes
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={onNavigateToTasks}>
-            <Edit className="mr-2 h-4 w-4" />
-            Editar
-          </DropdownMenuItem>
-          {!task.completed && (
-            <DropdownMenuItem onClick={() => handleToggleTask(task.id)}>
-              <CheckCircle2 className="mr-2 h-4 w-4" />
-              Marcar como concluída
-            </DropdownMenuItem>
-          )}
-          <DropdownMenuItem 
-            onClick={() => handleDeleteTask(task.id)}
-            className="text-red-600 dark:text-red-400"
-          >
-            <Trash2 className="mr-2 h-4 w-4" />
-            Excluir
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </motion.div>
-  ));
-
-  TaskItem.displayName = 'TaskItem';
+  }, [onDeleteTask]);
 
   return (
     <Card 
@@ -382,9 +379,15 @@ const DashboardTasksSection = ({
               </div>
             ) : (
               <div className="space-y-2">
-                <AnimatePresence mode="popLayout">
+                <AnimatePresence>
                   {displayedPendingTasks.map((task) => (
-                    <TaskItem key={task.id} task={task} />
+                    <TaskItem 
+                      key={task.id} 
+                      task={task}
+                      onToggle={handleToggleTask}
+                      onDelete={handleDeleteTask}
+                      onNavigate={onNavigateToTasks}
+                    />
                   ))}
                 </AnimatePresence>
                 
@@ -420,9 +423,16 @@ const DashboardTasksSection = ({
               </div>
             ) : (
               <div className="space-y-2">
-                <AnimatePresence mode="popLayout">
+                <AnimatePresence>
                   {completedTasks.map((task) => (
-                    <TaskItem key={task.id} task={task} isCompleted />
+                    <TaskItem 
+                      key={task.id} 
+                      task={task} 
+                      isCompleted
+                      onToggle={handleToggleTask}
+                      onDelete={handleDeleteTask}
+                      onNavigate={onNavigateToTasks}
+                    />
                   ))}
                 </AnimatePresence>
               </div>
@@ -432,6 +442,8 @@ const DashboardTasksSection = ({
       </Accordion>
     </Card>
   );
-};
+});
+
+DashboardTasksSection.displayName = 'DashboardTasksSection';
 
 export default DashboardTasksSection;

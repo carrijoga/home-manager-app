@@ -17,7 +17,7 @@ import {
     Sparkles,
     TrendingUp
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import Card from '../common/Card';
 import Input from '../common/Input';
@@ -44,41 +44,41 @@ const Dashboard = ({
   const [newNotice, setNewNotice] = useState('');
   const MAX_NOTICE_LENGTH = 200;
 
-  const handleAddNotice = () => {
+  const handleAddNotice = useCallback(() => {
     const trimmedNotice = newNotice.trim();
-    
+
     if (!trimmedNotice) {
       toast.error('Digite um aviso para adicionar');
       return;
     }
-    
+
     if (trimmedNotice.length > MAX_NOTICE_LENGTH) {
       toast.error(`O aviso deve ter no máximo ${MAX_NOTICE_LENGTH} caracteres`);
       return;
     }
-    
+
     onAddNotice({
       text: trimmedNotice,
       author: 'Você',
       createdBy: 'Você',
       date: new Date().toISOString().split('T')[0]
     });
-    
+
     setNewNotice('');
     toast.success('Aviso adicionado!');
-  };
+  }, [newNotice, onAddNotice]);
 
-  const handleKeyPress = (e) => {
+  const handleKeyPress = useCallback((e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleAddNotice();
     }
-  };
+  }, [handleAddNotice]);
 
-  const handleRemoveNotice = (id) => {
+  const handleRemoveNotice = useCallback((id) => {
     onRemoveNotice(id);
     toast.success('Aviso removido!');
-  };
+  }, [onRemoveNotice]);
 
   const remainingChars = MAX_NOTICE_LENGTH - newNotice.length;
 

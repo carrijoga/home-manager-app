@@ -1,25 +1,32 @@
-import React, { useState, useEffect } from 'react';
-import Header from './components/common/Header';
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
+import { FadeIn } from './components/common/FadeIn';
 import Navigation from './components/Navigation';
-import Dashboard from './components/modules/Dashboard';
-import Tasks from './components/modules/Tasks';
-import ShoppingList from './components/modules/ShoppingList';
-import Financial from './components/modules/Financial';
-import FutureItems from './components/modules/FutureItems';
-import Calendar from './components/modules/Calendar';
+import { DashboardSkeleton, ExpenseListSkeleton, ShoppingListSkeleton, TaskListSkeleton } from './components/skeletons';
+import { useTheme } from './contexts/ThemeContext';
 import { ModuleIds } from './models/types';
 
+// Lazy loading dos módulos para code splitting
+const Dashboard = lazy(() => import('./components/modules/Dashboard'));
+const Tasks = lazy(() => import('./components/modules/Tasks'));
+const ShoppingList = lazy(() => import('./components/modules/ShoppingList'));
+const Financial = lazy(() => import('./components/modules/Financial'));
+const FutureItems = lazy(() => import('./components/modules/FutureItems'));
+const Calendar = lazy(() => import('./components/modules/Calendar'));
+
 // Serviços
-import * as noticeService from './services/noticeService';
-import * as taskService from './services/taskService';
-import * as shoppingService from './services/shoppingService';
 import * as financialService from './services/financialService';
 import * as futureItemsService from './services/futureItemsService';
+import * as noticeService from './services/noticeService';
+import * as shoppingService from './services/shoppingService';
+import * as taskService from './services/taskService';
 
 /**
  * Componente principal da aplicação Home Manager
  */
 const App = () => {
+  // Tema
+  const { theme, setTheme } = useTheme();
+
   // Estado do módulo atual
   const [currentModule, setCurrentModule] = useState(ModuleIds.DASHBOARD);
 
@@ -62,142 +69,213 @@ const App = () => {
   };
 
   // Handlers de Avisos
-  const handleAddNotice = async (notice) => {
+  const handleAddNotice = useCallback(async (notice) => {
     const newNotice = await noticeService.addNotice(notice);
-    setNotices([...notices, newNotice]);
-  };
+    setNotices(prev => [...prev, newNotice]);
+  }, []);
+
+  const handleRemoveNotice = useCallback(async (id) => {
+    await noticeService.deleteNotice(id);
+    setNotices(prev => prev.filter(notice => notice.id !== id));
+  }, []);
 
   // Handlers de Tarefas
-  const handleAddTask = async (task) => {
+  const handleAddTask = useCallback(async (task) => {
     const newTask = await taskService.addTask(task);
-    setTasks([...tasks, newTask]);
-  };
+    setTasks(prev => [...prev, newTask]);
+  }, []);
 
-  const handleToggleTask = (id) => {
-    setTasks(tasks.map(task =>
+  const handleToggleTask = useCallback((id) => {
+    setTasks(prev => prev.map(task =>
       task.id === id ? { ...task, completed: !task.completed } : task
     ));
-  };
+  }, []);
 
-  const handleDeleteTask = async (id) => {
+  const handleDeleteTask = useCallback(async (id) => {
     await taskService.deleteTask(id);
-    setTasks(tasks.filter(task => task.id !== id));
-  };
+    setTasks(prev => prev.filter(task => task.id !== id));
+  }, []);
 
   // Handlers de Lista de Compras
-  const handleAddShoppingItem = async (item) => {
+  const handleAddShoppingItem = useCallback(async (item) => {
     const newItem = await shoppingService.addShoppingItem(item);
-    setShoppingList({
-      ...shoppingList,
-      items: [...shoppingList.items, newItem]
-    });
-  };
+    setShoppingList(prev => ({
+      ...prev,
+      items: [...prev.items, newItem]
+    }));
+  }, []);
 
-  const handleToggleShoppingItem = (id) => {
-    setShoppingList({
-      ...shoppingList,
-      items: shoppingList.items.map(item =>
+  const handleToggleShoppingItem = useCallback((id) => {
+    setShoppingList(prev => ({
+      ...prev,
+      items: prev.items.map(item =>
         item.id === id ? { ...item, checked: !item.checked } : item
       )
-    });
-  };
+    }));
+  }, []);
 
-  const handleDeleteShoppingItem = async (id) => {
+  const handleDeleteShoppingItem = useCallback(async (id) => {
     await shoppingService.deleteShoppingItem(id);
-    setShoppingList({
-      ...shoppingList,
-      items: shoppingList.items.filter(item => item.id !== id)
-    });
-  };
+    setShoppingList(prev => ({
+      ...prev,
+      items: prev.items.filter(item => item.id !== id)
+    }));
+  }, []);
 
   // Handlers de Despesas
-  const handleAddExpense = async (expense) => {
+  const handleAddExpense = useCallback(async (expense) => {
     const newExpense = await financialService.addExpense(expense);
-    setExpenses([...expenses, newExpense]);
-  };
+    setExpenses(prev => [...prev, newExpense]);
+  }, []);
 
-  const handleDeleteExpense = async (id) => {
+  const handleDeleteExpense = useCallback(async (id) => {
     await financialService.deleteExpense(id);
-    setExpenses(expenses.filter(exp => exp.id !== id));
-  };
+    setExpenses(prev => prev.filter(exp => exp.id !== id));
+  }, []);
 
   // Handlers de Itens Futuros
-  const handleAddFutureItem = async (item) => {
+  const handleAddFutureItem = useCallback(async (item) => {
     const newItem = await futureItemsService.addFutureItem(item);
-    setFutureItems([...futureItems, newItem]);
-  };
+    setFutureItems(prev => [...prev, newItem]);
+  }, []);
 
-  const handleDeleteFutureItem = async (id) => {
+  const handleDeleteFutureItem = useCallback(async (id) => {
     await futureItemsService.deleteFutureItem(id);
-    setFutureItems(futureItems.filter(item => item.id !== id));
-  };
+    setFutureItems(prev => prev.filter(item => item.id !== id));
+  }, []);
 
   // Renderiza o módulo atual
   const renderCurrentModule = () => {
     if (loading) {
-      return (
-        <div className="flex items-center justify-center py-12">
-          <div className="text-lg text-ninho-600 dark:text-dark-text-secondary">Carregando...</div>
-        </div>
-      );
+      // Mostra skeleton apropriado para cada módulo
+      switch (currentModule) {
+        case ModuleIds.DASHBOARD:
+          return <DashboardSkeleton />;
+        case ModuleIds.TASKS:
+          return (
+            <div className="space-y-4">
+              <div className="h-10 w-full" />
+              <TaskListSkeleton items={5} />
+            </div>
+          );
+        case ModuleIds.SHOPPING:
+          return (
+            <div className="space-y-4">
+              <div className="h-10 w-full" />
+              <ShoppingListSkeleton items={5} />
+            </div>
+          );
+        case ModuleIds.FINANCIAL:
+          return (
+            <div className="space-y-4">
+              <div className="h-10 w-full" />
+              <ExpenseListSkeleton items={5} />
+            </div>
+          );
+        case ModuleIds.FUTURE_ITEMS:
+          return (
+            <div className="space-y-4">
+              <div className="h-10 w-full" />
+              <ExpenseListSkeleton items={5} />
+            </div>
+          );
+        default:
+          return <DashboardSkeleton />;
+      }
     }
 
     switch (currentModule) {
       case ModuleIds.DASHBOARD:
         return (
-          <Dashboard
-            notices={notices}
-            tasks={tasks}
-            shoppingList={shoppingList}
-            expenses={expenses}
-            onAddNotice={handleAddNotice}
-          />
+          <Suspense fallback={<DashboardSkeleton />}>
+            <FadeIn>
+              <Dashboard
+                notices={notices}
+                tasks={tasks}
+                shoppingList={shoppingList}
+                expenses={expenses}
+                futureItems={futureItems}
+                onAddNotice={handleAddNotice}
+                onRemoveNotice={handleRemoveNotice}
+                onAddTask={handleAddTask}
+                onToggleTask={handleToggleTask}
+                onDeleteTask={handleDeleteTask}
+                onNavigateToTasks={() => setCurrentModule(ModuleIds.TASKS)}
+              />
+            </FadeIn>
+          </Suspense>
         );
       case ModuleIds.TASKS:
         return (
-          <Tasks
-            tasks={tasks}
-            onAddTask={handleAddTask}
-            onToggleTask={handleToggleTask}
-            onDeleteTask={handleDeleteTask}
-          />
+          <Suspense fallback={<TaskListSkeleton />}>
+            <FadeIn>
+              <Tasks
+                tasks={tasks}
+                onAddTask={handleAddTask}
+                onToggleTask={handleToggleTask}
+                onDeleteTask={handleDeleteTask}
+              />
+            </FadeIn>
+          </Suspense>
         );
       case ModuleIds.SHOPPING:
         return (
-          <ShoppingList
-            shoppingList={shoppingList}
-            onAddItem={handleAddShoppingItem}
-            onToggleItem={handleToggleShoppingItem}
-            onDeleteItem={handleDeleteShoppingItem}
-          />
+          <Suspense fallback={<ShoppingListSkeleton />}>
+            <FadeIn>
+              <ShoppingList
+                shoppingList={shoppingList}
+                onAddItem={handleAddShoppingItem}
+                onToggleItem={handleToggleShoppingItem}
+                onDeleteItem={handleDeleteShoppingItem}
+              />
+            </FadeIn>
+          </Suspense>
         );
       case ModuleIds.FINANCIAL:
         return (
-          <Financial
-            expenses={expenses}
-            onAddExpense={handleAddExpense}
-            onDeleteExpense={handleDeleteExpense}
-          />
+          <Suspense fallback={<ExpenseListSkeleton />}>
+            <FadeIn>
+              <Financial
+                expenses={expenses}
+                onAddExpense={handleAddExpense}
+                onDeleteExpense={handleDeleteExpense}
+              />
+            </FadeIn>
+          </Suspense>
         );
       case ModuleIds.FUTURE:
         return (
-          <FutureItems
-            futureItems={futureItems}
-            onAddItem={handleAddFutureItem}
-            onDeleteItem={handleDeleteFutureItem}
-          />
+          <Suspense fallback={<ExpenseListSkeleton />}>
+            <FadeIn>
+              <FutureItems
+                futureItems={futureItems}
+                onAddItem={handleAddFutureItem}
+                onDeleteItem={handleDeleteFutureItem}
+              />
+            </FadeIn>
+          </Suspense>
         );
       case ModuleIds.CALENDAR:
-        return <Calendar />;
+        return (
+          <Suspense fallback={<DashboardSkeleton />}>
+            <FadeIn>
+              <Calendar />
+            </FadeIn>
+          </Suspense>
+        );
       default:
         return null;
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-aconchego-50 via-ninho-50 to-serenidade-100 dark:bg-gradient-to-br dark:from-dark-bg-primary dark:via-dark-bg-secondary dark:to-dark-bg-tertiary transition-colors duration-300">
-      <Header />
-      <Navigation currentModule={currentModule} onModuleChange={setCurrentModule} />
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-cyan-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 transition-colors duration-300">
+      <Navigation
+        currentModule={currentModule}
+        onModuleChange={setCurrentModule}
+        currentTheme={theme}
+        onThemeChange={setTheme}
+      />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <div className="animate-fade-in">
           {renderCurrentModule()}

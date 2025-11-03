@@ -12,12 +12,12 @@ const Card = ({
   variant = 'default'
 }) => {
   const variantClasses = {
-    default: 'bg-white dark:bg-dark-bg-elevated border border-gray-100 dark:border-dark-border-subtle',
-    primary: 'bg-ninho-50 dark:bg-dark-bg-elevated border-l-4 border-ninho-500 dark:border-dark-accent-ninho dark:border-dark-border-subtle dark:border-l-4',
-    success: 'bg-natureza-50 dark:bg-dark-bg-elevated border-l-4 border-natureza-500 dark:border-dark-accent-natureza dark:border-dark-border-subtle dark:border-l-4',
-    warning: 'bg-aconchego-100 dark:bg-dark-bg-elevated border-l-4 border-aconchego-400 dark:border-dark-accent-aconchego dark:border-dark-border-subtle dark:border-l-4',
-    danger: 'bg-red-50 dark:bg-dark-bg-elevated border-l-4 border-red-500 dark:border-red-400 dark:border-dark-border-subtle dark:border-l-4',
-    info: 'bg-serenidade-50 dark:bg-dark-bg-elevated border-l-4 border-serenidade-500 dark:border-dark-accent-serenidade dark:border-dark-border-subtle dark:border-l-4'
+    default: 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700',
+    primary: 'bg-primary-50 dark:bg-gray-800 border-l-4 border-primary-500 dark:border-primary-600',
+    success: 'bg-green-50 dark:bg-gray-800 border-l-4 border-green-500 dark:border-green-600',
+    warning: 'bg-yellow-50 dark:bg-gray-800 border-l-4 border-yellow-500 dark:border-yellow-600',
+    danger: 'bg-red-50 dark:bg-gray-800 border-l-4 border-red-500 dark:border-red-600',
+    info: 'bg-blue-50 dark:bg-gray-800 border-l-4 border-blue-500 dark:border-blue-600'
   };
 
   return (
@@ -25,8 +25,8 @@ const Card = ({
       {(title || subtitle || headerAction) && (
         <div className="flex justify-between items-center mb-4">
           <div>
-            {title && <h2 className="text-2xl font-bold text-ninho-700 dark:text-dark-text-primary">{title}</h2>}
-            {subtitle && <p className="text-gray-600 dark:text-dark-text-secondary mt-1">{subtitle}</p>}
+            {title && <h2 className="text-2xl font-bold text-primary-700 dark:text-gray-100">{title}</h2>}
+            {subtitle && <p className="text-gray-600 dark:text-gray-300 mt-1">{subtitle}</p>}
           </div>
           {headerAction && <div>{headerAction}</div>}
         </div>

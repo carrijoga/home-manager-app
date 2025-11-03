@@ -34,7 +34,8 @@
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
@@ -65,17 +66,24 @@
 }
 
 .transition-colors-smooth {
-  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease;
 }
 
 /* Hover effects */
 .hover-lift {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .hover-lift:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px -5px rgba(139, 90, 60, 0.1), 0 8px 10px -6px rgba(139, 90, 60, 0.1);
+  box-shadow:
+    0 10px 25px -5px rgba(99, 102, 241, 0.1),
+    0 8px 10px -6px rgba(99, 102, 241, 0.1);
 }
 
 /* Stagger animation for lists */
@@ -83,12 +91,24 @@
   animation: fadeIn 0.4s ease-out backwards;
 }
 
-.stagger-item:nth-child(1) { animation-delay: 0.05s; }
-.stagger-item:nth-child(2) { animation-delay: 0.1s; }
-.stagger-item:nth-child(3) { animation-delay: 0.15s; }
-.stagger-item:nth-child(4) { animation-delay: 0.2s; }
-.stagger-item:nth-child(5) { animation-delay: 0.25s; }
-.stagger-item:nth-child(6) { animation-delay: 0.3s; }
+.stagger-item:nth-child(1) {
+  animation-delay: 0.05s;
+}
+.stagger-item:nth-child(2) {
+  animation-delay: 0.1s;
+}
+.stagger-item:nth-child(3) {
+  animation-delay: 0.15s;
+}
+.stagger-item:nth-child(4) {
+  animation-delay: 0.2s;
+}
+.stagger-item:nth-child(5) {
+  animation-delay: 0.25s;
+}
+.stagger-item:nth-child(6) {
+  animation-delay: 0.3s;
+}
 
 /* Loading skeleton */
 @keyframes shimmer {
@@ -108,7 +128,7 @@
 
 /* Focus states */
 .focus-ring {
-  @apply focus:outline-none focus:ring-2 focus:ring-ninho-400 focus:ring-offset-2;
+  @apply focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2;
 }
 
 /* Smooth scroll */
@@ -123,5 +143,7 @@ html {
 
 .card-interactive:hover {
   transform: translateY(-4px);
-  box-shadow: 0 20px 25px -5px rgba(139, 90, 60, 0.15), 0 10px 10px -5px rgba(139, 90, 60, 0.1);
+  box-shadow:
+    0 20px 25px -5px rgba(99, 102, 241, 0.15),
+    0 10px 10px -5px rgba(99, 102, 241, 0.1);
 }

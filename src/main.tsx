@@ -1,11 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App.jsx';
+import App from './App';
 import { ThemeProvider } from './contexts/ThemeContext';
 import './index.css';
 import './animations.css';
 
-ReactDOM.createRoot(document.getElementById('root')).render(
+ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ThemeProvider>
       <App />
@@ -31,7 +31,7 @@ if ('serviceWorker' in navigator) {
       });
 
     // Detectar quando o app está pronto para instalação
-    let deferredPrompt;
+    let deferredPrompt: any = null;
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredPrompt = e;
@@ -44,7 +44,9 @@ if ('serviceWorker' in navigator) {
     // Detectar quando o app foi instalado
     window.addEventListener('appinstalled', () => {
       console.log('🎉 PWA instalado com sucesso!');
-      deferredPrompt = null;
+      if (deferredPrompt) {
+        deferredPrompt = null;
+      }
     });
   });
 }

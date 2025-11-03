@@ -59,6 +59,11 @@ ninho/
 │   │   │   ├── Card.jsx
 │   │   │   ├── Input.jsx
 │   │   │   └── Header.jsx
+│   │   ├── ui/             # Componentes shadcn/ui
+│   │   │   ├── button.jsx
+│   │   │   ├── card.jsx
+│   │   │   ├── input.jsx
+│   │   │   └── dialog.jsx
 │   │   ├── modules/        # Módulos principais
 │   │   │   ├── Dashboard.jsx
 │   │   │   ├── Tasks.jsx
@@ -67,28 +72,37 @@ ninho/
 │   │   │   ├── FutureItems.jsx
 │   │   │   └── Calendar.jsx
 │   │   └── Navigation.jsx
-│   ├── services/           # Camada de serviços
-│   │   ├── api/           # Configuração de API
+│   ├── lib/               # Utilitários e helpers
+│   │   └── utils.js       # Função cn() para merge de classes
+│   ├── services/          # Camada de serviços
+│   │   ├── api/          # Configuração de API
 │   │   │   └── config.js
 │   │   ├── noticeService.js
 │   │   ├── taskService.js
 │   │   ├── shoppingService.js
 │   │   ├── financialService.js
 │   │   └── futureItemsService.js
-│   ├── models/            # Definições de tipos
+│   ├── models/           # Definições de tipos
 │   │   └── types.js
-│   ├── mocks/             # Dados mockados
+│   ├── mocks/            # Dados mockados
 │   │   └── data.js
-│   ├── utils/             # Funções utilitárias
+│   ├── utils/            # Funções utilitárias
 │   │   └── formatters.js
-│   ├── App.jsx            # Componente principal
-│   ├── main.jsx           # Entry point
-│   └── index.css          # Estilos globais
-├── public/                # Arquivos públicos
-├── index.html            # HTML principal
-├── package.json          # Dependências
-├── vite.config.js        # Configuração Vite
-├── tailwind.config.js    # Configuração Tailwind
+│   ├── contexts/         # Contextos React
+│   │   └── ThemeContext.jsx
+│   ├── App.jsx           # Componente principal
+│   ├── main.jsx          # Entry point
+│   └── index.css         # Estilos globais
+├── public/               # Arquivos públicos
+│   ├── icons/           # Ícones PWA
+│   ├── manifest.json    # Manifest PWA
+│   └── sw.js            # Service Worker
+├── index.html           # HTML principal
+├── package.json         # Dependências
+├── jsconfig.json        # Configuração de aliases JS
+├── vite.config.js       # Configuração Vite
+├── tailwind.config.js   # Configuração Tailwind
+├── components.json      # Configuração shadcn/ui
 └── README.md            # Documentação
 
 ```
@@ -96,10 +110,14 @@ ninho/
 ## 🛠️ Tecnologias Utilizadas
 
 - **React 18.3** - Biblioteca JavaScript para interfaces
+- **TypeScript 5.9** - Superset JavaScript com tipagem estática
 - **Vite 5.4** - Build tool e dev server
 - **Tailwind CSS 3.4** - Framework CSS utilitário
+- **shadcn/ui** - Sistema de componentes baseado em Radix UI
 - **Lucide React** - Biblioteca de ícones
-- **JavaScript ES6+** - Linguagem de programação
+- **date-fns** - Manipulação de datas
+- **Framer Motion** - Animações e transições
+- **React Hot Toast** - Notificações toast
 
 ## 📦 Instalação
 
@@ -132,8 +150,9 @@ http://localhost:3000
 ## 🚀 Scripts Disponíveis
 
 - `npm run dev` - Inicia o servidor de desenvolvimento
-- `npm run build` - Gera build de produção
+- `npm run build` - Gera build de produção (com type-check)
 - `npm run preview` - Visualiza o build de produção
+- `npm run type-check` - Verifica tipos TypeScript sem fazer build
 - `npm run lint` - Executa o linter
 - `npm run format` - Formata o código com Prettier
 
@@ -212,6 +231,110 @@ theme: {
 ### Componentes
 
 Todos os componentes em `src/components/common/` são reutilizáveis e podem ser customizados.
+
+## 🎨 Sistema de Design - shadcn/ui
+
+O projeto utiliza [shadcn/ui](https://ui.shadcn.com) como sistema de componentes base. O shadcn/ui oferece componentes acessíveis, customizáveis e bem documentados, construídos sobre Radix UI e Tailwind CSS.
+
+### Componentes Instalados
+
+O projeto possui uma biblioteca completa de componentes UI baseados em shadcn/ui:
+
+#### Formulários
+- **Button** - Botões com 6 variantes e 4 tamanhos
+- **Input** - Campos de entrada de texto
+- **Textarea** - Área de texto multi-linha
+- **Label** - Labels acessíveis para formulários
+- **Select** - Dropdown de seleção
+- **DatePicker** - Seletor de data com calendário (formato DD/MM/YYYY)
+
+#### Layout
+- **Card** - Containers para conteúdo
+- **Separator** - Linha separadora
+
+#### Overlay
+- **Dialog** - Modais e diálogos
+
+#### Display
+- **Badge** - Tags e badges de status
+- **Avatar** - Avatares circulares com fallback
+
+**📦 Total**: 11 componentes (10 base + DatePicker customizado)
+
+Para documentação completa, exemplos de uso e guia de customização, consulte [COMPONENTS.md](./COMPONENTS.md).
+
+### Adicionando Novos Componentes
+
+Para adicionar novos componentes do shadcn/ui:
+
+```bash
+# Exemplo: adicionando o componente Select
+npx shadcn@latest add select
+
+# Exemplo: adicionando múltiplos componentes
+npx shadcn@latest add dropdown-menu avatar badge
+```
+
+Os componentes são adicionados em `src/components/ui/` e podem ser importados em qualquer parte do projeto:
+
+```jsx
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+
+function MeuComponente() {
+  return (
+    <Card>
+      <Button>Clique aqui</Button>
+    </Card>
+  );
+}
+```
+
+### Customização de Componentes
+
+Os componentes do shadcn/ui são totalmente customizáveis através de:
+
+1. **Classes Tailwind**: Adicione classes diretamente aos componentes
+2. **Variáveis CSS**: Modifique as cores no `src/index.css`
+3. **Arquivo de configuração**: Ajuste `components.json` para mudar comportamentos globais
+
+### Documentação
+
+Para mais informações sobre os componentes disponíveis, visite a [documentação oficial do shadcn/ui](https://ui.shadcn.com/docs/components).
+
+## 📘 TypeScript
+
+O projeto está em processo de migração para TypeScript. A infraestrutura está completa e funcional:
+
+### Status Atual
+
+✅ **Concluído:**
+- Configuração TypeScript (tsconfig.json)
+- Tipos centralizados em `src/types/index.ts`
+- Componentes UI shadcn/ui em TypeScript
+- Utilitários e ferramentas
+- Build e type-check funcionando
+
+🔄 **Em Progresso:**
+- Migração gradual de componentes e serviços
+- Modo híbrido (JS/TS) habilitado para transição suave
+
+### Como Usar Tipos
+
+```typescript
+import { Task, Priority, Expense } from '@/types';
+
+const newTask: Task = {
+  id: '1',
+  title: 'Limpar cozinha',
+  assignedTo: 'João',
+  completed: false,
+  dueDate: '2025-11-02',
+  priority: Priority.HIGH
+};
+```
+
+Para mais detalhes sobre a migração TypeScript, consulte [TYPESCRIPT.md](./TYPESCRIPT.md).
 
 ## 🔮 Roadmap Futuro
 

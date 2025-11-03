@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { Spinner } from '../ui/spinner';
 
 /**
  * Componente de botão reutilizável com animações Framer Motion
@@ -12,22 +13,23 @@ const Button = ({
   className = '',
   disabled = false,
   fullWidth = false,
-  icon: Icon = null
+  icon: Icon = null,
+  loading = false
 }) => {
   const baseClasses = 'py-2 px-4 rounded-lg transition font-medium focus:outline-none focus:ring-2 focus:ring-offset-2';
 
   const variantClasses = {
-    primary: 'bg-ninho-500 dark:bg-dark-accent-ninho text-white dark:text-dark-text-primary hover:bg-ninho-600 dark:hover:bg-opacity-90 focus:ring-ninho-400 dark:focus:ring-dark-accent-ninho',
-    secondary: 'bg-serenidade-500 dark:bg-dark-accent-serenidade text-white dark:text-dark-text-primary hover:bg-serenidade-600 dark:hover:bg-opacity-90 focus:ring-serenidade-400 dark:focus:ring-dark-accent-serenidade',
-    success: 'bg-natureza-500 dark:bg-dark-accent-natureza text-white dark:text-dark-text-primary hover:bg-natureza-600 dark:hover:bg-opacity-90 focus:ring-natureza-400 dark:focus:ring-dark-accent-natureza',
-    danger: 'bg-red-600 dark:bg-red-500 text-white dark:text-dark-text-primary hover:bg-red-700 dark:hover:bg-red-600 focus:ring-red-500 dark:focus:ring-red-400',
-    warning: 'bg-aconchego-500 dark:bg-dark-accent-aconchego text-white dark:text-dark-bg-primary hover:bg-aconchego-600 dark:hover:bg-opacity-90 focus:ring-aconchego-400 dark:focus:ring-dark-accent-aconchego',
-    purple: 'bg-purple-600 dark:bg-purple-500 text-white dark:text-dark-text-primary hover:bg-purple-700 dark:hover:bg-purple-600 focus:ring-purple-500 dark:focus:ring-purple-400',
-    outline: 'border-2 border-ninho-500 dark:border-dark-accent-ninho text-ninho-600 dark:text-dark-text-primary hover:bg-ninho-50 dark:hover:bg-dark-bg-hover focus:ring-ninho-400 dark:focus:ring-dark-accent-ninho'
+    primary: 'bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white focus:ring-primary-400 dark:bg-primary-600 dark:hover:bg-primary-700',
+    secondary: 'bg-secondary-500 hover:bg-secondary-600 active:bg-secondary-700 text-white focus:ring-secondary-400 dark:bg-secondary-600 dark:hover:bg-secondary-700',
+    success: 'bg-green-600 hover:bg-green-700 text-white focus:ring-green-500 dark:bg-green-500 dark:hover:bg-green-600',
+    danger: 'bg-red-600 hover:bg-red-700 text-white focus:ring-red-500 dark:bg-red-500 dark:hover:bg-red-600',
+    warning: 'bg-yellow-500 hover:bg-yellow-600 text-white focus:ring-yellow-400 dark:bg-yellow-600 dark:hover:bg-yellow-700',
+    purple: 'bg-purple-600 dark:bg-purple-500 text-white hover:bg-purple-700 dark:hover:bg-purple-600 focus:ring-purple-500',
+    outline: 'border-2 border-primary-500 text-primary-600 hover:bg-primary-50 dark:border-primary-600 dark:text-primary-400 dark:hover:bg-gray-700 focus:ring-primary-400'
   };
 
   const widthClass = fullWidth ? 'w-full' : '';
-  const disabledClass = disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer';
+  const disabledClass = disabled || loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer';
 
   const MotionButton = motion.button;
 
@@ -35,14 +37,15 @@ const Button = ({
     <MotionButton
       type={type}
       onClick={onClick}
-      disabled={disabled}
-      whileHover={disabled ? {} : { scale: 1.02, y: -1 }}
-      whileTap={disabled ? {} : { scale: 0.98 }}
+      disabled={disabled || loading}
+      aria-busy={loading}
+      whileHover={disabled || loading ? {} : { scale: 1.02, y: -1 }}
+      whileTap={disabled || loading ? {} : { scale: 0.98 }}
       transition={{ type: "spring", stiffness: 400, damping: 17 }}
       className={`${baseClasses} ${variantClasses[variant]} ${widthClass} ${disabledClass} ${className}`}
     >
       <span className="flex items-center justify-center space-x-2">
-        {Icon && <Icon size={18} />}
+        {loading ? <Spinner size="sm" /> : Icon && <Icon size={18} />}
         <span>{children}</span>
       </span>
     </MotionButton>

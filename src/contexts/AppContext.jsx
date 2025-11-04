@@ -33,6 +33,18 @@ export function AppProvider({ children }) {
     setTasks([...tasks, newTask]);
   };
 
+  const restoreTask = (task) => {
+    // Restaura a tarefa exatamente como era (com mesmo ID)
+    // Verifica se já não existe antes de adicionar
+    setTasks(currentTasks => {
+      const exists = currentTasks.find(t => t.id === task.id);
+      if (exists) {
+        return currentTasks; // Já existe, não adiciona
+      }
+      return [...currentTasks, task];
+    });
+  };
+
   const toggleTask = async (id) => {
     const updatedTask = await taskService.toggleTaskCompletion(id);
     setTasks(tasks.map(t => t.id === id ? updatedTask : t));
@@ -135,6 +147,7 @@ export function AppProvider({ children }) {
     
     // Tasks actions
     addTask,
+    restoreTask,
     toggleTask,
     deleteTask,
     

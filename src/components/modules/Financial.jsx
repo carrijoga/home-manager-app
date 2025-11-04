@@ -13,7 +13,7 @@ import Input from '../common/Input';
 const Financial = memo(() => {
   // Obtém estados e ações do contexto global
   const { expenses, addExpense, deleteExpense } = useApp();
-  const { showSuccess, showError } = useToastNotifications();
+  const { showSuccess, showError, showLoading, dismissToast } = useToastNotifications();
 
   const [newExpense, setNewExpense] = useState({
     description: '',
@@ -26,6 +26,10 @@ const Financial = memo(() => {
   const handleAddExpense = async () => {
     if (newExpense.description.trim() && newExpense.value && !isSubmitting) {
       setIsSubmitting(true);
+      
+      // Toast persistente para operação longa
+      const loadingToast = showLoading('Processando gasto...');
+      
       try {
         await addExpense({
           description: newExpense.description,
@@ -33,10 +37,13 @@ const Financial = memo(() => {
           date: newExpense.date || new Date().toISOString().split('T')[0],
           category: newExpense.category || 'Geral'
         });
+        
+        dismissToast(loadingToast);
         setNewExpense({ description: '', value: '', date: '', category: '' });
         showSuccess('Gasto adicionado com sucesso!');
       } catch (error) {
         console.error('Erro ao adicionar gasto:', error);
+        dismissToast(loadingToast);
         showError('Erro ao adicionar gasto. Tente novamente.');
       } finally {
         setIsSubmitting(false);

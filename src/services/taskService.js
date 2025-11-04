@@ -27,10 +27,10 @@ export async function getAllTasks() {
  */
 export async function addTask(task) {
   const newTask = {
-    id: Date.now(),
+    id: task.id || Date.now(),
     title: task.title,
     assignedTo: task.assignedTo || 'Geral',
-    completed: false,
+    completed: task.completed || false,
     dueDate: task.dueDate || new Date().toISOString().split('T')[0]
   };
 

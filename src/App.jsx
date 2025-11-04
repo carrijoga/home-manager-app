@@ -3,6 +3,7 @@ import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { FadeIn } from './components/common/FadeIn';
 import Navigation from './components/Navigation';
 import { DashboardSkeleton, ExpenseListSkeleton, ShoppingListSkeleton, TaskListSkeleton } from './components/skeletons';
+import { Toaster } from './components/ui/sonner';
 import { AppProvider } from './contexts/AppContext';
 import { useTheme } from './contexts/ThemeContext';
 
@@ -54,7 +55,7 @@ const App = () => {
             <Login />
           </Suspense>
         } />
-        
+
         {/* Rotas privadas com layout compartilhado */}
         <Route path="/" element={<HomeLayout />}>
           <Route index element={<Navigate to="/dashboard" replace />} />
@@ -89,10 +90,11 @@ const App = () => {
             </Suspense>
           } />
         </Route>
-        
+
         {/* Fallback para rotas não encontradas */}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
+      <Toaster />
     </AppProvider>
   );
 };

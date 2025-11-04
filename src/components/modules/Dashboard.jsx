@@ -1,4 +1,5 @@
 import { useApp } from '@/contexts/AppContext';
+import { useToastNotifications } from '@/hooks/use-toast-notifications';
 import {
   calculateAverage,
   calculateMonthlySavings,
@@ -25,7 +26,6 @@ import {
   TrendingUp
 } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
-import toast from 'react-hot-toast';
 import {
   DailyAverageCard,
   MonthProjectionCard,
@@ -46,19 +46,20 @@ import DashboardTasksSection from './DashboardTasksSection';
  */
 const Dashboard = () => {
   // Obtém estados e ações do contexto global
-  const { 
-    notices, 
-    tasks, 
-    shoppingList, 
-    expenses, 
-    futureItems, 
+  const {
+    notices,
+    tasks,
+    shoppingList,
+    expenses,
+    futureItems,
     addNotice,
     deleteNotice,
     addTask,
     toggleTask,
     deleteTask
   } = useApp();
-  
+
+  const { showSuccess, showError } = useToastNotifications();
   const [newNotice, setNewNotice] = useState('');
   const MAX_NOTICE_LENGTH = 200;
 
@@ -66,12 +67,12 @@ const Dashboard = () => {
     const trimmedNotice = newNotice.trim();
 
     if (!trimmedNotice) {
-      toast.error('Digite um aviso para adicionar');
+      showError('Digite um aviso para adicionar');
       return;
     }
 
     if (trimmedNotice.length > MAX_NOTICE_LENGTH) {
-      toast.error(`O aviso deve ter no máximo ${MAX_NOTICE_LENGTH} caracteres`);
+      showError(`O aviso deve ter no máximo ${MAX_NOTICE_LENGTH} caracteres`);
       return;
     }
 
@@ -83,8 +84,8 @@ const Dashboard = () => {
     });
 
     setNewNotice('');
-    toast.success('Aviso adicionado!');
-  }, [newNotice, addNotice]);
+    showSuccess('Aviso adicionado!');
+  }, [newNotice, addNotice, showSuccess, showError]);
 
   const handleKeyPress = useCallback((e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -95,8 +96,8 @@ const Dashboard = () => {
 
   const handleRemoveNotice = useCallback((id) => {
     deleteNotice(id);
-    toast.success('Aviso removido!');
-  }, [deleteNotice]);
+    showSuccess('Aviso removido!');
+  }, [deleteNotice, showSuccess]);
 
   const remainingChars = MAX_NOTICE_LENGTH - newNotice.length;
 

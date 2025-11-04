@@ -1,4 +1,5 @@
 import { useApp } from '@/contexts/AppContext';
+import { useToastNotifications } from '@/hooks/use-toast-notifications';
 import { Trash2 } from 'lucide-react';
 import { memo, useMemo, useState } from 'react';
 import { ExpenseCategories } from '../../models/types';
@@ -12,7 +13,8 @@ import Input from '../common/Input';
 const Financial = memo(() => {
   // Obtém estados e ações do contexto global
   const { expenses, addExpense, deleteExpense } = useApp();
-  
+  const { showSuccess, showError } = useToastNotifications();
+
   const [newExpense, setNewExpense] = useState({
     description: '',
     value: '',
@@ -32,11 +34,23 @@ const Financial = memo(() => {
           category: newExpense.category || 'Geral'
         });
         setNewExpense({ description: '', value: '', date: '', category: '' });
+        showSuccess('Gasto adicionado com sucesso!');
       } catch (error) {
         console.error('Erro ao adicionar gasto:', error);
+        showError('Erro ao adicionar gasto. Tente novamente.');
       } finally {
         setIsSubmitting(false);
       }
+    }
+  };
+
+  const handleDeleteExpense = async (expenseId) => {
+    try {
+      await deleteExpense(expenseId);
+      showSuccess('Gasto excluído com sucesso!');
+    } catch (error) {
+      console.error('Erro ao excluir gasto:', error);
+      showError('Erro ao excluir gasto. Tente novamente.');
     }
   };
 
@@ -137,7 +151,7 @@ const Financial = memo(() => {
               <div className="flex items-center space-x-4">
                 <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">R$ {expense.value.toFixed(2)}</span>
                 <button
-                  onClick={() => deleteExpense(expense.id)}
+                  onClick={() => handleDeleteExpense(expense.id)}
                   className="text-rose-500 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 transition-colors"
                 >
                   <Trash2 size={18} />

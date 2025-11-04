@@ -69,3 +69,6 @@ export {
   DropdownMenuTrigger
 } from './dropdown-menu';
 
+// Toast/Notifications
+export { Toaster } from './sonner';
+

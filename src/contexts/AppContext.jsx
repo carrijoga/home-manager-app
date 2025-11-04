@@ -11,7 +11,7 @@ export function AppProvider({ children }) {
   // ========== ESTADOS ==========
   const [notices, setNotices] = useState([]);
   const [tasks, setTasks] = useState([]);
-  const [shoppingList, setShoppingList] = useState([]);
+  const [shoppingList, setShoppingList] = useState({ month: '', items: [] });
   const [expenses, setExpenses] = useState([]);
   const [futureItems, setFutureItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -46,17 +46,26 @@ export function AppProvider({ children }) {
   // ========== SHOPPING ==========
   const addShoppingItem = async (item) => {
     const newItem = await shoppingService.addShoppingItem(item);
-    setShoppingList([...shoppingList, newItem]);
+    setShoppingList({
+      ...shoppingList,
+      items: [...shoppingList.items, newItem]
+    });
   };
 
   const toggleShoppingItem = async (id) => {
     const updatedItem = await shoppingService.toggleShoppingItem(id);
-    setShoppingList(shoppingList.map(i => i.id === id ? updatedItem : i));
+    setShoppingList({
+      ...shoppingList,
+      items: shoppingList.items.map(i => i.id === id ? updatedItem : i)
+    });
   };
 
   const deleteShoppingItem = async (id) => {
     await shoppingService.deleteShoppingItem(id);
-    setShoppingList(shoppingList.filter(i => i.id !== id));
+    setShoppingList({
+      ...shoppingList,
+      items: shoppingList.items.filter(i => i.id !== id)
+    });
   };
 
   // ========== FINANCIAL ==========

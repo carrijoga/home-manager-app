@@ -1,4 +1,5 @@
 import { useApp } from '@/contexts/AppContext';
+import { useToastNotifications } from '@/hooks/use-toast-notifications';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Trash2 } from 'lucide-react';
 import { memo, useMemo, useState } from 'react';
@@ -12,7 +13,8 @@ import { DatePicker, Input } from '../ui';
 const Tasks = memo(() => {
   // Obtém estados e ações do contexto global
   const { tasks, addTask, toggleTask, deleteTask } = useApp();
-  
+  const { showSuccess, showError } = useToastNotifications();
+
   const [newTask, setNewTask] = useState({
     title: '',
     assignedTo: '',
@@ -30,11 +32,38 @@ const Tasks = memo(() => {
           dueDate: newTask.dueDate || new Date().toISOString().split('T')[0]
         });
         setNewTask({ title: '', assignedTo: '', dueDate: '' });
+        showSuccess('Tarefa criada com sucesso!');
       } catch (error) {
         console.error('Erro ao adicionar tarefa:', error);
+        showError('Erro ao criar tarefa. Tente novamente.');
       } finally {
         setIsSubmitting(false);
       }
+    }
+  };
+
+  const handleToggleTask = async (taskId) => {
+    try {
+      const task = tasks.find(t => t.id === taskId);
+      await toggleTask(taskId);
+      if (task?.completed) {
+        showSuccess('Tarefa marcada como pendente!');
+      } else {
+        showSuccess('Tarefa concluída!');
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar tarefa:', error);
+      showError('Erro ao atualizar tarefa. Tente novamente.');
+    }
+  };
+
+  const handleDeleteTask = async (taskId) => {
+    try {
+      await deleteTask(taskId);
+      showSuccess('Tarefa excluída com sucesso!');
+    } catch (error) {
+      console.error('Erro ao excluir tarefa:', error);
+      showError('Erro ao excluir tarefa. Tente novamente.');
     }
   };
 
@@ -91,7 +120,7 @@ const Tasks = memo(() => {
                   <input
                     type="checkbox"
                     checked={task.completed}
-                    onChange={() => toggleTask(task.id)}
+                    onChange={() => handleToggleTask(task.id)}
                     className="w-5 h-5 cursor-pointer accent-blue-500 dark:accent-blue-600"
                   />
                   <div>
@@ -104,7 +133,7 @@ const Tasks = memo(() => {
                 <motion.button
                   whileHover={{ scale: 1.1, rotate: 5 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => deleteTask(task.id)}
+                  onClick={() => handleDeleteTask(task.id)}
                   className="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors duration-300"
                 >
                   <Trash2 size={18} />
@@ -136,7 +165,7 @@ const Tasks = memo(() => {
                   <input
                     type="checkbox"
                     checked={task.completed}
-                    onChange={() => toggleTask(task.id)}
+                    onChange={() => handleToggleTask(task.id)}
                     className="w-5 h-5 cursor-pointer accent-green-500 dark:accent-green-600"
                   />
                   <div>
@@ -147,7 +176,7 @@ const Tasks = memo(() => {
                 <motion.button
                   whileHover={{ scale: 1.1, rotate: -5 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => deleteTask(task.id)}
+                  onClick={() => handleDeleteTask(task.id)}
                   className="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors duration-300"
                 >
                   <Trash2 size={18} />

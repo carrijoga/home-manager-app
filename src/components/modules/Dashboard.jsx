@@ -38,7 +38,6 @@ import {
 } from '../common/AdditionalMetricCards';
 import Card from '../common/Card';
 import CarouselMetrics from '../common/CarouselMetrics';
-import Input from '../common/Input';
 import MetricCard from '../common/MetricCard';
 import PostIt from '../common/PostIt';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui';
@@ -65,6 +64,7 @@ const Dashboard = () => {
   const { showSuccess, showError } = useToastNotifications();
   const [newNotice, setNewNotice] = useState('');
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isNewNoticeOpen, setIsNewNoticeOpen] = useState(false);
   const MAX_NOTICE_LENGTH = 200;
 
   const handleAddNotice = useCallback(() => {
@@ -88,15 +88,9 @@ const Dashboard = () => {
     });
 
     setNewNotice('');
+    setIsNewNoticeOpen(false);
     showSuccess('Aviso adicionado!');
   }, [newNotice, addNotice, showSuccess, showError]);
-
-  const handleKeyPress = useCallback((e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleAddNotice();
-    }
-  }, [handleAddNotice]);
 
   const handleRemoveNotice = useCallback((id) => {
     deleteNotice(id);
@@ -106,8 +100,6 @@ const Dashboard = () => {
   // Separar avisos atuais (últimos 4) e histórico
   const currentNotices = useMemo(() => notices.slice(0, 4), [notices]);
   const historicalNotices = useMemo(() => notices.slice(4), [notices]);
-
-  const remainingChars = MAX_NOTICE_LENGTH - newNotice.length;
 
   // Cálculos das métricas - Separados para melhor performance
   const expenseMetrics = useMemo(() => {
@@ -380,14 +372,82 @@ const Dashboard = () => {
             }
             headerAction={
               <div className="flex items-center gap-2">
-              <button
-                onClick={handleAddNotice}
-                disabled={!newNotice.trim()}
-                className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Plus size={16} />
-                Novo Aviso
-              </button>
+              {/* Dialog para Novo Aviso */}
+              <Dialog open={isNewNoticeOpen} onOpenChange={setIsNewNoticeOpen}>
+                <DialogTrigger asChild>
+                  <button className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-md transition-colors">
+                    <Plus size={16} />
+                    Novo Aviso
+                  </button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md p-0 overflow-hidden border-yellow-200 dark:border-yellow-300">
+                  <div className="bg-yellow-50 dark:bg-yellow-100 p-6 rounded-lg border-2 border-yellow-200 dark:border-yellow-300 shadow-lg">
+                    <DialogHeader className="mb-4">
+                      <DialogTitle className="text-gray-800 dark:text-gray-900 font-semibold text-lg">
+                        📝 Novo Aviso
+                      </DialogTitle>
+                    </DialogHeader>
+                    
+                    {/* Textarea estilizada como Post-It */}
+                    <div className="space-y-3">
+                      <textarea
+                        placeholder="Digite seu aviso aqui..."
+                        value={newNotice}
+                        onChange={(e) => setNewNotice(e.target.value.slice(0, MAX_NOTICE_LENGTH))}
+                        className="w-full min-h-[120px] p-3 bg-yellow-50 dark:bg-yellow-50 text-gray-800 dark:text-gray-900 placeholder:text-gray-500 dark:placeholder:text-gray-600 border-2 border-yellow-300 dark:border-yellow-400 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-400 dark:focus:ring-yellow-500 resize-none"
+                        autoFocus
+                      />
+                      
+                      {/* Contador de caracteres */}
+                      <div className="flex justify-between items-center text-xs text-gray-600 dark:text-gray-700">
+                        <span className="font-medium">
+                          {newNotice.length}/{MAX_NOTICE_LENGTH} caracteres
+                        </span>
+                        {newNotice.length > MAX_NOTICE_LENGTH * 0.9 && (
+                          <span className="text-amber-600 dark:text-amber-700 font-semibold">
+                            ⚠️ Limite próximo
+                          </span>
+                        )}
+                      </div>
+                      
+                      {/* Rodapé com autor e data (preview) */}
+                      <div className="pt-3 border-t border-yellow-300 dark:border-yellow-400 flex justify-between items-center text-xs text-gray-600 dark:text-gray-700">
+                        <span className="font-medium flex items-center gap-1">
+                          <span className="inline-block">👤</span>
+                          Você
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <span className="inline-block">📅</span>
+                          {new Date().toLocaleDateString("pt-BR", {
+                            day: "2-digit",
+                            month: "2-digit",
+                          })}
+                        </span>
+                      </div>
+                      
+                      {/* Botões de ação */}
+                      <div className="flex gap-2 pt-2">
+                        <button
+                          onClick={() => {
+                            setNewNotice('');
+                            setIsNewNoticeOpen(false);
+                          }}
+                          className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-800 bg-white dark:bg-yellow-200 border border-yellow-300 dark:border-yellow-400 rounded-md hover:bg-gray-50 dark:hover:bg-yellow-300 transition-colors"
+                        >
+                          Cancelar
+                        </button>
+                        <button
+                          onClick={handleAddNotice}
+                          disabled={!newNotice.trim()}
+                          className="flex-1 px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-indigo-600"
+                        >
+                          Adicionar
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
 
               <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
                 <DialogTrigger className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-foreground hover:bg-accent rounded-md transition-colors border border-border">
@@ -426,22 +486,6 @@ const Dashboard = () => {
             </div>
             }
           >
-            {/* Input para novo aviso */}
-            <div className="mb-6 space-y-2">
-              <div className="relative">
-                <Input
-                  placeholder="Digite um aviso... (pressione Enter para adicionar)"
-                  value={newNotice}
-                  onChange={(e) => setNewNotice(e.target.value.slice(0, MAX_NOTICE_LENGTH))}
-                  onKeyPress={handleKeyPress}
-                  className="w-full"
-                />
-              </div>
-              <div className="text-xs text-gray-500 dark:text-dark-text-tertiary">
-                <span>📝 Digite até {MAX_NOTICE_LENGTH} caracteres ({remainingChars} restantes)</span>
-              </div>
-            </div>
-
             {/* Grid de Post-its - Mostra apenas os 4 mais recentes */}
             {currentNotices.length === 0 ? (
               <div className="text-center py-12 text-gray-500 dark:text-dark-text-tertiary">

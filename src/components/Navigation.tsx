@@ -1,3 +1,9 @@
+/**
+ * @deprecated Este componente não é mais utilizado.
+ * Foi substituído pelo AppSidebar (app-sidebar.tsx) implementado em NIN-42.
+ * Mantido temporariamente para referência.
+ */
+
 import { cn } from "@/lib/utils";
 import type { User } from "@/types";
 import {
@@ -35,7 +41,12 @@ interface Module {
 const MODULES: Module[] = [
   { id: "dashboard", name: "Dashboard", icon: Home, path: "/dashboard" },
   { id: "tasks", name: "Tarefas", icon: CheckSquare, path: "/tasks" },
-  { id: "shopping", name: "Lista de Compras", icon: ShoppingCart, path: "/shopping" },
+  {
+    id: "shopping",
+    name: "Lista de Compras",
+    icon: ShoppingCart,
+    path: "/shopping",
+  },
   { id: "financial", name: "Financeiro", icon: DollarSign, path: "/financial" },
   { id: "future", name: "Compras Futuras", icon: Package, path: "/future" },
   { id: "calendar", name: "Calendário", icon: Calendar, path: "/calendar" },
@@ -127,7 +138,7 @@ const Navigation: FC<NavigationProps> = ({
     navigate(path);
     setMobileMenuOpen(false);
   };
-  
+
   const isActive = (path: string) => currentPath === path;
 
   return (

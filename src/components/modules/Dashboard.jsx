@@ -233,9 +233,9 @@ const Dashboard = () => {
   }, [expenses, tasks]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-full overflow-x-hidden">
       {/* Carrossel de Métricas */}
-      <div className="group">
+      <div className="group max-w-full">
         <CarouselMetrics autoPlayDelay={5000}>
           {/* Card 1: Total de Gastos do Mês */}
           <MetricCard
@@ -273,13 +273,13 @@ const Dashboard = () => {
             animationDelay={0.2}
             footer={
               <div className="space-y-2">
-                <div className="flex justify-between text-xs text-gray-600 dark:text-dark-text-tertiary">
+                <div className="flex justify-between text-xs text-muted-foreground">
                   <span>Progresso</span>
                   <span className="font-semibold">{metrics.tasks.completionRate}%</span>
                 </div>
-                <div className="w-full bg-gray-200 dark:bg-dark-bg-tertiary rounded-full h-2">
+                <div className="w-full bg-muted rounded-full h-2">
                   <div 
-                    className="bg-indigo-500 dark:bg-dark-accent-indigo h-2 rounded-full transition-all duration-500"
+                    className="bg-indigo-500 h-2 rounded-full transition-all duration-500"
                     style={{ width: `${metrics.tasks.completionRate}%` }}
                   />
                 </div>
@@ -383,14 +383,14 @@ const Dashboard = () => {
               <button
                 onClick={handleAddNotice}
                 disabled={!newNotice.trim()}
-                className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-dark-accent-indigo dark:hover:bg-purple-600 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Plus size={16} />
                 Novo Aviso
               </button>
 
               <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
-                <DialogTrigger className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-dark-text-secondary hover:bg-gray-100 dark:hover:bg-dark-bg-tertiary rounded-md transition-colors border border-gray-300 dark:border-dark-border-secondary">
+                <DialogTrigger className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-foreground hover:bg-accent rounded-md transition-colors border border-border">
                   <Clock size={16} />
                 </DialogTrigger>
                 <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">

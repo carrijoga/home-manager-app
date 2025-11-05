@@ -1,12 +1,12 @@
 import { formatCurrency } from '@/utils/dashboardMetrics';
 import {
-    AlertCircle,
-    Calendar,
-    DollarSign,
-    PieChart,
-    Target,
-    TrendingDown,
-    TrendingUp
+  AlertCircle,
+  Calendar,
+  DollarSign,
+  PieChart,
+  Target,
+  TrendingDown,
+  TrendingUp
 } from 'lucide-react';
 import MetricCard from './MetricCard';
 
@@ -172,17 +172,17 @@ export function MonthProjectionCard({ projection, current, animationDelay = 0 })
       animationDelay={animationDelay}
       footer={
         <div className="space-y-2">
-          <div className="flex justify-between text-xs text-gray-600 dark:text-dark-text-tertiary">
+          <div className="flex justify-between text-xs text-muted-foreground">
             <span>Gasto atual:</span>
             <span className="font-semibold">{formatCurrency(current)}</span>
           </div>
-          <div className="w-full bg-gray-200 dark:bg-dark-bg-tertiary rounded-full h-2">
+          <div className="w-full bg-muted rounded-full h-2">
             <div 
-              className="bg-pink-500 dark:bg-pink-600 h-2 rounded-full transition-all duration-500"
+              className="bg-pink-500 h-2 rounded-full transition-all duration-500"
               style={{ width: `${Math.min(percentageOfProjection, 100)}%` }}
             />
           </div>
-          <div className="text-xs text-gray-600 dark:text-dark-text-tertiary text-center">
+          <div className="text-xs text-muted-foreground text-center">
             {percentageOfProjection}% da projeção
           </div>
         </div>

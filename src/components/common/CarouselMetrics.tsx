@@ -112,7 +112,7 @@ export default function CarouselMetrics({
 
   return (
     <div
-      className={cn("relative", className)}
+      className={cn("relative max-w-full", className)}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
@@ -135,7 +135,7 @@ export default function CarouselMetrics({
         <button
           onClick={scrollPrev}
           className={cn(
-            "absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2",
+            "absolute left-2 top-1/2 -translate-y-1/2",
             "z-10 p-2 rounded-full",
             "bg-white/90 dark:bg-dark-bg-secondary/90",
             "border border-gray-200 dark:border-dark-border",
@@ -156,7 +156,7 @@ export default function CarouselMetrics({
         <button
           onClick={scrollNext}
           className={cn(
-            "absolute right-0 top-1/2 -translate-y-1/2 translate-x-2",
+            "absolute right-2 top-1/2 -translate-y-1/2",
             "z-10 p-2 rounded-full",
             "bg-white/90 dark:bg-dark-bg-secondary/90",
             "border border-gray-200 dark:border-dark-border",

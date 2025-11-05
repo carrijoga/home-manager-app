@@ -370,7 +370,7 @@ const DashboardTasksSection = memo(({
         <AccordionItem value="pending" className="border rounded-lg dark:border-dark-border-secondary">
           <AccordionTrigger className="px-4 py-3 hover:no-underline">
             <div className="flex items-center justify-between w-full pr-4">
-              <span className="font-semibold text-gray-900 dark:text-dark-text-primary">
+              <span className="font-semibold text-primary dark:text-dark-text-primary">
                 Pendentes
               </span>
               <Badge variant="secondary">

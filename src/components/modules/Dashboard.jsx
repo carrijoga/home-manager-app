@@ -438,26 +438,6 @@ const Dashboard = () => {
         </div>
 
         {/* Minhas Tarefas - Ocupa 1 coluna */}
-                </button>
-                <button
-                  onClick={() => showSuccess('Clique em Desfazer!', {
-                    soundVariant: 'delete',
-                    duration: 5000,
-                    action: {
-                      label: 'Desfazer',
-                      onClick: () => showInfo('Ação desfeita!')
-                    }
-                  })}
-                  className="px-3 py-2 bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-400 rounded-lg hover:bg-violet-100 dark:hover:bg-violet-900/30 transition-colors text-sm"
-                >
-                  ↩️ Desfazer
-                </button>
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        {/* Minhas Tarefas - Ocupa 1 coluna */}
         <div className="lg:col-span-1">
           <DashboardTasksSection
             tasks={tasks}

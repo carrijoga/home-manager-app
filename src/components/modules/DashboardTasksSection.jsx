@@ -1,6 +1,6 @@
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
 import { AnimatePresence, motion } from 'framer-motion';
-import { CheckCircle2, Edit, Eye, MoreVertical, Plus, Trash2 } from 'lucide-react';
+import { CheckCircle2, ClipboardList, Edit, Eye, MoreVertical, Plus, Trash2 } from 'lucide-react';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Card from '../common/Card';
@@ -239,12 +239,17 @@ const DashboardTasksSection = memo(({
 
   return (
     <Card 
-      title="✅ Minhas Tarefas"
+      title={
+        <div className="flex items-center gap-2">
+          <ClipboardList size={20} className="text-indigo-600 dark:text-dark-accent-indigo" />
+          <span>Minhas Tarefas</span>
+        </div>
+      }
       headerAction={
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-dark-accent-indigo dark:hover:bg-purple-600 rounded-md transition-colors">
             <Plus size={16} />
-            Nova
+            Nova Tarefa
           </DialogTrigger>
           <DialogContent className="max-w-lg">
             <DialogHeader>
@@ -345,6 +350,11 @@ const DashboardTasksSection = memo(({
         </Dialog>
       }
     >
+      {/* Botão e Dialog de nova tarefa */}
+      <div className="mb-4 flex items-center gap-2">
+        
+      </div>
+
       {/* Input de criação rápida */}
       <div className="mb-4">
         <Input
@@ -401,42 +411,6 @@ const DashboardTasksSection = memo(({
                     Ver mais ({pendingTasks.length - 5} tarefas)...
                   </button>
                 )}
-              </div>
-            )}
-          </AccordionContent>
-        </AccordionItem>
-
-        {/* Seção Concluídas */}
-        <AccordionItem value="completed" className="border rounded-lg dark:border-dark-border-secondary">
-          <AccordionTrigger className="px-4 py-3 hover:no-underline">
-            <div className="flex items-center justify-between w-full pr-4">
-              <span className="font-semibold text-gray-900 dark:text-dark-text-primary">
-                Concluídas
-              </span>
-              <Badge variant="success">
-                {completedTasks.length}
-              </Badge>
-            </div>
-          </AccordionTrigger>
-          <AccordionContent className="px-4 pb-3">
-            {completedTasks.length === 0 ? (
-              <div className="text-center py-8 text-gray-500 dark:text-dark-text-tertiary">
-                <p>Nenhuma tarefa concluída ainda</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <AnimatePresence>
-                  {completedTasks.map((task) => (
-                    <TaskItem 
-                      key={task.id} 
-                      task={task} 
-                      isCompleted
-                      onToggle={handleToggleTask}
-                      onDelete={handleDeleteTask}
-                      onNavigate={() => navigate('/tasks')}
-                    />
-                  ))}
-                </AnimatePresence>
               </div>
             )}
           </AccordionContent>

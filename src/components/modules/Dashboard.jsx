@@ -19,8 +19,10 @@ import {
 import { AnimatePresence } from 'framer-motion';
 import {
   CheckCircle2,
+  Clock,
   DollarSign,
   Pin,
+  Plus,
   ShoppingCart,
   Sparkles,
   TrendingUp
@@ -39,6 +41,7 @@ import CarouselMetrics from '../common/CarouselMetrics';
 import Input from '../common/Input';
 import MetricCard from '../common/MetricCard';
 import PostIt from '../common/PostIt';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui';
 import DashboardTasksSection from './DashboardTasksSection';
 
 /**
@@ -61,6 +64,7 @@ const Dashboard = () => {
 
   const { showSuccess, showError } = useToastNotifications();
   const [newNotice, setNewNotice] = useState('');
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const MAX_NOTICE_LENGTH = 200;
 
   const handleAddNotice = useCallback(() => {
@@ -98,6 +102,10 @@ const Dashboard = () => {
     deleteNotice(id);
     showSuccess('Aviso removido!');
   }, [deleteNotice, showSuccess]);
+
+  // Separar avisos atuais (últimos 4) e histórico
+  const currentNotices = useMemo(() => notices.slice(0, 4), [notices]);
+  const historicalNotices = useMemo(() => notices.slice(4), [notices]);
 
   const remainingChars = MAX_NOTICE_LENGTH - newNotice.length;
 
@@ -364,16 +372,58 @@ const Dashboard = () => {
         {/* Quadro de Avisos - Ocupa 1 coluna */}
         <div className="lg:col-span-1">
           <Card 
-            title="Quadro de Avisos" 
+            title={
+              <div className="flex items-center gap-2">
+                <Pin size={20} className="text-indigo-600 dark:text-dark-accent-indigo" />
+                <span>Quadro de Avisos</span>
+              </div>
+            }
             headerAction={
-              <button 
+              <div className="flex items-center gap-2">
+              <button
                 onClick={handleAddNotice}
                 disabled={!newNotice.trim()}
-                className="text-indigo-600 dark:text-dark-accent-indigo hover:text-indigo-700 dark:hover:text-purple-400 transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                aria-label="Adicionar aviso"
+                className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-dark-accent-indigo dark:hover:bg-purple-600 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Pin size={24} />
+                <Plus size={16} />
+                Novo Aviso
               </button>
+
+              <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
+                <DialogTrigger className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-dark-text-secondary hover:bg-gray-100 dark:hover:bg-dark-bg-tertiary rounded-md transition-colors border border-gray-300 dark:border-dark-border-secondary">
+                  <Clock size={16} />
+                </DialogTrigger>
+                <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Histórico de Avisos</DialogTitle>
+                  </DialogHeader>
+                  <div className="mt-4">
+                    {historicalNotices.length === 0 ? (
+                      <div className="text-center py-12 text-gray-500 dark:text-dark-text-tertiary">
+                        <Clock className="mx-auto mb-2" size={32} />
+                        <p>Nenhum aviso no histórico</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {historicalNotices.map((notice, index) => (
+                          <PostIt
+                            key={notice.id}
+                            id={notice.id}
+                            text={notice.text}
+                            author={notice.author}
+                            date={notice.date}
+                            createdBy={notice.createdBy || notice.author}
+                            currentUser="Você"
+                            onRemove={handleRemoveNotice}
+                            index={index}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
             }
           >
             {/* Input para novo aviso */}
@@ -384,32 +434,16 @@ const Dashboard = () => {
                   value={newNotice}
                   onChange={(e) => setNewNotice(e.target.value.slice(0, MAX_NOTICE_LENGTH))}
                   onKeyPress={handleKeyPress}
-                  className="pr-16"
+                  className="w-full"
                 />
-                <span 
-                  className={`absolute right-3 top-1/2 -translate-y-1/2 text-xs ${
-                    remainingChars < 20 
-                      ? 'text-red-500 dark:text-red-400 font-semibold' 
-                      : 'text-gray-400 dark:text-dark-text-tertiary'
-                  }`}
-                >
-                  {remainingChars}
-                </span>
               </div>
-              <div className="flex justify-between items-center text-xs text-gray-500 dark:text-dark-text-tertiary">
-                <span>📝 Digite até {MAX_NOTICE_LENGTH} caracteres</span>
-                <button
-                  onClick={handleAddNotice}
-                  disabled={!newNotice.trim()}
-                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 dark:bg-dark-accent-indigo dark:hover:bg-purple-600 text-white rounded-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-indigo-600 dark:disabled:hover:bg-dark-accent-indigo text-xs font-medium"
-                >
-                  + Novo Aviso
-                </button>
+              <div className="text-xs text-gray-500 dark:text-dark-text-tertiary">
+                <span>📝 Digite até {MAX_NOTICE_LENGTH} caracteres ({remainingChars} restantes)</span>
               </div>
             </div>
 
-            {/* Grid de Post-its */}
-            {notices.length === 0 ? (
+            {/* Grid de Post-its - Mostra apenas os 4 mais recentes */}
+            {currentNotices.length === 0 ? (
               <div className="text-center py-12 text-gray-500 dark:text-dark-text-tertiary">
                 <p className="text-lg mb-2">📝</p>
                 <p>Nenhum aviso no momento</p>
@@ -418,7 +452,7 @@ const Dashboard = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 auto-rows-fr">
                 <AnimatePresence mode="popLayout">
-                  {notices.map((notice, index) => (
+                  {currentNotices.map((notice, index) => (
                     <PostIt
                       key={notice.id}
                       id={notice.id}

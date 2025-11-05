@@ -350,11 +350,6 @@ const DashboardTasksSection = memo(({
         </Dialog>
       }
     >
-      {/* Botão e Dialog de nova tarefa */}
-      <div className="mb-4 flex items-center gap-2">
-        
-      </div>
-
       {/* Input de criação rápida */}
       <div className="mb-4">
         <Input

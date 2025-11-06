@@ -6,7 +6,18 @@ Aplicativo completo de gerenciamento doméstico para toda a família. Com múlti
 
 ## 📋 Sobre o Projeto
 
-**Ninho** é uma aplicação web desenvolvida em React que ajuda você a construir e manter a organização do seu lar. Assim como os pássaros constroem seus ninhos com cuidado, o Ninho oferece as ferramentas para você cuidar da sua casa com praticidade e eficiência.
+**Ninho** é uma Progressive Web App (PWA) desenvolvida em React que ajuda você a construir e manter a organização do seu lar. Assim como os pássaros constroem seus ninhos com cuidado, o Ninho oferece as ferramentas para você cuidar da sua casa com praticidade e eficiência.
+
+### 📱 Progressive Web App (PWA)
+
+O Ninho é uma PWA completa, oferecendo:
+
+- **✅ Instalável** - Instale no seu celular ou computador como um app nativo
+- **🔄 Service Worker** - Cache inteligente para melhor performance
+- **📴 Funcionamento offline** - Acesse dados mesmo sem conexão
+- **🚀 Performance otimizada** - Carregamento rápido e experiência fluída
+- **🔔 Notificações** - Sistema de notificações toast com sons opcionais
+- **🌓 Tema claro/escuro** - Alterna entre temas com suporte a preferências do sistema
 
 ## ✨ Funcionalidades
 
@@ -21,39 +32,55 @@ Aplicativo completo de gerenciamento doméstico para toda a família. Com múlti
 ### 📊 Dashboard
 
 - Visão geral de todas as atividades da casa
-- Quadro de avisos para comunicação familiar
-- Resumo de tarefas pendentes
+- **Quadro de avisos** interativo para comunicação familiar
+- **Métricas visuais** com mini-gráficos e tendências
+- Resumo de tarefas pendentes com seção dedicada
 - Indicadores de gastos mensais
-- Lista rápida de itens a comprar
+- Lista rápida de itens a comprar prioritários
+- **Carrossel de métricas** para visualização compacta no mobile
+- **Skeleton loaders** para melhor experiência de carregamento
+- **Busca global** para encontrar tarefas, itens e despesas rapidamente
 
 ### ✅ Tarefas
 
 - Criação e gerenciamento de tarefas domésticas
+- **Três níveis de prioridade** (Alta, Média, Baixa) com indicadores visuais
 - Atribuição de responsáveis
-- Definição de prazos
-- Marcação de tarefas concluídas
-- Visualização separada de pendentes e concluídas
+- Definição de prazos com validação de datas
+- Marcação de tarefas concluídas com confirmação
+- **Visualização separada** de pendentes e concluídas em tabs
+- **Filtros e ordenação** para facilitar organização
+- Edição inline de tarefas existentes
 
 ### 🛒 Lista de Compras
 
-- Organização de itens por categoria (Alimentos, Limpeza, etc.)
-- Definição de quantidades
-- Marcação de itens já comprados
+- Organização de itens por categoria (Alimentos, Limpeza, Higiene, Outros)
+- **Badges coloridos** para cada categoria
+- Definição de quantidades com validação
+- Marcação de itens já comprados com confirmação visual
+- **Filtros por categoria** e status (pendente/comprado)
 - Controle mensal de compras
+- **Estatísticas** de itens comprados vs. pendentes
 
 ### 💰 Financeiro
 
-- Registro de despesas com categorização
-- Visualização de gastos por categoria
-- Cálculo automático de totais e médias
-- Histórico completo de despesas
+- Registro de despesas com categorização detalhada
+- **14 categorias** (Alimentação, Transporte, Moradia, Saúde, Educação, etc.)
+- Visualização de gastos por categoria com cores distintas
+- Cálculo automático de totais e médias mensais
+- **Gráficos e estatísticas** visuais
+- Histórico completo de despesas com busca
+- **Análise de tendências** de gastos
 
 ### 📦 Compras Futuras
 
-- Planejamento de compras maiores
-- Definição de prioridades (alta, média, baixa)
-- Estimativa de custos
-- Organização por prioridade
+- Planejamento de compras maiores e investimentos
+- **Sistema de prioridades** (Alta, Média, Baixa) com cores e ícones
+- Estimativa de custos com formatação em R$
+- Organização por prioridade com filtros
+- **Notas e descrições** detalhadas para cada item
+- Marcação de itens já adquiridos
+- Cálculo do total estimado de investimentos pendentes
 
 ### 📅 Calendário
 
@@ -113,7 +140,10 @@ ninho/
 │   │   ├── formatters.js
 │   │   └── dashboardMetrics.ts
 │   ├── contexts/         # Contextos React
-│   │   └── ThemeContext.jsx
+│   │   ├── ThemeContext.jsx  # Gerenciamento de tema claro/escuro
+│   │   └── AppContext.jsx    # Estado global da aplicação
+│   ├── hooks/           # Custom hooks
+│   │   └── use-toast-notifications.ts  # Hook para notificações
 │   ├── App.jsx           # Componente principal com roteamento
 │   ├── main.tsx          # Entry point (TypeScript)
 │   └── index.css         # Estilos globais
@@ -128,8 +158,36 @@ ninho/
 ├── vite.config.ts       # Configuração Vite
 ├── tailwind.config.ts   # Configuração Tailwind
 ├── components.json      # Configuração shadcn/ui
+├── CLAUDE.md            # Documentação de arquitetura detalhada
+├── TYPESCRIPT.md        # Guia de migração TypeScript
 └── README.md            # Documentação
 
+```
+
+### 🎯 Path Aliases
+
+O projeto utiliza path aliases configurados em `vite.config.ts` e `tsconfig.json` para facilitar imports:
+
+```typescript
+// Aliases disponíveis
+@/*            → src/*
+@components/*  → src/components/*
+@services/*    → src/services/*
+@types/*       → src/types/*
+@utils/*       → src/utils/*
+@lib/*         → src/lib/*
+```
+
+**Exemplo de uso:**
+
+```typescript
+// ✅ Com alias (recomendado)
+import { Button } from "@/components/ui/button";
+import { Task } from "@/types";
+import * as taskService from "@services/taskService";
+
+// ❌ Sem alias (não recomendado)
+import { Button } from "../../components/ui/button";
 ```
 
 ### 🔄 Sistema de Roteamento
@@ -140,7 +198,7 @@ O app utiliza **React Router v7** com uma arquitetura híbrida:
 - **`/*`** - Aplicação principal com navegação por estado
   - Dashboard, Tarefas, Compras, Financeiro, Futuro, Calendário
   - Troca de módulos via tabs sem mudança de URL
-  - Estado gerenciado no componente `HomeLayout`
+  - Estado gerenciado no componente `App.jsx`
 
 Este design permite:
 
@@ -149,18 +207,71 @@ Este design permite:
 - ✅ Estado preservado ao trocar de módulo
 - ✅ Preparado para autenticação futura
 
+### 📐 Padrões de Arquitetura
+
+#### Service Layer (Obrigatório)
+
+**TODAS** as operações de dados DEVEM passar pela camada de serviços (`src/services/`). Nunca acesse mocks ou APIs diretamente dos componentes.
+
+```javascript
+// ✅ CORRETO: Use o serviço
+import * as taskService from "@services/taskService";
+const tasks = await taskService.getAllTasks();
+
+// ❌ ERRADO: Acesso direto aos dados
+import { mockTasks } from "@mocks/data";
+```
+
+Cada serviço implementa acesso dual controlado por `VITE_DATA_MODE`:
+
+- **`mock`** (padrão) - Retorna promises com delay de 100ms de `src/mocks/data.js`
+- **`api`** - Faz requisições HTTP via helper `apiRequest()` em `src/services/api/config.js`
+
+#### Gerenciamento de Estado
+
+- **Estado global**: Vive em `App.jsx` usando hooks useState do React
+- **Props down**: Dados fluem de App.jsx → componentes de módulo
+- **Callbacks up**: Componentes chamam handlers passados via props
+- **Context**: Apenas `ThemeContext` para tema claro/escuro (use hook `useTheme()`)
+- **Sem Redux/Zustand**: Mantém gerenciamento simples com props
+
+#### Sistema de Módulos
+
+Navegação baseada em tabs definida pelo enum `ModuleIds` em `src/models/types.js`:
+
+- `App.jsx` gerencia o estado `currentModule`
+- `Navigation.tsx` renderiza tabs e alterna módulos
+- Cada módulo é um componente auto-contido em `src/components/modules/`
+
 ## 🛠️ Tecnologias Utilizadas
+
+### Frontend Core
 
 - **React 18.3** - Biblioteca JavaScript para interfaces
 - **TypeScript 5.9** - Superset JavaScript com tipagem estática (migração parcial)
-- **React Router 6** - Roteamento declarativo para React
-- **Vite 5.4** - Build tool e dev server
+- **React Router 7** - Roteamento declarativo para React
+- **Vite 5.4** - Build tool e dev server ultrarrápido
+
+### UI e Estilização
+
 - **Tailwind CSS 3.4** - Framework CSS utilitário
 - **shadcn/ui** - Sistema de componentes baseado em Radix UI
-- **Lucide React** - Biblioteca de ícones
-- **date-fns** - Manipulação de datas
-- **Framer Motion** - Animações e transições
-- **React Hot Toast** - Notificações toast
+- **Radix UI** - Primitivos de UI acessíveis e não-estilizados
+- **Lucide React** - Biblioteca de ícones modernas (1000+ ícones)
+- **Framer Motion** - Animações e transições suaves
+
+### Utilitários
+
+- **date-fns** - Manipulação e formatação de datas
+- **React Hot Toast** - Notificações toast elegantes
+- **Sonner** - Sistema alternativo de toasts
+- **clsx** - Utilitário para construção de classNames
+- **tailwind-merge** - Merge inteligente de classes Tailwind
+
+### PWA
+
+- **Workbox** - Ferramentas para Service Workers
+- **Web App Manifest** - Configuração de instalação PWA
 
 ## 📦 Instalação
 
@@ -200,12 +311,21 @@ http://localhost:3000/login # Tela de login
 
 ## 🚀 Scripts Disponíveis
 
-- `npm run dev` - Inicia o servidor de desenvolvimento
+- `npm run dev` - Inicia o servidor de desenvolvimento na porta 3000
 - `npm run build` - Gera build de produção (com type-check)
-- `npm run preview` - Visualiza o build de produção
+- `npm run preview` - Visualiza o build de produção localmente
 - `npm run type-check` - Verifica tipos TypeScript sem fazer build
-- `npm run lint` - Executa o linter
+- `npm run lint` - Executa o ESLint em arquivos .js, .jsx, .ts, .tsx
 - `npm run format` - Formata o código com Prettier
+
+### Desenvolvimento
+
+O servidor de desenvolvimento abre automaticamente o navegador na porta 3000. Suporta:
+
+- ⚡️ Hot Module Replacement (HMR)
+- 🔍 Type-checking em tempo real
+- 🎨 Recarga automática de estilos
+- 📱 Teste responsivo em múltiplos devices
 
 ## 🔧 Configuração
 
@@ -285,31 +405,79 @@ A tela de login com Google OAuth já está implementada (`/login`), mas ainda n�
 
 A aplicação é totalmente responsiva e se adapta a diferentes tamanhos de tela:
 
-- 📱 Mobile (< 768px)
-- 💻 Tablet (768px - 1024px)
-- 🖥️ Desktop (> 1024px)
+- 📱 **Mobile** (< 768px) - Interface otimizada para telas pequenas com carrossel de métricas
+- 💻 **Tablet** (768px - 1024px) - Layout intermediário com grid adaptativo
+- 🖥️ **Desktop** (> 1024px) - Experiência completa com múltiplas colunas
 
-## 🎨 Personalização
+### Design Responsivo
 
-### Cores
+- **Navigation**: Tabs horizontais com scroll suave no mobile
+- **Dashboard**: Carrossel de métricas no mobile, grid no desktop
+- **Cards**: Stack vertical no mobile, grid multi-coluna no desktop
+- **Formulários**: Inputs e botões com tamanhos adaptados ao touch
+- **Tipografia**: Escalas responsivas para melhor legibilidade
 
-As cores podem ser personalizadas no arquivo `tailwind.config.js`:
+## 🎨 Tema e Personalização
+
+### Sistema de Temas
+
+O Ninho possui suporte completo a **tema claro/escuro**:
+
+- 🌞 **Tema Claro** - Interface limpa e moderna
+- 🌙 **Tema Escuro** - Reduz fadiga visual em ambientes com pouca luz
+- 🔄 **Toggle suave** - Transição animada entre temas
+- 💾 **Persistência** - Preferência salva no localStorage
+- 🎯 **Cores otimizadas** - Paleta especialmente ajustada para cada tema
+
+### Paleta de Cores
+
+As cores podem ser personalizadas no arquivo `tailwind.config.ts`:
 
 ```javascript
 theme: {
   extend: {
     colors: {
-      primary: {
-        // Suas cores aqui
+      // Cores primárias modernas e vibrantes
+      primary: colors.indigo,
+      secondary: colors.purple,
+      accent: colors.cyan,
+      success: colors.emerald,
+
+      // Tokens específicos para dark mode
+      dark: {
+        bg: {
+          primary: '#0f172a',
+          secondary: '#1e293b',
+          tertiary: '#334155',
+        },
+        text: {
+          primary: '#f1f5f9',
+          secondary: '#cbd5e1',
+          muted: '#94a3b8',
+        },
+        // ... mais tokens
       }
     }
   }
 }
 ```
 
+### Animações Customizadas
+
+O projeto inclui animações personalizadas em `src/animations.css`:
+
+- `fade-in` - Entrada suave com opacidade
+- `slide-in` - Deslizamento lateral
+- `scale-in` - Crescimento com escala
+- `pulse-soft` - Pulso suave para indicadores
+
 ### Componentes
 
-Todos os componentes em `src/components/common/` são reutilizáveis e podem ser customizados.
+Todos os componentes em `src/components/common/` são reutilizáveis e podem ser customizados através de:
+
+1. **Props de variante** - Estilos pré-definidos (primary, secondary, ghost, etc.)
+2. **Classes Tailwind** - Adicione classes diretamente via prop `className`
+3. **Função `cn()`** - Utilitário para merge inteligente de classes
 
 ## 🎨 Sistema de Design - shadcn/ui
 
@@ -319,30 +487,41 @@ O projeto utiliza [shadcn/ui](https://ui.shadcn.com) como sistema de componentes
 
 O projeto possui uma biblioteca completa de componentes UI baseados em shadcn/ui:
 
-#### Formulários
+#### Formulários & Input
 
-- **Button** - Botões com 6 variantes e 4 tamanhos
-- **Input** - Campos de entrada de texto
+- **Button** - Botões com 6 variantes (default, destructive, outline, secondary, ghost, link) e 4 tamanhos
+- **Input** - Campos de entrada de texto acessíveis
 - **Textarea** - Área de texto multi-linha
-- **Label** - Labels acessíveis para formulários
-- **Select** - Dropdown de seleção
-- **DatePicker** - Seletor de data com calendário (formato DD/MM/YYYY)
+- **Label** - Labels para formulários com acessibilidade
+- **Select** - Dropdown de seleção estilizado
+- **Checkbox** - Caixas de seleção com estados
+- **DatePicker** - Seletor de data com calendário interativo (formato DD/MM/YYYY)
 
-#### Layout
+#### Layout & Container
 
-- **Card** - Containers para conteúdo
-- **Separator** - Linha separadora
+- **Card** - Containers modulares (Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter)
+- **Separator** - Linha separadora horizontal ou vertical
+- **Accordion** - Painéis expansíveis para conteúdo
 
-#### Overlay
+#### Overlay & Feedback
 
-- **Dialog** - Modais e diálogos
+- **Dialog** - Modais e diálogos com overlay
+- **AlertDialog** - Diálogos de confirmação
+- **Popover** - Popovers posicionáveis
+- **DropdownMenu** - Menus dropdown contextuais
 
-#### Display
+#### Display & Visual
 
-- **Badge** - Tags e badges de status
-- **Avatar** - Avatares circulares com fallback
+- **Badge** - Tags e badges de status coloridos
+- **Avatar** - Avatares circulares com fallback e imagem
+- **Skeleton** - Placeholders de carregamento animados
+- **Spinner** - Indicadores de loading personalizados
 
-**📦 Total**: 11 componentes (10 base + DatePicker customizado)
+#### Notificações
+
+- **Sonner** - Sistema de toasts elegante
+
+**📦 Total**: 20+ componentes reutilizáveis
 
 Para documentação completa, exemplos de uso e guia de customização, consulte [COMPONENTS.md](./COMPONENTS.md).
 
@@ -421,41 +600,248 @@ const newTask: Task = {
 
 Para mais detalhes sobre a migração TypeScript, consulte [TYPESCRIPT.md](./TYPESCRIPT.md).
 
+## 🎯 Recursos de UX
+
+### Skeleton Loaders
+
+Carregamento elegante com placeholders animados:
+
+- **DashboardSkeleton** - Para a tela inicial
+- **ListSkeleton** - Para listas de itens
+- **CardSkeleton** - Para cards individuais
+
+### Notificações Toast
+
+Sistema de notificações com som opcional:
+
+- **Toast visual** - Alertas elegantes com react-hot-toast
+- **Som de notificação** - Feedback sonoro configurável
+- **Toggle de som** - Controle no header para habilitar/desabilitar sons
+- **Posições customizáveis** - Top, bottom, left, right
+
+### Busca Global
+
+Sistema de busca unificado no header:
+
+- Busca simultânea em **tarefas**, **itens de compras** e **despesas**
+- Resultados em tempo real conforme você digita
+- Destaque visual dos termos encontrados
+- Navegação rápida para o módulo correspondente
+
+### Micro-interações
+
+- **Hover states** - Feedback visual em todos os elementos interativos
+- **Animações suaves** - Transições com Framer Motion
+- **Loading states** - Spinners e skeletons durante carregamento
+- **Confirmações visuais** - Feedback ao completar ações
+
+### Acessibilidade
+
+- **Suporte a teclado** - Navegação completa por teclado
+- **ARIA labels** - Labels apropriados para screen readers
+- **Contraste adequado** - Cores otimizadas para WCAG AA
+- **Focus indicators** - Indicadores visuais de foco
+
 ## 🔮 Roadmap Futuro
 
-- [ ] Integração com Google Calendar
-- [ ] Sistema de autenticação de usuários
-- [ ] Backend com Node.js e Express
-- [ ] Banco de dados (MongoDB/PostgreSQL)
-- [ ] Notificações push
-- [ ] Modo offline com Service Workers
-- [ ] Aplicativo mobile (React Native)
-- [ ] Relatórios financeiros detalhados
-- [ ] Gráficos e estatísticas
-- [ ] Exportação de dados (PDF, Excel)
+### Curto Prazo (Próximas Sprints)
+
+- [ ] Sistema completo de autenticação com Google OAuth
+- [ ] Backend ASP.NET Core com Entity Framework
+- [ ] Banco de dados PostgreSQL/SQL Server
+- [ ] API REST completa para todos os módulos
+- [ ] AuthContext e ProtectedRoute
+
+### Médio Prazo
+
+- [ ] Integração com Google Calendar API
+- [ ] Sistema de notificações push
+- [ ] Modo offline avançado com sincronização
+- [ ] Multi-usuário com permissões e roles
+- [ ] Compartilhamento de listas entre membros da família
+- [ ] Relatórios financeiros em PDF
+- [ ] Gráficos avançados com recharts ou chart.js
+- [ ] Exportação de dados (CSV, Excel)
+
+### Longo Prazo
+
+- [ ] Aplicativo mobile nativo (React Native)
+- [ ] Integração com assistentes de voz (Google Assistant, Alexa)
+- [ ] Machine Learning para sugestões de gastos
+- [ ] Gamificação de tarefas domésticas
+- [ ] Dashboard de métricas avançadas
+- [ ] Integração com apps de delivery e supermercados
+- [ ] Sistema de receitas e planejamento de refeições
+- [ ] Módulo de manutenção preventiva da casa
 
 ## 🤝 Contribuindo
 
-Contribuições são bem-vindas! Sinta-se à vontade para:
+Contribuições são bem-vindas! Para contribuir:
 
-1. Fazer fork do projeto
-2. Criar uma branch para sua feature (`git checkout -b feature/MinhaFeature`)
-3. Commit suas mudanças (`git commit -m 'Adiciona MinhaFeature'`)
-4. Push para a branch (`git push origin feature/MinhaFeature`)
-5. Abrir um Pull Request
+1. **Fork o projeto**
+
+   ```bash
+   gh repo fork carrijoga/home-manager-app
+   ```
+
+2. **Clone seu fork**
+
+   ```bash
+   git clone https://github.com/SEU_USUARIO/home-manager-app.git
+   cd home-manager-app
+   ```
+
+3. **Crie uma branch para sua feature**
+
+   ```bash
+   git checkout -b feature/MinhaFeature
+   ```
+
+4. **Instale as dependências**
+
+   ```bash
+   npm install
+   ```
+
+5. **Faça suas alterações seguindo os padrões do projeto:**
+   - Use path aliases (`@/`, `@components/`, etc.)
+   - Siga a Service Layer Pattern para dados
+   - Mantenha componentes responsivos
+   - Adicione TypeScript em novos arquivos
+   - Use componentes shadcn/ui quando possível
+   - Teste em tema claro e escuro
+
+6. **Commit suas mudanças**
+
+   ```bash
+   git commit -m 'feat: Adiciona MinhaFeature'
+   ```
+
+   Siga o padrão de commits:
+   - `feat:` - Nova funcionalidade
+   - `fix:` - Correção de bug
+   - `docs:` - Apenas documentação
+   - `style:` - Formatação, ponto e vírgula, etc
+   - `refactor:` - Refatoração de código
+   - `test:` - Adição de testes
+   - `chore:` - Atualização de dependências, config, etc
+
+7. **Push para sua branch**
+
+   ```bash
+   git push origin feature/MinhaFeature
+   ```
+
+8. **Abra um Pull Request**
+   - Descreva claramente o que foi implementado
+   - Adicione screenshots se houver mudanças visuais
+   - Referencie issues relacionadas
+
+### 🐛 Reportando Bugs
+
+Ao reportar bugs, inclua:
+
+- Descrição clara do problema
+- Passos para reproduzir
+- Comportamento esperado vs. atual
+- Screenshots (se aplicável)
+- Informações do ambiente (navegador, OS)
+
+### 💡 Sugerindo Funcionalidades
+
+Para sugerir novas funcionalidades:
+
+- Descreva o problema que ela resolve
+- Explique a solução proposta
+- Considere alternativas
+- Indique a prioridade (baixa, média, alta)
+
+## ⚡ Performance e Otimizações
+
+### Build de Produção
+
+O build otimizado inclui:
+
+- **Code splitting** - Carregamento lazy de módulos
+- **Tree shaking** - Remoção de código não utilizado
+- **Minificação** - CSS e JavaScript minificados
+- **Asset optimization** - Imagens e ícones otimizados
+- **Cache busting** - Hashes em nomes de arquivos
+
+### Service Worker
+
+O PWA inclui Service Worker para:
+
+- **Cache de assets** - Arquivos estáticos em cache
+- **Offline fallback** - Funcionalidade básica offline
+- **Background sync** - Sincronização quando online
+- **Update checks** - Verificação de atualizações a cada 60s
+
+### Best Practices
+
+- **Lazy loading** - Componentes carregados sob demanda
+- **Memoization** - React.memo para prevenir re-renders
+- **Debouncing** - Em buscas e inputs de texto
+- **Virtual scrolling** - Para listas longas (futuro)
+
+## 📚 Documentação Adicional
+
+- **[CLAUDE.md](./CLAUDE.md)** - Arquitetura detalhada e padrões de código
+- **[TYPESCRIPT.md](./TYPESCRIPT.md)** - Guia completo de migração TypeScript
+- **[FEATURES_IDEAS.md](./FEATURES_IDEAS.md)** - Ideias e features futuras
+- **[components.json](./components.json)** - Configuração shadcn/ui
+
+## 🔐 Segurança
+
+### Práticas Atuais
+
+- ✅ Validação de inputs do usuário
+- ✅ Sanitização de dados exibidos
+- ✅ HTTPS obrigatório em produção (via Vercel)
+- ✅ Content Security Policy configurado
+
+### Planejado (com Backend)
+
+- 🔄 Autenticação JWT ou OAuth2
+- 🔄 Rate limiting em APIs
+- 🔄 Criptografia de dados sensíveis
+- 🔄 Proteção CSRF
+- 🔄 Input validation server-side
 
 ## 📄 Licença
 
 Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalhes.
 
-## 👥 Autores
+## 👥 Autor
 
-Desenvolvido com ❤️ para facilitar a organização doméstica.
+Desenvolvido com ❤️ para facilitar a organização doméstica e fortalecer a conexão familiar.
 
-## 📞 Suporte
+**GitHub**: [@carrijoga](https://github.com/carrijoga)  
+**Repositório**: [home-manager-app](https://github.com/carrijoga/home-manager-app)
 
-Para dúvidas ou sugestões, abra uma issue no GitHub.
+## 📞 Suporte e Contato
+
+- 🐛 **Bugs e Issues**: [GitHub Issues](https://github.com/carrijoga/home-manager-app/issues)
+- 💡 **Sugestões**: [GitHub Discussions](https://github.com/carrijoga/home-manager-app/discussions)
+- 📧 **Contato direto**: Abra uma issue ou discussion
+
+## 🌟 Agradecimentos
+
+- **shadcn/ui** - Sistema de componentes elegante
+- **Radix UI** - Primitivos de UI acessíveis
+- **Tailwind CSS** - Framework CSS utilitário
+- **Lucide Icons** - Biblioteca de ícones modernos
+- **React** e toda comunidade open source
+
+## 📊 Status do Projeto
+
+![Status](https://img.shields.io/badge/status-em%20desenvolvimento-yellow)
+![React](https://img.shields.io/badge/react-18.3-blue)
+![TypeScript](https://img.shields.io/badge/typescript-5.9-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
 
 ---
 
-**Nota:** Este projeto está em desenvolvimento ativo. Novas funcionalidades serão adicionadas regularmente.
+**🪺 Ninho** - Construindo lares organizados, uma tarefa de cada vez.
+
+**Última atualização**: Novembro 2025

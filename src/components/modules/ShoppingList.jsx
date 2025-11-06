@@ -1,3 +1,5 @@
+import { useApp } from '@/contexts/AppContext';
+import { useToastNotifications } from '@/hooks/use-toast-notifications';
 import { Trash2 } from 'lucide-react';
 import { memo, useMemo, useState } from 'react';
 import Button from '../common/Button';
@@ -7,7 +9,11 @@ import { Input } from '../ui';
 /**
  * Módulo de Lista de Compras
  */
-const ShoppingList = memo(({ shoppingList, onAddItem, onToggleItem, onDeleteItem }) => {
+const ShoppingList = memo(() => {
+  // Obtém estados e ações do contexto global
+  const { shoppingList, addShoppingItem, toggleShoppingItem, deleteShoppingItem } = useApp();
+  const { showSuccess, showError } = useToastNotifications();
+
   const [newItem, setNewItem] = useState({
     name: '',
     quantity: '',
@@ -19,17 +25,44 @@ const ShoppingList = memo(({ shoppingList, onAddItem, onToggleItem, onDeleteItem
     if (newItem.name.trim() && !isSubmitting) {
       setIsSubmitting(true);
       try {
-        await onAddItem({
+        await addShoppingItem({
           name: newItem.name,
           quantity: newItem.quantity,
           category: newItem.category || 'Geral'
         });
         setNewItem({ name: '', quantity: '', category: '' });
+        showSuccess('Item adicionado à lista!');
       } catch (error) {
         console.error('Erro ao adicionar item:', error);
+        showError('Erro ao adicionar item. Tente novamente.');
       } finally {
         setIsSubmitting(false);
       }
+    }
+  };
+
+  const handleToggleItem = async (itemId) => {
+    try {
+      const item = shoppingList.items.find(i => i.id === itemId);
+      await toggleShoppingItem(itemId);
+      if (item?.checked) {
+        showSuccess('Item desmarcado!');
+      } else {
+        showSuccess('Item marcado como comprado!');
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar item:', error);
+      showError('Erro ao atualizar item. Tente novamente.');
+    }
+  };
+
+  const handleDeleteItem = async (itemId) => {
+    try {
+      await deleteShoppingItem(itemId);
+      showSuccess('Item removido da lista!');
+    } catch (error) {
+      console.error('Erro ao remover item:', error);
+      showError('Erro ao remover item. Tente novamente.');
     }
   };
 
@@ -91,7 +124,7 @@ const ShoppingList = memo(({ shoppingList, onAddItem, onToggleItem, onDeleteItem
                     <input
                       type="checkbox"
                       checked={item.checked}
-                      onChange={() => onToggleItem(item.id)}
+                      onChange={() => handleToggleItem(item.id)}
                       className="w-5 h-5 cursor-pointer accent-emerald-500 dark:accent-emerald-400"
                     />
                     <div>
@@ -102,7 +135,7 @@ const ShoppingList = memo(({ shoppingList, onAddItem, onToggleItem, onDeleteItem
                     </div>
                   </div>
                   <button
-                    onClick={() => onDeleteItem(item.id)}
+                    onClick={() => handleDeleteItem(item.id)}
                     className="text-rose-500 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 transition-colors"
                   >
                     <Trash2 size={18} />

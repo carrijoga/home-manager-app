@@ -81,9 +81,9 @@ const PostIt = forwardRef<HTMLDivElement, PostItProps>(
           }}
           animate={{
             opacity: 1,
-            scale: 1,
-            y: 0,
-            rotate: rotation,
+            scale: isHovered ? 1.05 : 1,
+            y: isHovered ? -8 : 0,
+            rotate: isHovered ? 0 : rotation,
           }}
           exit={{
             opacity: 0,
@@ -93,9 +93,15 @@ const PostIt = forwardRef<HTMLDivElement, PostItProps>(
           }}
           transition={{
             type: "spring",
-            stiffness: 260,
-            damping: 20,
+            stiffness: 300,
+            damping: 25,
             delay: index * 0.05,
+          }}
+          whileHover={{
+            scale: 1.05,
+            y: -8,
+            rotate: 0,
+            transition: { duration: 0.2 },
           }}
           onHoverStart={() => setIsHovered(true)}
           onHoverEnd={() => setIsHovered(false)}
@@ -103,7 +109,15 @@ const PostIt = forwardRef<HTMLDivElement, PostItProps>(
           className="relative group"
         >
           {/* Post-it */}
-          <div className="bg-yellow-50 dark:bg-yellow-100 border border-yellow-200 dark:border-yellow-300 rounded-md p-4 shadow-md hover:shadow-lg transition-shadow duration-300 min-h-[140px] flex flex-col justify-between">
+          <motion.div
+            className="bg-yellow-50 dark:bg-yellow-100 border border-yellow-200 dark:border-yellow-300 rounded-md p-4 min-h-[140px] flex flex-col justify-between"
+            animate={{
+              boxShadow: isHovered
+                ? "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+                : "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+            }}
+            transition={{ duration: 0.2 }}
+          >
             {/* Botão remover (apenas para o autor) */}
             {canRemove && onRemove && (
               <motion.button
@@ -142,7 +156,7 @@ const PostIt = forwardRef<HTMLDivElement, PostItProps>(
                 })}
               </span>
             </div>
-          </div>
+          </motion.div>
         </motion.div>
 
         {/* Diálogo de Confirmação */}

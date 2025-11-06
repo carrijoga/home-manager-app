@@ -57,10 +57,10 @@ const MetricCard = ({
 
   // Classes de borda baseadas no tipo de alerta
   const alertBorderClass = {
-    success: "border-l-4 border-emerald-500 dark:border-emerald-400",
-    warning: "border-l-4 border-amber-500 dark:border-amber-400",
-    danger: "border-l-4 border-red-500 dark:border-red-400",
-    info: "border-l-4 border-cyan-500 dark:border-cyan-400",
+    success: "border-l-4 border-emerald-500",
+    warning: "border-l-4 border-amber-500",
+    danger: "border-l-4 border-red-500",
+    info: "border-l-4 border-cyan-500",
   };
 
   return (
@@ -69,7 +69,7 @@ const MetricCard = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: animationDelay, duration: 0.4 }}
       className={cn(
-        "bg-white dark:bg-dark-bg-secondary rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 p-5",
+        "bg-card text-card-foreground rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 p-5",
         "h-full flex flex-col",
         alertType && alertBorderClass[alertType],
         className
@@ -86,9 +86,7 @@ const MetricCard = ({
         >
           <Icon size={24} />
         </div>
-        <h3 className="text-sm font-medium text-slate-600 dark:text-dark-text-secondary">
-          {title}
-        </h3>
+        <h3 className="text-sm font-medium text-muted-foreground">{title}</h3>
       </div>
 
       {/* Valor Principal */}
@@ -108,32 +106,26 @@ const MetricCard = ({
         <div className="flex items-center space-x-1 mb-3">
           {isPositive && (
             <>
-              <TrendingUp
-                size={16}
-                className="text-emerald-500 dark:text-emerald-400"
-              />
-              <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
+              <TrendingUp size={16} className="text-emerald-500" />
+              <span className="text-sm font-medium text-emerald-600">
                 +{comparison.value}%
               </span>
             </>
           )}
           {isNegative && (
             <>
-              <TrendingDown
-                size={16}
-                className="text-red-500 dark:text-red-400"
-              />
-              <span className="text-sm font-medium text-red-600 dark:text-red-400">
+              <TrendingDown size={16} className="text-red-500" />
+              <span className="text-sm font-medium text-red-600">
                 {comparison.value}%
               </span>
             </>
           )}
           {!isPositive && !isNegative && (
-            <span className="text-sm font-medium text-gray-500 dark:text-dark-text-tertiary">
+            <span className="text-sm font-medium text-muted-foreground">
               0%
             </span>
           )}
-          <span className="text-xs text-gray-500 dark:text-dark-text-tertiary ml-1">
+          <span className="text-xs text-muted-foreground ml-1">
             {comparisonLabel}
           </span>
         </div>
@@ -151,9 +143,7 @@ const MetricCard = ({
 
       {/* Footer customizado */}
       {footer && (
-        <div className="pt-3 border-t border-gray-100 dark:border-dark-border-primary mt-auto">
-          {footer}
-        </div>
+        <div className="pt-3 border-t border-border mt-auto">{footer}</div>
       )}
     </motion.div>
   );

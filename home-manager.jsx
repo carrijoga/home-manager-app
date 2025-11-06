@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Home, CheckSquare, ShoppingCart, DollarSign, Package, Calendar, Plus, Trash2, Edit2, X, Check } from 'lucide-react';
+import { Calendar, CheckSquare, DollarSign, Home, Package, Plus, ShoppingCart, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 
 const HomeManagerApp = () => {
   const [currentModule, setCurrentModule] = useState('dashboard');
@@ -179,7 +179,7 @@ const HomeManagerApp = () => {
           </div>
 
           <div className="space-y-3">
-            <h3 className="font-semibold text-gray-700">Pendentes</h3>
+            <h3 className="font-semibold text-gray-600">Pendentes</h3>
             {tasks.filter(t => !t.completed).map(task => (
               <div key={task.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border-l-4 border-blue-500">
                 <div className="flex items-center space-x-3 flex-1">

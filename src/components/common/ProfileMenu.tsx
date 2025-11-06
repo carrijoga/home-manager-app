@@ -10,6 +10,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useToastNotifications } from "@/hooks/use-toast-notifications";
 import { cn } from "@/lib/utils";
 import type { User } from "@/types";
 import {
@@ -19,8 +20,10 @@ import {
   Settings,
   Sun,
   User as UserIcon,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 interface ProfileMenuProps {
   user: User;
@@ -42,6 +45,23 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
   onSettingsClick,
   onLogoutClick,
 }) => {
+  const { enableSound, disableSound, isSoundEnabled } = useToastNotifications();
+  const [soundEnabled, setSoundEnabled] = useState(false);
+
+  useEffect(() => {
+    setSoundEnabled(isSoundEnabled());
+  }, [isSoundEnabled]);
+
+  const handleToggleSound = () => {
+    if (soundEnabled) {
+      disableSound();
+      setSoundEnabled(false);
+    } else {
+      enableSound();
+      setSoundEnabled(true);
+    }
+  };
+
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -104,6 +124,23 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
         >
           <Settings className="mr-2 h-4 w-4" />
           <span>Configurações</span>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem
+          onClick={handleToggleSound}
+          className="cursor-pointer dark:hover:bg-dark-bg-hover dark:focus:bg-dark-bg-hover dark:text-dark-text-secondary"
+        >
+          {soundEnabled ? (
+            <>
+              <Volume2 className="mr-2 h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+              <span>Sons Ativos</span>
+            </>
+          ) : (
+            <>
+              <VolumeX className="mr-2 h-4 w-4" />
+              <span>Sons Desativados</span>
+            </>
+          )}
         </DropdownMenuItem>
 
         <DropdownMenuSub>

@@ -1,7 +1,8 @@
+import { useToastNotifications } from '@/hooks/use-toast-notifications';
 import { AnimatePresence, motion } from 'framer-motion';
-import { CheckCircle2, Edit, Eye, MoreVertical, Plus, Trash2 } from 'lucide-react';
+import { CheckCircle2, ClipboardList, Edit, Eye, MoreVertical, Plus, Trash2 } from 'lucide-react';
 import { memo, useCallback, useMemo, useState } from 'react';
-import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 import Card from '../common/Card';
 import Input from '../common/Input';
 import {
@@ -115,13 +116,14 @@ TaskItem.displayName = 'TaskItem';
  * Componente de seção de Tarefas para o Dashboard
  * Com criação rápida, seções expansíveis e sincronização
  */
-const DashboardTasksSection = memo(({ 
-  tasks, 
-  onAddTask, 
-  onToggleTask, 
-  onDeleteTask,
-  onNavigateToTasks 
+const DashboardTasksSection = memo(({
+  tasks,
+  onAddTask,
+  onToggleTask,
+  onDeleteTask
 }) => {
+  const navigate = useNavigate();
+  const { showSuccess, showError } = useToastNotifications();
   const [quickTaskInput, setQuickTaskInput] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newTask, setNewTask] = useState({
@@ -163,20 +165,20 @@ const DashboardTasksSection = memo(({
         });
 
         setQuickTaskInput('');
-        toast.success('Tarefa criada!');
+        showSuccess('Tarefa criada!');
       } catch (error) {
         console.error('Erro ao criar tarefa:', error);
-        toast.error('Erro ao criar tarefa');
+        showError('Erro ao criar tarefa');
       }
     }
-  }, [quickTaskInput, onAddTask]);
+  }, [quickTaskInput, onAddTask, showSuccess, showError]);
 
   /**
    * Criar tarefa completa via dialog
    */
   const handleFullTaskCreate = useCallback(async () => {
     if (!newTask.title.trim()) {
-      toast.error('Digite um título para a tarefa');
+      showError('Digite um título para a tarefa');
       return;
     }
 
@@ -199,12 +201,12 @@ const DashboardTasksSection = memo(({
         category: ''
       });
       setIsDialogOpen(false);
-      toast.success('Tarefa criada!');
+      showSuccess('Tarefa criada!');
     } catch (error) {
       console.error('Erro ao criar tarefa:', error);
-      toast.error('Erro ao criar tarefa');
+      showError('Erro ao criar tarefa');
     }
-  }, [newTask, onAddTask]);
+  }, [newTask, onAddTask, showSuccess, showError]);
 
   /**
    * Alternar conclusão de tarefa com animação
@@ -214,13 +216,13 @@ const DashboardTasksSection = memo(({
       await onToggleTask(taskId);
       const task = tasks.find(t => t.id === taskId);
       if (task && !task.completed) {
-        toast.success('Tarefa concluída! 🎉');
+        showSuccess('Tarefa concluída! 🎉');
       }
     } catch (error) {
       console.error('Erro ao alternar tarefa:', error);
-      toast.error('Erro ao atualizar tarefa');
+      showError('Erro ao atualizar tarefa');
     }
-  }, [onToggleTask, tasks]);
+  }, [onToggleTask, tasks, showSuccess, showError]);
 
   /**
    * Excluir tarefa
@@ -228,21 +230,26 @@ const DashboardTasksSection = memo(({
   const handleDeleteTask = useCallback(async (taskId) => {
     try {
       await onDeleteTask(taskId);
-      toast.success('Tarefa excluída');
+      showSuccess('Tarefa excluída');
     } catch (error) {
       console.error('Erro ao excluir tarefa:', error);
-      toast.error('Erro ao excluir tarefa');
+      showError('Erro ao excluir tarefa');
     }
-  }, [onDeleteTask]);
+  }, [onDeleteTask, showSuccess, showError]);
 
   return (
     <Card 
-      title="✅ Minhas Tarefas"
+      title={
+        <div className="flex items-center gap-2">
+          <ClipboardList size={20} className="text-indigo-600 dark:text-dark-accent-indigo" />
+          <span>Minhas Tarefas</span>
+        </div>
+      }
       headerAction={
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-dark-accent-indigo dark:hover:bg-purple-600 rounded-md transition-colors">
             <Plus size={16} />
-            Nova
+            Nova Tarefa
           </DialogTrigger>
           <DialogContent className="max-w-lg">
             <DialogHeader>
@@ -363,7 +370,7 @@ const DashboardTasksSection = memo(({
         <AccordionItem value="pending" className="border rounded-lg dark:border-dark-border-secondary">
           <AccordionTrigger className="px-4 py-3 hover:no-underline">
             <div className="flex items-center justify-between w-full pr-4">
-              <span className="font-semibold text-gray-900 dark:text-dark-text-primary">
+              <span className="font-semibold text-primary dark:text-dark-text-primary">
                 Pendentes
               </span>
               <Badge variant="secondary">
@@ -386,55 +393,19 @@ const DashboardTasksSection = memo(({
                       task={task}
                       onToggle={handleToggleTask}
                       onDelete={handleDeleteTask}
-                      onNavigate={onNavigateToTasks}
+                      onNavigate={() => navigate('/tasks')}
                     />
                   ))}
                 </AnimatePresence>
                 
                 {hasMorePendingTasks && (
                   <button
-                    onClick={onNavigateToTasks}
+                    onClick={() => navigate('/tasks')}
                     className="w-full py-2 text-sm text-indigo-600 dark:text-dark-accent-indigo hover:text-indigo-700 dark:hover:text-purple-400 font-medium transition-colors"
                   >
                     Ver mais ({pendingTasks.length - 5} tarefas)...
                   </button>
                 )}
-              </div>
-            )}
-          </AccordionContent>
-        </AccordionItem>
-
-        {/* Seção Concluídas */}
-        <AccordionItem value="completed" className="border rounded-lg dark:border-dark-border-secondary">
-          <AccordionTrigger className="px-4 py-3 hover:no-underline">
-            <div className="flex items-center justify-between w-full pr-4">
-              <span className="font-semibold text-gray-900 dark:text-dark-text-primary">
-                Concluídas
-              </span>
-              <Badge variant="success">
-                {completedTasks.length}
-              </Badge>
-            </div>
-          </AccordionTrigger>
-          <AccordionContent className="px-4 pb-3">
-            {completedTasks.length === 0 ? (
-              <div className="text-center py-8 text-gray-500 dark:text-dark-text-tertiary">
-                <p>Nenhuma tarefa concluída ainda</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <AnimatePresence>
-                  {completedTasks.map((task) => (
-                    <TaskItem 
-                      key={task.id} 
-                      task={task} 
-                      isCompleted
-                      onToggle={handleToggleTask}
-                      onDelete={handleDeleteTask}
-                      onNavigate={onNavigateToTasks}
-                    />
-                  ))}
-                </AnimatePresence>
               </div>
             )}
           </AccordionContent>

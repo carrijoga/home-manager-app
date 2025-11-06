@@ -1,26 +1,47 @@
-import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
-import { Route, Routes } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
+import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
+import { AppSidebar } from './components/app-sidebar';
 import { FadeIn } from './components/common/FadeIn';
-import Navigation from './components/Navigation';
 import { DashboardSkeleton, ExpenseListSkeleton, ShoppingListSkeleton, TaskListSkeleton } from './components/skeletons';
+import { Separator } from './components/ui/separator';
+import { SidebarInset, SidebarProvider, SidebarTrigger } from './components/ui/sidebar';
+import { Toaster } from './components/ui/sonner';
+import { AppProvider } from './contexts/AppContext';
 import { useTheme } from './contexts/ThemeContext';
-import { ModuleIds } from './models/types';
 
 // Lazy loading dos módulos para code splitting
-const Dashboard = lazy(() => import('./components/modules/Dashboard'));
-const Tasks = lazy(() => import('./components/modules/Tasks'));
-const ShoppingList = lazy(() => import('./components/modules/ShoppingList'));
-const Financial = lazy(() => import('./components/modules/Financial'));
-const FutureItems = lazy(() => import('./components/modules/FutureItems'));
-const Calendar = lazy(() => import('./components/modules/Calendar'));
+const DashboardModule = lazy(() => import('./components/modules/Dashboard'));
+const TasksModule = lazy(() => import('./components/modules/Tasks'));
+const ShoppingListModule = lazy(() => import('./components/modules/ShoppingList'));
+const FinancialModule = lazy(() => import('./components/modules/Financial'));
+const FutureItemsModule = lazy(() => import('./components/modules/FutureItems'));
+const CalendarModule = lazy(() => import('./components/modules/Calendar'));
 const Login = lazy(() => import('./pages/Login'));
 
-// Serviços
-import * as financialService from './services/financialService';
-import * as futureItemsService from './services/futureItemsService';
-import * as noticeService from './services/noticeService';
-import * as shoppingService from './services/shoppingService';
-import * as taskService from './services/taskService';
+// Componentes wrapper que conectam o context aos módulos
+const Dashboard = () => {
+  return <DashboardModule />;
+};
+
+const Tasks = () => {
+  return <TasksModule />;
+};
+
+const ShoppingList = () => {
+  return <ShoppingListModule />;
+};
+
+const Financial = () => {
+  return <FinancialModule />;
+};
+
+const FutureItems = () => {
+  return <FutureItemsModule />;
+};
+
+const Calendar = () => {
+  return <CalendarModule />;
+};
 
 /**
  * Componente principal da aplicação Home Manager
@@ -28,14 +49,55 @@ import * as taskService from './services/taskService';
  */
 const App = () => {
   return (
-    <Routes>
-      <Route path="/login" element={
-        <Suspense fallback={<DashboardSkeleton />}>
-          <Login />
-        </Suspense>
-      } />
-      <Route path="/*" element={<HomeLayout />} />
-    </Routes>
+    <AppProvider>
+      <Routes>
+        {/* Rota pública */}
+        <Route path="/login" element={
+          <Suspense fallback={<DashboardSkeleton />}>
+            <Login />
+          </Suspense>
+        } />
+
+        {/* Rotas privadas com layout compartilhado */}
+        <Route path="/" element={<HomeLayout />}>
+          <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route path="dashboard" element={
+            <Suspense fallback={<DashboardSkeleton />}>
+              <FadeIn><Dashboard /></FadeIn>
+            </Suspense>
+          } />
+          <Route path="tasks" element={
+            <Suspense fallback={<TaskListSkeleton />}>
+              <FadeIn><Tasks /></FadeIn>
+            </Suspense>
+          } />
+          <Route path="shopping" element={
+            <Suspense fallback={<ShoppingListSkeleton />}>
+              <FadeIn><ShoppingList /></FadeIn>
+            </Suspense>
+          } />
+          <Route path="financial" element={
+            <Suspense fallback={<ExpenseListSkeleton />}>
+              <FadeIn><Financial /></FadeIn>
+            </Suspense>
+          } />
+          <Route path="future" element={
+            <Suspense fallback={<ExpenseListSkeleton />}>
+              <FadeIn><FutureItems /></FadeIn>
+            </Suspense>
+          } />
+          <Route path="calendar" element={
+            <Suspense fallback={<DashboardSkeleton />}>
+              <FadeIn><Calendar /></FadeIn>
+            </Suspense>
+          } />
+        </Route>
+
+        {/* Fallback para rotas não encontradas */}
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      </Routes>
+      <Toaster />
+    </AppProvider>
   );
 };
 
@@ -43,264 +105,44 @@ const App = () => {
  * Layout principal para as páginas autenticadas
  */
 const HomeLayout = () => {
-  // Tema
-  const { theme, setTheme } = useTheme();
+  // Tema (necessário manter o ThemeContext ativo)
+  const { theme } = useTheme();
+  
+  // Location para título dinâmico
+  const location = useLocation();
 
-  // Estado do módulo atual
-  const [currentModule, setCurrentModule] = useState(ModuleIds.DASHBOARD);
-
-  // Estados dos dados
-  const [notices, setNotices] = useState([]);
-  const [tasks, setTasks] = useState([]);
-  const [shoppingList, setShoppingList] = useState({ month: '', items: [] });
-  const [expenses, setExpenses] = useState([]);
-  const [futureItems, setFutureItems] = useState([]);
-
-  // Estado de loading
-  const [loading, setLoading] = useState(true);
-
-  // Carrega dados iniciais
-  useEffect(() => {
-    loadInitialData();
-  }, []);
-
-  const loadInitialData = async () => {
-    try {
-      setLoading(true);
-      const [noticesData, tasksData, shoppingData, expensesData, futureItemsData] = await Promise.all([
-        noticeService.getAllNotices(),
-        taskService.getAllTasks(),
-        shoppingService.getShoppingList(),
-        financialService.getAllExpenses(),
-        futureItemsService.getAllFutureItems()
-      ]);
-
-      setNotices(noticesData);
-      setTasks(tasksData);
-      setShoppingList(shoppingData);
-      setExpenses(expensesData);
-      setFutureItems(futureItemsData);
-    } catch (error) {
-      console.error('Erro ao carregar dados:', error);
-    } finally {
-      setLoading(false);
-    }
+  // Mapa de títulos por rota
+  const pageTitles = {
+    '/dashboard': 'Dashboard',
+    '/tasks': 'Tarefas',
+    '/shopping': 'Lista de Compras',
+    '/financial': 'Financeiro',
+    '/future': 'Compras Futuras',
+    '/calendar': 'Calendário',
   };
 
-  // Handlers de Avisos
-  const handleAddNotice = useCallback(async (notice) => {
-    const newNotice = await noticeService.addNotice(notice);
-    setNotices(prev => [...prev, newNotice]);
-  }, []);
-
-  const handleRemoveNotice = useCallback(async (id) => {
-    await noticeService.deleteNotice(id);
-    setNotices(prev => prev.filter(notice => notice.id !== id));
-  }, []);
-
-  // Handlers de Tarefas
-  const handleAddTask = useCallback(async (task) => {
-    const newTask = await taskService.addTask(task);
-    setTasks(prev => [...prev, newTask]);
-  }, []);
-
-  const handleToggleTask = useCallback((id) => {
-    setTasks(prev => prev.map(task =>
-      task.id === id ? { ...task, completed: !task.completed } : task
-    ));
-  }, []);
-
-  const handleDeleteTask = useCallback(async (id) => {
-    await taskService.deleteTask(id);
-    setTasks(prev => prev.filter(task => task.id !== id));
-  }, []);
-
-  // Handlers de Lista de Compras
-  const handleAddShoppingItem = useCallback(async (item) => {
-    const newItem = await shoppingService.addShoppingItem(item);
-    setShoppingList(prev => ({
-      ...prev,
-      items: [...prev.items, newItem]
-    }));
-  }, []);
-
-  const handleToggleShoppingItem = useCallback((id) => {
-    setShoppingList(prev => ({
-      ...prev,
-      items: prev.items.map(item =>
-        item.id === id ? { ...item, checked: !item.checked } : item
-      )
-    }));
-  }, []);
-
-  const handleDeleteShoppingItem = useCallback(async (id) => {
-    await shoppingService.deleteShoppingItem(id);
-    setShoppingList(prev => ({
-      ...prev,
-      items: prev.items.filter(item => item.id !== id)
-    }));
-  }, []);
-
-  // Handlers de Despesas
-  const handleAddExpense = useCallback(async (expense) => {
-    const newExpense = await financialService.addExpense(expense);
-    setExpenses(prev => [...prev, newExpense]);
-  }, []);
-
-  const handleDeleteExpense = useCallback(async (id) => {
-    await financialService.deleteExpense(id);
-    setExpenses(prev => prev.filter(exp => exp.id !== id));
-  }, []);
-
-  // Handlers de Itens Futuros
-  const handleAddFutureItem = useCallback(async (item) => {
-    const newItem = await futureItemsService.addFutureItem(item);
-    setFutureItems(prev => [...prev, newItem]);
-  }, []);
-
-  const handleDeleteFutureItem = useCallback(async (id) => {
-    await futureItemsService.deleteFutureItem(id);
-    setFutureItems(prev => prev.filter(item => item.id !== id));
-  }, []);
-
-  // Renderiza o módulo atual
-  const renderCurrentModule = () => {
-    if (loading) {
-      // Mostra skeleton apropriado para cada módulo
-      switch (currentModule) {
-        case ModuleIds.DASHBOARD:
-          return <DashboardSkeleton />;
-        case ModuleIds.TASKS:
-          return (
-            <div className="space-y-4">
-              <div className="h-10 w-full" />
-              <TaskListSkeleton items={5} />
-            </div>
-          );
-        case ModuleIds.SHOPPING:
-          return (
-            <div className="space-y-4">
-              <div className="h-10 w-full" />
-              <ShoppingListSkeleton items={5} />
-            </div>
-          );
-        case ModuleIds.FINANCIAL:
-          return (
-            <div className="space-y-4">
-              <div className="h-10 w-full" />
-              <ExpenseListSkeleton items={5} />
-            </div>
-          );
-        case ModuleIds.FUTURE_ITEMS:
-          return (
-            <div className="space-y-4">
-              <div className="h-10 w-full" />
-              <ExpenseListSkeleton items={5} />
-            </div>
-          );
-        default:
-          return <DashboardSkeleton />;
-      }
-    }
-
-    switch (currentModule) {
-      case ModuleIds.DASHBOARD:
-        return (
-          <Suspense fallback={<DashboardSkeleton />}>
-            <FadeIn>
-              <Dashboard
-                notices={notices}
-                tasks={tasks}
-                shoppingList={shoppingList}
-                expenses={expenses}
-                futureItems={futureItems}
-                onAddNotice={handleAddNotice}
-                onRemoveNotice={handleRemoveNotice}
-                onAddTask={handleAddTask}
-                onToggleTask={handleToggleTask}
-                onDeleteTask={handleDeleteTask}
-                onNavigateToTasks={() => setCurrentModule(ModuleIds.TASKS)}
-              />
-            </FadeIn>
-          </Suspense>
-        );
-      case ModuleIds.TASKS:
-        return (
-          <Suspense fallback={<TaskListSkeleton />}>
-            <FadeIn>
-              <Tasks
-                tasks={tasks}
-                onAddTask={handleAddTask}
-                onToggleTask={handleToggleTask}
-                onDeleteTask={handleDeleteTask}
-              />
-            </FadeIn>
-          </Suspense>
-        );
-      case ModuleIds.SHOPPING:
-        return (
-          <Suspense fallback={<ShoppingListSkeleton />}>
-            <FadeIn>
-              <ShoppingList
-                shoppingList={shoppingList}
-                onAddItem={handleAddShoppingItem}
-                onToggleItem={handleToggleShoppingItem}
-                onDeleteItem={handleDeleteShoppingItem}
-              />
-            </FadeIn>
-          </Suspense>
-        );
-      case ModuleIds.FINANCIAL:
-        return (
-          <Suspense fallback={<ExpenseListSkeleton />}>
-            <FadeIn>
-              <Financial
-                expenses={expenses}
-                onAddExpense={handleAddExpense}
-                onDeleteExpense={handleDeleteExpense}
-              />
-            </FadeIn>
-          </Suspense>
-        );
-      case ModuleIds.FUTURE:
-        return (
-          <Suspense fallback={<ExpenseListSkeleton />}>
-            <FadeIn>
-              <FutureItems
-                futureItems={futureItems}
-                onAddItem={handleAddFutureItem}
-                onDeleteItem={handleDeleteFutureItem}
-              />
-            </FadeIn>
-          </Suspense>
-        );
-      case ModuleIds.CALENDAR:
-        return (
-          <Suspense fallback={<DashboardSkeleton />}>
-            <FadeIn>
-              <Calendar />
-            </FadeIn>
-          </Suspense>
-        );
-      default:
-        return null;
-    }
-  };
+  const pageTitle = pageTitles[location.pathname] || 'Ninho';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-cyan-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 transition-colors duration-300">
-      <Navigation
-        currentModule={currentModule}
-        onModuleChange={setCurrentModule}
-        currentTheme={theme}
-        onThemeChange={setTheme}
-      />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        <div className="animate-fade-in">
-          {renderCurrentModule()}
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset className="overflow-x-hidden">
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-background px-4 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+          <div className="flex items-center gap-2 flex-1">
+            <SidebarTrigger className="-ml-1" />
+            <Separator orientation="vertical" className="mr-2 h-4" />
+            <h1 className="text-lg font-semibold text-foreground">
+              {pageTitle}
+            </h1>
+          </div>
+        </header>
+        <div className="flex flex-1 flex-col gap-4 p-4 overflow-x-hidden">
+          <div className="flex-1 max-w-full">
+            <Outlet />
+          </div>
         </div>
-      </main>
-    </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 };
 

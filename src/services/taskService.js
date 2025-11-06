@@ -4,7 +4,7 @@
  */
 
 import { mockTasks } from '../mocks/data';
-import { DATA_MODE, apiRequest, API_ENDPOINTS } from './api/config';
+import { API_ENDPOINTS, DATA_MODE, apiRequest } from './api/config';
 
 /**
  * Busca todas as tarefas
@@ -27,10 +27,10 @@ export async function getAllTasks() {
  */
 export async function addTask(task) {
   const newTask = {
-    id: Date.now(),
+    id: task.id || Date.now(),
     title: task.title,
     assignedTo: task.assignedTo || 'Geral',
-    completed: false,
+    completed: task.completed || false,
     dueDate: task.dueDate || new Date().toISOString().split('T')[0]
   };
 
@@ -55,7 +55,20 @@ export async function addTask(task) {
 export async function updateTask(id, updates) {
   if (DATA_MODE === 'mock') {
     return new Promise((resolve) => {
-      setTimeout(() => resolve({ id, ...updates }), 100);
+      setTimeout(() => {
+        // Encontra a tarefa nos dados mock
+        const task = mockTasks.find(t => t.id === id);
+        if (!task) {
+          resolve({ id, ...updates });
+          return;
+        }
+        
+        // Atualiza a tarefa nos dados mock
+        Object.assign(task, updates);
+        
+        // Retorna a tarefa atualizada
+        resolve({ ...task });
+      }, 100);
     });
   }
 
@@ -73,7 +86,20 @@ export async function updateTask(id, updates) {
 export async function toggleTaskCompletion(id) {
   if (DATA_MODE === 'mock') {
     return new Promise((resolve) => {
-      setTimeout(() => resolve({ id }), 100);
+      setTimeout(() => {
+        // Encontra a tarefa nos dados mock
+        const task = mockTasks.find(t => t.id === id);
+        if (!task) {
+          resolve({ id, completed: false });
+          return;
+        }
+        
+        // Atualiza o status nos dados mock para persistir durante a sessão
+        task.completed = !task.completed;
+        
+        // Retorna a tarefa atualizada
+        resolve({ ...task });
+      }, 100);
     });
   }
 

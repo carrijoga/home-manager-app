@@ -15,6 +15,14 @@ export function AppProvider({ children }) {
   const [expenses, setExpenses] = useState([]);
   const [futureItems, setFutureItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // Mock user - será substituído pela autenticação real
+  const [user] = useState({
+    id: '1',
+    name: 'Usuário',
+    email: 'usuario@ninho.com',
+    avatar: null
+  });
 
   // ========== NOTICES ==========
   const addNotice = async (notice) => {
@@ -140,6 +148,7 @@ export function AppProvider({ children }) {
     expenses,
     futureItems,
     loading,
+    user,
     
     // Notices actions
     addNotice,

@@ -18,7 +18,7 @@ export async function toAvatarSrc(avatar: any, mime = "image/png"): Promise<stri
       const parsed = JSON.parse(s);
       if (Array.isArray(parsed)) {
         const bytes = new Uint8Array(parsed);
-        const blob = new Blob([bytes], { type: mime });
+        const blob = new Blob([bytes as BlobPart], { type: mime });
         return URL.createObjectURL(blob);
       }
     } catch {
@@ -29,14 +29,13 @@ export async function toAvatarSrc(avatar: any, mime = "image/png"): Promise<stri
   // Array<number> or Uint8Array
   if (Array.isArray(avatar) || avatar instanceof Uint8Array) {
     const bytes = avatar instanceof Uint8Array ? avatar : new Uint8Array(avatar);
-    const blob = new Blob([bytes], { type: mime });
+    const blob = new Blob([bytes as BlobPart], { type: mime });
     return URL.createObjectURL(blob);
   }
 
   // ArrayBuffer
   if (avatar instanceof ArrayBuffer) {
-    const bytes = new Uint8Array(avatar);
-    const blob = new Blob([bytes], { type: mime });
+    const blob = new Blob([avatar], { type: mime });
     return URL.createObjectURL(blob);
   }
 

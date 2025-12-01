@@ -15,7 +15,8 @@ The project is in **hybrid mode** - partially migrated to TypeScript:
 - Configuration files (`vite.config.ts`, `tailwind.config.ts`)
 - Type definitions (`src/types/index.ts`)
 - shadcn/ui components (`src/components/ui/*.tsx`)
-- Navigation component (`src/components/Navigation.tsx`)
+- Sidebar component (`src/components/app-sidebar.tsx`)
+- Skeleton components (`src/components/skeletons/*.tsx`)
 - Pages (`src/pages/Login.tsx`)
 - Utilities (`src/lib/utils.ts`)
 - Entry point (`src/main.tsx`)
@@ -24,6 +25,7 @@ The project is in **hybrid mode** - partially migrated to TypeScript:
 
 - Most React components (`.jsx` files in `components/modules/` and `components/common/`)
 - Main App component (`src/App.jsx`)
+- Contexts (`src/contexts/AppContext.jsx`, `src/contexts/ThemeContext.jsx`)
 - Services (`src/services/*.js`)
 - Mocks and utilities
 
@@ -44,6 +46,136 @@ const task: Task = {
 ```
 
 For detailed migration guide, see `TYPESCRIPT.md`.
+
+## Common Patterns & Examples
+
+### Adding a New Module
+
+To add a new module to the application, follow these steps:
+
+1. **Create the service** (`src/services/myModuleService.js`):
+```javascript
+import { DATA_MODE } from './api/config';
+import * as mockData from '../mocks/data';
+
+export const getAllItems = async () => {
+  if (DATA_MODE === 'mock') {
+    return new Promise(resolve =>
+      setTimeout(() => resolve(mockData.myItems), 100)
+    );
+  }
+  // API implementation here
+};
+```
+
+2. **Add state to AppContext** (`src/contexts/AppContext.jsx`):
+```javascript
+import * as myModuleService from '@/services/myModuleService';
+
+export function AppProvider({ children }) {
+  const [myItems, setMyItems] = useState([]);
+
+  const addMyItem = async (item) => {
+    const newItem = await myModuleService.addItem(item);
+    setMyItems([...myItems, newItem]);
+  };
+
+  // Add to memoized value
+  const value = useMemo(() => ({
+    myItems,
+    addMyItem,
+    // ...
+  }), [myItems]);
+}
+```
+
+3. **Create module component** (`src/components/modules/MyModule.jsx`):
+```javascript
+import { useApp } from '@/contexts/AppContext';
+
+export default function MyModule() {
+  const { myItems, addMyItem } = useApp();
+
+  return (
+    <div>
+      {/* Module UI */}
+    </div>
+  );
+}
+```
+
+4. **Add route to App.jsx**:
+```javascript
+const MyModuleModule = lazy(() => import('./components/modules/MyModule'));
+
+<Route path="my-module" element={
+  <Suspense fallback={<DashboardSkeleton />}>
+    <FadeIn><MyModule /></FadeIn>
+  </Suspense>
+} />
+```
+
+5. **Add to AppSidebar** (`src/components/app-sidebar.tsx`):
+```typescript
+{
+  title: "My Module",
+  url: "/my-module",
+  icon: MyIcon,
+}
+```
+
+### Working with Forms
+
+Use shadcn/ui components with controlled inputs:
+
+```javascript
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useState } from 'react';
+import { useApp } from '@/contexts/AppContext';
+
+function MyForm() {
+  const { addTask } = useApp();
+  const [title, setTitle] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await addTask({ title });
+    setTitle('');
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <Label htmlFor="title">Título</Label>
+      <Input
+        id="title"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+      />
+      <Button type="submit">Adicionar</Button>
+    </form>
+  );
+}
+```
+
+### Navigating Programmatically
+
+Use React Router's `useNavigate` hook:
+
+```javascript
+import { useNavigate } from 'react-router-dom';
+
+function MyComponent() {
+  const navigate = useNavigate();
+
+  const goToTasks = () => {
+    navigate('/tasks');
+  };
+
+  return <button onClick={goToTasks}>Ver Tarefas</button>;
+}
+```
 
 ## Development Commands
 
@@ -67,31 +199,37 @@ For detailed migration guide, see `TYPESCRIPT.md`.
 
 ### Routing Architecture
 
-The application uses **React Router v6** for navigation:
+The application uses **React Router v7** with proper route-based navigation:
 
 **Route Structure**:
 
 ```
 / (root)
 ├── /login → Login page (public)
-└── /* → HomeLayout (main app)
-    └── Module switching via state (Dashboard, Tasks, Shopping, etc.)
+└── / → HomeLayout (authenticated app shell)
+    ├── /dashboard → Dashboard module
+    ├── /tasks → Tasks module
+    ├── /shopping → Shopping List module
+    ├── /financial → Financial module
+    ├── /future → Future Items module
+    └── /calendar → Calendar module
 ```
 
 **Key Points**:
 
 - `App.jsx` manages top-level routing with `<Routes>` and `<Route>`
 - `/login` route renders the Login component (public access)
-- All other routes (`/*`) render `HomeLayout` component
-- **Module navigation** within HomeLayout uses **state-based switching**, not routes
-- This hybrid approach allows a separate login page while keeping the existing module system
+- All other routes render through `HomeLayout` component with `<Outlet />`
+- Each module has its own route and URL (e.g., `/tasks`, `/shopping`)
+- **Lazy loading**: Modules are loaded on-demand using `React.lazy()` and `<Suspense>`
+- Root path `/` redirects to `/dashboard`
 
-**Why Hybrid?**:
+**Benefits**:
 
-- Login has its own URL for deep linking and bookmarking
-- Main app modules use state for faster transitions and simpler architecture
-- No URL changes when switching between Dashboard, Tasks, Shopping, etc.
-- Preserves existing module system without breaking changes
+- Proper deep linking and browser history support
+- Code splitting for optimized initial load
+- Better UX with URL-based navigation
+- Easier to implement protected routes in the future
 
 ### Data Flow Architecture
 
@@ -104,10 +242,12 @@ The application uses a **service layer pattern** with dual-mode data access:
 
 ### State Management
 
-- **Global State**: Managed in `HomeLayout` (inside `App.jsx`) using React useState hooks
-- **Context**: `ThemeContext` for dark/light theme management
-- All data flows down from HomeLayout to module components via props
-- Callbacks flow up from modules to HomeLayout for state updates
+- **Global State**: Managed in `AppContext` (`src/contexts/AppContext.jsx`) using React Context API
+- **App Context**: Centralized state management with `AppProvider` and `useApp()` hook
+- **Theme Context**: Separate `ThemeContext` for dark/light theme management
+- All data (notices, tasks, shopping, expenses, future items) stored in AppContext
+- Modules consume state via `useApp()` hook instead of props
+- Actions (add, delete, toggle) provided through context, not callbacks
 
 ### Layer Structure
 
@@ -144,29 +284,64 @@ Each domain has its own service file (`taskService.js`, `financialService.js`, e
 
 **When adding new features**: Always create or extend services rather than putting business logic in components.
 
+### AppContext Pattern
+
+The application uses a centralized Context API pattern for state management:
+
+**AppContext** (`src/contexts/AppContext.jsx`):
+- Wraps entire app via `<AppProvider>` in `App.jsx`
+- Stores all application data (notices, tasks, shopping, expenses, future items)
+- Provides actions (add, delete, toggle) through context
+- Handles initial data loading on mount using service layer
+- Uses `useMemo` to optimize context value updates
+
+**Usage in Components**:
+```javascript
+import { useApp } from '@/contexts/AppContext';
+
+function MyComponent() {
+  const { tasks, addTask, deleteTask } = useApp();
+
+  // Access data and actions directly
+  const handleAdd = () => addTask({ title: 'New Task' });
+}
+```
+
+**Important**:
+- NEVER import services directly in module components
+- ALWAYS use `useApp()` hook to access data and actions
+- Services are ONLY called from AppContext
+- This ensures single source of truth and consistent state updates
+
 ### Module System
 
-The app uses a **hybrid routing system**:
+The app uses **route-based navigation** with sidebar:
 
-**Top-Level Routes** (React Router):
+**Routes** (React Router):
 
 - `/login` - Login page with Google OAuth UI
-- `/*` - Main application (HomeLayout)
+- `/dashboard` - Dashboard overview
+- `/tasks` - Tasks management
+- `/shopping` - Shopping list
+- `/financial` - Financial tracking
+- `/future` - Future purchases
+- `/calendar` - Calendar (placeholder)
 
-**Module Switching** (State-based, inside HomeLayout):
+**Navigation**:
 
-- **ModuleIds** enum defines all available modules (Dashboard, Tasks, Shopping, Financial, Future, Calendar)
-- `HomeLayout` component (inside `App.jsx`) manages the current module state
-- `Navigation.tsx` renders tabs and handles module switching via `setCurrentModule`
+- `AppSidebar` component (TypeScript) provides collapsible sidebar navigation
+- Uses shadcn/ui `Sidebar` component with `SidebarProvider`
+- User avatar, notifications, and theme toggle in sidebar
+- Navigation items trigger route changes via `react-router-dom`
 - Each module is a self-contained feature component in `components/modules/`
-- Modules switch instantly without URL changes (better UX, preserves state)
+- Modules are lazy-loaded for performance optimization
 
 **Navigation Flow**:
 
 ```
-User clicks tab → Navigation calls onModuleChange(moduleId)
-→ HomeLayout updates currentModule state
-→ renderCurrentModule() displays new module
+User clicks sidebar item → React Router navigates to route
+→ HomeLayout renders with <Outlet />
+→ Route component lazy loads and renders
 ```
 
 ### Authentication & Pages Structure
@@ -185,12 +360,13 @@ User clicks tab → Navigation calls onModuleChange(moduleId)
 
 ### Component Organization
 
-- `components/common/` - Reusable UI components (Button, Card, Input, Header, Logo, etc.)
-- `components/ui/` - shadcn/ui components (button, card, dialog, select, spinner, etc.)
+- `components/common/` - Reusable UI components (Button, Card, Input, Header, Logo, FadeIn, etc.)
+- `components/ui/` - shadcn/ui components (button, card, dialog, select, spinner, sidebar, etc.)
 - `components/modules/` - Feature modules (Dashboard, Tasks, ShoppingList, Financial, FutureItems, Calendar)
-- `components/Navigation.tsx` - Tab-based navigation for module switching
-- `components/skeletons/` - Loading skeletons for async data
+- `components/app-sidebar.tsx` - Main sidebar navigation with user profile and notifications
+- `components/skeletons/` - Loading skeletons for async data (TypeScript)
 - `pages/` - Standalone pages with their own routes (Login, etc.)
+- `contexts/` - React contexts (AppContext, ThemeContext)
 - Each component follows React functional component pattern with hooks
 
 ## Styling System
@@ -295,18 +471,87 @@ The codebase is prepared for REST API integration:
 
 **CORS Note**: Backend must enable CORS with origin `http://localhost:3000` and appropriate methods.
 
-## Known Issues & Planned Improvements
+## Key Architecture Decisions
 
-See `FIX.md` for comprehensive list of planned enhancements:
+### Why AppContext Instead of Props?
 
-- **Critical**: Many cards use hardcoded white backgrounds instead of theme colors
-- **Planned**: Integration with shadcn/ui component library
-- **Planned**: Enhanced date picker with default behavior (current date)
-- **Planned**: Redesigned navigation bar with user profile and notifications
-- **Planned**: Monthly shopping lists (currently single list)
-- **Planned**: Payment status tracking in Financial module
-- **Planned**: Edit functionality for expenses and future items
-- **Planned**: Post-it style design for notice board
+The app evolved from a prop-drilling architecture to AppContext for several reasons:
+
+1. **Simplified component signatures**: Components no longer need to pass callbacks down multiple levels
+2. **Easier refactoring**: Adding new actions doesn't require updating all intermediate components
+3. **Better separation of concerns**: Components focus on UI, AppContext handles data orchestration
+4. **Consistent state updates**: Single point of truth for all state mutations
+5. **Performance**: Memoized context value prevents unnecessary re-renders
+
+### Why React Router Routes Instead of State-Based Tabs?
+
+The app migrated from state-based module switching to proper React Router routes:
+
+1. **Deep linking**: Users can bookmark specific modules (e.g., `/tasks`, `/shopping`)
+2. **Browser history**: Back/forward buttons work as expected
+3. **Code splitting**: Lazy loading reduces initial bundle size
+4. **Better UX**: URL reflects current view, easier to share specific sections
+5. **SEO-ready**: Proper routing structure for future SSR/SSG implementation
+
+### Why shadcn/ui Components?
+
+The app uses shadcn/ui instead of custom components where possible:
+
+1. **Accessibility**: Built on Radix UI primitives with WCAG compliance
+2. **Customizable**: Components are copied to your codebase, not imported from a package
+3. **TypeScript-first**: Full type safety out of the box
+4. **Consistent design**: Pre-built components follow best practices
+5. **No lock-in**: You own the code and can modify as needed
+
+## Recent Architectural Changes
+
+The application has undergone significant refactoring from its original implementation:
+
+### Changes from Previous Architecture
+
+**Before** (State-based navigation):
+- Module switching via `currentModule` state in App.jsx
+- Tab-based navigation with `Navigation.tsx`
+- Props drilling for data and callbacks
+- No lazy loading, all modules loaded upfront
+
+**After** (Route-based navigation):
+- Proper React Router routes (`/dashboard`, `/tasks`, etc.)
+- Sidebar navigation with `AppSidebar.tsx`
+- AppContext with `useApp()` hook for state management
+- Lazy loading with `React.lazy()` and `<Suspense>`
+- Better performance and UX
+
+### Deprecated Patterns
+
+❌ **Don't use these patterns** (from old architecture):
+```javascript
+// Old: Props drilling
+function App() {
+  const [tasks, setTasks] = useState([]);
+  return <Tasks tasks={tasks} onAddTask={setTasks} />;
+}
+
+// Old: State-based module switching
+const [currentModule, setCurrentModule] = useState('dashboard');
+
+// Old: Direct service imports in components
+import * as taskService from '@/services/taskService';
+```
+
+✅ **Use these patterns instead** (current architecture):
+```javascript
+// New: AppContext hook
+function Tasks() {
+  const { tasks, addTask } = useApp();
+}
+
+// New: Route-based navigation
+<Route path="tasks" element={<Tasks />} />
+
+// New: Services only in AppContext
+// Components should NEVER import services directly
+```
 
 ## Code Conventions
 
@@ -317,6 +562,7 @@ See `FIX.md` for comprehensive list of planned enhancements:
 - Props destructuring in component parameters
 - Named exports for services, default exports for components
 - Async/await for asynchronous operations
+- Use `useApp()` hook instead of props for accessing global state
 
 ### TypeScript
 
@@ -341,11 +587,53 @@ See `FIX.md` for comprehensive list of planned enhancements:
 - LocalStorage for theme persistence
 - Vite build tool ensures broad compatibility
 
+## Project Structure Quick Reference
+
+```
+src/
+├── components/
+│   ├── app-sidebar.tsx          # Main sidebar navigation (TS)
+│   ├── common/                  # Reusable UI components (JS)
+│   ├── modules/                 # Feature modules (JS)
+│   │   ├── Dashboard.jsx
+│   │   ├── Tasks.jsx
+│   │   ├── ShoppingList.jsx
+│   │   ├── Financial.jsx
+│   │   ├── FutureItems.jsx
+│   │   └── Calendar.jsx
+│   ├── skeletons/              # Loading states (TS)
+│   └── ui/                     # shadcn/ui components (TS)
+├── contexts/
+│   ├── AppContext.jsx          # Global state management
+│   └── ThemeContext.jsx        # Theme (dark/light)
+├── pages/
+│   └── Login.tsx               # Login page
+├── services/                   # Data layer (all JS)
+│   ├── api/
+│   │   └── config.js           # API configuration
+│   ├── taskService.js
+│   ├── shoppingService.js
+│   ├── financialService.js
+│   ├── futureItemsService.js
+│   └── noticeService.js
+├── types/
+│   └── index.ts                # All TypeScript types
+├── lib/
+│   └── utils.ts                # Helper utilities
+├── mocks/
+│   └── data.js                 # Mock data
+├── App.jsx                     # Main app + routing
+└── main.tsx                    # Entry point
+```
+
 ## Development Notes
 
 1. **Theme Management**: Use `useTheme()` hook from ThemeContext, never manipulate DOM classes directly
-2. **Adding New Services**: Follow existing service patterns with DATA_MODE check
-3. **Color Usage**: Use Tailwind theme colors, avoid hardcoded values
-4. **Component Reuse**: Check `components/common/` before creating new UI components
-5. **State Updates**: Always use provided callbacks from App.jsx, never mutate props
+2. **State Management**: Use `useApp()` hook from AppContext to access state and actions, never import services directly in components
+3. **Adding New Services**: Follow existing service patterns with DATA_MODE check
+4. **Color Usage**: Use Tailwind theme colors, avoid hardcoded values
+5. **Component Reuse**: Check `components/common/` and `components/ui/` before creating new UI components
 6. **Date Handling**: date-fns library available for date formatting and manipulation
+7. **Navigation**: Use React Router's `useNavigate()` or `<Link>` for routing, never manipulate URL directly
+8. **Lazy Loading**: Wrap lazy-loaded components in `<Suspense>` with appropriate fallback skeletons
+9. **Sidebar**: Add new navigation items to `AppSidebar.tsx`, not inline in components

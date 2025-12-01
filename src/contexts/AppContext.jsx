@@ -1,8 +1,10 @@
+import * as authService from '@/services/authService';
 import * as financialService from '@/services/financialService';
 import * as futureItemsService from '@/services/futureItemsService';
 import * as noticeService from '@/services/noticeService';
 import * as shoppingService from '@/services/shoppingService';
 import * as taskService from '@/services/taskService';
+import { userProfileToUser } from '@/types';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 export const AppContext = createContext();
@@ -15,6 +17,8 @@ export function AppProvider({ children }) {
   const [expenses, setExpenses] = useState([]);
   const [futureItems, setFutureItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  const [userLoading, setUserLoading] = useState(false);
 
   // ========== NOTICES ==========
   const addNotice = async (notice) => {
@@ -102,6 +106,26 @@ export function AppProvider({ children }) {
     setFutureItems(futureItems.filter(i => i.id !== id));
   };
 
+  // ========== USER PROFILE ==========
+  const loadUserProfile = async () => {
+    try {
+      setUserLoading(true);
+      const profileData = await authService.getUserProfile();
+      setUser(userProfileToUser(profileData));
+      return userProfileToUser(profileData);
+    } catch (error) {
+      console.error('Erro ao carregar perfil do usuário:', error);
+      setUser(null);
+      throw error;
+    } finally {
+      setUserLoading(false);
+    }
+  };
+
+  const clearUser = () => {
+    setUser(null);
+  };
+
   // ========== LOAD INITIAL DATA ==========
   useEffect(() => {
     const loadData = async () => {
@@ -140,6 +164,12 @@ export function AppProvider({ children }) {
     expenses,
     futureItems,
     loading,
+    user,
+    userLoading,
+    
+    // User actions
+    loadUserProfile,
+    clearUser,
     
     // Notices actions
     addNotice,
@@ -163,7 +193,7 @@ export function AppProvider({ children }) {
     // Future items actions
     addFutureItem,
     deleteFutureItem,
-  }), [notices, tasks, shoppingList, expenses, futureItems, loading]);
+  }), [notices, tasks, shoppingList, expenses, futureItems, loading, user, userLoading]);
 
   return (
     <AppContext.Provider value={value}>

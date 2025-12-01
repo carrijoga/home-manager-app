@@ -54,6 +54,7 @@ const Dashboard = () => {
     shoppingList,
     expenses,
     futureItems,
+    user,
     addNotice,
     deleteNotice,
     addTask,
@@ -224,8 +225,50 @@ const Dashboard = () => {
     };
   }, [expenses, tasks]);
 
+  // Obtém a saudação de acordo com o horário
+  const getGreeting = useCallback(() => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) return 'Bom dia';
+    if (hour >= 12 && hour < 18) return 'Boa tarde';
+    return 'Boa noite';
+  }, []);
+
+  // Obtém mensagem motivacional aleatória
+  const getMotivationalMessage = useCallback(() => {
+    const messages = [
+      'Vamos organizar o dia de hoje?',
+      'Seu lar merece o melhor!',
+      'Pronto para conquistar suas metas?',
+      'Juntos, a organização fica mais fácil!',
+      'Um dia produtivo começa aqui!',
+      'Vamos manter tudo em ordem?',
+      'Sua família conta com você!'
+    ];
+    return messages[Math.floor(Math.random() * messages.length)];
+  }, []);
+
   return (
     <div className="space-y-6 max-w-full overflow-x-hidden">
+      {/* Saudação Personalizada */}
+      <div className="bg-gradient-to-r from-gray-50 to-indigo-50/30 dark:from-gray-800/50 dark:to-indigo-900/10 rounded-lg p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div>
+              <h1 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                {getGreeting()}, {user?.name || 'Usuário'}!
+                <span className="text-2xl animate-wave inline-block">👋</span>
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">
+                {getMotivationalMessage()}
+              </p>
+            </div>
+          </div>
+          <div className="hidden sm:block opacity-60">
+            <Sparkles className="text-indigo-500 dark:text-indigo-400" size={20} />
+          </div>
+        </div>
+      </div>
+
       {/* Carrossel de Métricas */}
       <div className="group max-w-full">
         <CarouselMetrics autoPlayDelay={5000}>

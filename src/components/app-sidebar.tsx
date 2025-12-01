@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
@@ -40,6 +40,7 @@ import {
 } from "lucide-react";
 import * as React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { toAvatarSrc } from "@/lib/avatarUtils";
 
 // Mock de ninhos - será substituído por dados reais
 const mockNinhos = [
@@ -109,6 +110,28 @@ export function AppSidebar({ user }: AppSidebarProps) {
   };
 
   const currentUser = user || defaultUser;
+
+  const [avatarSrc, setAvatarSrc] = React.useState<string | undefined>(undefined);
+
+  React.useEffect(() => {
+    let mounted = true;
+    let createdObjectUrl: string | undefined;
+
+    (async () => {
+      const src = await toAvatarSrc(currentUser.avatar, "image/png");
+      if (!mounted) {
+        if (src && src.startsWith("blob:")) URL.revokeObjectURL(src);
+        return;
+      }
+      if (src && src.startsWith("blob:")) createdObjectUrl = src;
+      setAvatarSrc(src);
+    })();
+
+    return () => {
+      mounted = false;
+      if (createdObjectUrl) URL.revokeObjectURL(createdObjectUrl);
+    };
+  }, [currentUser.avatar]);
 
   const unreadCount = mockNotifications.filter((n) => !n.read).length;
 
@@ -291,6 +314,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
                   className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                 >
                   <Avatar className="h-8 w-8 rounded-lg">
+                    <AvatarImage src={avatarSrc ?? currentUser.avatar} alt={currentUser.name} />
                     <AvatarFallback className="rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
                       {currentUser.name
                         .split(" ")
@@ -318,7 +342,8 @@ export function AppSidebar({ user }: AppSidebarProps) {
               >
                 <DropdownMenuLabel className="p-0 font-normal">
                   <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                    <Avatar className="h-8 w-8 rounded-lg">
+                      <Avatar className="h-8 w-8 rounded-lg">
+                      <AvatarImage src={avatarSrc ?? currentUser.avatar} alt={currentUser.name} />
                       <AvatarFallback className="rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
                         {currentUser.name
                           .split(" ")

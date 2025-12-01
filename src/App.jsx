@@ -1,12 +1,13 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { AppSidebar } from './components/app-sidebar';
 import { FadeIn } from './components/common/FadeIn';
+import RequireAuth from './components/common/RequireAuth';
 import { DashboardSkeleton, ExpenseListSkeleton, ShoppingListSkeleton, TaskListSkeleton } from './components/skeletons';
 import { Separator } from './components/ui/separator';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from './components/ui/sidebar';
 import { Toaster } from './components/ui/sonner';
-import { AppProvider } from './contexts/AppContext';
+import { AppProvider, useApp } from './contexts/AppContext';
 import { useTheme } from './contexts/ThemeContext';
 
 // Lazy loading dos módulos para code splitting
@@ -17,6 +18,8 @@ const FinancialModule = lazy(() => import('./components/modules/Financial'));
 const FutureItemsModule = lazy(() => import('./components/modules/FutureItems'));
 const CalendarModule = lazy(() => import('./components/modules/Calendar'));
 const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const GoogleCallback = lazy(() => import('./pages/GoogleCallback'));
 
 // Componentes wrapper que conectam o context aos módulos
 const Dashboard = () => {
@@ -57,9 +60,19 @@ const App = () => {
             <Login />
           </Suspense>
         } />
+        <Route path="/register" element={
+          <Suspense fallback={<DashboardSkeleton />}>
+            <Register />
+          </Suspense>
+        } />
+        <Route path="/auth/google/callback" element={
+          <Suspense fallback={<DashboardSkeleton />}>
+            <GoogleCallback />
+          </Suspense>
+        } />
 
         {/* Rotas privadas com layout compartilhado */}
-        <Route path="/" element={<HomeLayout />}>
+        <Route path="/" element={<RequireAuth><HomeLayout /></RequireAuth>}>
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={
             <Suspense fallback={<DashboardSkeleton />}>
@@ -107,9 +120,19 @@ const App = () => {
 const HomeLayout = () => {
   // Tema (necessário manter o ThemeContext ativo)
   const { theme } = useTheme();
-  
+
+  // User e funções do contexto
+  const { user, userLoading, loadUserProfile } = useApp();
+
   // Location para título dinâmico
   const location = useLocation();
+
+  // Carregar perfil do usuário ao montar o componente
+  useEffect(() => {
+    if (!user && !userLoading) {
+      loadUserProfile();
+    }
+  }, []);
 
   // Mapa de títulos por rota
   const pageTitles = {
@@ -125,7 +148,7 @@ const HomeLayout = () => {
 
   return (
     <SidebarProvider>
-      <AppSidebar />
+      <AppSidebar user={user} />
       <SidebarInset className="overflow-x-hidden">
         <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-background px-4 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 flex-1">

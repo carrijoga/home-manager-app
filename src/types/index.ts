@@ -196,13 +196,37 @@ export interface FutureItem {
 }
 
 /**
- * Interface para Usuário
+ * Interface para Usuário (formato da API)
+ */
+export interface UserProfile {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  userName: string;
+  profilePicture?: string | null;
+}
+
+/**
+ * Interface para Usuário (formato interno do app)
  */
 export interface User {
   id: string;
   name: string;
   email: string;
   avatar?: string;
+}
+
+/**
+ * Converte UserProfile da API para User do app
+ */
+export function userProfileToUser(profile: UserProfile): User {
+  return {
+    id: profile.id,
+    name: `${profile.firstName} ${profile.lastName}`.trim(),
+    email: profile.email,
+    avatar: profile.profilePicture || undefined,
+  };
 }
 
 // ==================== TYPE ALIASES ====================

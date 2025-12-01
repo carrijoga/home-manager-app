@@ -54,6 +54,8 @@ export async function apiRequest(endpoint, options = {}) {
       ...API_CONFIG.headers,
       ...options.headers
     },
+    // Ensure cookies (HttpOnly) are sent so server-side session cookies work
+    credentials: options.credentials ?? 'include',
     ...options
   };
 

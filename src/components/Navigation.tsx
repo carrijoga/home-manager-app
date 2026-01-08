@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import type { FC } from "react";
 import { useMemo, useState } from "react";
+import * as authService from "@/services/authService";
 import { useNavigate } from "react-router-dom";
 import GlobalSearch from "./common/GlobalSearch";
 import NotificationsMenu from "./common/NotificationsMenu";
@@ -129,9 +130,15 @@ const Navigation: FC<NavigationProps> = ({
     console.log("Settings clicked");
   };
 
-  const handleLogoutClick = () => {
-    // TODO: Implementar logout
-    console.log("Logout clicked");
+  const handleLogoutClick = async () => {
+    try {
+      await authService.logout();
+      // Limpar estado do usuário, se houver (opcional: useApp()?.setUser(null))
+      navigate("/login");
+    } catch (error) {
+      // Exibir erro (opcional: toast)
+      console.error("Erro ao sair:", error);
+    }
   };
 
   const handleModuleClick = (path: string) => {

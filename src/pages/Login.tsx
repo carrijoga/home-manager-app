@@ -2,6 +2,7 @@ import Logo from "@/components/common/Logo";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { EyeIcon, EyeOffIcon } from "@/components/ui";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { login as loginRequest } from "@/services/authService";
@@ -22,6 +23,7 @@ function Login() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Não verificamos sessão na página de login
   // Se o usuário já estiver autenticado, o RequireAuth vai redirecioná-lo
@@ -165,18 +167,33 @@ function Login() {
 
             <div className="space-y-2">
               <Label htmlFor="password" className="text-sm font-medium text-gray-700 dark:text-gray-200">Senha</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                placeholder="********"
-                autoComplete="current-password"
-                required
-                minLength={MIN_PASSWORD_LENGTH}
-                value={formState.password}
-                onChange={handleChange}
-                className="h-10 bg-white text-gray-700 dark:bg-gray-950 transition-all duration-200 focus:ring-2 focus:ring-indigo-500 border-gray-200 dark:border-gray-800"
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="********"
+                  autoComplete="current-password"
+                  required
+                  minLength={MIN_PASSWORD_LENGTH}
+                  value={formState.password}
+                  onChange={handleChange}
+                  className="h-10 bg-white text-gray-700 dark:bg-gray-950 transition-all duration-200 focus:ring-2 focus:ring-indigo-500 border-gray-200 dark:border-gray-800 pr-10"
+                />
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400 focus:outline-none"
+                >
+                  {showPassword ? (
+                    <EyeOffIcon className="w-5 h-5" />
+                  ) : (
+                    <EyeIcon className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
             </div>
 
             <Button

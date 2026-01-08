@@ -1,3 +1,5 @@
+// Eye Icons
+export { EyeIcon, EyeOffIcon } from './eye-icons';
 /**
  * Componentes UI baseados em shadcn/ui
  *

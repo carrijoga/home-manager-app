@@ -2,17 +2,20 @@ import Logo from "@/components/common/Logo";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { EyeIcon, EyeOffIcon } from "@/components/ui";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { register as registerRequest } from "@/services/authService";
-import { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { toast } from "sonner";
 import * as authService from "@services/authService";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const MIN_PASSWORD_LENGTH = 6;
 
 function Register() {
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -60,7 +63,7 @@ function Register() {
       toast.success(message);
 
       setTimeout(() => {
-        navigate('/login', { replace: true });
+        navigate("/login", { replace: true });
       }, 1200);
     } catch (err) {
       const message =
@@ -75,7 +78,8 @@ function Register() {
   };
 
   const passwordsMatch = formState.password === formState.confirmPassword;
-  const showPasswordMismatch = formState.confirmPassword.length > 0 && !passwordsMatch;
+  const showPasswordMismatch =
+    formState.confirmPassword.length > 0 && !passwordsMatch;
 
   const isFormValid =
     formState.firstName.trim() !== "" &&
@@ -102,18 +106,20 @@ function Register() {
               </h1>
             </div>
             <p className="text-sm text-muted-foreground max-w-sm">
-              Preencha todos os campos para criar sua conta e começar a organizar seu lar.
+              Preencha todos os campos para criar sua conta e começar a
+              organizar seu lar.
             </p>
           </div>
 
-          <form
-            onSubmit={handleSubmit}
-            className="flex-1 space-y-3"
-            noValidate
-          >
+          <form onSubmit={handleSubmit} className="flex-1 space-y-3" noValidate>
             <div className="grid sm:grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label htmlFor="firstName" className="text-sm font-medium text-gray-700 dark:text-gray-200">Nome</Label>
+                <Label
+                  htmlFor="firstName"
+                  className="text-sm font-medium text-gray-700 dark:text-gray-200"
+                >
+                  Nome
+                </Label>
                 <Input
                   id="firstName"
                   name="firstName"
@@ -121,11 +127,16 @@ function Register() {
                   required
                   value={formState.firstName}
                   onChange={handleChange}
-                  className="h-10 bg-white dark:bg-gray-950 transition-all duration-200 focus:ring-2 focus:ring-indigo-500 border-gray-200 dark:border-gray-800"
+                  className="h-10 bg-white text-gray-900 dark:bg-gray-950 transition-all duration-200 focus:ring-2 focus:ring-indigo-500 border-gray-200 dark:border-gray-800"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="lastName" className="text-sm font-medium text-gray-700 dark:text-gray-200">Sobrenome</Label>
+                <Label
+                  htmlFor="lastName"
+                  className="text-sm font-medium text-gray-700 dark:text-gray-200"
+                >
+                  Sobrenome
+                </Label>
                 <Input
                   id="lastName"
                   name="lastName"
@@ -133,13 +144,18 @@ function Register() {
                   required
                   value={formState.lastName}
                   onChange={handleChange}
-                  className="h-10 bg-white dark:bg-gray-950 transition-all duration-200 focus:ring-2 focus:ring-indigo-500 border-gray-200 dark:border-gray-800"
+                  className="h-10 bg-white text-gray-900 dark:bg-gray-950 transition-all duration-200 focus:ring-2 focus:ring-indigo-500 border-gray-200 dark:border-gray-800"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium text-gray-700 dark:text-gray-200">Email</Label>
+              <Label
+                htmlFor="email"
+                className="text-sm font-medium text-gray-700 dark:text-gray-200"
+              >
+                Email
+              </Label>
               <Input
                 id="email"
                 name="email"
@@ -149,46 +165,87 @@ function Register() {
                 required
                 value={formState.email}
                 onChange={handleChange}
-                className="h-10 bg-white dark:bg-gray-950 transition-all duration-200 focus:ring-2 focus:ring-indigo-500 border-gray-200 dark:border-gray-800"
+                className="h-10 bg-white text-gray-900 dark:bg-gray-950 transition-all duration-200 focus:ring-2 focus:ring-indigo-500 border-gray-200 dark:border-gray-800"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium text-gray-700 dark:text-gray-200">Senha</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                placeholder="Mínimo de 6 caracteres"
-                autoComplete="new-password"
-                minLength={MIN_PASSWORD_LENGTH}
-                required
-                value={formState.password}
-                onChange={handleChange}
-                className="h-11 bg-white dark:bg-gray-950 transition-all duration-200 focus:ring-2 focus:ring-indigo-500 border-gray-200 dark:border-gray-800"
-              />
+              <Label
+                htmlFor="password"
+                className="text-sm font-medium text-gray-700 dark:text-gray-200"
+              >
+                Senha
+              </Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Mínimo de 6 caracteres"
+                  autoComplete="new-password"
+                  minLength={MIN_PASSWORD_LENGTH}
+                  required
+                  value={formState.password}
+                  onChange={handleChange}
+                  className="h-11 bg-white text-gray-900 dark:bg-gray-950 transition-all duration-200 focus:ring-2 focus:ring-indigo-500 border-gray-200 dark:border-gray-800 pr-10"
+                />
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400 focus:outline-none"
+                >
+                  {showPassword ? (
+                    <EyeOffIcon className="w-5 h-5" />
+                  ) : (
+                    <EyeIcon className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
               <p className="text-xs text-muted-foreground">
                 Use uma senha segura com no mínimo 6 caracteres.
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700 dark:text-gray-200">Confirmar Senha</Label>
-              <Input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                placeholder="Digite a senha novamente"
-                autoComplete="new-password"
-                minLength={MIN_PASSWORD_LENGTH}
-                required
-                value={formState.confirmPassword}
-                onChange={handleChange}
-                className={`h-10 bg-white dark:bg-gray-950 transition-all duration-200 focus:ring-2 border-gray-200 dark:border-gray-800 ${showPasswordMismatch
-                  ? "border-red-500 focus:ring-red-500"
-                  : "focus:ring-indigo-500"
+              <Label
+                htmlFor="confirmPassword"
+                className="text-sm font-medium text-gray-700 dark:text-gray-200"
+              >
+                Confirmar Senha
+              </Label>
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="Digite a senha novamente"
+                  autoComplete="new-password"
+                  minLength={MIN_PASSWORD_LENGTH}
+                  required
+                  value={formState.confirmPassword}
+                  onChange={handleChange}
+                  className={`h-10 bg-white text-gray-900 dark:bg-gray-950 transition-all duration-200 focus:ring-2 border-gray-200 dark:border-gray-800 pr-10 ${
+                    showPasswordMismatch
+                      ? "border-red-500 focus:ring-red-500"
+                      : "focus:ring-indigo-500"
                   }`}
-              />
+                />
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  aria-label={showConfirmPassword ? "Ocultar senha" : "Mostrar senha"}
+                  onClick={() => setShowConfirmPassword((v) => !v)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400 focus:outline-none"
+                >
+                  {showConfirmPassword ? (
+                    <EyeOffIcon className="w-5 h-5" />
+                  ) : (
+                    <EyeIcon className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
               {showPasswordMismatch && (
                 <p className="text-xs text-red-600 dark:text-red-400 animate-in fade-in slide-in-from-top-1 duration-200">
                   As senhas não coincidem

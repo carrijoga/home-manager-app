@@ -41,6 +41,7 @@ import {
 import * as React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toAvatarSrc } from "@/lib/avatarUtils";
+import * as authService from "@/services/authService";
 
 // Mock de ninhos - será substituído por dados reais
 const mockNinhos = [
@@ -156,8 +157,15 @@ export function AppSidebar({ user }: AppSidebarProps) {
     console.log("Settings clicked");
   };
 
-  const handleLogoutClick = () => {
-    console.log("Logout clicked");
+  const handleLogoutClick = async () => {
+    try {
+      await authService.logout();
+      // Limpar estado do usuário, se houver (opcional: useApp()?.setUser(null))
+      navigate("/login");
+    } catch (error) {
+      // Exibir erro (opcional: toast)
+      console.error("Erro ao sair:", error);
+    }
   };
 
   const isActive = (path: string) => location.pathname === path;

@@ -1,5 +1,5 @@
-const CACHE_NAME = 'ninho-v1';
-const RUNTIME_CACHE = 'ninho-runtime';
+const CACHE_NAME = 'ninho-v2'; // Incrementa versão para forçar atualização
+const RUNTIME_CACHE = 'ninho-runtime-v2';
 
 // Assets essenciais para cache durante a instalação
 const PRECACHE_URLS = [
@@ -51,6 +51,11 @@ self.addEventListener('fetch', (event) => {
   // Ignora requisições não-HTTP
   if (!url.protocol.startsWith('http')) {
     return;
+  }
+
+  // IMPORTANTE: Ignora requisições de API - deixa passar direto para a rede
+  if (url.pathname.startsWith('/api/') || url.port === '5026' || url.hostname.includes('localhost') && url.port !== '') {
+    return; // Não intercepta, deixa o fetch normal acontecer
   }
 
   // Cache-first para assets estáticos

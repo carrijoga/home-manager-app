@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { register as registerRequest } from "@/services/authService";
 import * as authService from "@services/authService";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -29,18 +29,97 @@ function Register() {
   const [formState, setFormState] = useState({
     firstName: "",
     lastName: "",
+    username: "",
     email: "",
     password: "",
     confirmPassword: "",
   });
+  const [isUsernameLoading, setIsUsernameLoading] = useState(false);
+  const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [usernameManuallyEdited, setUsernameManuallyEdited] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
-    setFormState((prev: typeof formState) => ({ ...prev, [name]: value }));
+    setFormState((prev: typeof formState) => ({
+      ...prev,
+      [name]: value ?? ""
+    }));
+    if (name === "username") {
+      setUsernameError(null);
+      setUsernameManuallyEdited(true);
+    }
+    if (name === "firstName" || name === "lastName") {
+      setUsernameManuallyEdited(false);
+    }
   };
+
+  // Gera username automaticamente ao preencher nome e sobrenome
+  // Debounce para evitar múltiplas requisições
+  const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
+  const lastGeneratedRef = useRef<string>("");
+  const isGeneratingRef = useRef<boolean>(false);
+  
+  useEffect(() => {
+    const { firstName = "", lastName = "" } = formState;
+    
+    if (debounceTimeout.current) {
+      clearTimeout(debounceTimeout.current);
+    }
+    
+    if (firstName?.trim() && lastName?.trim() && !usernameManuallyEdited) {
+      debounceTimeout.current = setTimeout(async () => {
+        const currentKey = `${firstName.trim()}_${lastName.trim()}`;
+        
+        // Evita requisições duplicadas para os mesmos valores
+        if (lastGeneratedRef.current === currentKey || isGeneratingRef.current) {
+          return;
+        }
+        
+        isGeneratingRef.current = true;
+        setIsUsernameLoading(true);
+        setUsernameError(null);
+        
+        try {
+          const res = await authService.generateUsername(firstName.trim(), lastName.trim());
+          lastGeneratedRef.current = currentKey;
+          console.log('Resposta completa da API:', res);
+          let username = "";
+          if (typeof res === "string") {
+            username = res;
+          } else {
+            username = res?.username || res?.result || "";
+          }
+          console.log('Username sugerido pela API:', username);
+          // Sempre atualiza o campo username se não foi editado manualmente
+          if (!usernameManuallyEdited) {
+            setFormState((prev) => ({ ...prev, username }));
+          }
+        } catch (err: any) {
+          console.error("Erro ao gerar username:", err);
+          // Não mostra erro para não atrapalhar a experiência, apenas não preenche
+          // setUsernameError(err.message || "Erro ao gerar username");
+        } finally {
+          setIsUsernameLoading(false);
+          isGeneratingRef.current = false;
+        }
+      }, 500); // 500ms debounce
+    } else if (!firstName?.trim() || !lastName?.trim()) {
+      lastGeneratedRef.current = "";
+      if (!usernameManuallyEdited) {
+        setFormState((prev) => ({ ...prev, username: "" })); // já é string
+      }
+      setUsernameError(null);
+    }
+    
+    return () => {
+      if (debounceTimeout.current) {
+        clearTimeout(debounceTimeout.current);
+      }
+    };
+  }, [formState.firstName, formState.lastName, usernameManuallyEdited]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -55,7 +134,7 @@ function Register() {
     }
 
     try {
-      // Send only required fields to API
+      // Envia todos os campos necessários para API, incluindo username
       const { confirmPassword, ...payload } = formState;
       const response = await registerRequest(payload);
       const message = response?.message || "Conta criada com sucesso!";
@@ -79,14 +158,15 @@ function Register() {
 
   const passwordsMatch = formState.password === formState.confirmPassword;
   const showPasswordMismatch =
-    formState.confirmPassword.length > 0 && !passwordsMatch;
+    formState.confirmPassword && formState.confirmPassword.length > 0 && !passwordsMatch;
 
   const isFormValid =
-    formState.firstName.trim() !== "" &&
-    formState.lastName.trim() !== "" &&
-    formState.email.trim() !== "" &&
-    formState.password.trim().length >= MIN_PASSWORD_LENGTH &&
-    formState.confirmPassword.trim().length >= MIN_PASSWORD_LENGTH &&
+    formState.firstName?.trim() !== "" &&
+    formState.lastName?.trim() !== "" &&
+    formState.username?.trim() !== "" &&
+    formState.email?.trim() !== "" &&
+    (formState.password?.trim().length ?? 0) >= MIN_PASSWORD_LENGTH &&
+    (formState.confirmPassword?.trim().length ?? 0) >= MIN_PASSWORD_LENGTH &&
     passwordsMatch;
 
   return (
@@ -147,6 +227,32 @@ function Register() {
                   className="h-10 bg-white text-gray-900 dark:bg-gray-950 transition-all duration-200 focus:ring-2 focus:ring-indigo-500 border-gray-200 dark:border-gray-800"
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label
+                htmlFor="username"
+                className="text-sm font-medium text-gray-700 dark:text-gray-200"
+              >
+                Nome de usuário
+              </Label>
+              <div className="relative">
+                <Input
+                  id="username"
+                  name="username"
+                  placeholder="nome.de.usuario"
+                  required
+                  value={formState.username}
+                  onChange={handleChange}
+                  className="h-10 bg-white text-gray-900 dark:bg-gray-950 transition-all duration-200 focus:ring-2 focus:ring-indigo-500 border-gray-200 dark:border-gray-800 pr-8"
+                />
+                {isUsernameLoading && (
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2"><Spinner className="w-4 h-4" /></span>
+                )}
+              </div>
+              {usernameError && (
+                <p className="text-xs text-red-600 dark:text-red-400 animate-in fade-in slide-in-from-top-1 duration-200">{usernameError}</p>
+              )}
             </div>
 
             <div className="space-y-2">

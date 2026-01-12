@@ -7,7 +7,22 @@ const AUTH_ENDPOINTS = {
   logout: '/api/Account/logout',
   googleLogin: '/api/Account/google-login',
   profile: '/api/User/profile',
+  generateUsername: '/api/Account/generate-username',
 } as const;
+// Gera um username sugerido a partir do nome e sobrenome
+export async function generateUsername(firstName: string, lastName: string): Promise<{ username: string }> {
+  if (!firstName || !lastName) {
+    throw new ApiError('The provided firstname and lastname are invalid.', 400);
+  }
+  const params = new URLSearchParams({ firstname: firstName, lastname: lastName });
+  return request<{ username: string }>(
+    `${AUTH_ENDPOINTS.generateUsername}?${params.toString()}`,
+    {
+      method: 'GET',
+    },
+    { retryOnUnauthorized: false }
+  );
+}
 
 export interface RegisterRequest {
   firstName: string;
@@ -114,9 +129,15 @@ async function request<T>(
   try {
     return await baseRequest<T>(path, options);
   } catch (error) {
+    // Só tenta refresh se for 401 E retryOnUnauthorized for true
     if (error instanceof ApiError && error.status === 401 && retryOnUnauthorized) {
-      await refreshToken();
-      return request<T>(path, options, { retryOnUnauthorized: false });
+      try {
+        await refreshToken();
+        return baseRequest<T>(path, options); // Não chama recursivamente para evitar loop
+      } catch (refreshError) {
+        // Se o refresh falhar, lança o erro original
+        throw error;
+      }
     }
     throw error;
   }

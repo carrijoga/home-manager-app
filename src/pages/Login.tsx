@@ -6,6 +6,7 @@ import { EyeIcon, EyeOffIcon } from "@/components/ui";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { login as loginRequest } from "@/services/authService";
+import { useApp } from "@/contexts/AppContext";
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
@@ -16,9 +17,10 @@ const MIN_PASSWORD_LENGTH = 6;
 
 function Login() {
   const navigate = useNavigate();
+  const { loadUserProfile } = useApp();
   const [formState, setFormState] = useState({
-    email: "",
-    password: "",
+    UsernameOrEmail: "",
+    Password: "",
   });
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -40,6 +42,7 @@ function Login() {
 
     try {
       const response = await loginRequest(formState);
+      await loadUserProfile();
 
       const message = response?.message || "Login realizado com sucesso!";
       toast.success(message);
@@ -81,8 +84,8 @@ function Login() {
   };
 
   const isFormValid =
-    formState.email.trim() !== "" &&
-    formState.password.trim().length >= MIN_PASSWORD_LENGTH;
+    formState.UsernameOrEmail.trim() !== "" &&
+    formState.Password.trim().length >= MIN_PASSWORD_LENGTH;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-purple-50 to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4">
@@ -151,32 +154,32 @@ function Login() {
 
           <form onSubmit={handleSubmit} className="w-full space-y-4" noValidate>
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium text-gray-700 dark:text-gray-200">Email</Label>
+              <Label htmlFor="UsernameOrEmail" className="text-sm font-medium text-gray-700 dark:text-gray-200">Email</Label>
               <Input
-                id="email"
-                name="email"
+                id="UsernameOrEmail"
+                name="UsernameOrEmail"
                 type="email"
                 placeholder="ninho@ninho.com"
                 autoComplete="email"
                 required
-                value={formState.email}
+                value={formState.UsernameOrEmail}
                 onChange={handleChange}
                 className="h-10 bg-white text-gray-700 dark:bg-gray-950 transition-all duration-200 focus:ring-2 focus:ring-indigo-500 border-gray-200 dark:border-gray-800"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium text-gray-700 dark:text-gray-200">Senha</Label>
+              <Label htmlFor="Password" className="text-sm font-medium text-gray-700 dark:text-gray-200">Senha</Label>
               <div className="relative">
                 <Input
-                  id="password"
-                  name="password"
+                  id="Password"
+                  name="Password"
                   type={showPassword ? "text" : "password"}
                   placeholder="********"
                   autoComplete="current-password"
                   required
                   minLength={MIN_PASSWORD_LENGTH}
-                  value={formState.password}
+                  value={formState.Password}
                   onChange={handleChange}
                   className="h-10 bg-white text-gray-700 dark:bg-gray-950 transition-all duration-200 focus:ring-2 focus:ring-indigo-500 border-gray-200 dark:border-gray-800 pr-10"
                 />

@@ -158,9 +158,14 @@ ninho/
 ├── vite.config.ts       # Configuração Vite
 ├── tailwind.config.ts   # Configuração Tailwind
 ├── components.json      # Configuração shadcn/ui
-├── CLAUDE.md            # Documentação de arquitetura detalhada
-├── TYPESCRIPT.md        # Guia de migração TypeScript
-└── README.md            # Documentação
+├── docs/                # Documentação organizada
+│   ├── README.md       # Índice da documentação
+│   ├── ENVIRONMENTS.md # Configuração de ambientes
+│   ├── DEPLOY.md       # Guias de deploy
+│   └── ROADMAP.md      # Roadmap de features
+├── .github/
+│   └── copilot-instructions.md  # Instruções para GitHub Copilot
+└── README.md           # Documentação principal
 
 ```
 
@@ -329,6 +334,25 @@ O servidor de desenvolvimento abre automaticamente o navegador na porta 3000. Su
 
 ## 🔧 Configuração
 
+### Ambientes (Development, Staging, Production)
+
+O Ninho suporta múltiplos ambientes com configurações específicas para cada um. Para detalhes completos sobre como configurar e usar diferentes ambientes, consulte [docs/ENVIRONMENTS.md](./docs/ENVIRONMENTS.md).
+
+**Resumo rápido:**
+
+```bash
+# Desenvolvimento local (dados mockados)
+npm run dev
+
+# Staging (API de testes)
+npm run dev:staging
+npm run build:staging
+
+# Production (API de produção)
+npm run dev:production
+npm run build:production
+```
+
 ### Modo de Dados
 
 Por padrão, a aplicação usa **dados mockados** localmente. Para alterar:
@@ -341,7 +365,9 @@ VITE_DATA_MODE=mock
 
 # Modo API (dados de servidor externo)
 VITE_DATA_MODE=api
-VITE_API_URL=http://localhost:3001/api
+
+# Ambiente (development, staging, production)
+VITE_ENVIRONMENT=development
 ```
 
 ### Integração com API Externa
@@ -598,7 +624,7 @@ const newTask: Task = {
 };
 ```
 
-Para mais detalhes sobre a migração TypeScript, consulte [TYPESCRIPT.md](./TYPESCRIPT.md).
+Para mais detalhes sobre a arquitetura, padrões e guia TypeScript, consulte [.github/copilot-instructions.md](./.github/copilot-instructions.md).
 
 ## 🎯 Recursos de UX
 
@@ -784,12 +810,24 @@ O PWA inclui Service Worker para:
 - **Debouncing** - Em buscas e inputs de texto
 - **Virtual scrolling** - Para listas longas (futuro)
 
-## 📚 Documentação Adicional
+## 📚 Documentação
 
-- **[CLAUDE.md](./CLAUDE.md)** - Arquitetura detalhada e padrões de código
-- **[TYPESCRIPT.md](./TYPESCRIPT.md)** - Guia completo de migração TypeScript
-- **[FEATURES_IDEAS.md](./FEATURES_IDEAS.md)** - Ideias e features futuras
+Toda a documentação do projeto está organizada na pasta **`docs/`**:
+
+### 📖 Guias de Configuração
+- **[docs/ENVIRONMENTS.md](./docs/ENVIRONMENTS.md)** - Configuração de ambientes (development, staging, production)
+- **[docs/DEPLOY.md](./docs/DEPLOY.md)** - Guias de deploy para Vercel, Netlify, Docker e mais
+
+### 🎯 Planejamento
+- **[docs/ROADMAP.md](./docs/ROADMAP.md)** - Roadmap de features e ideias futuras
+
+### 🏗️ Arquitetura e Desenvolvimento
 - **[components.json](./components.json)** - Configuração shadcn/ui
+- **[src/types/index.ts](./src/types/index.ts)** - Definições TypeScript centralizadas
+- **[.github/copilot-instructions.md](./.github/copilot-instructions.md)** - Instruções para GitHub Copilot
+
+### 📑 Índice Completo
+Consulte **[docs/README.md](./docs/README.md)** para o índice completo da documentação.
 
 ## 🔐 Segurança
 

@@ -213,6 +213,7 @@ export interface UserProfile {
 export interface User {
   id: string;
   name: string;
+  callmeby: string;
   email: string;
   avatar?: string;
 }
@@ -224,6 +225,7 @@ export function userProfileToUser(profile: UserProfile): User {
   return {
     id: profile.id,
     name: `${profile.firstName} ${profile.lastName}`.trim(),
+    callmeby: profile.firstName,
     email: profile.email,
     avatar: profile.profilePicture || undefined,
   };

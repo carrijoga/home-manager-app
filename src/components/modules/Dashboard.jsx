@@ -255,7 +255,7 @@ const Dashboard = () => {
           <div className="flex items-center space-x-3">
             <div>
               <h1 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                {getGreeting()}, {user?.name || 'Usuário'}!
+                {getGreeting()}, {user?.callmeby || 'Usuário'}!
                 <span className="text-2xl animate-wave inline-block">👋</span>
               </h1>
               <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">

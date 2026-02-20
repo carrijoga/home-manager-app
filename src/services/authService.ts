@@ -1,24 +1,24 @@
-const DEFAULT_API_URL = (import.meta.env.VITE_AUTH_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:5026').replace(/\/$/, '');
+const DEFAULT_API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5026').replace(/\/$/, '');
 
 const AUTH_ENDPOINTS = {
-  register: '/api/Account/register',
-  login: '/api/Account/login',
-  refresh: '/api/Account/refresh',
-  logout: '/api/Account/logout',
-  googleLogin: '/api/Account/google-login',
-  profile: '/api/User/profile',
-  generateUsername: '/api/Account/generate-username',
+  register: '/api/auth/register',
+  login: '/api/auth/login',
+  refresh: '/api/auth/refresh',
+  logout: '/api/auth/logout',
+  googleLogin: '/api/auth/google-login',
+  profile: '/api/users/me/profile',
+  generateUsername: '/api/users/username/preview',
 } as const;
 // Gera um username sugerido a partir do nome e sobrenome
 export async function generateUsername(firstName: string, lastName: string): Promise<{ username: string }> {
   if (!firstName || !lastName) {
     throw new ApiError('The provided firstname and lastname are invalid.', 400);
   }
-  const params = new URLSearchParams({ firstname: firstName, lastname: lastName });
+  const params = new URLSearchParams({ firstName: firstName, lastName: lastName });
   return request<{ username: string }>(
     `${AUTH_ENDPOINTS.generateUsername}?${params.toString()}`,
     {
-      method: 'GET',
+      method: 'POST',
     },
     { retryOnUnauthorized: false }
   );
@@ -36,8 +36,8 @@ export interface SuccessResponse {
 }
 
 export interface LoginRequest {
-  email: string;
-  password: string;
+  UsernameOrEmail: string;
+  Password: string;
 }
 
 export interface LoginResponse {
@@ -51,12 +51,13 @@ export interface GoogleLoginRequest {
 }
 
 export interface UserProfileResponse {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  userName: string;
-  profilePicture?: string | null;
+  UserId: string;
+  FirstName: string;
+  LastName: string;
+  Username: string;
+  Email: string;
+  CallbyName: string;
+  ProfilePictureUrl: string;
 }
 
 export class ApiError extends Error {

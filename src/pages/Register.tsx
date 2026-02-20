@@ -58,7 +58,7 @@ function Register() {
 
   // Gera username automaticamente ao preencher nome e sobrenome
   // Debounce para evitar múltiplas requisições
-  const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
+  const debounceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastGeneratedRef = useRef<string>("");
   const isGeneratingRef = useRef<boolean>(false);
   
@@ -90,7 +90,7 @@ function Register() {
           if (typeof res === "string") {
             username = res;
           } else {
-            username = res?.username || res?.result || "";
+            username = res?.username || "";
           }
           console.log('Username sugerido pela API:', username);
           // Sempre atualiza o campo username se não foi editado manualmente

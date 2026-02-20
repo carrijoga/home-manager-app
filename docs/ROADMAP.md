@@ -1,9 +1,11 @@
-# 🎯 Ideias de Features para o Ninho
+# 🎯 Roadmap de Features do Ninho
+
+Este documento lista ideias de features futuras organizadas por prioridade e categoria.
 
 ## 🔥 Features Essenciais (Alta Prioridade)
 
 ### 1. **Sistema de Notificações Toast**
-- ✅ **Implementar**: react-hot-toast
+- ✅ **Implementado**: react-hot-toast
 - Notificações ao adicionar/remover/editar itens
 - Feedback visual instantâneo
 - Animações suaves
@@ -214,7 +216,7 @@
 
 ## 🏆 Top 5 Recomendações para Implementar Agora:
 
-1. **🔔 Sistema de Notificações Toast** - Feedback essencial
+1. **🔔 Sistema de Notificações Toast** - Feedback essencial ✅ **Implementado**
 2. **🔍 Busca e Filtros** - Usabilidade crítica
 3. **📊 Gráficos Básicos** - Visualização de dados
 4. **✏️ Edição Inline** - UX moderna
@@ -222,7 +224,7 @@
 
 ---
 
-## 📚 Bibliotecas Recomendadas:
+## 📚 Bibliotecas Recomendadas
 
 ### Animações
 - ✅ **framer-motion** - Animações React (já adicionado)
@@ -231,7 +233,7 @@
 ### UI Components
 - **Headless UI** - Componentes acessíveis
 - **Radix UI** - Primitivos de UI
-- **shadcn/ui** - Componentes prontos (Tailwind)
+- ✅ **shadcn/ui** - Componentes prontos (Tailwind) (já adicionado)
 
 ### Formulários
 - **react-hook-form** - Formulários performáticos
@@ -263,4 +265,23 @@
 
 ---
 
-**Qual feature você quer que eu implemente primeiro?** 🚀
+## 📅 Cronograma Sugerido
+
+### Sprint 1 (Curto Prazo)
+- [ ] Sistema de busca e filtros
+- [ ] Edição inline de itens
+- [ ] Tags e etiquetas
+
+### Sprint 2 (Médio Prazo)
+- [ ] Drag and drop
+- [ ] Gráficos básicos
+- [ ] Histórico e desfazer
+
+### Sprint 3 (Longo Prazo)
+- [ ] Modo colaborativo
+- [ ] Integração com calendário
+- [ ] Scanner de códigos
+
+---
+
+**Qual feature você quer que seja implementada primeiro?** 🚀

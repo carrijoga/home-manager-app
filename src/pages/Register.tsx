@@ -2,17 +2,20 @@ import Logo from "@/components/common/Logo";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { EyeIcon, EyeOffIcon } from "@/components/ui";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { register as registerRequest } from "@/services/authService";
-import { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { toast } from "sonner";
 import * as authService from "@services/authService";
+import { useEffect, useState, useRef } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const MIN_PASSWORD_LENGTH = 6;
 
 function Register() {
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -26,18 +29,97 @@ function Register() {
   const [formState, setFormState] = useState({
     firstName: "",
     lastName: "",
+    username: "",
     email: "",
     password: "",
     confirmPassword: "",
   });
+  const [isUsernameLoading, setIsUsernameLoading] = useState(false);
+  const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [usernameManuallyEdited, setUsernameManuallyEdited] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
-    setFormState((prev: typeof formState) => ({ ...prev, [name]: value }));
+    setFormState((prev: typeof formState) => ({
+      ...prev,
+      [name]: value ?? ""
+    }));
+    if (name === "username") {
+      setUsernameError(null);
+      setUsernameManuallyEdited(true);
+    }
+    if (name === "firstName" || name === "lastName") {
+      setUsernameManuallyEdited(false);
+    }
   };
+
+  // Gera username automaticamente ao preencher nome e sobrenome
+  // Debounce para evitar múltiplas requisições
+  const debounceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastGeneratedRef = useRef<string>("");
+  const isGeneratingRef = useRef<boolean>(false);
+  
+  useEffect(() => {
+    const { firstName = "", lastName = "" } = formState;
+    
+    if (debounceTimeout.current) {
+      clearTimeout(debounceTimeout.current);
+    }
+    
+    if (firstName?.trim() && lastName?.trim() && !usernameManuallyEdited) {
+      debounceTimeout.current = setTimeout(async () => {
+        const currentKey = `${firstName.trim()}_${lastName.trim()}`;
+        
+        // Evita requisições duplicadas para os mesmos valores
+        if (lastGeneratedRef.current === currentKey || isGeneratingRef.current) {
+          return;
+        }
+        
+        isGeneratingRef.current = true;
+        setIsUsernameLoading(true);
+        setUsernameError(null);
+        
+        try {
+          const res = await authService.generateUsername(firstName.trim(), lastName.trim());
+          lastGeneratedRef.current = currentKey;
+          console.log('Resposta completa da API:', res);
+          let username = "";
+          if (typeof res === "string") {
+            username = res;
+          } else {
+            username = res?.username || "";
+          }
+          console.log('Username sugerido pela API:', username);
+          // Sempre atualiza o campo username se não foi editado manualmente
+          if (!usernameManuallyEdited) {
+            setFormState((prev) => ({ ...prev, username }));
+          }
+        } catch (err: any) {
+          console.error("Erro ao gerar username:", err);
+          // Não mostra erro para não atrapalhar a experiência, apenas não preenche
+          // setUsernameError(err.message || "Erro ao gerar username");
+        } finally {
+          setIsUsernameLoading(false);
+          isGeneratingRef.current = false;
+        }
+      }, 500); // 500ms debounce
+    } else if (!firstName?.trim() || !lastName?.trim()) {
+      lastGeneratedRef.current = "";
+      if (!usernameManuallyEdited) {
+        setFormState((prev) => ({ ...prev, username: "" })); // já é string
+      }
+      setUsernameError(null);
+    }
+    
+    return () => {
+      if (debounceTimeout.current) {
+        clearTimeout(debounceTimeout.current);
+      }
+    };
+  }, [formState.firstName, formState.lastName, usernameManuallyEdited]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -52,7 +134,7 @@ function Register() {
     }
 
     try {
-      // Send only required fields to API
+      // Envia todos os campos necessários para API, incluindo username
       const { confirmPassword, ...payload } = formState;
       const response = await registerRequest(payload);
       const message = response?.message || "Conta criada com sucesso!";
@@ -60,7 +142,7 @@ function Register() {
       toast.success(message);
 
       setTimeout(() => {
-        navigate('/login', { replace: true });
+        navigate("/login", { replace: true });
       }, 1200);
     } catch (err) {
       const message =
@@ -75,14 +157,16 @@ function Register() {
   };
 
   const passwordsMatch = formState.password === formState.confirmPassword;
-  const showPasswordMismatch = formState.confirmPassword.length > 0 && !passwordsMatch;
+  const showPasswordMismatch =
+    formState.confirmPassword && formState.confirmPassword.length > 0 && !passwordsMatch;
 
   const isFormValid =
-    formState.firstName.trim() !== "" &&
-    formState.lastName.trim() !== "" &&
-    formState.email.trim() !== "" &&
-    formState.password.trim().length >= MIN_PASSWORD_LENGTH &&
-    formState.confirmPassword.trim().length >= MIN_PASSWORD_LENGTH &&
+    formState.firstName?.trim() !== "" &&
+    formState.lastName?.trim() !== "" &&
+    formState.username?.trim() !== "" &&
+    formState.email?.trim() !== "" &&
+    (formState.password?.trim().length ?? 0) >= MIN_PASSWORD_LENGTH &&
+    (formState.confirmPassword?.trim().length ?? 0) >= MIN_PASSWORD_LENGTH &&
     passwordsMatch;
 
   return (
@@ -102,18 +186,20 @@ function Register() {
               </h1>
             </div>
             <p className="text-sm text-muted-foreground max-w-sm">
-              Preencha todos os campos para criar sua conta e começar a organizar seu lar.
+              Preencha todos os campos para criar sua conta e começar a
+              organizar seu lar.
             </p>
           </div>
 
-          <form
-            onSubmit={handleSubmit}
-            className="flex-1 space-y-3"
-            noValidate
-          >
+          <form onSubmit={handleSubmit} className="flex-1 space-y-3" noValidate>
             <div className="grid sm:grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label htmlFor="firstName" className="text-sm font-medium text-gray-700 dark:text-gray-200">Nome</Label>
+                <Label
+                  htmlFor="firstName"
+                  className="text-sm font-medium text-gray-700 dark:text-gray-200"
+                >
+                  Nome
+                </Label>
                 <Input
                   id="firstName"
                   name="firstName"
@@ -121,11 +207,16 @@ function Register() {
                   required
                   value={formState.firstName}
                   onChange={handleChange}
-                  className="h-10 bg-white dark:bg-gray-950 transition-all duration-200 focus:ring-2 focus:ring-indigo-500 border-gray-200 dark:border-gray-800"
+                  className="h-10 bg-white text-gray-900 dark:bg-gray-950 transition-all duration-200 focus:ring-2 focus:ring-indigo-500 border-gray-200 dark:border-gray-800"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="lastName" className="text-sm font-medium text-gray-700 dark:text-gray-200">Sobrenome</Label>
+                <Label
+                  htmlFor="lastName"
+                  className="text-sm font-medium text-gray-700 dark:text-gray-200"
+                >
+                  Sobrenome
+                </Label>
                 <Input
                   id="lastName"
                   name="lastName"
@@ -133,13 +224,44 @@ function Register() {
                   required
                   value={formState.lastName}
                   onChange={handleChange}
-                  className="h-10 bg-white dark:bg-gray-950 transition-all duration-200 focus:ring-2 focus:ring-indigo-500 border-gray-200 dark:border-gray-800"
+                  className="h-10 bg-white text-gray-900 dark:bg-gray-950 transition-all duration-200 focus:ring-2 focus:ring-indigo-500 border-gray-200 dark:border-gray-800"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium text-gray-700 dark:text-gray-200">Email</Label>
+              <Label
+                htmlFor="username"
+                className="text-sm font-medium text-gray-700 dark:text-gray-200"
+              >
+                Nome de usuário
+              </Label>
+              <div className="relative">
+                <Input
+                  id="username"
+                  name="username"
+                  placeholder="nome.de.usuario"
+                  required
+                  value={formState.username}
+                  onChange={handleChange}
+                  className="h-10 bg-white text-gray-900 dark:bg-gray-950 transition-all duration-200 focus:ring-2 focus:ring-indigo-500 border-gray-200 dark:border-gray-800 pr-8"
+                />
+                {isUsernameLoading && (
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2"><Spinner className="w-4 h-4" /></span>
+                )}
+              </div>
+              {usernameError && (
+                <p className="text-xs text-red-600 dark:text-red-400 animate-in fade-in slide-in-from-top-1 duration-200">{usernameError}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label
+                htmlFor="email"
+                className="text-sm font-medium text-gray-700 dark:text-gray-200"
+              >
+                Email
+              </Label>
               <Input
                 id="email"
                 name="email"
@@ -149,46 +271,87 @@ function Register() {
                 required
                 value={formState.email}
                 onChange={handleChange}
-                className="h-10 bg-white dark:bg-gray-950 transition-all duration-200 focus:ring-2 focus:ring-indigo-500 border-gray-200 dark:border-gray-800"
+                className="h-10 bg-white text-gray-900 dark:bg-gray-950 transition-all duration-200 focus:ring-2 focus:ring-indigo-500 border-gray-200 dark:border-gray-800"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium text-gray-700 dark:text-gray-200">Senha</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                placeholder="Mínimo de 6 caracteres"
-                autoComplete="new-password"
-                minLength={MIN_PASSWORD_LENGTH}
-                required
-                value={formState.password}
-                onChange={handleChange}
-                className="h-11 bg-white dark:bg-gray-950 transition-all duration-200 focus:ring-2 focus:ring-indigo-500 border-gray-200 dark:border-gray-800"
-              />
+              <Label
+                htmlFor="password"
+                className="text-sm font-medium text-gray-700 dark:text-gray-200"
+              >
+                Senha
+              </Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Mínimo de 6 caracteres"
+                  autoComplete="new-password"
+                  minLength={MIN_PASSWORD_LENGTH}
+                  required
+                  value={formState.password}
+                  onChange={handleChange}
+                  className="h-11 bg-white text-gray-900 dark:bg-gray-950 transition-all duration-200 focus:ring-2 focus:ring-indigo-500 border-gray-200 dark:border-gray-800 pr-10"
+                />
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400 focus:outline-none"
+                >
+                  {showPassword ? (
+                    <EyeOffIcon className="w-5 h-5" />
+                  ) : (
+                    <EyeIcon className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
               <p className="text-xs text-muted-foreground">
                 Use uma senha segura com no mínimo 6 caracteres.
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700 dark:text-gray-200">Confirmar Senha</Label>
-              <Input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                placeholder="Digite a senha novamente"
-                autoComplete="new-password"
-                minLength={MIN_PASSWORD_LENGTH}
-                required
-                value={formState.confirmPassword}
-                onChange={handleChange}
-                className={`h-10 bg-white dark:bg-gray-950 transition-all duration-200 focus:ring-2 border-gray-200 dark:border-gray-800 ${showPasswordMismatch
-                  ? "border-red-500 focus:ring-red-500"
-                  : "focus:ring-indigo-500"
+              <Label
+                htmlFor="confirmPassword"
+                className="text-sm font-medium text-gray-700 dark:text-gray-200"
+              >
+                Confirmar Senha
+              </Label>
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="Digite a senha novamente"
+                  autoComplete="new-password"
+                  minLength={MIN_PASSWORD_LENGTH}
+                  required
+                  value={formState.confirmPassword}
+                  onChange={handleChange}
+                  className={`h-10 bg-white text-gray-900 dark:bg-gray-950 transition-all duration-200 focus:ring-2 border-gray-200 dark:border-gray-800 pr-10 ${
+                    showPasswordMismatch
+                      ? "border-red-500 focus:ring-red-500"
+                      : "focus:ring-indigo-500"
                   }`}
-              />
+                />
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  aria-label={showConfirmPassword ? "Ocultar senha" : "Mostrar senha"}
+                  onClick={() => setShowConfirmPassword((v) => !v)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400 focus:outline-none"
+                >
+                  {showConfirmPassword ? (
+                    <EyeOffIcon className="w-5 h-5" />
+                  ) : (
+                    <EyeIcon className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
               {showPasswordMismatch && (
                 <p className="text-xs text-red-600 dark:text-red-400 animate-in fade-in slide-in-from-top-1 duration-200">
                   As senhas não coincidem

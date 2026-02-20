@@ -54,7 +54,13 @@ Project is **partially migrated**. Config: `allowJs: true`, `checkJs: false`.
 import { Task, Priority, ExpenseCategory } from "@/types";
 ```
 
-For details: see `TYPESCRIPT.md` and `CLAUDE.md`
+For details: see this file (`copilot-instructions.md`)\
+Never create a resume document summarizing the changes has maded.
+
+**Documentation structure**: All docs are in `docs/` folder:
+- `docs/ENVIRONMENTS.md` - Environment configuration
+- `docs/DEPLOY.md` - Deployment guides
+- `docs/ROADMAP.md` - Feature roadmap
 
 ## Component Organization
 
@@ -130,8 +136,10 @@ VITE_API_URL=http://localhost:3001/api # API base URL (when using API mode)
 - `src/services/api/config.js` - API configuration, `DATA_MODE` check, `apiRequest()` helper
 - `src/mocks/data.js` - Mock data for all modules
 - `tailwind.config.ts` - Custom theme colors and dark mode tokens
-- `CLAUDE.md` - Detailed architecture documentation
-- `TYPESCRIPT.md` - TypeScript migration guide
+- `docs/` - Organized documentation folder
+  - `docs/ENVIRONMENTS.md` - Environment configuration guide
+  - `docs/DEPLOY.md` - Platform deployment guides
+  - `docs/ROADMAP.md` - Features roadmap and ideas
 
 ## Common Patterns
 

@@ -4,11 +4,33 @@
  */
 
 /**
+ * Ambiente da aplicação: 'development', 'staging', ou 'production'
+ * Configure via variável de ambiente VITE_ENVIRONMENT
+ */
+export const ENVIRONMENT = import.meta.env.VITE_ENVIRONMENT || 'development';
+
+/**
+ * URLs base para cada ambiente
+ */
+const API_URLS = {
+  development: import.meta.env.VITE_API_URL || 'http://localhost:3001/api',
+  staging: import.meta.env.VITE_API_STAGING_URL || 'https://staging-api.ninho.app/api',
+  production: import.meta.env.VITE_API_PRODUCTION_URL || 'https://api.ninho.app/api'
+};
+
+/**
+ * Retorna a URL base da API com base no ambiente atual
+ */
+function getApiBaseUrl() {
+  return API_URLS[ENVIRONMENT] || API_URLS.development;
+}
+
+/**
  * Configuração da API
  */
 export const API_CONFIG = {
-  // URL base da API (será configurada quando implementar a API real)
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3001/api',
+  // URL base da API (selecionada automaticamente com base no ambiente)
+  baseURL: getApiBaseUrl(),
 
   // Timeout para requisições (em milissegundos)
   timeout: 10000,
@@ -20,15 +42,24 @@ export const API_CONFIG = {
   }
 };
 
+// Log de configuração em modo de desenvolvimento
+// if (import.meta.env.DEV) {
+//   console.log('🔧 API Configuration:', {
+//     environment: ENVIRONMENT,
+//     dataMode: DATA_MODE,
+//     baseURL: API_CONFIG.baseURL
+//   });
+// }
+
 /**
  * Endpoints da API
  */
 export const API_ENDPOINTS = {
-  notices: '/notices',
-  tasks: '/tasks',
-  shopping: '/shopping',
-  expenses: '/expenses',
-  futureItems: '/future-items'
+  notices: '/api/notices',
+  tasks: '/api/tasks',
+  shopping: '/api/shopping',
+  expenses: '/api/financial-transactions',
+  futureItems: '/api/future-items'
 };
 
 /**

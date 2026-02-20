@@ -5,7 +5,7 @@ import * as noticeService from '@/services/noticeService';
 import * as shoppingService from '@/services/shoppingService';
 import * as taskService from '@/services/taskService';
 import { userProfileToUser } from '@/types';
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 export const AppContext = createContext();
 
@@ -19,6 +19,9 @@ export function AppProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [userLoading, setUserLoading] = useState(false);
+  const [sessionChecked, setSessionChecked] = useState(false);
+  const hasLoaded = useRef(false);
+  const sessionCheckRef = useRef(false);
 
   // ========== NOTICES ==========
   const addNotice = async (notice) => {
@@ -111,6 +114,7 @@ export function AppProvider({ children }) {
     try {
       setUserLoading(true);
       const profileData = await authService.getUserProfile();
+      console.log('Perfil do usuário carregado:', profileData);
       setUser(userProfileToUser(profileData));
       return userProfileToUser(profileData);
     } catch (error) {
@@ -124,10 +128,31 @@ export function AppProvider({ children }) {
 
   const clearUser = () => {
     setUser(null);
+    hasLoaded.current = false;
+  };
+
+  // ========== CHECK SESSION ==========
+  // Chamado explicitamente pelo RequireAuth — não roda na página de login
+  const checkSession = async () => {
+    if (sessionCheckRef.current) return;
+    sessionCheckRef.current = true;
+    try {
+      const profileData = await authService.getUserProfile();
+      setUser(userProfileToUser(profileData));
+    } catch {
+      setUser(null);
+    } finally {
+      setSessionChecked(true);
+    }
   };
 
   // ========== LOAD INITIAL DATA ==========
+  // Carrega dados apenas após o usuário estar autenticado
   useEffect(() => {
+    if (!user) return;
+    if (hasLoaded.current) return;
+    hasLoaded.current = true;
+
     const loadData = async () => {
       try {
         setLoading(true);
@@ -153,7 +178,7 @@ export function AppProvider({ children }) {
     };
 
     loadData();
-  }, []);
+  }, [user]);
 
   // ========== MEMOIZED VALUE ==========
   const value = useMemo(() => ({
@@ -166,8 +191,10 @@ export function AppProvider({ children }) {
     loading,
     user,
     userLoading,
+    sessionChecked,
     
     // User actions
+    checkSession,
     loadUserProfile,
     clearUser,
     
@@ -193,7 +220,7 @@ export function AppProvider({ children }) {
     // Future items actions
     addFutureItem,
     deleteFutureItem,
-  }), [notices, tasks, shoppingList, expenses, futureItems, loading, user, userLoading]);
+  }), [notices, tasks, shoppingList, expenses, futureItems, loading, user, userLoading, sessionChecked]);
 
   return (
     <AppContext.Provider value={value}>

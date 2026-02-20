@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from 'react';
+import { lazy, Suspense } from 'react';
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { AppSidebar } from './components/app-sidebar';
 import { FadeIn } from './components/common/FadeIn';
@@ -121,18 +121,11 @@ const HomeLayout = () => {
   // Tema (necessário manter o ThemeContext ativo)
   const { theme } = useTheme();
 
-  // User e funções do contexto
-  const { user, userLoading, loadUserProfile } = useApp();
+  // User do contexto
+  const { user } = useApp();
 
   // Location para título dinâmico
   const location = useLocation();
-
-  // Carregar perfil do usuário ao montar o componente
-  useEffect(() => {
-    if (!user && !userLoading) {
-      loadUserProfile();
-    }
-  }, []);
 
   // Mapa de títulos por rota
   const pageTitles = {

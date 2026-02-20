@@ -41,6 +41,7 @@ import {
 import * as React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toAvatarSrc } from "@/lib/avatarUtils";
+import * as authService from "@/services/authService";
 
 // Mock de ninhos - será substituído por dados reais
 const mockNinhos = [
@@ -106,6 +107,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
   const defaultUser: User = {
     id: "1",
     name: "Usuário",
+    callmeby: "Você",
     email: "usuario@ninho.app",
   };
 
@@ -156,8 +158,19 @@ export function AppSidebar({ user }: AppSidebarProps) {
     console.log("Settings clicked");
   };
 
-  const handleLogoutClick = () => {
-    console.log("Logout clicked");
+  const [isLoggingOut, setIsLoggingOut] = React.useState(false);
+  const handleLogoutClick = async () => {
+    setIsLoggingOut(true);
+    try {
+      await authService.logout();
+      // Limpar estado do usuário, se houver (opcional: useApp()?.setUser(null))
+      navigate("/login");
+    } catch (error) {
+      // Exibir erro (opcional: toast)
+      console.error("Erro ao sair:", error);
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   const isActive = (path: string) => location.pathname === path;
@@ -376,9 +389,18 @@ export function AppSidebar({ user }: AppSidebarProps) {
                   {theme === "light" ? "Modo Escuro" : "Modo Claro"}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogoutClick}>
-                  <LogOut />
-                  Sair
+                <DropdownMenuItem onClick={isLoggingOut ? undefined : handleLogoutClick} disabled={isLoggingOut} className={isLoggingOut ? "opacity-60 pointer-events-none" : ""}>
+                  {isLoggingOut ? (
+                    <>
+                      <LogOut className="animate-spin mr-1" />
+                      Saindo...
+                    </>
+                  ) : (
+                    <>
+                      <LogOut />
+                      Sair
+                    </>
+                  )}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

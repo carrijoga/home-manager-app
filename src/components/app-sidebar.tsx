@@ -107,6 +107,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
   const defaultUser: User = {
     id: "1",
     name: "Usuário",
+    callmeby: "Você",
     email: "usuario@ninho.app",
   };
 

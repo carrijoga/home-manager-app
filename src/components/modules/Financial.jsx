@@ -2,7 +2,19 @@ import { useApp } from '@/contexts/AppContext';
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
 import { Trash2 } from 'lucide-react';
 import { memo, useMemo, useState } from 'react';
-import { ExpenseCategories } from '../../models/types';
+// Categorias de despesa (mock-only — categorias reais vêm da API via categoryService)
+const ExpenseCategories = {
+  FIXED: 'Fixo',
+  MAINTENANCE: 'Manutenção',
+  NEW_ITEM: 'Novo item',
+  GENERAL: 'Geral',
+  FOOD: 'Alimentação',
+  TRANSPORT: 'Transporte',
+  HEALTH: 'Saúde',
+  EDUCATION: 'Educação',
+  ENTERTAINMENT: 'Entretenimento',
+  OTHER: 'Outro',
+};
 import Button from '../common/Button';
 import Card from '../common/Card';
 import Input from '../common/Input';

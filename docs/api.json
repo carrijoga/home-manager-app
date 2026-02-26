@@ -45,10 +45,13 @@
         "tags": [
           "User"
         ],
+        "summary": "Generates a username preview based on the specified first and last names.",
+        "description": "This endpoint does not require authentication and is intended for previewing potential\r\n    usernames before account creation.",
         "parameters": [
           {
             "name": "firstName",
             "in": "query",
+            "description": "The first name to use when generating the username. Cannot be null or empty.",
             "schema": {
               "type": "string"
             }
@@ -56,6 +59,7 @@
           {
             "name": "lastName",
             "in": "query",
+            "description": "The last name to use when generating the username. Cannot be null or empty.",
             "schema": {
               "type": "string"
             }
@@ -63,7 +67,44 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           }
         }
       }
@@ -366,6 +407,61 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/me/nests/create": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Creates a new nest for the authenticated user using the specified details.",
+        "description": "This method requires the user to be authenticated. The request must include valid nest data.\r\n    If the operation fails, the response will contain an error message.",
+        "requestBody": {
+          "description": "The request object containing the nest's name, description, and icon. Must provide valid values for all fields.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateNestRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateNestRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateNestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
           },
           "400": {
             "description": "Bad Request",
@@ -1824,6 +1920,23 @@
           },
           "type": {
             "$ref": "#/components/schemas/TransactionType"
+          }
+        }
+      },
+      "CreateNestRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "icon": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },

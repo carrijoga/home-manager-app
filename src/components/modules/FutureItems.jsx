@@ -2,7 +2,7 @@ import { useApp } from '@/contexts/AppContext';
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
 import { Trash2 } from 'lucide-react';
 import { memo, useState } from 'react';
-import { PriorityLevels } from '../../models/types';
+import { PriorityLevels } from '@/types';
 import Button from '../common/Button';
 import Card from '../common/Card';
 import Input from '../common/Input';

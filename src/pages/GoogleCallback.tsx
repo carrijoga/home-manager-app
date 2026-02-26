@@ -36,7 +36,7 @@ export const GoogleCallback = () => {
             try {
                 const response = await loginWithGoogle(code);
                 toast.success(
-                    response.message || "Login com Google realizado com sucesso!"
+                    (response as { message?: string }).message || "Login com Google realizado com sucesso!"
                 );
                 navigate("/dashboard", { replace: true });
             } catch (err) {

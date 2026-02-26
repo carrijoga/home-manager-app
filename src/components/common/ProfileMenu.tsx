@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToastNotifications } from "@/hooks/use-toast-notifications";
 import { cn } from "@/lib/utils";
-import type { User } from "@/types";
+import type { AppUser } from "@/types";
 import {
   LogOut,
   Monitor,
@@ -26,7 +26,7 @@ import {
 import React, { useEffect, useState } from "react";
 
 interface ProfileMenuProps {
-  user: User;
+  user: AppUser;
   currentTheme?: "light" | "dark" | "system";
   onThemeChange?: (theme: "light" | "dark" | "system") => void;
   onProfileClick?: () => void;

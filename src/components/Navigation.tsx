@@ -5,7 +5,7 @@
  */
 
 import { cn } from "@/lib/utils";
-import type { User } from "@/types";
+import type { AppUser } from "@/types";
 import {
   Calendar,
   CheckSquare,
@@ -26,7 +26,7 @@ import ProfileMenu from "./common/ProfileMenu";
 
 interface NavigationProps {
   currentPath: string;
-  user?: User;
+  user?: AppUser;
   onThemeChange?: (theme: "light" | "dark" | "system") => void;
   currentTheme?: "light" | "dark" | "system";
 }
@@ -66,7 +66,7 @@ const Navigation: FC<NavigationProps> = ({
   const navigate = useNavigate();
 
   // Usuário padrão para desenvolvimento
-  const defaultUser: User = {
+  const defaultUser: AppUser = {
     id: "1",
     name: "Usuário",
     callmeby: "Você",

@@ -51,7 +51,7 @@ const Dashboard = () => {
   const {
     notices,
     tasks,
-    shoppingList,
+    shoppingLists,
     expenses,
     futureItems,
     user,
@@ -152,28 +152,27 @@ const Dashboard = () => {
   }, [tasks]);
 
   const shoppingMetrics = useMemo(() => {
-    const pendingItems = shoppingList.items.filter(i => !i.checked).length;
-    const totalItems = shoppingList.items.length;
-    const estimatedValue = shoppingList.items
-      .filter(i => !i.checked && i.price)
-      .reduce((sum, item) => sum + (item.price || 0), 0);
-    
-    // Categoria com mais itens pendentes
-    const categoryCount = {};
-    shoppingList.items.filter(i => !i.checked).forEach(item => {
-      categoryCount[item.category] = (categoryCount[item.category] || 0) + 1;
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1; // 1-based
+
+    const currentMonthLists = shoppingLists.filter(l => {
+      const d = new Date(l.monthYear);
+      return d.getUTCFullYear() === currentYear && (d.getUTCMonth() + 1) === currentMonth;
     });
-    const topCategory = Object.keys(categoryCount).length > 0
-      ? Object.entries(categoryCount).sort((a, b) => b[1] - a[1])[0][0]
-      : 'Nenhuma';
-    
+
+    const totalItems = currentMonthLists.reduce((s, l) => s + l.totalItems, 0);
+    const purchasedItems = currentMonthLists.reduce((s, l) => s + l.purchasedItems, 0);
+    const pendingItems = totalItems - purchasedItems;
+    const estimatedValue = currentMonthLists.reduce((s, l) => s + (l.totalEstimated ?? 0), 0);
+
     return {
       pending: pendingItems,
       total: totalItems,
       estimatedValue,
-      topCategory
+      topCategory: '',
     };
-  }, [shoppingList.items]);
+  }, [shoppingLists]);
 
   const futureMetrics = useMemo(() => {
     const prioritizedItems = futureItems?.filter(item => 

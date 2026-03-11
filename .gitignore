@@ -29,10 +29,9 @@ dist-ssr
 # Note: .env.example, .env.development, .env.staging, and .env.production
 # are versioned as templates/references. Use them to create your local .env
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.development
+.env.production
+.env.staging
 
 # Build
 build

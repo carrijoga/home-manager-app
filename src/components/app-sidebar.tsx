@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -21,50 +22,53 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { useTheme } from "@/contexts/ThemeContext";
-import type { User } from "@/types";
+import { useApp } from "@/contexts/AppContext";
+import { getIconComponent } from "@/lib/nestIcons";
+import { NestManagerSheet } from "@/components/modals/NestManagerSheet";
+import type { AppUser } from "@/types";
 import {
+  AlertTriangle,
   Bell,
   Calendar,
   Check,
+  CheckCircle2,
   CheckSquare,
   ChevronsUpDown,
   DollarSign,
   Home,
+  Info,
   LogOut,
   Moon,
   Package,
   Settings,
+  Settings2,
   ShoppingCart,
   Sun,
   User as UserIcon,
+  X,
+  XCircle,
 } from "lucide-react";
 import * as React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toAvatarSrc } from "@/lib/avatarUtils";
 import * as authService from "@/services/authService";
 
-// Mock de ninhos - será substituído por dados reais
-const mockNinhos = [
-  { id: "1", name: "Casa Principal" },
-  { id: "2", name: "Escritório" },
-  { id: "3", name: "Casa de Praia" },
-];
+// Notification type icon + color helpers
+function getNotificationIcon(type: number) {
+  switch (type) {
+    case 1: return AlertTriangle; // Warning
+    case 2: return XCircle;       // Error
+    case 3: return CheckCircle2;  // Success
+    default: return Info;         // Info (0) + fallback
+  }
+}
 
-// Mock de notificações
-const mockNotifications = [
-  {
-    id: "1",
-    title: "Tarefa vencendo",
-    message: 'A tarefa "Comprar mantimentos" vence hoje',
-    read: false,
-  },
-  {
-    id: "2",
-    title: "Novo aviso",
-    message: "Gabriel adicionou um novo aviso no quadro",
-    read: false,
-  },
-];
+const NOTIFICATION_ICON_COLOR: Record<number, string> = {
+  0: 'text-blue-500',
+  1: 'text-amber-500',
+  2: 'text-red-500',
+  3: 'text-emerald-500',
+};
 
 interface Module {
   id: string;
@@ -93,18 +97,32 @@ const MODULES: Module[] = [
 ];
 
 interface AppSidebarProps {
-  user?: User;
+  user?: AppUser;
 }
 
 export function AppSidebar({ user }: AppSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
+  const {
+    activeNestId,
+    setActiveNestId,
+    notifications,
+    markAsRead,
+    markAllAsRead,
+    clearNotification,
+    clearAllNotifications,
+  } = useApp();
+  const [manageNestsOpen, setManageNestsOpen] = React.useState(false);
 
-  const [activeNinho, setActiveNinho] = React.useState(mockNinhos[0]);
+  const nests = user?.nests ?? [];
+  const activeNest = nests.find(n => n.nestId === activeNestId)
+    ?? nests.find(n => n.isDefault)
+    ?? nests[0]
+    ?? null;
 
   // Usuário padrão para desenvolvimento
-  const defaultUser: User = {
+  const defaultUser: AppUser = {
     id: "1",
     name: "Usuário",
     callmeby: "Você",
@@ -135,19 +153,14 @@ export function AppSidebar({ user }: AppSidebarProps) {
     };
   }, [currentUser.avatar]);
 
-  const unreadCount = mockNotifications.filter((n) => !n.read).length;
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
 
-  const handleNinhoChange = (ninho: (typeof mockNinhos)[0]) => {
-    setActiveNinho(ninho);
-    console.log("Ninho changed to:", ninho.name);
+  const handleNinhoChange = (nestId: string) => {
+    setActiveNestId(nestId);
   };
 
   const handleThemeToggle = () => {
     setTheme(theme === "light" ? "dark" : "light");
-  };
-
-  const handleNotificationClick = (notificationId: string) => {
-    console.log("Notification clicked:", notificationId);
   };
 
   const handleProfileClick = () => {
@@ -177,6 +190,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
 
   return (
     <Sidebar collapsible="icon">
+      <NestManagerSheet open={manageNestsOpen} onClose={() => setManageNestsOpen(false)} />
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -184,45 +198,64 @@ export function AppSidebar({ user }: AppSidebarProps) {
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton
                   size="lg"
+                  disabled={nests.length === 0}
                   className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                 >
                   <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-lg">
-                    🪺
+                    {activeNest?.icon
+                      ? React.createElement(getIconComponent(activeNest.icon), { className: 'size-4' })
+                      : '🪺'
+                    }
                   </div>
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-semibold">Ninho</span>
                     <span className="truncate text-xs text-muted-foreground">
-                      {activeNinho.name}
+                      {activeNest?.name ?? 'Nenhum ninho'}
                     </span>
                   </div>
-                  <ChevronsUpDown className="ml-auto" />
+                  {nests.length > 0 && <ChevronsUpDown className="ml-auto" />}
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
-              <DropdownMenuContent
-                className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-                align="start"
-                side="bottom"
-                sideOffset={4}
-              >
-                <DropdownMenuLabel className="text-xs text-muted-foreground">
-                  Ninhos
-                </DropdownMenuLabel>
-                {mockNinhos.map((ninho) => (
+              {nests.length > 0 && (
+                <DropdownMenuContent
+                  className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+                  align="start"
+                  side="bottom"
+                  sideOffset={4}
+                >
+                  <DropdownMenuLabel className="text-xs text-muted-foreground">
+                    Ninhos
+                  </DropdownMenuLabel>
+                  {nests.map((nest) => {
+                    const NestIcon = getIconComponent(nest.icon);
+                    return (
+                      <DropdownMenuItem
+                        key={nest.nestId}
+                        onClick={() => handleNinhoChange(nest.nestId)}
+                        className="gap-2 p-2"
+                      >
+                        <div className="flex size-6 items-center justify-center rounded-sm border">
+                          <NestIcon className="size-3.5" />
+                        </div>
+                        <span className="flex-1 truncate">{nest.name}</span>
+                        {activeNest?.nestId === nest.nestId && (
+                          <Check className="ml-auto size-3.5" />
+                        )}
+                      </DropdownMenuItem>
+                    );
+                  })}
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    key={ninho.id}
-                    onClick={() => handleNinhoChange(ninho)}
-                    className="gap-2 p-2"
+                    className="gap-2 p-2 text-indigo-600 dark:text-indigo-400"
+                    onClick={() => setManageNestsOpen(true)}
                   >
                     <div className="flex size-6 items-center justify-center rounded-sm border">
-                      🪺
+                      <Settings2 className="size-3.5" />
                     </div>
-                    {ninho.name}
-                    {activeNinho.id === ninho.id && (
-                      <Check className="ml-auto" />
-                    )}
+                    Gerenciar ninhos
                   </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
+                </DropdownMenuContent>
+              )}
             </DropdownMenu>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -279,41 +312,106 @@ export function AppSidebar({ user }: AppSidebarProps) {
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-semibold">Notificações</span>
                     <span className="truncate text-xs text-muted-foreground">
-                      {unreadCount} não lidas
+                      {unreadCount > 0 ? `${unreadCount} não lidas` : 'Nenhuma nova'}
                     </span>
                   </div>
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+                className="w-80 rounded-lg p-0"
                 side="bottom"
                 align="end"
                 sideOffset={4}
               >
-                <DropdownMenuLabel>Notificações</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {mockNotifications.map((notification) => (
-                  <DropdownMenuItem
-                    key={notification.id}
-                    onClick={() => handleNotificationClick(notification.id)}
-                    className="flex flex-col items-start gap-1 p-2"
-                  >
-                    <div className="flex items-center gap-2 w-full">
-                      <span className="font-semibold text-sm">
-                        {notification.title}
-                      </span>
-                      {!notification.read && (
-                        <Badge
-                          variant="default"
-                          className="h-2 w-2 p-0 rounded-full"
-                        />
-                      )}
+                {/* Header */}
+                <div className="flex items-center justify-between px-3 py-2 border-b">
+                  <span className="text-sm font-semibold">Notificações</span>
+                  {notifications.length > 0 && (
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={markAllAsRead}
+                        className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        Marcar todas
+                      </button>
+                      <span className="text-muted-foreground/40 text-xs">·</span>
+                      <button
+                        type="button"
+                        onClick={clearAllNotifications}
+                        className="text-xs text-muted-foreground hover:text-destructive transition-colors"
+                      >
+                        Limpar tudo
+                      </button>
                     </div>
-                    <span className="text-xs text-muted-foreground">
-                      {notification.message}
-                    </span>
-                  </DropdownMenuItem>
-                ))}
+                  )}
+                </div>
+
+                {/* List */}
+                <div className="max-h-72 overflow-y-auto">
+                  {notifications.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-8 gap-2 text-muted-foreground">
+                      <Bell className="size-8 opacity-30" />
+                      <span className="text-sm">Nenhuma notificação</span>
+                    </div>
+                  ) : (
+                    notifications.map((notification) => {
+                      const Icon = getNotificationIcon(notification.type);
+                      const iconColor = NOTIFICATION_ICON_COLOR[notification.type] ?? 'text-blue-500';
+                      return (
+                        <div
+                          key={notification.notificationId}
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => markAsRead(notification.notificationId)}
+                          onKeyDown={(e) => e.key === 'Enter' && markAsRead(notification.notificationId)}
+                          className={cn(
+                            "group flex items-start gap-3 px-3 py-2.5 cursor-pointer",
+                            "hover:bg-muted/60 transition-colors border-b last:border-0",
+                            !notification.isRead && "bg-muted/30"
+                          )}
+                        >
+                          <Icon className={cn("size-4 mt-0.5 shrink-0", iconColor)} />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className={cn(
+                                "text-sm truncate",
+                                !notification.isRead && "font-semibold"
+                              )}>
+                                {notification.title}
+                              </span>
+                              {!notification.isRead && (
+                                <span className="shrink-0 size-1.5 rounded-full bg-blue-500" />
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground line-clamp-2">{notification.message}</p>
+                          </div>
+                          <button
+                            type="button"
+                            aria-label="Remover notificação"
+                            onClick={(e) => { e.stopPropagation(); clearNotification(notification.notificationId); }}
+                            className="shrink-0 rounded p-0.5 opacity-0 group-hover:opacity-100 hover:bg-muted transition-all"
+                          >
+                            <X className="size-3" />
+                          </button>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+                {/* Footer */}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="gap-2 text-muted-foreground"
+                  onClick={() => {
+                    // TODO: navigate to notification settings or open preferences modal
+                    handleSettingsClick();
+                  }}
+                >
+                  <Settings className="size-4" />
+                  Configurar notificações
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </SidebarMenuItem>
@@ -331,7 +429,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
                     <AvatarFallback className="rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
                       {currentUser.name
                         .split(" ")
-                        .map((n) => n[0])
+                        .map((n: string) => n[0])
                         .join("")
                         .toUpperCase()}
                     </AvatarFallback>
@@ -360,7 +458,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
                       <AvatarFallback className="rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
                         {currentUser.name
                           .split(" ")
-                          .map((n) => n[0])
+                          .map((n: string) => n[0])
                           .join("")
                           .toUpperCase()}
                       </AvatarFallback>

@@ -6,59 +6,44 @@ import { EyeIcon, EyeOffIcon } from "@/components/ui";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { login as loginRequest } from "@/services/authService";
+import { LoginRequestSchema } from "@/schemas/auth";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useApp } from "@/contexts/AppContext";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
+import type { LoginRequest } from "@/schemas/auth";
+
 // Constantes de ambiente
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 const GOOGLE_REDIRECT_URI = import.meta.env.VITE_GOOGLE_REDIRECT_URI;
-const MIN_PASSWORD_LENGTH = 6;
 
 function Login() {
   const navigate = useNavigate();
   const { loadUserProfile } = useApp();
-  const [formState, setFormState] = useState({
-    UsernameOrEmail: "",
-    Password: "",
-  });
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Não verificamos sessão na página de login
-  // Se o usuário já estiver autenticado, o RequireAuth vai redirecioná-lo
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting, isValid },
+  } = useForm<LoginRequest>({
+    resolver: zodResolver(LoginRequestSchema),
+    mode: 'onChange',
+  });
 
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = event.target;
-    setFormState((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setIsLoading(true);
-    setError(null);
-
+  const onSubmit = async (data: LoginRequest) => {
     try {
-      const response = await loginRequest(formState);
+      await loginRequest(data);
       await loadUserProfile();
-
-      const message = response?.message || "Login realizado com sucesso!";
-      toast.success(message);
-
-      // Se o login foi bem-sucedido, os cookies HttpOnly foram configurados
-      // Redireciona para o dashboard imediatamente
+      toast.success('Login realizado com sucesso!');
       navigate('/dashboard', { replace: true });
     } catch (err) {
       const message =
-        err instanceof Error
-          ? err.message
-          : "Não foi possível realizar o login, tente novamente.";
-      setError(message);
+        err instanceof Error ? err.message : 'Não foi possível realizar o login, tente novamente.';
       toast.error(message);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -70,7 +55,6 @@ function Login() {
 
     setIsGoogleLoading(true);
 
-    // Build Google OAuth URL
     const googleAuthUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
     googleAuthUrl.searchParams.append("client_id", GOOGLE_CLIENT_ID);
     googleAuthUrl.searchParams.append("redirect_uri", GOOGLE_REDIRECT_URI);
@@ -79,13 +63,8 @@ function Login() {
     googleAuthUrl.searchParams.append("access_type", "offline");
     googleAuthUrl.searchParams.append("prompt", "consent");
 
-    // Redirect to Google OAuth
     window.location.href = googleAuthUrl.toString();
   };
-
-  const isFormValid =
-    formState.UsernameOrEmail.trim() !== "" &&
-    formState.Password.trim().length >= MIN_PASSWORD_LENGTH;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-purple-50 to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4">
@@ -112,7 +91,7 @@ function Login() {
             type="button"
             variant="outline"
             onClick={handleGoogleLogin}
-            disabled={isGoogleLoading || isLoading}
+            disabled={isGoogleLoading || isSubmitting}
             className="w-full h-12 mb-6 text-base font-medium bg-white dark:bg-gray-950 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-700 hover:bg-gray-100 hover:text-gray-500 dark:hover:bg-gray-900 transition-all duration-200 shadow-sm hover:shadow-md"
           >
             {isGoogleLoading ? (
@@ -152,35 +131,31 @@ function Login() {
             <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 dark:via-gray-600 to-transparent"></div>
           </div>
 
-          <form onSubmit={handleSubmit} className="w-full space-y-4" noValidate>
+          <form onSubmit={handleSubmit(onSubmit)} className="w-full space-y-4" noValidate>
             <div className="space-y-2">
-              <Label htmlFor="UsernameOrEmail" className="text-sm font-medium text-gray-700 dark:text-gray-200">Email</Label>
+              <Label htmlFor="usernameOrEmail" className="text-sm font-medium text-gray-700 dark:text-gray-200">Email ou usuário</Label>
               <Input
-                id="UsernameOrEmail"
-                name="UsernameOrEmail"
-                type="email"
+                id="usernameOrEmail"
+                type="text"
                 placeholder="ninho@ninho.com"
                 autoComplete="email"
-                required
-                value={formState.UsernameOrEmail}
-                onChange={handleChange}
+                {...register('usernameOrEmail')}
                 className="h-10 bg-white text-gray-700 dark:bg-gray-950 transition-all duration-200 focus:ring-2 focus:ring-indigo-500 border-gray-200 dark:border-gray-800"
               />
+              {errors.usernameOrEmail && (
+                <p className="text-xs text-red-600 dark:text-red-400">{errors.usernameOrEmail.message}</p>
+              )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="Password" className="text-sm font-medium text-gray-700 dark:text-gray-200">Senha</Label>
+              <Label htmlFor="password" className="text-sm font-medium text-gray-700 dark:text-gray-200">Senha</Label>
               <div className="relative">
                 <Input
-                  id="Password"
-                  name="Password"
+                  id="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="********"
                   autoComplete="current-password"
-                  required
-                  minLength={MIN_PASSWORD_LENGTH}
-                  value={formState.Password}
-                  onChange={handleChange}
+                  {...register('password')}
                   className="h-10 bg-white text-gray-700 dark:bg-gray-950 transition-all duration-200 focus:ring-2 focus:ring-indigo-500 border-gray-200 dark:border-gray-800 pr-10"
                 />
                 <button
@@ -190,21 +165,20 @@ function Login() {
                   onClick={() => setShowPassword((v) => !v)}
                   className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400 focus:outline-none"
                 >
-                  {showPassword ? (
-                    <EyeOffIcon className="w-5 h-5" />
-                  ) : (
-                    <EyeIcon className="w-5 h-5" />
-                  )}
+                  {showPassword ? <EyeOffIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
                 </button>
               </div>
+              {errors.password && (
+                <p className="text-xs text-red-600 dark:text-red-400">{errors.password.message}</p>
+              )}
             </div>
 
             <Button
               type="submit"
-              disabled={!isFormValid || isLoading || isGoogleLoading}
+              disabled={!isValid || isSubmitting || isGoogleLoading}
               className="w-full h-12 text-base font-semibold bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 hover:from-indigo-700 hover:via-purple-700 hover:to-cyan-700 transition-all duration-200 hover:shadow-lg hover:scale-[1.02]"
             >
-              {isLoading ? (
+              {isSubmitting ? (
                 <div className="flex items-center justify-center gap-2">
                   <Spinner className="w-4 h-4" />
                   Entrando...
@@ -214,12 +188,6 @@ function Login() {
               )}
             </Button>
           </form>
-
-          {error && (
-            <div className="mt-4 w-full rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-900/10 p-3 text-sm text-red-700 dark:text-red-300 animate-in fade-in slide-in-from-top-2 duration-300">
-              {error}
-            </div>
-          )}
 
           <div className="mt-8 w-full text-center text-sm text-muted-foreground space-y-2">
             <p>

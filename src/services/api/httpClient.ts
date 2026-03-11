@@ -104,13 +104,14 @@ async function parseResponse<T>(response: Response): Promise<T> {
     try {
       data = JSON.parse(text);
     } catch {
-      data = null;
+      data = text;
     }
   }
 
   if (!response.ok) {
     const message =
-      (data as { message?: string } | null)?.message ?? 'Erro ao comunicar com o servidor.';
+      (data as { message?: string } | null)?.message ??
+      (typeof data === 'string' ? data : 'Erro ao comunicar com o servidor.');
     throw new ApiError(message, response.status);
   }
 

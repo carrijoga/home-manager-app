@@ -73,7 +73,7 @@ export type UpdateProfileRequest = z.infer<typeof UpdateProfileRequestSchema>;
 
 export const CreateNestRequestSchema = z.object({
   name: z.string().min(1, 'Nome do ninho é obrigatório'),
-  description: z.string().min(1, 'Descrição é obrigatória'),
+  description: z.string().optional().default(''),
   icon: z.string().nullable().optional(),
 });
 export type CreateNestRequest = z.infer<typeof CreateNestRequestSchema>;

@@ -29,9 +29,10 @@ export const ENDPOINTS = {
 
   // Nest (grupo/família)
   nests: {
-    create: '/api/users/me/nests/create',
-    // TODO: confirmar rota exata quando o endpoint de atualização estiver no contrato da API
+    create: '/api/nests/create',
+    // TODO: confirmar rota exata quando os endpoints estiverem no contrato da API
     update: (nestId: string) => `/api/nests/${nestId}`,
+    delete: (nestId: string) => `/api/nests/${nestId}`,
   },
 
   // Transações financeiras

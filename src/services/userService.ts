@@ -61,3 +61,10 @@ export async function createNest(payload: CreateNestRequest): Promise<void> {
 export async function updateNest(nestId: string, payload: UpdateNestRequest): Promise<void> {
   await httpClient.put<void>(ENDPOINTS.nests.update(nestId), payload);
 }
+
+/** Remove um ninho
+ * TODO: confirmar rota e método HTTP quando o endpoint estiver no contrato da API
+ */
+export async function deleteNest(nestId: string): Promise<void> {
+  await httpClient.del(ENDPOINTS.nests.delete(nestId));
+}

@@ -24,8 +24,8 @@ import {
 import { useTheme } from "@/contexts/ThemeContext";
 import { useApp } from "@/contexts/AppContext";
 import { getIconComponent } from "@/lib/nestIcons";
-import { CreateNestModal } from "@/components/modals/CreateNestModal";
-import type { AppUser, AppUserNest } from "@/types";
+import { NestManagerSheet } from "@/components/modals/NestManagerSheet";
+import type { AppUser } from "@/types";
 import {
   AlertTriangle,
   Bell,
@@ -40,9 +40,8 @@ import {
   LogOut,
   Moon,
   Package,
-  Pencil,
-  Plus,
   Settings,
+  Settings2,
   ShoppingCart,
   Sun,
   User as UserIcon,
@@ -53,8 +52,6 @@ import * as React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toAvatarSrc } from "@/lib/avatarUtils";
 import * as authService from "@/services/authService";
-
-// Mock de notificações removido — notificações vem do AppContext
 
 // Notification type icon + color helpers
 function getNotificationIcon(type: number) {
@@ -116,14 +113,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
     clearNotification,
     clearAllNotifications,
   } = useApp();
-  const [createNestOpen, setCreateNestOpen] = React.useState(false);
-  const [editNestOpen, setEditNestOpen] = React.useState(false);
-  const [editingNest, setEditingNest] = React.useState<AppUserNest | null>(null);
-
-  const handleEditNest = (nest: AppUserNest) => {
-    setEditingNest(nest);
-    setEditNestOpen(true);
-  };
+  const [manageNestsOpen, setManageNestsOpen] = React.useState(false);
 
   const nests = user?.nests ?? [];
   const activeNest = nests.find(n => n.nestId === activeNestId)
@@ -200,13 +190,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
 
   return (
     <Sidebar collapsible="icon">
-      <CreateNestModal open={createNestOpen} onClose={() => setCreateNestOpen(false)} />
-      <CreateNestModal
-        open={editNestOpen}
-        onClose={() => setEditNestOpen(false)}
-        mode="edit"
-        nest={editingNest ?? undefined}
-      />
+      <NestManagerSheet open={manageNestsOpen} onClose={() => setManageNestsOpen(false)} />
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -248,37 +232,27 @@ export function AppSidebar({ user }: AppSidebarProps) {
                       <DropdownMenuItem
                         key={nest.nestId}
                         onClick={() => handleNinhoChange(nest.nestId)}
-                        className="group gap-2 p-2"
+                        className="gap-2 p-2"
                       >
                         <div className="flex size-6 items-center justify-center rounded-sm border">
                           <NestIcon className="size-3.5" />
                         </div>
                         <span className="flex-1 truncate">{nest.name}</span>
-                        <span className="ml-auto flex items-center gap-1">
-                          <button
-                            type="button"
-                            aria-label="Editar ninho"
-                            onClick={(e) => { e.stopPropagation(); handleEditNest(nest); }}
-                            className="rounded p-0.5 opacity-0 transition-opacity hover:bg-muted group-hover:opacity-100"
-                          >
-                            <Pencil className="size-3" />
-                          </button>
-                          {activeNest?.nestId === nest.nestId && (
-                            <Check className="size-3.5" />
-                          )}
-                        </span>
+                        {activeNest?.nestId === nest.nestId && (
+                          <Check className="ml-auto size-3.5" />
+                        )}
                       </DropdownMenuItem>
                     );
                   })}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="gap-2 p-2 text-indigo-600 dark:text-indigo-400"
-                    onClick={() => setCreateNestOpen(true)}
+                    onClick={() => setManageNestsOpen(true)}
                   >
-                    <div className="flex size-6 items-center justify-center rounded-sm border border-dashed">
-                      <Plus className="size-3.5" />
+                    <div className="flex size-6 items-center justify-center rounded-sm border">
+                      <Settings2 className="size-3.5" />
                     </div>
-                    Adicionar ninho
+                    Gerenciar ninhos
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               )}

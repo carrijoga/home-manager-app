@@ -8,12 +8,14 @@ import * as userService from '@/services/userService';
 import { userProfileToAppUser } from '@/types';
 import type {
   AppNotification,
+  AppShoppingCategory,
+  AppShoppingItem,
+  AppShoppingList,
+  AppShoppingListSummary,
   AppUser,
   AppUserNest,
   FutureItem,
   Notice,
-  ShoppingItem,
-  ShoppingList,
   Task,
 } from '@/types';
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
@@ -24,7 +26,8 @@ interface AppContextValue {
   // States
   notices: Notice[];
   tasks: Task[];
-  shoppingList: ShoppingList;
+  shoppingLists: AppShoppingListSummary[];
+  shoppingCategories: AppShoppingCategory[];
   expenses: unknown[];
   futureItems: FutureItem[];
   loading: boolean;
@@ -60,9 +63,17 @@ interface AppContextValue {
   deleteTask: (id: string) => Promise<void>;
 
   // Shopping actions
-  addShoppingItem: (item: Omit<ShoppingItem, 'id' | 'checked'>) => Promise<void>;
-  toggleShoppingItem: (id: string) => Promise<void>;
-  deleteShoppingItem: (id: string) => Promise<void>;
+  createShoppingList: (name: string, monthYear: string, notes?: string) => Promise<void>;
+  updateShoppingList: (id: string, name: string, monthYear: string, notes?: string) => Promise<void>;
+  deleteShoppingList: (id: string) => Promise<void>;
+  loadShoppingListDetail: (id: string) => Promise<AppShoppingList>;
+  addShoppingItem: (listId: string, name: string, quantity: number, unitType: number, categoryId?: string | null, estimatedPrice?: number | null, notes?: string | null) => Promise<AppShoppingItem>;
+  updateShoppingItem: (id: string, listId: string, name: string, quantity: number, unitType: number, categoryId?: string | null, estimatedPrice?: number | null, notes?: string | null) => Promise<void>;
+  deleteShoppingItem: (id: string, listId: string, quantity: number, unitType: number, estimatedPrice?: number | null, isPurchased?: boolean, price?: number | null) => Promise<void>;
+  markItemAsPurchased: (id: string, listId: string, quantity: number, unitType: number, price: number, purchasedAt: string) => Promise<void>;
+  unmarkItemAsPurchased: (id: string, listId: string, quantity: number, unitType: number, price: number) => Promise<void>;
+  createShoppingCategory: (name: string, description?: string) => Promise<AppShoppingCategory>;
+  deleteShoppingCategory: (id: string) => Promise<void>;
 
   // Financial actions
   addExpense: (expense: unknown) => Promise<void>;
@@ -83,7 +94,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // ========== ESTADOS ==========
   const [notices, setNotices] = useState<Notice[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [shoppingList, setShoppingList] = useState<ShoppingList>({ id: '', month: '', items: [], createdAt: '' });
+  const [shoppingLists, setShoppingLists] = useState<AppShoppingListSummary[]>([]);
+  const [shoppingCategories, setShoppingCategories] = useState<AppShoppingCategory[]>([]);
   const [expenses, setExpenses] = useState<unknown[]>([]);
   const [futureItems, setFutureItems] = useState<FutureItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -94,6 +106,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const hasLoaded = useRef(false);
   const sessionCheckRef = useRef(false);
+
+  // Helper: unit types where the price entered is per-unit (needs × quantity for totals).
+  // UN=0, Dúzia=5, Caixa=6, Pacote=7. Weight/volume types (KG=1,G=2,L=3,mL=4) are totals.
+  const isPricePerUnit = (unitType: number): boolean => [0, 5, 6, 7].includes(unitType);
 
   // Helper to derive default nestId from an AppUser
   const deriveDefaultNestId = (appUser: AppUser): string | null => {
@@ -174,19 +190,128 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   // ========== SHOPPING ==========
-  const addShoppingItem = async (item: Omit<ShoppingItem, 'id' | 'checked'>) => {
-    const newItem = await shoppingService.addShoppingItem(item);
-    setShoppingList(prev => ({ ...prev, items: [...prev.items, newItem] }));
+  const createShoppingList = async (name: string, monthYear: string, notes?: string) => {
+    const detail = await shoppingService.createShoppingList({ name, monthYear, notes }, activeNestId ?? undefined);
+    const summary: AppShoppingListSummary = {
+      shoppingListId: detail.shoppingListId,
+      name: detail.name,
+      monthYear: detail.monthYear,
+      notes: detail.notes,
+      totalItems: 0,
+      purchasedItems: 0,
+      totalEstimated: 0,
+      totalSpent: 0,
+    };
+    setShoppingLists(prev => [summary, ...prev]);
   };
 
-  const toggleShoppingItem = async (id: string) => {
-    const updatedItem = await shoppingService.toggleShoppingItem(id);
-    setShoppingList(prev => ({ ...prev, items: prev.items.map(i => i.id === id ? updatedItem : i) }));
+  const updateShoppingList = async (id: string, name: string, monthYear: string, notes?: string) => {
+    await shoppingService.updateShoppingList(id, { name, monthYear, notes }, activeNestId ?? undefined);
+    setShoppingLists(prev =>
+      prev.map(l => l.shoppingListId === id ? { ...l, name, monthYear, notes: notes ?? null } : l),
+    );
   };
 
-  const deleteShoppingItem = async (id: string) => {
-    await shoppingService.deleteShoppingItem(id);
-    setShoppingList(prev => ({ ...prev, items: prev.items.filter(i => i.id !== id) }));
+  const deleteShoppingList = async (id: string) => {
+    await shoppingService.deleteShoppingList(id, activeNestId ?? undefined);
+    setShoppingLists(prev => prev.filter(l => l.shoppingListId !== id));
+  };
+
+  const loadShoppingListDetail = async (id: string): Promise<AppShoppingList> => {
+    return shoppingService.getShoppingListById(id, activeNestId ?? undefined);
+  };
+
+  const addShoppingItem = async (
+    listId: string, name: string, quantity: number, unitType: number,
+    categoryId?: string | null, estimatedPrice?: number | null, notes?: string | null,
+  ): Promise<AppShoppingItem> => {
+    const newItem = await shoppingService.addShoppingItem(
+      { shoppingListId: listId, name, quantity, unitType, shoppingCategoryId: categoryId, estimatedPrice, notes },
+      activeNestId ?? undefined,
+    );
+    const estimatedContrib = (estimatedPrice ?? 0) * (isPricePerUnit(unitType) ? quantity : 1);
+    setShoppingLists(prev =>
+      prev.map(l =>
+        l.shoppingListId === listId
+          ? { ...l, totalItems: l.totalItems + 1, totalEstimated: (l.totalEstimated ?? 0) + estimatedContrib }
+          : l,
+      ),
+    );
+    return newItem;
+  };
+
+  const updateShoppingItem = async (
+    id: string, _listId: string, name: string, quantity: number, unitType: number,
+    categoryId?: string | null, estimatedPrice?: number | null, notes?: string | null,
+  ) => {
+    await shoppingService.updateShoppingItem(
+      id,
+      { name, quantity, unitType, shoppingCategoryId: categoryId, estimatedPrice, notes },
+      activeNestId ?? undefined,
+    );
+  };
+
+  const deleteShoppingItem = async (id: string, listId: string, quantity: number, unitType: number, estimatedPrice?: number | null, isPurchased?: boolean, price?: number | null) => {
+    await shoppingService.deleteShoppingItem(id, activeNestId ?? undefined);
+    const mult = isPricePerUnit(unitType) ? quantity : 1;
+    const estimatedContrib = (estimatedPrice ?? 0) * mult;
+    const spentContrib = (price ?? 0) * mult;
+    setShoppingLists(prev =>
+      prev.map(l =>
+        l.shoppingListId === listId
+          ? {
+              ...l,
+              totalItems: Math.max(0, l.totalItems - 1),
+              purchasedItems: isPurchased ? Math.max(0, l.purchasedItems - 1) : l.purchasedItems,
+              totalEstimated: Math.max(0, (l.totalEstimated ?? 0) - estimatedContrib),
+              totalSpent: isPurchased ? Math.max(0, (l.totalSpent ?? 0) - spentContrib) : l.totalSpent,
+            }
+          : l,
+      ),
+    );
+  };
+
+  const markItemAsPurchased = async (id: string, listId: string, quantity: number, unitType: number, price: number, purchasedAt: string) => {
+    await shoppingService.markItemAsPurchased(id, { price, purchasedAt }, activeNestId ?? undefined);
+    const spentContrib = price * (isPricePerUnit(unitType) ? quantity : 1);
+    setShoppingLists(prev =>
+      prev.map(l =>
+        l.shoppingListId === listId
+          ? {
+              ...l,
+              purchasedItems: l.purchasedItems + 1,
+              totalSpent: (l.totalSpent ?? 0) + spentContrib,
+            }
+          : l,
+      ),
+    );
+  };
+
+  const unmarkItemAsPurchased = async (id: string, listId: string, quantity: number, unitType: number, price: number) => {
+    await shoppingService.unmarkItemAsPurchased(id, activeNestId ?? undefined);
+    const spentContrib = price * (isPricePerUnit(unitType) ? quantity : 1);
+    setShoppingLists(prev =>
+      prev.map(l =>
+        l.shoppingListId === listId
+          ? {
+              ...l,
+              purchasedItems: Math.max(0, l.purchasedItems - 1),
+              totalSpent: Math.max(0, (l.totalSpent ?? 0) - spentContrib),
+            }
+          : l,
+      ),
+    );
+  };
+
+  const createShoppingCategory = async (name: string, description?: string): Promise<AppShoppingCategory> => {
+    const cat = await shoppingService.createShoppingCategory({ name, description }, activeNestId ?? undefined);
+    setShoppingCategories(prev => [...prev, cat]);
+    return cat;
+  };
+
+  const deleteShoppingCategory = async (id: string) => {
+    await shoppingService.deleteShoppingCategory(id, activeNestId ?? undefined);
+    setShoppingCategories(prev => prev.filter(c => c.shoppingCategoryId !== id));
   };
 
   // ========== FINANCIAL ==========
@@ -267,6 +392,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // ========== SESSION EXPIRY LISTENER ==========
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      setUser(null);
+      setActiveNestId(null);
+      hasLoaded.current = false;
+      sessionCheckRef.current = false;
+      setSessionChecked(false);
+    };
+    window.addEventListener('auth:session-expired', handleSessionExpired);
+    return () => window.removeEventListener('auth:session-expired', handleSessionExpired);
+  }, []);
+
   // ========== LOAD INITIAL DATA ==========
   useEffect(() => {
     if (!user) return;
@@ -276,22 +414,33 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const loadData = async () => {
       try {
         setLoading(true);
-        const [noticesData, tasksData, shoppingData, expensesData, futureData] =
-          await Promise.all([
+        const [noticesResult, tasksResult, shoppingListsResult, shoppingCatsResult, expensesResult, futureResult] =
+          await Promise.allSettled([
             noticeService.getAllNotices(),
             taskService.getAllTasks(),
-            shoppingService.getShoppingList(),
+            shoppingService.getShoppingLists(undefined, activeNestId ?? undefined),
+            shoppingService.getShoppingCategories(activeNestId ?? undefined),
             financialService.getAllExpenses(),
             futureItemsService.getAllFutureItems(),
           ]);
 
-        setNotices(noticesData);
-        setTasks(tasksData);
-        setShoppingList(shoppingData);
-        setExpenses(expensesData);
-        setFutureItems(futureData);
-      } catch (error) {
-        console.error('Erro ao carregar dados:', error);
+        if (noticesResult.status === 'fulfilled') setNotices(noticesResult.value);
+        else console.error('Erro ao carregar avisos:', noticesResult.reason);
+
+        if (tasksResult.status === 'fulfilled') setTasks(tasksResult.value);
+        else console.error('Erro ao carregar tarefas:', tasksResult.reason);
+
+        if (shoppingListsResult.status === 'fulfilled') setShoppingLists(shoppingListsResult.value);
+        else console.error('Erro ao carregar listas de compras:', shoppingListsResult.reason);
+
+        if (shoppingCatsResult.status === 'fulfilled') setShoppingCategories(shoppingCatsResult.value);
+        else console.error('Erro ao carregar categorias de compras:', shoppingCatsResult.reason);
+
+        if (expensesResult.status === 'fulfilled') setExpenses(expensesResult.value);
+        else console.error('Erro ao carregar gastos:', expensesResult.reason);
+
+        if (futureResult.status === 'fulfilled') setFutureItems(futureResult.value);
+        else console.error('Erro ao carregar itens futuros:', futureResult.reason);
       } finally {
         setLoading(false);
       }
@@ -304,7 +453,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<AppContextValue>(() => ({
     notices,
     tasks,
-    shoppingList,
+    shoppingLists,
+    shoppingCategories,
     expenses,
     futureItems,
     loading,
@@ -329,16 +479,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     restoreTask,
     toggleTask,
     deleteTask,
+    createShoppingList,
+    updateShoppingList,
+    deleteShoppingList,
+    loadShoppingListDetail,
     addShoppingItem,
-    toggleShoppingItem,
+    updateShoppingItem,
     deleteShoppingItem,
+    markItemAsPurchased,
+    unmarkItemAsPurchased,
+    createShoppingCategory,
+    deleteShoppingCategory,
     addExpense,
     deleteExpense,
     addFutureItem,
     deleteFutureItem,
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [notices, tasks, shoppingList, expenses, futureItems, loading, user, userLoading, sessionChecked, activeNestId, notifications]);
+  }), [notices, tasks, shoppingLists, shoppingCategories, expenses, futureItems, loading, user, userLoading, sessionChecked, activeNestId, notifications]);
 
   return (
     <AppContext.Provider value={value}>

@@ -27,7 +27,6 @@ async function doRefresh(): Promise<void> {
     method: 'POST',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-    body: JSON.stringify(null),
     signal: AbortSignal.timeout(TIMEOUT_MS),
   });
 
@@ -75,6 +74,7 @@ async function baseRequest<T>(path: string, options: RequestOptions = {}): Promi
     try {
       await refreshOnce();
     } catch {
+      window.dispatchEvent(new CustomEvent('auth:session-expired'));
       throw new ApiError('Sessão expirada. Faça login novamente.', 401);
     }
 
@@ -152,6 +152,14 @@ export const httpClient = {
   put<T>(path: string, body?: unknown, nestId?: string): Promise<T> {
     return baseRequest<T>(path, {
       method: 'PUT',
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+      headers: buildNestHeaders(path, nestId),
+    });
+  },
+
+  patch<T>(path: string, body?: unknown, nestId?: string): Promise<T> {
+    return baseRequest<T>(path, {
+      method: 'PATCH',
       body: body !== undefined ? JSON.stringify(body) : undefined,
       headers: buildNestHeaders(path, nestId),
     });

@@ -10,23 +10,44 @@ const Toaster = ({ ...props }: ToasterProps) => {
     <Sonner
       theme={isDark ? "dark" : "light"}
       className="toaster group"
+      position="bottom-right"
+      // closeButton
+      visibleToasts={3}
+      gap={8}
       toastOptions={{
         classNames: {
           toast:
-            "group toast group-[.toaster]:bg-white group-[.toaster]:text-slate-900 group-[.toaster]:border-slate-200 group-[.toaster]:shadow-xl dark:group-[.toaster]:bg-slate-800 dark:group-[.toaster]:text-slate-50 dark:group-[.toaster]:border-slate-700",
-          description:
-            "group-[.toast]:text-slate-600 dark:group-[.toast]:text-slate-400",
-          actionButton:
-            "!bg-white/20 !text-white !border !border-white/30 hover:!bg-white/30 !font-semibold",
-          cancelButton:
-            "group-[.toast]:bg-slate-100 group-[.toast]:text-slate-600 dark:group-[.toast]:bg-slate-700 dark:group-[.toast]:text-slate-300",
+            "group toast !font-sans !rounded-xl !border !shadow-lg !shadow-black/[0.06] !px-4 !py-3 " +
+            "group-[.toaster]:bg-white group-[.toaster]:text-slate-800 group-[.toaster]:border-slate-200/80 " +
+            "dark:group-[.toaster]:bg-slate-900 dark:group-[.toaster]:text-slate-100 dark:group-[.toaster]:border-slate-700/60",
+          title: "!font-semibold !text-sm",
+          description: "group-[.toast]:!text-slate-500 dark:group-[.toast]:!text-slate-400 !text-xs !mt-0.5",
+          // closeButton:
+          //   "!bg-transparent !border-0 !text-slate-400 hover:!text-slate-700 dark:hover:!text-slate-200 !transition-colors",
           success:
-            "group-[.toaster]:!bg-emerald-600 group-[.toaster]:!text-white group-[.toaster]:!border-emerald-700 dark:group-[.toaster]:!bg-emerald-500 dark:group-[.toaster]:!border-emerald-600",
+            "group-[.toaster]:!border-l-4 group-[.toaster]:!border-l-emerald-500 " +
+            "group-[.toaster]:!bg-white group-[.toaster]:!text-slate-800 group-[.toaster]:!border-slate-200/80 " +
+            "dark:group-[.toaster]:!bg-slate-900 dark:group-[.toaster]:!text-slate-100 dark:group-[.toaster]:!border-l-emerald-400 dark:group-[.toaster]:!border-slate-700/60",
           error:
-            "group-[.toaster]:!bg-rose-600 group-[.toaster]:!text-white group-[.toaster]:!border-rose-700 dark:group-[.toaster]:!bg-rose-500 dark:group-[.toaster]:!border-rose-600",
+            "group-[.toaster]:!border-l-4 group-[.toaster]:!border-l-rose-500 " +
+            "group-[.toaster]:!bg-white group-[.toaster]:!text-slate-800 group-[.toaster]:!border-slate-200/80 " +
+            "dark:group-[.toaster]:!bg-slate-900 dark:group-[.toaster]:!text-slate-100 dark:group-[.toaster]:!border-l-rose-400 dark:group-[.toaster]:!border-slate-700/60",
           warning:
-            "group-[.toaster]:!bg-amber-500 group-[.toaster]:!text-white group-[.toaster]:!border-amber-600 dark:group-[.toaster]:!bg-amber-400 dark:group-[.toaster]:!border-amber-500",
-          info: "group-[.toaster]:!bg-cyan-500 group-[.toaster]:!text-white group-[.toaster]:!border-cyan-600 dark:group-[.toaster]:!bg-cyan-400 dark:group-[.toaster]:!border-cyan-500",
+            "group-[.toaster]:!border-l-4 group-[.toaster]:!border-l-amber-400 " +
+            "group-[.toaster]:!bg-white group-[.toaster]:!text-slate-800 group-[.toaster]:!border-slate-200/80 " +
+            "dark:group-[.toaster]:!bg-slate-900 dark:group-[.toaster]:!text-slate-100 dark:group-[.toaster]:!border-l-amber-300 dark:group-[.toaster]:!border-slate-700/60",
+          info:
+            "group-[.toaster]:!border-l-4 group-[.toaster]:!border-l-indigo-500 " +
+            "group-[.toaster]:!bg-white group-[.toaster]:!text-slate-800 group-[.toaster]:!border-slate-200/80 " +
+            "dark:group-[.toaster]:!bg-slate-900 dark:group-[.toaster]:!text-slate-100 dark:group-[.toaster]:!border-l-indigo-400 dark:group-[.toaster]:!border-slate-700/60",
+          actionButton:
+            "!text-xs !font-semibold !rounded-lg !px-3 !py-1.5 " +
+            "!bg-slate-100 !text-slate-700 hover:!bg-slate-200 " +
+            "dark:!bg-slate-800 dark:!text-slate-200 dark:hover:!bg-slate-700",
+          cancelButton:
+            "!text-xs !rounded-lg !px-3 !py-1.5 " +
+            "!bg-transparent !text-slate-500 hover:!text-slate-700 " +
+            "dark:!text-slate-400 dark:hover:!text-slate-200",
         },
       }}
       {...props}

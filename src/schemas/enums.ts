@@ -68,3 +68,30 @@ export type Modules = z.infer<typeof ModulesSchema>;
 // Tipo de dono de attachment
 export const AttachmentOwnerTypeSchema = z.number().int();
 export type AttachmentOwnerType = z.infer<typeof AttachmentOwnerTypeSchema>;
+
+// Tipo de unidade dos itens de compra — valores assumidos, confirmar com o backend
+// TODO: confirmar valores exatos com o backend
+export const UnitTypeSchema = z.number().int();
+export type UnitType = z.infer<typeof UnitTypeSchema>;
+export const UnitType = {
+  Unidade: 0,
+  Kg: 1,
+  G: 2,
+  L: 3,
+  ML: 4,
+  Duzia: 5,
+  Caixa: 6,
+  Pacote: 7,
+} as const;
+
+/** Labels em PT-BR para exibição no frontend. */
+export const UNIT_TYPE_LABELS: Record<number, string> = {
+  0: 'un',
+  1: 'kg',
+  2: 'g',
+  3: 'L',
+  4: 'mL',
+  5: 'dz',
+  6: 'cx',
+  7: 'pct',
+};

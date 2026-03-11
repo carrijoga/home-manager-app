@@ -22,14 +22,7 @@ export enum ModuleId {
   CALENDAR = 'calendar',
 }
 
-/** Categorias para itens de compra (módulo Shopping, mock-only) */
-export enum ShoppingCategory {
-  FOOD = 'Alimentos',
-  CLEANING = 'Limpeza',
-  HYGIENE = 'Higiene',
-  GENERAL = 'Geral',
-  OTHER = 'Outro',
-}
+// ShoppingCategory enum removed — categories are now dynamic (from API / mock)
 
 /**
  * Status de item de compra futura.
@@ -107,24 +100,50 @@ export interface Task {
   createdAt?: string;
 }
 
-/** Item da lista de compras */
-export interface ShoppingItem {
-  id: string;
+/** Categoria de compra (default do sistema ou personalizada do nest) */
+export interface AppShoppingCategory {
+  shoppingCategoryId: string;
+  nestId: string | null;
   name: string;
-  quantity: string; // ex: '5kg', '3un'
-  checked: boolean;
-  category: string;
-  month: string; // YYYY-MM
-  price?: number;
+  description?: string | null;
+  isDefault: boolean;
 }
 
-/** Lista de compras mensal */
-export interface ShoppingList {
-  id: string;
-  month: string; // YYYY-MM
-  items: ShoppingItem[];
-  createdAt: string;
-  archived?: boolean;
+/** Item dentro de uma lista de compras */
+export interface AppShoppingItem {
+  shoppingItemId: string;
+  shoppingListId: string;
+  name: string;
+  quantity: number;
+  unitType: number;
+  shoppingCategoryId?: string | null;
+  categoryName?: string | null;
+  isPurchased: boolean;
+  price?: number | null;
+  estimatedPrice?: number | null;
+  purchasedAt?: string | null;
+  notes?: string | null;
+}
+
+/** Lista de compras (visão detalhada — inclui itens) */
+export interface AppShoppingList {
+  shoppingListId: string;
+  name: string;
+  monthYear: string; // ISO date-time string
+  notes?: string | null;
+  items: AppShoppingItem[];
+}
+
+/** Resumo de lista de compras (visão de listagem — sem itens) */
+export interface AppShoppingListSummary {
+  shoppingListId: string;
+  name: string;
+  monthYear: string; // ISO date-time string
+  notes?: string | null;
+  totalItems: number;
+  purchasedItems: number;
+  totalEstimated?: number | null;
+  totalSpent?: number | null;
 }
 
 /** Informações de compra de item futuro */

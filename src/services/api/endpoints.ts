@@ -64,6 +64,31 @@ export const ENDPOINTS = {
     resetPassword: '/api/recovery-password/reset',
   },
 
+  // Listas de compras
+  shoppingLists: {
+    list: '/api/shopping-list',
+    create: '/api/shopping-list',
+    getById: (id: string) => `/api/shopping-list/${id}`,
+    update: (id: string) => `/api/shopping-list/${id}`,
+    delete: (id: string) => `/api/shopping-list/${id}`,
+  },
+
+  // Itens de compra
+  shoppingItems: {
+    create: '/api/shopping-item',
+    update: (id: string) => `/api/shopping-item/${id}`,
+    delete: (id: string) => `/api/shopping-item/${id}`,
+    markAsPurchased: (id: string) => `/api/shopping-item/${id}/purchase`,
+    unmarkAsPurchased: (id: string) => `/api/shopping-item/${id}/unpurchase`,
+  },
+
+  // Categorias de compra
+  shoppingCategories: {
+    list: '/api/shopping-category',
+    create: '/api/shopping-category',
+    delete: (id: string) => `/api/shopping-category/${id}`,
+  },
+
   // Health
   health: '/health',
 } as const;

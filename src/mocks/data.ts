@@ -4,7 +4,7 @@
  * Cada array usa `satisfies` para garantir conformidade com os tipos em build.
  */
 
-import type { AppNotification, FutureItem, Notice, ShoppingItem, ShoppingList, Task } from '@/types';
+import type { AppNotification, AppShoppingCategory, AppShoppingItem, AppShoppingList, AppShoppingListSummary, FutureItem, Notice, Task } from '@/types';
 import { FutureItemStatus, Priority } from '@/types';
 
 // ── Notificações ─────────────────────────────────────────────────────────────
@@ -71,25 +71,86 @@ export const mockTasks = [
   { id: '11', title: 'Limpar cozinha', assignedTo: 'João', completed: true, dueDate: '2025-09-15' },
 ] satisfies Task[];
 
+// ── Categorias de compra (padrões do sistema) ─────────────────────────────────
+
+export const mockShoppingCategories: AppShoppingCategory[] = [
+  { shoppingCategoryId: 'cat-0001-0000-0000-000000000001', nestId: null, name: 'Alimentos',    description: 'Produtos alimentícios',               isDefault: true },
+  { shoppingCategoryId: 'cat-0001-0000-0000-000000000002', nestId: null, name: 'Limpeza',      description: 'Produtos de limpeza',                isDefault: true },
+  { shoppingCategoryId: 'cat-0001-0000-0000-000000000003', nestId: null, name: 'Higiene',      description: 'Produtos de higiene pessoal',        isDefault: true },
+  { shoppingCategoryId: 'cat-0001-0000-0000-000000000004', nestId: null, name: 'Geral',        description: 'Itens diversos',                     isDefault: true },
+  { shoppingCategoryId: 'cat-0001-0000-0000-000000000005', nestId: null, name: 'Bebidas',      description: 'Bebidas e refrigerantes',            isDefault: true },
+  { shoppingCategoryId: 'cat-0001-0000-0000-000000000006', nestId: null, name: 'Vestuário',    description: 'Roupas e acessórios',                isDefault: true },
+  { shoppingCategoryId: 'cat-0001-0000-0000-000000000007', nestId: null, name: 'Eletrônicos',  description: 'Aparelhos eletrônicos',              isDefault: true },
+  { shoppingCategoryId: 'cat-0001-0000-0000-000000000008', nestId: null, name: 'Móveis',       description: 'Móveis e decoração',                 isDefault: true },
+  { shoppingCategoryId: 'cat-0001-0000-0000-000000000009', nestId: null, name: 'Brinquedos',   description: 'Brinquedos e jogos infantis',        isDefault: true },
+  { shoppingCategoryId: 'cat-0001-0000-0000-000000000010', nestId: null, name: 'Papelaria',    description: 'Artigos de papelaria',               isDefault: true },
+  { shoppingCategoryId: 'cat-0001-0000-0000-000000000011', nestId: null, name: 'Medicamentos', description: 'Medicamentos e produtos farmacêuticos', isDefault: true },
+  { shoppingCategoryId: 'cat-0001-0000-0000-000000000012', nestId: null, name: 'PetShop',      description: 'Produtos para animais de estimação', isDefault: true },
+  { shoppingCategoryId: 'cat-0001-0000-0000-000000000013', nestId: null, name: 'Ferramentas',  description: 'Ferramentas e materiais de construção', isDefault: true },
+  { shoppingCategoryId: 'cat-0001-0000-0000-000000000014', nestId: null, name: 'Esportes',     description: 'Equipamentos esportivos',            isDefault: true },
+  { shoppingCategoryId: 'cat-0001-0000-0000-000000000015', nestId: null, name: 'Beleza',       description: 'Produtos de beleza e cosméticos',   isDefault: true },
+  { shoppingCategoryId: 'cat-0001-0000-0000-000000000016', nestId: null, name: 'Outro',        description: 'Outros',                             isDefault: true },
+] satisfies AppShoppingCategory[];
+
 // ── Lista de compras ──────────────────────────────────────────────────────────
 
-const mockShoppingItems = [
-  { id: '1', name: 'Arroz', quantity: '5kg', checked: false, category: 'Alimentos', month: '2025-10', price: 30 },
-  { id: '2', name: 'Feijão', quantity: '2kg', checked: false, category: 'Alimentos', month: '2025-10', price: 15 },
-  { id: '3', name: 'Detergente', quantity: '3un', checked: true, category: 'Limpeza', month: '2025-10', price: 9 },
-  { id: '4', name: 'Sabão em pó', quantity: '2un', checked: false, category: 'Limpeza', month: '2025-10', price: 25 },
-  { id: '5', name: 'Macarrão', quantity: '3 pacotes', checked: false, category: 'Alimentos', month: '2025-10', price: 12 },
-  { id: '6', name: 'Papel higiênico', quantity: '12un', checked: false, category: 'Limpeza', month: '2025-10', price: 35 },
-  { id: '7', name: 'Café', quantity: '500g', checked: true, category: 'Alimentos', month: '2025-10', price: 18 },
-  { id: '8', name: 'Açúcar', quantity: '1kg', checked: false, category: 'Alimentos', month: '2025-10', price: 5 },
-] satisfies ShoppingItem[];
+const mockShoppingItemsWeek1: AppShoppingItem[] = [
+  { shoppingItemId: 'item-0001', shoppingListId: 'list-0001', name: 'Arroz',          quantity: 5,  unitType: 1, shoppingCategoryId: 'cat-0001-0000-0000-000000000001', categoryName: 'Alimentos', isPurchased: true,  price: 32,   estimatedPrice: 30,  purchasedAt: '2026-03-05T10:00:00Z', notes: null },
+  { shoppingItemId: 'item-0002', shoppingListId: 'list-0001', name: 'Feijão',         quantity: 2,  unitType: 1, shoppingCategoryId: 'cat-0001-0000-0000-000000000001', categoryName: 'Alimentos', isPurchased: true,  price: 16,   estimatedPrice: 15,  purchasedAt: '2026-03-05T10:00:00Z', notes: null },
+  { shoppingItemId: 'item-0003', shoppingListId: 'list-0001', name: 'Macarrão',       quantity: 3,  unitType: 7, shoppingCategoryId: 'cat-0001-0000-0000-000000000001', categoryName: 'Alimentos', isPurchased: false, price: null, estimatedPrice: 12,  purchasedAt: null,                   notes: null },
+  { shoppingItemId: 'item-0004', shoppingListId: 'list-0001', name: 'Café',           quantity: 500, unitType: 2, shoppingCategoryId: 'cat-0001-0000-0000-000000000001', categoryName: 'Alimentos', isPurchased: false, price: null, estimatedPrice: 22,  purchasedAt: null,                   notes: null },
+  { shoppingItemId: 'item-0005', shoppingListId: 'list-0001', name: 'Detergente',     quantity: 3,  unitType: 0, shoppingCategoryId: 'cat-0001-0000-0000-000000000002', categoryName: 'Limpeza',   isPurchased: true,  price: 9,    estimatedPrice: 9,   purchasedAt: '2026-03-05T10:00:00Z', notes: null },
+  { shoppingItemId: 'item-0006', shoppingListId: 'list-0001', name: 'Sabão em pó',    quantity: 2,  unitType: 0, shoppingCategoryId: 'cat-0001-0000-0000-000000000002', categoryName: 'Limpeza',   isPurchased: false, price: null, estimatedPrice: 25,  purchasedAt: null,                   notes: null },
+  { shoppingItemId: 'item-0007', shoppingListId: 'list-0001', name: 'Papel higiênico', quantity: 12, unitType: 0, shoppingCategoryId: 'cat-0001-0000-0000-000000000002', categoryName: 'Limpeza',   isPurchased: false, price: null, estimatedPrice: 35,  purchasedAt: null,                   notes: null },
+  { shoppingItemId: 'item-0008', shoppingListId: 'list-0001', name: 'Shampoo',        quantity: 1,  unitType: 0, shoppingCategoryId: 'cat-0001-0000-0000-000000000003', categoryName: 'Higiene',   isPurchased: false, price: null, estimatedPrice: 18,  purchasedAt: null,                   notes: 'Sem parabenos' },
+] satisfies AppShoppingItem[];
 
-export const mockShoppingList = {
-  id: 'mock-list-1',
-  month: '2025-10',
-  items: mockShoppingItems,
-  createdAt: '2025-10-01T00:00:00.000Z',
-} satisfies ShoppingList;
+const mockShoppingItemsWeek2: AppShoppingItem[] = [
+  { shoppingItemId: 'item-0009', shoppingListId: 'list-0002', name: 'Açúcar',         quantity: 1,  unitType: 1, shoppingCategoryId: 'cat-0001-0000-0000-000000000001', categoryName: 'Alimentos', isPurchased: false, price: null, estimatedPrice: 5,   purchasedAt: null,                   notes: null },
+  { shoppingItemId: 'item-0010', shoppingListId: 'list-0002', name: 'Óleo de soja',   quantity: 2,  unitType: 0, shoppingCategoryId: 'cat-0001-0000-0000-000000000001', categoryName: 'Alimentos', isPurchased: false, price: null, estimatedPrice: 14,  purchasedAt: null,                   notes: null },
+  { shoppingItemId: 'item-0011', shoppingListId: 'list-0002', name: 'Iogurte',        quantity: 4,  unitType: 0, shoppingCategoryId: 'cat-0001-0000-0000-000000000001', categoryName: 'Alimentos', isPurchased: false, price: null, estimatedPrice: 20,  purchasedAt: null,                   notes: null },
+  { shoppingItemId: 'item-0012', shoppingListId: 'list-0002', name: 'Água sanitária', quantity: 2,  unitType: 0, shoppingCategoryId: 'cat-0001-0000-0000-000000000002', categoryName: 'Limpeza',   isPurchased: false, price: null, estimatedPrice: 8,   purchasedAt: null,                   notes: null },
+] satisfies AppShoppingItem[];
+
+export const mockShoppingLists: AppShoppingListSummary[] = [
+  {
+    shoppingListId: 'list-0001',
+    name: 'Semana 1 de Março',
+    monthYear: '2026-03-01T00:00:00Z',
+    notes: 'Compras do início do mês',
+    totalItems: mockShoppingItemsWeek1.length,
+    purchasedItems: mockShoppingItemsWeek1.filter(i => i.isPurchased).length,
+    totalEstimated: mockShoppingItemsWeek1.reduce((s, i) => s + (i.estimatedPrice ?? 0), 0),
+    totalSpent: mockShoppingItemsWeek1.filter(i => i.isPurchased).reduce((s, i) => s + (i.price ?? 0), 0),
+  },
+  {
+    shoppingListId: 'list-0002',
+    name: 'Semana 2 de Março',
+    monthYear: '2026-03-01T00:00:00Z',
+    notes: null,
+    totalItems: mockShoppingItemsWeek2.length,
+    purchasedItems: 0,
+    totalEstimated: mockShoppingItemsWeek2.reduce((s, i) => s + (i.estimatedPrice ?? 0), 0),
+    totalSpent: 0,
+  },
+] satisfies AppShoppingListSummary[];
+
+export const mockShoppingListDetails: Record<string, AppShoppingList> = {
+  'list-0001': {
+    shoppingListId: 'list-0001',
+    name: 'Semana 1 de Março',
+    monthYear: '2026-03-01T00:00:00Z',
+    notes: 'Compras do início do mês',
+    items: mockShoppingItemsWeek1,
+  } satisfies AppShoppingList,
+  'list-0002': {
+    shoppingListId: 'list-0002',
+    name: 'Semana 2 de Março',
+    monthYear: '2026-03-01T00:00:00Z',
+    notes: null,
+    items: mockShoppingItemsWeek2,
+  } satisfies AppShoppingList,
+};
 
 // ── Despesas (mock-only, não mapeia para FinancialTransactionResponse) ─────────
 

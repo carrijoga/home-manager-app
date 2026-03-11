@@ -5,3 +5,4 @@ export * from './user';
 export * from './financial';
 export * from './category';
 export * from './bank-account';
+export * from './shopping';

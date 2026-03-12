@@ -13,10 +13,6 @@ import { useNavigate } from 'react-router-dom';
 import Card from '../common/Card';
 import Input from '../common/Input';
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
   Badge,
   Checkbox,
   DatePicker,
@@ -30,15 +26,19 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   Textarea,
 } from '../ui';
 
 // Mapeamentos de prioridade e categoria (refletem os enums da API)
 const PRIORITY_COLORS = {
-  0: { label: 'Urgente', bg: 'bg-red-100 dark:bg-red-900/30', border: 'border-red-500', badge: 'destructive' },
-  1: { label: 'Alta',    bg: 'bg-orange-50 dark:bg-orange-900/20', border: 'border-orange-400', badge: 'warning' },
-  2: { label: 'Média',   bg: 'bg-yellow-50 dark:bg-yellow-900/20', border: 'border-yellow-400', badge: 'secondary' },
-  3: { label: 'Baixa',   bg: 'bg-green-50 dark:bg-green-900/20', border: 'border-green-400', badge: 'success' },
+  0: { label: 'Urgente', bg: 'bg-red-100 dark:bg-red-900/30', border: 'border-red-500' },
+  1: { label: 'Alta',    bg: 'bg-orange-50 dark:bg-orange-900/20', border: 'border-orange-400' },
+  2: { label: 'Média',   bg: 'bg-yellow-50 dark:bg-yellow-900/20', border: 'border-yellow-400' },
+  3: { label: 'Baixa',   bg: 'bg-green-50 dark:bg-green-900/20', border: 'border-green-400' },
 };
 
 const PRIORITIES = [
@@ -166,7 +166,7 @@ const DashboardTasksSection = memo(({
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
-    dueDate: '',
+    dueDate: undefined,   // Date | undefined
     priority: '3',
     category: '0',
   });
@@ -183,15 +183,19 @@ const DashboardTasksSection = memo(({
   const hasMore = totalPending > 5;
 
   const handleQuickTask = useCallback(async (e) => {
-    if (e.key === 'Enter' && quickTaskInput.trim()) {
-      e.preventDefault();
-      try {
-        await (onQuickAddTask ?? onAddTask)({ title: quickTaskInput.trim(), priority: 3, category: 0 });
-        setQuickTaskInput('');
-        showSuccess('Tarefa criada!');
-      } catch {
-        showError('Erro ao criar tarefa');
+    if (e.key !== 'Enter' || !quickTaskInput.trim()) return;
+    e.preventDefault();
+    try {
+      // onQuickAddTask espera apenas uma string; onAddTask espera objeto completo
+      if (onQuickAddTask) {
+        await onQuickAddTask(quickTaskInput.trim());
+      } else {
+        await onAddTask({ title: quickTaskInput.trim(), priority: 3, category: 0 });
       }
+      setQuickTaskInput('');
+      showSuccess('Tarefa criada!');
+    } catch {
+      showError('Erro ao criar tarefa');
     }
   }, [quickTaskInput, onQuickAddTask, onAddTask, showSuccess, showError]);
 
@@ -201,11 +205,11 @@ const DashboardTasksSection = memo(({
       await onAddTask({
         title: newTask.title.trim(),
         description: newTask.description || null,
-        dueDate: newTask.dueDate || null,
+        dueDate: newTask.dueDate ? newTask.dueDate.toISOString() : null,
         priority: Number(newTask.priority),
         category: Number(newTask.category),
       });
-      setNewTask({ title: '', description: '', dueDate: '', priority: '3', category: '0' });
+      setNewTask({ title: '', description: '', dueDate: undefined, priority: '3', category: '0' });
       setIsDialogOpen(false);
       showSuccess('Tarefa criada!');
     } catch {
@@ -269,20 +273,39 @@ const DashboardTasksSection = memo(({
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1 block">Data</label>
-                  <DatePicker value={newTask.dueDate} onChange={(date) => setNewTask({ ...newTask, dueDate: date })} />
+                  <label className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1 block">Data limite</label>
+                  <DatePicker
+                    value={newTask.dueDate}
+                    onChange={(date) => setNewTask({ ...newTask, dueDate: date })}
+                    fromDate={new Date()}
+                    placeholder="Selecione..."
+                  />
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1 block">Prioridade</label>
                   <Select value={newTask.priority} onValueChange={(v) => setNewTask({ ...newTask, priority: v })}>
-                    {PRIORITIES.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PRIORITIES.map(p => (
+                        <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
                 </div>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1 block">Categoria</label>
                 <Select value={newTask.category} onValueChange={(v) => setNewTask({ ...newTask, category: v })}>
-                  {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CATEGORIES.map(c => (
+                      <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
               </div>
               <div className="flex justify-end gap-2 pt-4 border-t dark:border-dark-border-secondary">
@@ -304,53 +327,49 @@ const DashboardTasksSection = memo(({
           placeholder="Tarefa rápida... (pressione Enter)"
           value={quickTaskInput}
           onChange={(e) => setQuickTaskInput(e.target.value)}
-          onKeyPress={handleQuickTask}
+          onKeyDown={handleQuickTask}
         />
         <p className="text-xs text-gray-500 dark:text-dark-text-tertiary mt-1">
           Pressione Enter para criar com prioridade Baixa
         </p>
       </div>
 
-      <Accordion type="multiple" defaultValue={['pending']} className="space-y-3">
-        <AccordionItem value="pending" className="border rounded-lg dark:border-dark-border-secondary">
-          <AccordionTrigger className="px-4 py-3 hover:no-underline">
-            <div className="flex items-center justify-between w-full pr-4">
-              <span className="font-semibold text-primary dark:text-dark-text-primary">Pendentes</span>
-              <Badge variant="secondary">{totalPending}</Badge>
-            </div>
-          </AccordionTrigger>
-          <AccordionContent className="px-4 pb-3">
-            {pendingTasks.length === 0 ? (
-              <div className="text-center py-8 text-gray-500 dark:text-dark-text-tertiary">
-                <CheckCircle2 className="mx-auto mb-2 text-emerald-500" size={32} />
-                <p>Nenhuma tarefa pendente!</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <AnimatePresence>
-                  {pendingTasks.map((task) => (
-                    <TaskItem
-                      key={task.taskId}
-                      task={task}
-                      onComplete={handleComplete}
-                      onDelete={handleDelete}
-                      onNavigate={() => navigate('/tasks')}
-                    />
-                  ))}
-                </AnimatePresence>
-                {hasMore && (
-                  <button
-                    onClick={() => navigate('/tasks')}
-                    className="w-full py-2 text-sm text-indigo-600 dark:text-dark-accent-indigo font-medium transition-colors hover:underline"
-                  >
-                    Ver mais ({totalPending - 5} tarefas)...
-                  </button>
-                )}
-              </div>
+      {/* Lista de tarefas pendentes */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <span className="font-semibold text-sm text-gray-700 dark:text-dark-text-primary">Pendentes</span>
+          <Badge variant="secondary">{totalPending}</Badge>
+        </div>
+
+        {pendingTasks.length === 0 ? (
+          <div className="text-center py-8 text-gray-500 dark:text-dark-text-tertiary">
+            <CheckCircle2 className="mx-auto mb-2 text-emerald-500" size={32} />
+            <p>Nenhuma tarefa pendente!</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <AnimatePresence>
+              {pendingTasks.map((task) => (
+                <TaskItem
+                  key={task.taskId}
+                  task={task}
+                  onComplete={handleComplete}
+                  onDelete={handleDelete}
+                  onNavigate={() => navigate('/tasks')}
+                />
+              ))}
+            </AnimatePresence>
+            {hasMore && (
+              <button
+                onClick={() => navigate('/tasks')}
+                className="w-full py-2 text-sm text-indigo-600 dark:text-dark-accent-indigo font-medium transition-colors hover:underline"
+              >
+                Ver mais ({totalPending - 5} tarefas)...
+              </button>
             )}
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
+          </div>
+        )}
+      </div>
     </Card>
   );
 });

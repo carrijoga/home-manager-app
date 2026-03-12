@@ -51,6 +51,7 @@ const in24h = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
 const in12h = new Date(now.getTime() + 12 * 60 * 60 * 1000).toISOString();
 
 export const mockNotices: Notice[] = [
+  // ── Ativos ────────────────────────────────────────────────────────────────
   {
     noticeId: 'notice-mock-0001',
     message: 'Reunião de condomínio sexta-feira às 19h. Favor confirmar presença!',
@@ -61,6 +62,7 @@ export const mockNotices: Notice[] = [
     createdBy: 'user-mock-0001',
     createdAt: new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString(),
     authorName: 'João',
+    color: 'yellow',
   },
   {
     noticeId: 'notice-mock-0002',
@@ -72,6 +74,7 @@ export const mockNotices: Notice[] = [
     createdBy: 'user-mock-0002',
     createdAt: new Date(now.getTime() - 1 * 60 * 60 * 1000).toISOString(),
     authorName: 'Maria',
+    color: 'pink',
   },
   {
     noticeId: 'notice-mock-0003',
@@ -83,6 +86,7 @@ export const mockNotices: Notice[] = [
     createdBy: 'user-mock-0003',
     createdAt: new Date(now.getTime() - 30 * 60 * 1000).toISOString(),
     authorName: 'Pedro',
+    color: 'green',
   },
   {
     noticeId: 'notice-mock-0004',
@@ -94,6 +98,44 @@ export const mockNotices: Notice[] = [
     createdBy: 'user-mock-0001',
     createdAt: now.toISOString(),
     authorName: 'Você',
+    color: 'blue',
+  },
+  // ── Histórico (expirados / inativos) ──────────────────────────────────────
+  {
+    noticeId: 'notice-mock-0005',
+    message: 'Conta de luz paga com sucesso! Vencimento era dia 10.',
+    date: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+    isPinned: false,
+    expiresAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    isActive: false,
+    createdBy: 'user-mock-0001',
+    createdAt: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+    authorName: 'João',
+    color: 'orange',
+  },
+  {
+    noticeId: 'notice-mock-0006',
+    message: 'Limpeza geral da casa foi concluída! Ótimo trabalho equipe! 🎉',
+    date: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    isPinned: false,
+    expiresAt: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+    isActive: false,
+    createdBy: 'user-mock-0002',
+    createdAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    authorName: 'Maria',
+    color: 'green',
+  },
+  {
+    noticeId: 'notice-mock-0007',
+    message: 'Manutenção do portão agendada para semana passada foi realizada.',
+    date: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+    isPinned: false,
+    expiresAt: new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000).toISOString(),
+    isActive: false,
+    createdBy: 'user-mock-0003',
+    createdAt: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+    authorName: 'Pedro',
+    color: 'blue',
   },
 ];
 

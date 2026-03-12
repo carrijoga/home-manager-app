@@ -16,7 +16,8 @@ import { DATA_MODE } from './api/config';
 function apiToNotice(raw: unknown): Notice {
   const parsed = NoticeResponseSchema.safeParse(raw);
   if (parsed.success) {
-    return parsed.data as Notice;
+    const r = raw as Record<string, unknown>;
+    return { ...parsed.data as Notice, color: (r.color as string) ?? undefined };
   }
   // fallback permissivo
   const r = raw as Record<string, unknown>;
@@ -29,6 +30,7 @@ function apiToNotice(raw: unknown): Notice {
     isActive: Boolean(r.isActive ?? true),
     createdBy: String(r.createdBy ?? ''),
     createdAt: String(r.createdAt ?? ''),
+    color: (r.color as string) ?? undefined,
   };
 }
 
@@ -64,6 +66,7 @@ export async function createNotice(payload: CreateNoticeRequest, nestId?: string
       createdBy: 'user-mock-0001',
       createdAt: now,
       authorName: 'Você',
+      color: payload.color,
     };
     _mockState.unshift(notice);
     return new Promise(resolve => setTimeout(() => resolve(notice), 100));

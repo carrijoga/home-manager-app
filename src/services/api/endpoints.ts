@@ -110,6 +110,7 @@ export const ENDPOINTS = {
     update: (id: string) => `/api/tasks/${id}`,
     delete: (id: string) => `/api/tasks/${id}`,
     complete: (id: string) => `/api/tasks/${id}/complete`,
+    uncomplete: (id: string) => `/api/tasks/${id}/uncomplete`,
   },
 
   // Health

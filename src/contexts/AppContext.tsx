@@ -53,16 +53,19 @@ interface AppContextValue {
   pushNotification: (notification: AppNotification) => void;
 
   // Notice actions
-  addNotice: (message: string, expiresAt?: string | null) => Promise<void>;
+  addNotice: (message: string, color?: string, expiresAt?: string | null) => Promise<void>;
+  updateNotice: (noticeId: string, message: string, color?: string) => Promise<void>;
   deleteNotice: (noticeId: string) => Promise<void>;
   pinNotice: (noticeId: string) => Promise<void>;
   unpinNotice: (noticeId: string) => Promise<void>;
 
   // Task actions
   addTask: (payload: import('@/schemas/tasks').CreateTaskRequest) => Promise<void>;
+  updateTask: (taskId: string, payload: import('@/schemas/tasks').UpdateTaskRequest) => Promise<void>;
   createQuickTask: (title: string) => Promise<void>;
   restoreTask: (task: Task) => void;
   completeTask: (taskId: string) => Promise<void>;
+  uncompleteTask: (taskId: string) => Promise<void>;
   deleteTask: (taskId: string) => Promise<void>;
 
   // Shopping actions
@@ -158,13 +161,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   // ========== NOTICES ==========
-  const addNotice = async (message: string, expiresAt?: string | null) => {
+  const addNotice = async (message: string, color?: string, expiresAt?: string | null) => {
     const newNotice = await noticeService.createNotice({
       message,
       date: new Date().toISOString(),
+      color,
       expiresAt: expiresAt ?? undefined,
     }, activeNestId ?? undefined);
     setNotices(prev => [newNotice, ...prev]);
+  };
+
+  const updateNotice = async (noticeId: string, message: string, color?: string) => {
+    await noticeService.updateNotice(noticeId, { message, color }, activeNestId ?? undefined);
+    setNotices(prev => prev.map(n =>
+      n.noticeId === noticeId ? { ...n, message, color } : n
+    ));
   };
 
   const deleteNotice = async (noticeId: string) => {
@@ -196,6 +207,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setTasks(prev => [newTask, ...prev]);
   };
 
+  const updateTask = async (taskId: string, payload: import('@/schemas/tasks').UpdateTaskRequest) => {
+    await taskService.updateTask(taskId, payload, activeNestId ?? undefined);
+    setTasks(prev => prev.map(t =>
+      t.taskId === taskId ? { ...t, ...payload, priorityLabel: t.priorityLabel, categoryLabel: t.categoryLabel } : t
+    ));
+  };
+
   const createQuickTask = async (title: string) => {
     const newTask = await taskService.createQuickTask(title, activeNestId ?? undefined);
     setTasks(prev => [newTask, ...prev]);
@@ -211,6 +229,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const completeTask = async (taskId: string) => {
     const updatedTask = await taskService.completeTask(taskId, activeNestId ?? undefined);
+    setTasks(prev => prev.map(t => t.taskId === taskId ? updatedTask : t));
+  };
+
+  const uncompleteTask = async (taskId: string) => {
+    const updatedTask = await taskService.uncompleteTask(taskId, activeNestId ?? undefined);
     setTasks(prev => prev.map(t => t.taskId === taskId ? updatedTask : t));
   };
 
@@ -504,13 +527,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     clearAllNotifications,
     pushNotification,
     addNotice,
+    updateNotice,
     deleteNotice,
     pinNotice,
     unpinNotice,
     addTask,
+    updateTask,
     createQuickTask,
     restoreTask,
     completeTask,
+    uncompleteTask,
     deleteTask,
     createShoppingList,
     updateShoppingList,

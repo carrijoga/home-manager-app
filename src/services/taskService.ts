@@ -181,6 +181,21 @@ export async function completeTask(id: string, nestId?: string): Promise<Task> {
   return getTaskById(id, nestId);
 }
 
+export async function uncompleteTask(id: string, nestId?: string): Promise<Task> {
+  if (DATA_MODE === 'mock') {
+    const task = _mockState.find(t => t.taskId === id);
+    if (task) {
+      task.isCompleted = false;
+      task.completedAt = null;
+    }
+    return new Promise((resolve, reject) =>
+      setTimeout(() => task ? resolve({ ...task }) : reject(new Error('Task not found')), 100)
+    );
+  }
+  await httpClient.patch<void>(ENDPOINTS.tasks.uncomplete(id), undefined, nestId);
+  return getTaskById(id, nestId);
+}
+
 export async function getTaskHistory(page = 1, pageSize = 20, nestId?: string): Promise<PaginatedResponse<Task>> {
   if (DATA_MODE === 'mock') {
     const completed = _mockState

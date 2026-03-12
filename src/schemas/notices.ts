@@ -29,9 +29,11 @@ export interface CreateNoticeRequest {
   message: string;
   date: string;
   expiresAt?: string | null;
+  color?: string;
 }
 
 export interface UpdateNoticeRequest {
   message: string;
   expiresAt?: string | null;
+  color?: string;
 }

@@ -106,6 +106,7 @@ export interface Notice {
   createdBy: string; // UUID do autor
   createdAt: string;
   authorName?: string; // nome legível, enriquecido no frontend
+  color?: string; // chave de cor do post-it (yellow|pink|green|orange|blue)
 }
 
 /** Tarefa (módulo Tasks) */

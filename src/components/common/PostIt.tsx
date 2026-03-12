@@ -9,8 +9,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { motion } from "framer-motion";
-import { Pin, PinOff, X } from "lucide-react";
-import { forwardRef, useState } from "react";
+import { Edit2, Pin, PinOff, Save, X } from "lucide-react";
+import { forwardRef, useRef, useState } from "react";
 
 interface PostItProps {
   noticeId: string;
@@ -23,25 +23,33 @@ interface PostItProps {
   createdAt?: string;
   authorName?: string;
   currentUserId?: string;
+  color?: string; // color key: yellow|pink|green|orange|blue
   onRemove?: (id: string) => void;
   onPin?: (id: string) => void;
   onUnpin?: (id: string) => void;
+  onEdit?: (id: string, message: string) => void;
   index?: number;
 }
 
-// Paleta de cores — inspirada nas imagens de referência (post-its coloridos)
-const POST_IT_COLORS = [
-  { bg: '#fef08a', border: '#fde047', text: '#713f12', line: '#fde68a' }, // Amarelo
-  { bg: '#fda4af', border: '#fb7185', text: '#881337', line: '#fecdd3' }, // Rosa
-  { bg: '#86efac', border: '#4ade80', text: '#14532d', line: '#bbf7d0' }, // Verde
-  { bg: '#93c5fd', border: '#60a5fa', text: '#1e3a5f', line: '#bfdbfe' }, // Azul
-  { bg: '#d8b4fe', border: '#c084fc', text: '#581c87', line: '#ede9fe' }, // Roxo
-  { bg: '#fdba74', border: '#fb923c', text: '#7c2d12', line: '#fed7aa' }, // Laranja
-];
+// ── Paleta Neon (especificada pelo usuário) ───────────────────────────────────
+const POST_IT_PALETTE: Record<string, {
+  bg: string; border: string; text: string; line: string; shadow: string;
+}> = {
+  yellow: { bg: '#FFF700', border: '#c8c000', text: '#3a2e00', line: '#fffab0', shadow: 'rgba(180,160,0,0.35)' },
+  pink:   { bg: '#FF66CC', border: '#cc3399', text: '#5c0033', line: '#ffb3e6', shadow: 'rgba(180,0,100,0.25)' },
+  green:  { bg: '#CCFF00', border: '#88cc00', text: '#284000', line: '#e8ff99', shadow: 'rgba(80,160,0,0.28)' },
+  orange: { bg: '#FF9933', border: '#cc6600', text: '#4a1800', line: '#ffd0a0', shadow: 'rgba(160,80,0,0.28)' },
+  blue:   { bg: '#66CCFF', border: '#0099dd', text: '#002244', line: '#c0e8ff', shadow: 'rgba(0,100,200,0.25)' },
+};
 
-function getColor(id: string, index: number) {
-  const hash = id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  return POST_IT_COLORS[(hash + index) % POST_IT_COLORS.length];
+const COLOR_KEYS = ['pink', 'green', 'orange', 'blue', 'yellow'];
+
+// Cor determinística por noticeId (sem index para não mudar ao adicionar novos)
+function resolveColor(noticeId: string, isPinned: boolean, colorKey?: string) {
+  if (isPinned) return POST_IT_PALETTE.yellow;
+  if (colorKey && POST_IT_PALETTE[colorKey]) return POST_IT_PALETTE[colorKey];
+  const hash = noticeId.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  return POST_IT_PALETTE[COLOR_KEYS[hash % COLOR_KEYS.length]];
 }
 
 function formatExpiry(expiresAt: string | null | undefined): string | null {
@@ -50,20 +58,16 @@ function formatExpiry(expiresAt: string | null | undefined): string | null {
   if (diff <= 0) return 'Expirado';
   const hours = Math.floor(diff / (1000 * 60 * 60));
   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-  if (hours > 0) return `${hours}h restante${hours > 1 ? 's' : ''}`;
-  return `${minutes}min restante${minutes !== 1 ? 's' : ''}`;
+  if (hours > 0) return `${hours}h`;
+  return `${minutes}min`;
 }
 
 /**
- * PostIt — Nota autoadesiva para o Quadro de Avisos (quadro de cortiça).
- *
- * Features:
- * - 6 paletas de cores rotacionadas por ID
- * - Pino (pushpin) visual no topo — vermelho quando fixado, cinza quando livre
- * - Indicador de expiração restante
- * - Efeito de dobra de canto inferior direito
- * - Linhas horizontais sutis (estilo caderno)
- * - Botões pin/unpin + remover aparecem no hover
+ * PostIt — Nota em post-it com paleta neon.
+ * - Amarelo quando fixado, neon aleatório (determinístico por ID) quando livre.
+ * - Pino visual (vermelho = fixado, cinza = livre).
+ * - Todos podem fixar/desafixar; apenas o autor pode editar/excluir.
+ * - Edição inline ao clicar no lápis.
  */
 const PostIt = forwardRef<HTMLDivElement, PostItProps>(
   ({
@@ -75,18 +79,37 @@ const PostIt = forwardRef<HTMLDivElement, PostItProps>(
     authorName,
     currentUserId,
     createdBy,
+    color: colorKey,
     onRemove,
     onPin,
     onUnpin,
+    onEdit,
     index = 0,
   }, ref) => {
     const [showConfirm, setShowConfirm] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
+    const [editing, setEditing] = useState(false);
+    const [editValue, setEditValue] = useState(message);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-    const color = getColor(noticeId, index);
+    const color = resolveColor(noticeId, isPinned, colorKey);
     const rotation = ((noticeId.charCodeAt(0) + noticeId.charCodeAt(1)) % 9) - 4;
     const expiryLabel = formatExpiry(expiresAt);
-    const canManage = !createdBy || !currentUserId || createdBy === currentUserId;
+
+    const canEdit = !createdBy || !currentUserId || createdBy === currentUserId;
+    const canPin = !!(onPin || onUnpin);
+
+    const handleSaveEdit = () => {
+      if (editValue.trim() && editValue.trim() !== message) {
+        onEdit?.(noticeId, editValue.trim());
+      }
+      setEditing(false);
+    };
+
+    const handleEditKeyDown = (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' && e.ctrlKey) handleSaveEdit();
+      if (e.key === 'Escape') { setEditing(false); setEditValue(message); }
+    };
 
     return (
       <>
@@ -110,7 +133,7 @@ const PostIt = forwardRef<HTMLDivElement, PostItProps>(
             type: "spring",
             stiffness: 280,
             damping: 22,
-            delay: index * 0.06,
+            delay: index * 0.05,
           }}
           onHoverStart={() => setIsHovered(true)}
           onHoverEnd={() => setIsHovered(false)}
@@ -137,45 +160,60 @@ const PostIt = forwardRef<HTMLDivElement, PostItProps>(
           <motion.div
             animate={{
               boxShadow: isHovered
-                ? `6px 14px 28px rgba(0,0,0,0.28), 2px 4px 8px rgba(0,0,0,0.15)`
-                : `3px 7px 14px rgba(0,0,0,0.2), 1px 2px 5px rgba(0,0,0,0.1)`,
+                ? `6px 14px 28px ${color.shadow}, 2px 4px 8px rgba(0,0,0,0.15)`
+                : `3px 7px 14px ${color.shadow}, 1px 2px 4px rgba(0,0,0,0.1)`,
             }}
             transition={{ duration: 0.2 }}
             className="relative rounded-sm overflow-hidden min-h-[130px] flex flex-col"
-            style={{ background: color.bg, border: `1px solid ${color.border}`, paddingTop: '16px' }}
+            style={{ background: color.bg, border: `1.5px solid ${color.border}`, paddingTop: '16px' }}
           >
-            {/* Faixa superior — lado colante */}
+            {/* Faixa superior colante */}
             <div
               className="absolute top-0 left-0 right-0 h-4"
-              style={{ background: `linear-gradient(to bottom, ${color.border}dd, ${color.bg}00)` }}
+              style={{ background: `linear-gradient(to bottom, ${color.border}cc, ${color.bg}00)` }}
             />
 
             {/* Linhas horizontais */}
             <div
               className="absolute inset-0 pointer-events-none"
               style={{
-                backgroundImage: `repeating-linear-gradient(to bottom, transparent, transparent 22px, ${color.line}70 22px, ${color.line}70 23px)`,
+                backgroundImage: `repeating-linear-gradient(to bottom, transparent, transparent 22px, ${color.line}80 22px, ${color.line}80 23px)`,
                 backgroundPosition: '0 24px',
               }}
             />
 
-            {/* Mensagem */}
+            {/* Mensagem / Editor */}
             <div className="relative flex-1 px-3 pt-1 pb-2">
-              <p className="text-sm leading-relaxed break-words" style={{ color: color.text, fontWeight: 500 }}>
-                {message}
-              </p>
+              {editing ? (
+                <textarea
+                  ref={textareaRef}
+                  autoFocus
+                  value={editValue}
+                  onChange={e => setEditValue(e.target.value)}
+                  onKeyDown={handleEditKeyDown}
+                  maxLength={200}
+                  rows={4}
+                  className="w-full resize-none text-sm leading-relaxed bg-transparent outline-none border-b-2 border-dashed"
+                  style={{ color: color.text, borderColor: color.border }}
+                />
+              ) : (
+                <p className="text-sm leading-relaxed break-words" style={{ color: color.text, fontWeight: 500 }}>
+                  {message}
+                </p>
+              )}
             </div>
 
             {/* Rodapé */}
             <div
               className="relative px-3 py-1.5 flex justify-between items-center text-xs"
-              style={{ borderTop: `1px solid ${color.border}80`, color: color.text, opacity: 0.85 }}
+              style={{ borderTop: `1px solid ${color.border}60`, color: color.text, opacity: 0.85 }}
             >
-              <span className="font-semibold truncate max-w-[55%]">{authorName ?? '—'}</span>
-              <div className="flex items-center gap-1.5">
-                {isPinned && <span className="font-bold text-red-600 text-xs">Fixado</span>}
+              <span className="font-semibold truncate max-w-[50%]">{authorName ?? '—'}</span>
+              {/* pr-5 para não sobrepor a dobra de canto */}
+              <div className="flex items-center gap-1.5 pr-5">
+                {isPinned && <span className="font-bold text-red-700 text-xs">Fixado</span>}
                 {!isPinned && expiryLabel && (
-                  <span className="text-xs" style={{ color: expiryLabel === 'Expirado' ? '#dc2626' : color.text }}>
+                  <span className="text-xs" style={{ color: expiryLabel === 'Expirado' ? '#b91c1c' : color.text }}>
                     {expiryLabel}
                   </span>
                 )}
@@ -185,31 +223,52 @@ const PostIt = forwardRef<HTMLDivElement, PostItProps>(
               </div>
             </div>
 
-            {/* Dobra de canto */}
+            {/* Dobra de canto — 16×16 para não cobrir texto */}
             <div
-              className="absolute bottom-0 right-0 w-7 h-7 pointer-events-none"
+              className="absolute bottom-0 right-0 w-4 h-4 pointer-events-none"
               style={{
-                background: `linear-gradient(225deg, rgba(0,0,0,0.18) 45%, ${color.bg} 50%)`,
-                borderTop: `1px solid ${color.border}50`,
-                borderLeft: `1px solid ${color.border}50`,
+                background: `linear-gradient(225deg, rgba(0,0,0,0.25) 45%, ${color.bg} 50%)`,
+                borderTop: `1px solid ${color.border}40`,
+                borderLeft: `1px solid ${color.border}40`,
               }}
             />
           </motion.div>
 
           {/* Botões — hover */}
-          {canManage && (onRemove || onPin || onUnpin) && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: isHovered ? 1 : 0 }}
-              transition={{ duration: 0.15 }}
-              className="absolute -top-1 right-0 flex gap-1 z-20"
-            >
-              {isPinned && onUnpin ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: isHovered ? 1 : 0 }}
+            transition={{ duration: 0.15 }}
+            className="absolute -top-1 right-0 flex gap-1 z-20"
+          >
+            {editing && (
+              <button
+                onClick={handleSaveEdit}
+                title="Salvar (Ctrl+Enter)"
+                className="rounded-full p-1 shadow-sm transition-colors bg-emerald-500 text-white hover:bg-emerald-600"
+              >
+                <Save size={11} />
+              </button>
+            )}
+
+            {!editing && canEdit && onEdit && (
+              <button
+                onClick={() => { setEditing(true); setEditValue(message); }}
+                title="Editar"
+                className="rounded-full p-1 shadow-sm transition-colors"
+                style={{ background: color.border, color: '#fff' }}
+              >
+                <Edit2 size={11} />
+              </button>
+            )}
+
+            {canPin && !editing && (
+              isPinned && onUnpin ? (
                 <button
                   onClick={() => onUnpin(noticeId)}
                   title="Desafixar"
                   className="rounded-full p-1 shadow-sm transition-colors"
-                  style={{ background: color.border, color: color.text }}
+                  style={{ background: color.border, color: '#fff' }}
                 >
                   <PinOff size={11} />
                 </button>
@@ -218,22 +277,23 @@ const PostIt = forwardRef<HTMLDivElement, PostItProps>(
                   onClick={() => onPin(noticeId)}
                   title="Fixar"
                   className="rounded-full p-1 shadow-sm transition-colors"
-                  style={{ background: color.border, color: color.text }}
+                  style={{ background: color.border, color: '#fff' }}
                 >
                   <Pin size={11} />
                 </button>
-              ) : null}
-              {onRemove && (
-                <button
-                  onClick={() => setShowConfirm(true)}
-                  title="Remover"
-                  className="rounded-full p-1 shadow-sm bg-red-500 hover:bg-red-600 text-white transition-colors"
-                >
-                  <X size={11} />
-                </button>
-              )}
-            </motion.div>
-          )}
+              ) : null
+            )}
+
+            {!editing && canEdit && onRemove && (
+              <button
+                onClick={() => setShowConfirm(true)}
+                title="Remover"
+                className="rounded-full p-1 shadow-sm bg-red-500 hover:bg-red-600 text-white transition-colors"
+              >
+                <X size={11} />
+              </button>
+            )}
+          </motion.div>
         </motion.div>
 
         <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
@@ -261,3 +321,5 @@ const PostIt = forwardRef<HTMLDivElement, PostItProps>(
 PostIt.displayName = "PostIt";
 
 export default PostIt;
+export { POST_IT_PALETTE, COLOR_KEYS };
+export type { PostItProps };

@@ -27,7 +27,12 @@ import {
   Sparkles,
   TrendingUp
 } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
+
+// Paleta de cores para seleção ao criar aviso
+const NOTICE_COLOR_KEYS = ['yellow', 'pink', 'green', 'orange', 'blue'];
+const NOTICE_COLOR_LABELS = { yellow: 'Amarelo', pink: 'Rosa', green: 'Verde', orange: 'Laranja', blue: 'Azul' };
+const NOTICE_COLOR_BG = { yellow: '#FFF700', pink: '#FF66CC', green: '#CCFF00', orange: '#FF9933', blue: '#66CCFF' };
 import {
   DailyAverageCard,
   MonthProjectionCard,
@@ -56,6 +61,7 @@ const Dashboard = () => {
     futureItems,
     user,
     addNotice,
+    updateNotice,
     deleteNotice,
     pinNotice,
     unpinNotice,
@@ -67,9 +73,24 @@ const Dashboard = () => {
 
   const { showSuccess, showError } = useToastNotifications();
   const [newNotice, setNewNotice] = useState('');
+  const [selectedColor, setSelectedColor] = useState('yellow');
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isNewNoticeOpen, setIsNewNoticeOpen] = useState(false);
   const MAX_NOTICE_LENGTH = 200;
+
+  // Mensagem motivacional estável (não muda com re-renders)
+  const motivationalMessage = useRef((() => {
+    const messages = [
+      'Vamos organizar o dia de hoje?',
+      'Seu lar merece o melhor!',
+      'Pronto para conquistar suas metas?',
+      'Juntos, a organização fica mais fácil!',
+      'Um dia produtivo começa aqui!',
+      'Vamos manter tudo em ordem?',
+      'Sua família conta com você!',
+    ];
+    return messages[Math.floor(Math.random() * messages.length)];
+  })()).current;
 
   const handleAddNotice = useCallback(async () => {
     const trimmedNotice = newNotice.trim();
@@ -85,14 +106,23 @@ const Dashboard = () => {
     }
 
     try {
-      await addNotice(trimmedNotice);
+      await addNotice(trimmedNotice, selectedColor);
       setNewNotice('');
       setIsNewNoticeOpen(false);
       showSuccess('Aviso adicionado!');
     } catch {
       showError('Erro ao adicionar aviso. Tente novamente.');
     }
-  }, [newNotice, addNotice, showSuccess, showError]);
+  }, [newNotice, selectedColor, addNotice, showSuccess, showError]);
+
+  const handleEditNotice = useCallback(async (noticeId, message) => {
+    try {
+      await updateNotice(noticeId, message);
+      showSuccess('Aviso atualizado!');
+    } catch {
+      showError('Erro ao atualizar aviso.');
+    }
+  }, [updateNotice, showSuccess, showError]);
 
   const handleRemoveNotice = useCallback(async (noticeId) => {
     try {
@@ -259,26 +289,12 @@ const Dashboard = () => {
     };
   }, [expenses, tasks]);
 
-  // Obtém a saudação de acordo com o horário
-  const getGreeting = useCallback(() => {
+  // Saudação estável por horário
+  const greeting = useMemo(() => {
     const hour = new Date().getHours();
     if (hour >= 5 && hour < 12) return 'Bom dia';
     if (hour >= 12 && hour < 18) return 'Boa tarde';
     return 'Boa noite';
-  }, []);
-
-  // Obtém mensagem motivacional aleatória
-  const getMotivationalMessage = useCallback(() => {
-    const messages = [
-      'Vamos organizar o dia de hoje?',
-      'Seu lar merece o melhor!',
-      'Pronto para conquistar suas metas?',
-      'Juntos, a organização fica mais fácil!',
-      'Um dia produtivo começa aqui!',
-      'Vamos manter tudo em ordem?',
-      'Sua família conta com você!'
-    ];
-    return messages[Math.floor(Math.random() * messages.length)];
   }, []);
 
   return (
@@ -289,11 +305,11 @@ const Dashboard = () => {
           <div className="flex items-center space-x-3">
             <div>
               <h1 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                {getGreeting()}, {user?.callmeby || 'Usuário'}!
+                {greeting}, {user?.callmeby || 'Usuário'}!
                 <span className="text-2xl animate-wave inline-block">👋</span>
               </h1>
               <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">
-                {getMotivationalMessage()}
+                {motivationalMessage}
               </p>
             </div>
           </div>
@@ -467,11 +483,31 @@ const Dashboard = () => {
                     
                     {/* Textarea estilizada como Post-It */}
                     <div className="space-y-3">
+                      {/* Seletor de cor */}
+                      <div>
+                        <p className="text-xs font-medium text-gray-600 dark:text-gray-700 mb-1.5">Cor do post-it</p>
+                        <div className="flex gap-2">
+                          {NOTICE_COLOR_KEYS.map(key => (
+                            <button
+                              key={key}
+                              title={NOTICE_COLOR_LABELS[key]}
+                              onClick={() => setSelectedColor(key)}
+                              className="w-7 h-7 rounded-full border-2 transition-transform hover:scale-110"
+                              style={{
+                                background: NOTICE_COLOR_BG[key],
+                                borderColor: selectedColor === key ? '#374151' : 'transparent',
+                                boxShadow: selectedColor === key ? '0 0 0 1px #374151' : 'none',
+                              }}
+                            />
+                          ))}
+                        </div>
+                      </div>
                       <textarea
                         placeholder="Digite seu aviso aqui..."
                         value={newNotice}
                         onChange={(e) => setNewNotice(e.target.value.slice(0, MAX_NOTICE_LENGTH))}
-                        className="w-full min-h-[120px] p-3 bg-yellow-50 dark:bg-yellow-50 text-gray-800 dark:text-gray-900 placeholder:text-gray-500 dark:placeholder:text-gray-600 border-2 border-yellow-300 dark:border-yellow-400 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-400 dark:focus:ring-yellow-500 resize-none"
+                        className="w-full min-h-[120px] p-3 text-gray-800 placeholder:text-gray-500 border-2 rounded-md focus:outline-none focus:ring-2 resize-none"
+                        style={{ background: NOTICE_COLOR_BG[selectedColor], borderColor: '#c0a000', color: '#3a2e00' }}
                         autoFocus
                       />
                       
@@ -555,7 +591,7 @@ const Dashboard = () => {
                             createdAt={notice.createdAt}
                             authorName={notice.authorName}
                             currentUserId={user?.id}
-                            onRemove={handleRemoveNotice}
+                            color={notice.color}
                             index={index}
                           />
                         ))}
@@ -603,9 +639,11 @@ const Dashboard = () => {
                         createdAt={notice.createdAt}
                         authorName={notice.authorName}
                         currentUserId={user?.id}
+                        color={notice.color}
                         onRemove={handleRemoveNotice}
                         onPin={handlePinNotice}
                         onUnpin={handleUnpinNotice}
+                        onEdit={handleEditNotice}
                         index={index}
                       />
                     ))}

@@ -57,8 +57,11 @@ const Dashboard = () => {
     user,
     addNotice,
     deleteNotice,
+    pinNotice,
+    unpinNotice,
     addTask,
-    toggleTask,
+    createQuickTask,
+    completeTask,
     deleteTask
   } = useApp();
 
@@ -68,7 +71,7 @@ const Dashboard = () => {
   const [isNewNoticeOpen, setIsNewNoticeOpen] = useState(false);
   const MAX_NOTICE_LENGTH = 200;
 
-  const handleAddNotice = useCallback(() => {
+  const handleAddNotice = useCallback(async () => {
     const trimmedNotice = newNotice.trim();
 
     if (!trimmedNotice) {
@@ -81,26 +84,58 @@ const Dashboard = () => {
       return;
     }
 
-    addNotice({
-      text: trimmedNotice,
-      author: 'Você',
-      createdBy: 'Você',
-      date: new Date().toISOString().split('T')[0]
-    });
-
-    setNewNotice('');
-    setIsNewNoticeOpen(false);
-    showSuccess('Aviso adicionado!');
+    try {
+      await addNotice(trimmedNotice);
+      setNewNotice('');
+      setIsNewNoticeOpen(false);
+      showSuccess('Aviso adicionado!');
+    } catch {
+      showError('Erro ao adicionar aviso. Tente novamente.');
+    }
   }, [newNotice, addNotice, showSuccess, showError]);
 
-  const handleRemoveNotice = useCallback((id) => {
-    deleteNotice(id);
-    showSuccess('Aviso removido!');
-  }, [deleteNotice, showSuccess]);
+  const handleRemoveNotice = useCallback(async (noticeId) => {
+    try {
+      await deleteNotice(noticeId);
+      showSuccess('Aviso removido!');
+    } catch {
+      showError('Erro ao remover aviso.');
+    }
+  }, [deleteNotice, showSuccess, showError]);
 
-  // Separar avisos atuais (últimos 4) e histórico
-  const currentNotices = useMemo(() => notices.slice(0, 4), [notices]);
-  const historicalNotices = useMemo(() => notices.slice(4), [notices]);
+  const handlePinNotice = useCallback(async (noticeId) => {
+    try {
+      await pinNotice(noticeId);
+      showSuccess('Aviso fixado!');
+    } catch {
+      showError('Erro ao fixar aviso.');
+    }
+  }, [pinNotice, showSuccess, showError]);
+
+  const handleUnpinNotice = useCallback(async (noticeId) => {
+    try {
+      await unpinNotice(noticeId);
+      showSuccess('Aviso desafixado.');
+    } catch {
+      showError('Erro ao desafixar aviso.');
+    }
+  }, [unpinNotice, showSuccess, showError]);
+
+  // Avisos ativos: pinados primeiro, depois por data — exibe até 6
+  const activeNotices = useMemo(() =>
+    [...notices]
+      .filter(n => n.isActive !== false)
+      .sort((a, b) => {
+        if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      })
+      .slice(0, 6),
+    [notices]
+  );
+  const historicalNotices = useMemo(() =>
+    notices.filter(n => n.isActive === false),
+    [notices]
+  );
 
   // Cálculos das métricas - Separados para melhor performance
   const expenseMetrics = useMemo(() => {
@@ -138,8 +173,8 @@ const Dashboard = () => {
       previousTaskStats.completionRate
     );
     
-    const pendingTasks = tasks.filter(t => !t.completed).length;
-    const completedTasks = tasks.filter(t => t.completed).length;
+    const pendingTasks = tasks.filter(t => !t.isCompleted).length;
+    const completedTasks = tasks.filter(t => t.isCompleted).length;
     const totalTasks = tasks.length;
     
     return {
@@ -509,13 +544,17 @@ const Dashboard = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {historicalNotices.map((notice, index) => (
                           <PostIt
-                            key={notice.id}
-                            id={notice.id}
-                            text={notice.text}
-                            author={notice.author}
+                            key={notice.noticeId}
+                            noticeId={notice.noticeId}
+                            message={notice.message}
                             date={notice.date}
-                            createdBy={notice.createdBy || notice.author}
-                            currentUser="Você"
+                            isPinned={notice.isPinned}
+                            expiresAt={notice.expiresAt}
+                            isActive={notice.isActive}
+                            createdBy={notice.createdBy}
+                            createdAt={notice.createdAt}
+                            authorName={notice.authorName}
+                            currentUserId={user?.id}
                             onRemove={handleRemoveNotice}
                             index={index}
                           />
@@ -528,32 +567,52 @@ const Dashboard = () => {
             </div>
             }
           >
-            {/* Grid de Post-its - Mostra apenas os 4 mais recentes */}
-            {currentNotices.length === 0 ? (
-              <div className="text-center py-12 text-gray-500 dark:text-dark-text-tertiary">
-                <p className="text-lg mb-2">📝</p>
-                <p>Nenhum aviso no momento</p>
-                <p className="text-sm mt-1">Adicione o primeiro aviso acima!</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 auto-rows-fr">
-                <AnimatePresence mode="popLayout">
-                  {currentNotices.map((notice, index) => (
-                    <PostIt
-                      key={notice.id}
-                      id={notice.id}
-                      text={notice.text}
-                      author={notice.author}
-                      date={notice.date}
-                      createdBy={notice.createdBy || notice.author}
-                      currentUser="Você"
-                      onRemove={handleRemoveNotice}
-                      index={index}
-                    />
-                  ))}
-                </AnimatePresence>
-              </div>
-            )}
+            {/* Quadro de Cortiça */}
+            <div
+              className="rounded-lg p-4 min-h-[160px]"
+              style={{
+                background: `
+                  radial-gradient(ellipse at 15% 20%, rgba(196,135,58,0.6) 0%, transparent 45%),
+                  radial-gradient(ellipse at 85% 80%, rgba(160,105,42,0.5) 0%, transparent 45%),
+                  radial-gradient(ellipse at 50% 50%, rgba(180,118,46,0.3) 0%, transparent 70%),
+                  #b8762e
+                `,
+                boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.3), 0 2px 6px rgba(0,0,0,0.15)',
+                border: '6px solid #8B5E3C',
+              }}
+            >
+              {activeNotices.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 text-amber-100/80">
+                  <p className="text-2xl mb-2">📌</p>
+                  <p className="text-sm font-medium">Nenhum aviso no quadro</p>
+                  <p className="text-xs mt-1 opacity-70">Adicione o primeiro aviso acima!</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-5 pt-3">
+                  <AnimatePresence mode="popLayout">
+                    {activeNotices.map((notice, index) => (
+                      <PostIt
+                        key={notice.noticeId}
+                        noticeId={notice.noticeId}
+                        message={notice.message}
+                        date={notice.date}
+                        isPinned={notice.isPinned}
+                        expiresAt={notice.expiresAt}
+                        isActive={notice.isActive}
+                        createdBy={notice.createdBy}
+                        createdAt={notice.createdAt}
+                        authorName={notice.authorName}
+                        currentUserId={user?.id}
+                        onRemove={handleRemoveNotice}
+                        onPin={handlePinNotice}
+                        onUnpin={handleUnpinNotice}
+                        index={index}
+                      />
+                    ))}
+                  </AnimatePresence>
+                </div>
+              )}
+            </div>
           </Card>
         </div>
 
@@ -562,7 +621,8 @@ const Dashboard = () => {
           <DashboardTasksSection
             tasks={tasks}
             onAddTask={addTask}
-            onToggleTask={toggleTask}
+            onQuickAddTask={createQuickTask}
+            onCompleteTask={completeTask}
             onDeleteTask={deleteTask}
           />
         </div>

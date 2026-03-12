@@ -5,7 +5,7 @@
  */
 
 import type { AppNotification, AppShoppingCategory, AppShoppingItem, AppShoppingList, AppShoppingListSummary, FutureItem, Notice, Task } from '@/types';
-import { FutureItemStatus, Priority } from '@/types';
+import { ApiCategory, ApiPriority, FutureItemStatus, Priority } from '@/types';
 
 // ── Notificações ─────────────────────────────────────────────────────────────
 
@@ -46,30 +46,195 @@ export const mockNotifications = [
 
 // ── Avisos ────────────────────────────────────────────────────────────────────
 
-export const mockNotices = [
-  { id: '1', text: 'Lembrete: Reunião de condomínio sexta-feira às 19h', author: 'João', date: '2025-10-28' },
-  { id: '2', text: 'Encanador virá terça-feira para verificar o chuveiro', author: 'Maria', date: '2025-10-29' },
-  { id: '3', text: 'Lembrar de pagar a conta de água até dia 15', author: 'Pedro', date: '2025-10-27' },
-] satisfies Notice[];
+const now = new Date();
+const in24h = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
+const in12h = new Date(now.getTime() + 12 * 60 * 60 * 1000).toISOString();
+
+export const mockNotices: Notice[] = [
+  {
+    noticeId: 'notice-mock-0001',
+    message: 'Reunião de condomínio sexta-feira às 19h. Favor confirmar presença!',
+    date: new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString(),
+    isPinned: true,
+    expiresAt: null,
+    isActive: true,
+    createdBy: 'user-mock-0001',
+    createdAt: new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString(),
+    authorName: 'João',
+  },
+  {
+    noticeId: 'notice-mock-0002',
+    message: 'Encanador virá amanhã para verificar o chuveiro. Liberar acesso ao banheiro.',
+    date: new Date(now.getTime() - 1 * 60 * 60 * 1000).toISOString(),
+    isPinned: false,
+    expiresAt: in24h,
+    isActive: true,
+    createdBy: 'user-mock-0002',
+    createdAt: new Date(now.getTime() - 1 * 60 * 60 * 1000).toISOString(),
+    authorName: 'Maria',
+  },
+  {
+    noticeId: 'notice-mock-0003',
+    message: 'Pagar conta de água até dia 15. Boleto no armário da cozinha.',
+    date: new Date(now.getTime() - 30 * 60 * 1000).toISOString(),
+    isPinned: false,
+    expiresAt: in12h,
+    isActive: true,
+    createdBy: 'user-mock-0003',
+    createdAt: new Date(now.getTime() - 30 * 60 * 1000).toISOString(),
+    authorName: 'Pedro',
+  },
+  {
+    noticeId: 'notice-mock-0004',
+    message: 'Não esquecer de comprar detergente e sabão em pó na próxima saída.',
+    date: now.toISOString(),
+    isPinned: false,
+    expiresAt: in24h,
+    isActive: true,
+    createdBy: 'user-mock-0001',
+    createdAt: now.toISOString(),
+    authorName: 'Você',
+  },
+];
 
 // ── Tarefas ───────────────────────────────────────────────────────────────────
 
-export const mockTasks = [
-  // Novembro 2025
-  { id: '1', title: 'Limpar a geladeira', assignedTo: 'Maria', completed: false, dueDate: '2025-11-02' },
-  { id: '2', title: 'Levar o lixo para fora', assignedTo: 'João', completed: false, dueDate: '2025-11-03' },
-  { id: '4', title: 'Limpar o banheiro', assignedTo: 'Pedro', completed: false, dueDate: '2025-11-01' },
-  { id: '5', title: 'Organizar a despensa', assignedTo: 'Maria', completed: false, dueDate: '2025-11-05' },
-  // Outubro 2025
-  { id: '3', title: 'Pagar conta de luz', assignedTo: 'Geral', completed: true, dueDate: '2025-10-28' },
-  { id: '6', title: 'Trocar lâmpada da sala', assignedTo: 'João', completed: true, dueDate: '2025-10-20' },
-  { id: '7', title: 'Fazer compras do mês', assignedTo: 'Maria', completed: true, dueDate: '2025-10-15' },
-  { id: '8', title: 'Limpar quintal', assignedTo: 'Pedro', completed: false, dueDate: '2025-10-25' },
-  // Setembro 2025
-  { id: '9', title: 'Organizar guarda-roupa', assignedTo: 'Maria', completed: true, dueDate: '2025-09-20' },
-  { id: '10', title: 'Pagar condomínio', assignedTo: 'Geral', completed: true, dueDate: '2025-09-10' },
-  { id: '11', title: 'Limpar cozinha', assignedTo: 'João', completed: true, dueDate: '2025-09-15' },
-] satisfies Task[];
+const MOCK_USER_ID = 'user-mock-0001';
+
+export const mockTasks: Task[] = [
+  // Pendentes — prioridades variadas
+  {
+    taskId: 'task-mock-0001',
+    title: 'Limpar a geladeira',
+    description: 'Remover itens vencidos e higienizar prateleiras',
+    assignedTo: null,
+    dueDate: new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000).toISOString(),
+    priority: ApiPriority.Alta,
+    priorityLabel: 'Alta',
+    category: ApiCategory.Limpeza,
+    categoryLabel: 'Limpeza',
+    date: now.toISOString(),
+    isCompleted: false,
+    completedAt: null,
+    isOverdue: false,
+    createdBy: MOCK_USER_ID,
+    createdAt: new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    taskId: 'task-mock-0002',
+    title: 'Levar o lixo para fora',
+    assignedTo: null,
+    dueDate: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+    priority: ApiPriority.Urgente,
+    priorityLabel: 'Urgente',
+    category: ApiCategory.Limpeza,
+    categoryLabel: 'Limpeza',
+    date: now.toISOString(),
+    isCompleted: false,
+    completedAt: null,
+    isOverdue: true,
+    createdBy: MOCK_USER_ID,
+    createdAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    taskId: 'task-mock-0003',
+    title: 'Limpar o banheiro',
+    assignedTo: null,
+    dueDate: new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+    priority: ApiPriority.Media,
+    priorityLabel: 'Média',
+    category: ApiCategory.Limpeza,
+    categoryLabel: 'Limpeza',
+    date: now.toISOString(),
+    isCompleted: false,
+    completedAt: null,
+    isOverdue: false,
+    createdBy: MOCK_USER_ID,
+    createdAt: new Date(now.getTime() - 12 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    taskId: 'task-mock-0004',
+    title: 'Organizar a despensa',
+    description: 'Verificar validades e organizar por categoria',
+    assignedTo: null,
+    dueDate: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+    priority: ApiPriority.Baixa,
+    priorityLabel: 'Baixa',
+    category: ApiCategory.Geral,
+    categoryLabel: 'Geral',
+    date: now.toISOString(),
+    isCompleted: false,
+    completedAt: null,
+    isOverdue: false,
+    createdBy: MOCK_USER_ID,
+    createdAt: new Date(now.getTime() - 6 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    taskId: 'task-mock-0005',
+    title: 'Limpar quintal',
+    assignedTo: null,
+    dueDate: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+    priority: ApiPriority.Media,
+    priorityLabel: 'Média',
+    category: ApiCategory.Limpeza,
+    categoryLabel: 'Limpeza',
+    date: now.toISOString(),
+    isCompleted: false,
+    completedAt: null,
+    isOverdue: true,
+    createdBy: MOCK_USER_ID,
+    createdAt: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  // Concluídas
+  {
+    taskId: 'task-mock-0006',
+    title: 'Pagar conta de luz',
+    assignedTo: null,
+    dueDate: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    priority: ApiPriority.Alta,
+    priorityLabel: 'Alta',
+    category: ApiCategory.Financas,
+    categoryLabel: 'Finanças',
+    date: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+    isCompleted: true,
+    completedAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    isOverdue: false,
+    createdBy: MOCK_USER_ID,
+    createdAt: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    taskId: 'task-mock-0007',
+    title: 'Trocar lâmpada da sala',
+    assignedTo: null,
+    dueDate: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+    priority: ApiPriority.Baixa,
+    priorityLabel: 'Baixa',
+    category: ApiCategory.Manutencao,
+    categoryLabel: 'Manutenção',
+    date: new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+    isCompleted: true,
+    completedAt: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+    isOverdue: false,
+    createdBy: MOCK_USER_ID,
+    createdAt: new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    taskId: 'task-mock-0008',
+    title: 'Fazer compras do mês',
+    assignedTo: null,
+    dueDate: new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+    priority: ApiPriority.Alta,
+    priorityLabel: 'Alta',
+    category: ApiCategory.Geral,
+    categoryLabel: 'Geral',
+    date: new Date(now.getTime() - 20 * 24 * 60 * 60 * 1000).toISOString(),
+    isCompleted: true,
+    completedAt: new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+    isOverdue: false,
+    createdBy: MOCK_USER_ID,
+    createdAt: new Date(now.getTime() - 20 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+];
 
 // ── Categorias de compra (padrões do sistema) ─────────────────────────────────
 

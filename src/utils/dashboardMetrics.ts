@@ -82,14 +82,16 @@ export function groupTasksByMonth(tasks: any[]): Record<string, { total: number;
     const grouped: Record<string, { total: number; completed: number; completionRate: number }> = {};
 
     tasks.forEach(task => {
-        const month = task.dueDate.substring(0, 7); // Extrai 'YYYY-MM' de 'YYYY-MM-DD'
+        const dateStr = task.dueDate ?? task.createdAt ?? task.date;
+        if (!dateStr) return;
+        const month = dateStr.substring(0, 7); // Extrai 'YYYY-MM' de 'YYYY-MM-DD'
 
         if (!grouped[month]) {
             grouped[month] = { total: 0, completed: 0, completionRate: 0 };
         }
 
         grouped[month].total++;
-        if (task.completed) {
+        if (task.isCompleted) {
             grouped[month].completed++;
         }
     });
@@ -250,7 +252,7 @@ export function getDaysUntilNextBill(expenses: any[]): { days: number; bill: str
  */
 export function getOverdueTasks(tasks: any[]): number {
     const today = new Date().toISOString().split('T')[0];
-    return tasks.filter(t => !t.completed && t.dueDate < today).length;
+    return tasks.filter(t => t.isOverdue || (!t.isCompleted && t.dueDate && t.dueDate < today)).length;
 }
 
 /**

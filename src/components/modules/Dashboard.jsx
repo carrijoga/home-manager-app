@@ -1,5 +1,6 @@
 import { useApp } from '@/contexts/AppContext';
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
+import * as noticeService from '@/services/noticeService';
 import {
   calculateAverage,
   calculateMonthlySavings,
@@ -27,7 +28,7 @@ import {
   Sparkles,
   TrendingUp
 } from 'lucide-react';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 // Paleta de cores para seleção ao criar aviso
 const NOTICE_COLOR_KEYS = ['yellow', 'pink', 'green', 'orange', 'blue'];
@@ -162,10 +163,22 @@ const Dashboard = () => {
       .slice(0, 6),
     [notices]
   );
-  const historicalNotices = useMemo(() =>
-    notices.filter(n => n.isActive === false),
-    [notices]
-  );
+  // Histórico de avisos — carregado via API ao abrir o dialog
+  const [noticeHistory, setNoticeHistory] = useState([]);
+  const [noticeHistoryLoading, setNoticeHistoryLoading] = useState(false);
+  const noticeHistoryLoaded = useRef(false);
+
+  const handleOpenHistory = useCallback((open) => {
+    setIsHistoryOpen(open);
+    if (open && !noticeHistoryLoaded.current) {
+      noticeHistoryLoaded.current = true;
+      setNoticeHistoryLoading(true);
+      noticeService.getNoticeHistory(1, 50)
+        .then(result => setNoticeHistory(result.items))
+        .catch(() => {})
+        .finally(() => setNoticeHistoryLoading(false));
+    }
+  }, []);
 
   // Cálculos das métricas - Separados para melhor performance
   const expenseMetrics = useMemo(() => {
@@ -562,7 +575,7 @@ const Dashboard = () => {
                 </DialogContent>
               </Dialog>
 
-              <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
+              <Dialog open={isHistoryOpen} onOpenChange={handleOpenHistory}>
                 <DialogTrigger className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-foreground hover:bg-accent rounded-md transition-colors border border-border">
                   <Clock size={16} />
                 </DialogTrigger>
@@ -571,14 +584,19 @@ const Dashboard = () => {
                     <DialogTitle>Histórico de Avisos</DialogTitle>
                   </DialogHeader>
                   <div className="mt-4">
-                    {historicalNotices.length === 0 ? (
+                    {noticeHistoryLoading ? (
+                      <div className="text-center py-12 text-gray-500 dark:text-dark-text-tertiary">
+                        <Clock className="mx-auto mb-2" size={32} />
+                        <p>Carregando...</p>
+                      </div>
+                    ) : noticeHistory.length === 0 ? (
                       <div className="text-center py-12 text-gray-500 dark:text-dark-text-tertiary">
                         <Clock className="mx-auto mb-2" size={32} />
                         <p>Nenhum aviso no histórico</p>
                       </div>
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {historicalNotices.map((notice, index) => (
+                        {noticeHistory.map((notice, index) => (
                           <PostIt
                             key={notice.noticeId}
                             noticeId={notice.noticeId}

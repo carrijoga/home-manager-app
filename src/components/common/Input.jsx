@@ -8,6 +8,7 @@ const Input = ({
   value,
   onChange,
   onKeyPress = null,
+  onKeyDown = null,
   className = '',
   label = null,
   error = null,
@@ -36,6 +37,7 @@ const Input = ({
         value={value}
         onChange={onChange}
         onKeyPress={onKeyPress}
+        onKeyDown={onKeyDown}
         required={required}
         disabled={disabled}
         className={inputClasses}

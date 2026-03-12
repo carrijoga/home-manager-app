@@ -23,7 +23,7 @@ interface PostItProps {
   createdAt?: string;
   authorName?: string;
   currentUserId?: string;
-  color?: string; // color key: yellow|pink|green|orange|blue
+  color?: string;
   onRemove?: (id: string) => void;
   onPin?: (id: string) => void;
   onUnpin?: (id: string) => void;
@@ -31,20 +31,20 @@ interface PostItProps {
   index?: number;
 }
 
-// ── Paleta Neon (especificada pelo usuário) ───────────────────────────────────
+// ── Paleta Neon ──────────────────────────────────────────────────────────────
+// line: cor escura para as linhas horizontais (visível sobre o fundo neon)
 const POST_IT_PALETTE: Record<string, {
   bg: string; border: string; text: string; line: string; shadow: string;
 }> = {
-  yellow: { bg: '#FFF700', border: '#c8c000', text: '#3a2e00', line: '#fffab0', shadow: 'rgba(180,160,0,0.35)' },
-  pink:   { bg: '#FF66CC', border: '#cc3399', text: '#5c0033', line: '#ffb3e6', shadow: 'rgba(180,0,100,0.25)' },
-  green:  { bg: '#CCFF00', border: '#88cc00', text: '#284000', line: '#e8ff99', shadow: 'rgba(80,160,0,0.28)' },
-  orange: { bg: '#FF9933', border: '#cc6600', text: '#4a1800', line: '#ffd0a0', shadow: 'rgba(160,80,0,0.28)' },
-  blue:   { bg: '#66CCFF', border: '#0099dd', text: '#002244', line: '#c0e8ff', shadow: 'rgba(0,100,200,0.25)' },
+  yellow: { bg: '#FFF700', border: '#bfb600', text: '#3a2e00', line: '#a08800', shadow: 'rgba(160,140,0,0.35)' },
+  pink:   { bg: '#FF66CC', border: '#cc2299', text: '#4a0028', line: '#990044', shadow: 'rgba(160,0,80,0.28)' },
+  green:  { bg: '#CCFF00', border: '#77bb00', text: '#1e3800', line: '#558800', shadow: 'rgba(60,130,0,0.28)' },
+  orange: { bg: '#FF9933', border: '#cc5500', text: '#3a1200', line: '#993300', shadow: 'rgba(140,60,0,0.28)' },
+  blue:   { bg: '#66CCFF', border: '#0088cc', text: '#001e3a', line: '#005599', shadow: 'rgba(0,80,160,0.28)' },
 };
 
 const COLOR_KEYS = ['pink', 'green', 'orange', 'blue', 'yellow'];
 
-// Cor determinística por noticeId (sem index para não mudar ao adicionar novos)
 function resolveColor(noticeId: string, isPinned: boolean, colorKey?: string) {
   if (isPinned) return POST_IT_PALETTE.yellow;
   if (colorKey && POST_IT_PALETTE[colorKey]) return POST_IT_PALETTE[colorKey];
@@ -56,18 +56,17 @@ function formatExpiry(expiresAt: string | null | undefined): string | null {
   if (!expiresAt) return null;
   const diff = new Date(expiresAt).getTime() - Date.now();
   if (diff <= 0) return 'Expirado';
-  const hours = Math.floor(diff / (1000 * 60 * 60));
-  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-  if (hours > 0) return `${hours}h`;
-  return `${minutes}min`;
+  const h = Math.floor(diff / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  return h > 0 ? `${h}h` : `${m}min`;
 }
 
 /**
  * PostIt — Nota em post-it com paleta neon.
- * - Amarelo quando fixado, neon aleatório (determinístico por ID) quando livre.
- * - Pino visual (vermelho = fixado, cinza = livre).
- * - Todos podem fixar/desafixar; apenas o autor pode editar/excluir.
- * - Edição inline ao clicar no lápis.
+ * - Amarelo quando fixado, neon determinístico por ID quando livre.
+ * - Todos podem fixar/desafixar; apenas o criador pode editar/excluir.
+ * - Botões sempre visíveis (não dependem de hover state JS).
+ * - Edição inline com textarea.
  */
 const PostIt = forwardRef<HTMLDivElement, PostItProps>(
   ({
@@ -87,7 +86,6 @@ const PostIt = forwardRef<HTMLDivElement, PostItProps>(
     index = 0,
   }, ref) => {
     const [showConfirm, setShowConfirm] = useState(false);
-    const [isHovered, setIsHovered] = useState(false);
     const [editing, setEditing] = useState(false);
     const [editValue, setEditValue] = useState(message);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -97,7 +95,6 @@ const PostIt = forwardRef<HTMLDivElement, PostItProps>(
     const expiryLabel = formatExpiry(expiresAt);
 
     const canEdit = !createdBy || !currentUserId || createdBy === currentUserId;
-    const canPin = !!(onPin || onUnpin);
 
     const handleSaveEdit = () => {
       if (editValue.trim() && editValue.trim() !== message) {
@@ -113,32 +110,17 @@ const PostIt = forwardRef<HTMLDivElement, PostItProps>(
 
     return (
       <>
+        {/* group permite CSS hover nativo para mostrar os botões */}
         <motion.div
           ref={ref}
           layout
           initial={{ opacity: 0, scale: 0.75, y: -30, rotate: rotation }}
-          animate={{
-            opacity: 1,
-            scale: isHovered ? 1.06 : 1,
-            y: isHovered ? -10 : 0,
-            rotate: isHovered ? 0 : rotation,
-          }}
-          exit={{
-            opacity: 0,
-            scale: 0.7,
-            rotate: rotation + 20,
-            transition: { duration: 0.25 },
-          }}
-          transition={{
-            type: "spring",
-            stiffness: 280,
-            damping: 22,
-            delay: index * 0.05,
-          }}
-          onHoverStart={() => setIsHovered(true)}
-          onHoverEnd={() => setIsHovered(false)}
-          className="relative cursor-default"
-          style={{ transformOrigin: 'top center', zIndex: isHovered ? 10 : 1, position: 'relative' }}
+          animate={{ opacity: 1, scale: 1, y: 0, rotate: rotation }}
+          whileHover={{ scale: 1.06, y: -10, rotate: 0, zIndex: 10 }}
+          exit={{ opacity: 0, scale: 0.7, rotate: rotation + 20, transition: { duration: 0.25 } }}
+          transition={{ type: "spring", stiffness: 280, damping: 22, delay: index * 0.05 }}
+          className="relative cursor-default group"
+          style={{ transformOrigin: 'top center', position: 'relative' }}
         >
           {/* Pushpin */}
           <div className="absolute left-1/2 -top-4 z-20" style={{ transform: 'translateX(-50%)' }}>
@@ -158,14 +140,14 @@ const PostIt = forwardRef<HTMLDivElement, PostItProps>(
 
           {/* Corpo do post-it */}
           <motion.div
-            animate={{
-              boxShadow: isHovered
-                ? `6px 14px 28px ${color.shadow}, 2px 4px 8px rgba(0,0,0,0.15)`
-                : `3px 7px 14px ${color.shadow}, 1px 2px 4px rgba(0,0,0,0.1)`,
-            }}
-            transition={{ duration: 0.2 }}
             className="relative rounded-sm overflow-hidden min-h-[130px] flex flex-col"
-            style={{ background: color.bg, border: `1.5px solid ${color.border}`, paddingTop: '16px' }}
+            style={{
+              background: color.bg,
+              border: `1.5px solid ${color.border}`,
+              paddingTop: '16px',
+              boxShadow: `3px 7px 14px ${color.shadow}, 1px 2px 4px rgba(0,0,0,0.1)`,
+            }}
+            whileHover={{ boxShadow: `6px 14px 28px ${color.shadow}, 2px 4px 8px rgba(0,0,0,0.15)` }}
           >
             {/* Faixa superior colante */}
             <div
@@ -173,11 +155,11 @@ const PostIt = forwardRef<HTMLDivElement, PostItProps>(
               style={{ background: `linear-gradient(to bottom, ${color.border}cc, ${color.bg}00)` }}
             />
 
-            {/* Linhas horizontais */}
+            {/* Linhas horizontais — cor escura para contraste */}
             <div
               className="absolute inset-0 pointer-events-none"
               style={{
-                backgroundImage: `repeating-linear-gradient(to bottom, transparent, transparent 22px, ${color.line}80 22px, ${color.line}80 23px)`,
+                backgroundImage: `repeating-linear-gradient(to bottom, transparent, transparent 22px, ${color.line}55 22px, ${color.line}55 23px)`,
                 backgroundPosition: '0 24px',
               }}
             />
@@ -208,8 +190,7 @@ const PostIt = forwardRef<HTMLDivElement, PostItProps>(
               className="relative px-3 py-1.5 flex justify-between items-center text-xs"
               style={{ borderTop: `1px solid ${color.border}60`, color: color.text, opacity: 0.85 }}
             >
-              <span className="font-semibold truncate max-w-[50%]">{authorName ?? '—'}</span>
-              {/* pr-5 para não sobrepor a dobra de canto */}
+              <span className="font-semibold truncate max-w-[45%]">{authorName ?? '—'}</span>
               <div className="flex items-center gap-1.5 pr-5">
                 {isPinned && <span className="font-bold text-red-700 text-xs">Fixado</span>}
                 {!isPinned && expiryLabel && (
@@ -217,83 +198,90 @@ const PostIt = forwardRef<HTMLDivElement, PostItProps>(
                     {expiryLabel}
                   </span>
                 )}
-                <span>
-                  {new Date(date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
-                </span>
+                <span>{new Date(date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</span>
               </div>
             </div>
 
-            {/* Dobra de canto — 16×16 para não cobrir texto */}
+            {/* Dobra de canto */}
             <div
               className="absolute bottom-0 right-0 w-4 h-4 pointer-events-none"
               style={{
-                background: `linear-gradient(225deg, rgba(0,0,0,0.25) 45%, ${color.bg} 50%)`,
-                borderTop: `1px solid ${color.border}40`,
-                borderLeft: `1px solid ${color.border}40`,
+                background: `linear-gradient(225deg, rgba(0,0,0,0.22) 45%, ${color.bg} 50%)`,
               }}
             />
           </motion.div>
 
-          {/* Botões — hover */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: isHovered ? 1 : 0 }}
-            transition={{ duration: 0.15 }}
-            className="absolute -top-1 right-0 flex gap-1 z-20"
-          >
+          {/* ── Botões de ação ─────────────────────────────────────────────────
+              Sempre presentes no DOM mas visíveis via CSS group-hover (nativo,
+              sem dependência de estado JS) — funciona em todos os navegadores. */}
+          <div className="absolute -top-1 right-0 flex gap-1 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+            {/* Salvar edição */}
             {editing && (
               <button
                 onClick={handleSaveEdit}
                 title="Salvar (Ctrl+Enter)"
-                className="rounded-full p-1 shadow-sm transition-colors bg-emerald-500 text-white hover:bg-emerald-600"
+                className="rounded-full p-1.5 shadow bg-emerald-500 text-white hover:bg-emerald-600 transition-colors"
               >
                 <Save size={11} />
               </button>
             )}
 
+            {/* Cancelar edição */}
+            {editing && (
+              <button
+                onClick={() => { setEditing(false); setEditValue(message); }}
+                title="Cancelar"
+                className="rounded-full p-1.5 shadow bg-gray-500 text-white hover:bg-gray-600 transition-colors"
+              >
+                <X size={11} />
+              </button>
+            )}
+
+            {/* Editar (só o autor) */}
             {!editing && canEdit && onEdit && (
               <button
                 onClick={() => { setEditing(true); setEditValue(message); }}
                 title="Editar"
-                className="rounded-full p-1 shadow-sm transition-colors"
-                style={{ background: color.border, color: '#fff' }}
+                className="rounded-full p-1.5 shadow text-white transition-colors"
+                style={{ background: color.border }}
               >
                 <Edit2 size={11} />
               </button>
             )}
 
-            {canPin && !editing && (
-              isPinned && onUnpin ? (
-                <button
-                  onClick={() => onUnpin(noticeId)}
-                  title="Desafixar"
-                  className="rounded-full p-1 shadow-sm transition-colors"
-                  style={{ background: color.border, color: '#fff' }}
-                >
-                  <PinOff size={11} />
-                </button>
-              ) : !isPinned && onPin ? (
-                <button
-                  onClick={() => onPin(noticeId)}
-                  title="Fixar"
-                  className="rounded-full p-1 shadow-sm transition-colors"
-                  style={{ background: color.border, color: '#fff' }}
-                >
-                  <Pin size={11} />
-                </button>
-              ) : null
+            {/* Pin / Unpin (todos) */}
+            {!editing && isPinned && onUnpin && (
+              <button
+                onClick={() => onUnpin(noticeId)}
+                title="Desafixar"
+                className="rounded-full p-1.5 shadow text-white transition-colors"
+                style={{ background: color.border }}
+              >
+                <PinOff size={11} />
+              </button>
+            )}
+            {!editing && !isPinned && onPin && (
+              <button
+                onClick={() => onPin(noticeId)}
+                title="Fixar"
+                className="rounded-full p-1.5 shadow text-white transition-colors"
+                style={{ background: color.border }}
+              >
+                <Pin size={11} />
+              </button>
             )}
 
+            {/* Excluir (só o autor) */}
             {!editing && canEdit && onRemove && (
               <button
                 onClick={() => setShowConfirm(true)}
                 title="Remover"
-                className="rounded-full p-1 shadow-sm bg-red-500 hover:bg-red-600 text-white transition-colors"
+                className="rounded-full p-1.5 shadow bg-red-500 hover:bg-red-600 text-white transition-colors"
               >
                 <X size={11} />
               </button>
             )}
-          </motion.div>
+          </div>
         </motion.div>
 
         <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>

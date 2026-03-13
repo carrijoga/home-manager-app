@@ -209,9 +209,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const updateTask = async (taskId: string, payload: import('@/schemas/tasks').UpdateTaskRequest) => {
     await taskService.updateTask(taskId, payload, activeNestId ?? undefined);
-    setTasks(prev => prev.map(t =>
-      t.taskId === taskId ? { ...t, ...payload, priorityLabel: t.priorityLabel, categoryLabel: t.categoryLabel } : t
-    ));
+    setTasks(prev => prev.map(t => {
+      if (t.taskId !== taskId) return t;
+      return {
+        ...t,
+        ...payload,
+        date: payload.date ?? t.date,
+        priorityLabel: t.priorityLabel,
+        categoryLabel: t.categoryLabel,
+      };
+    }));
   };
 
   const createQuickTask = async (title: string) => {

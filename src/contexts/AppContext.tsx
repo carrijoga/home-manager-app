@@ -53,14 +53,20 @@ interface AppContextValue {
   pushNotification: (notification: AppNotification) => void;
 
   // Notice actions
-  addNotice: (notice: Omit<Notice, 'id'>) => Promise<void>;
-  deleteNotice: (id: string) => Promise<void>;
+  addNotice: (message: string, color?: string, expiresAt?: string | null) => Promise<void>;
+  updateNotice: (noticeId: string, message: string, color?: string) => Promise<void>;
+  deleteNotice: (noticeId: string) => Promise<void>;
+  pinNotice: (noticeId: string) => Promise<void>;
+  unpinNotice: (noticeId: string) => Promise<void>;
 
   // Task actions
-  addTask: (task: Omit<Task, 'id'>) => Promise<void>;
+  addTask: (payload: import('@/schemas/tasks').CreateTaskRequest) => Promise<void>;
+  updateTask: (taskId: string, payload: import('@/schemas/tasks').UpdateTaskRequest) => Promise<void>;
+  createQuickTask: (title: string) => Promise<void>;
   restoreTask: (task: Task) => void;
-  toggleTask: (id: string) => Promise<void>;
-  deleteTask: (id: string) => Promise<void>;
+  completeTask: (taskId: string) => Promise<void>;
+  uncompleteTask: (taskId: string) => Promise<void>;
+  deleteTask: (taskId: string) => Promise<void>;
 
   // Shopping actions
   createShoppingList: (name: string, monthYear: string, notes?: string) => Promise<void>;
@@ -155,38 +161,85 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   // ========== NOTICES ==========
-  const addNotice = async (notice: Omit<Notice, 'id'>) => {
-    const newNotice = await noticeService.addNotice(notice);
-    setNotices(prev => [...prev, newNotice]);
+  const addNotice = async (message: string, color?: string, expiresAt?: string | null) => {
+    const newNotice = await noticeService.createNotice({
+      message,
+      date: new Date().toISOString(),
+      color,
+      expiresAt: expiresAt ?? undefined,
+    }, activeNestId ?? undefined);
+    setNotices(prev => [newNotice, ...prev]);
   };
 
-  const deleteNotice = async (id: string) => {
-    await noticeService.deleteNotice(id);
-    setNotices(prev => prev.filter(n => n.id !== id));
+  const updateNotice = async (noticeId: string, message: string, color?: string) => {
+    await noticeService.updateNotice(noticeId, { message, color }, activeNestId ?? undefined);
+    setNotices(prev => prev.map(n =>
+      n.noticeId === noticeId ? { ...n, message, color } : n
+    ));
+  };
+
+  const deleteNotice = async (noticeId: string) => {
+    await noticeService.deleteNotice(noticeId, activeNestId ?? undefined);
+    setNotices(prev => prev.filter(n => n.noticeId !== noticeId));
+  };
+
+  const pinNotice = async (noticeId: string) => {
+    await noticeService.pinNotice(noticeId, activeNestId ?? undefined);
+    setNotices(prev => prev.map(n =>
+      n.noticeId === noticeId ? { ...n, isPinned: true, expiresAt: null } : n
+    ).sort((a, b) => {
+      if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    }));
+  };
+
+  const unpinNotice = async (noticeId: string) => {
+    await noticeService.unpinNotice(noticeId, activeNestId ?? undefined);
+    const newExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    setNotices(prev => prev.map(n =>
+      n.noticeId === noticeId ? { ...n, isPinned: false, expiresAt: newExpiry } : n
+    ));
   };
 
   // ========== TASKS ==========
-  const addTask = async (task: Omit<Task, 'id'>) => {
-    const newTask = await taskService.addTask(task);
-    setTasks(prev => [...prev, newTask]);
+  const addTask = async (payload: import('@/schemas/tasks').CreateTaskRequest) => {
+    const newTask = await taskService.createTask(payload, activeNestId ?? undefined);
+    setTasks(prev => [newTask, ...prev]);
+  };
+
+  const updateTask = async (taskId: string, payload: import('@/schemas/tasks').UpdateTaskRequest) => {
+    await taskService.updateTask(taskId, payload, activeNestId ?? undefined);
+    setTasks(prev => prev.map(t =>
+      t.taskId === taskId ? { ...t, ...payload, priorityLabel: t.priorityLabel, categoryLabel: t.categoryLabel } : t
+    ));
+  };
+
+  const createQuickTask = async (title: string) => {
+    const newTask = await taskService.createQuickTask(title, activeNestId ?? undefined);
+    setTasks(prev => [newTask, ...prev]);
   };
 
   const restoreTask = (task: Task) => {
     setTasks(prev => {
-      const exists = prev.find(t => t.id === task.id);
+      const exists = prev.find(t => t.taskId === task.taskId);
       if (exists) return prev;
-      return [...prev, task];
+      return [task, ...prev];
     });
   };
 
-  const toggleTask = async (id: string) => {
-    const updatedTask = await taskService.toggleTaskCompletion(id);
-    setTasks(prev => prev.map(t => t.id === id ? updatedTask : t));
+  const completeTask = async (taskId: string) => {
+    const updatedTask = await taskService.completeTask(taskId, activeNestId ?? undefined);
+    setTasks(prev => prev.map(t => t.taskId === taskId ? updatedTask : t));
   };
 
-  const deleteTask = async (id: string) => {
-    await taskService.deleteTask(id);
-    setTasks(prev => prev.filter(t => t.id !== id));
+  const uncompleteTask = async (taskId: string) => {
+    const updatedTask = await taskService.uncompleteTask(taskId, activeNestId ?? undefined);
+    setTasks(prev => prev.map(t => t.taskId === taskId ? updatedTask : t));
+  };
+
+  const deleteTask = async (taskId: string) => {
+    await taskService.deleteTask(taskId, activeNestId ?? undefined);
+    setTasks(prev => prev.filter(t => t.taskId !== taskId));
   };
 
   // ========== SHOPPING ==========
@@ -416,8 +469,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setLoading(true);
         const [noticesResult, tasksResult, shoppingListsResult, shoppingCatsResult, expensesResult, futureResult] =
           await Promise.allSettled([
-            noticeService.getAllNotices(),
-            taskService.getAllTasks(),
+            noticeService.getActiveNotices(activeNestId ?? undefined),
+            taskService.getActiveTasks(activeNestId ?? undefined),
             shoppingService.getShoppingLists(undefined, activeNestId ?? undefined),
             shoppingService.getShoppingCategories(activeNestId ?? undefined),
             financialService.getAllExpenses(),
@@ -474,10 +527,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     clearAllNotifications,
     pushNotification,
     addNotice,
+    updateNotice,
     deleteNotice,
+    pinNotice,
+    unpinNotice,
     addTask,
+    updateTask,
+    createQuickTask,
     restoreTask,
-    toggleTask,
+    completeTask,
+    uncompleteTask,
     deleteTask,
     createShoppingList,
     updateShoppingList,

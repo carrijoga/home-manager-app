@@ -65,6 +65,11 @@ export interface DatePickerProps {
    * @default false
    */
   defaultToToday?: boolean;
+
+  /**
+   * Data mínima permitida (datas anteriores ficam desabilitadas).
+   */
+  fromDate?: Date;
 }
 
 export function DatePicker({
@@ -74,6 +79,7 @@ export function DatePicker({
   disabled = false,
   className,
   defaultToToday = false,
+  fromDate,
 }: DatePickerProps) {
   const [open, setOpen] = React.useState(false);
 
@@ -121,6 +127,7 @@ export function DatePicker({
           onSelect={handleSelect}
           initialFocus
           locale={ptBR}
+          disabled={fromDate ? (date) => date < fromDate : undefined}
           className="bg-background text-foreground dark:bg-dark-bg-tertiary dark:text-dark-text-primary"
         />
       </PopoverContent>

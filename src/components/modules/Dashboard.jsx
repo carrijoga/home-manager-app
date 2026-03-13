@@ -1,5 +1,6 @@
 import { useApp } from '@/contexts/AppContext';
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
+import * as noticeService from '@/services/noticeService';
 import {
   calculateAverage,
   calculateMonthlySavings,
@@ -27,7 +28,12 @@ import {
   Sparkles,
   TrendingUp
 } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+// Paleta de cores para seleção ao criar aviso
+const NOTICE_COLOR_KEYS = ['yellow', 'pink', 'green', 'orange', 'blue'];
+const NOTICE_COLOR_LABELS = { yellow: 'Amarelo', pink: 'Rosa', green: 'Verde', orange: 'Laranja', blue: 'Azul' };
+const NOTICE_COLOR_BG = { yellow: '#FFF700', pink: '#FF66CC', green: '#CCFF00', orange: '#FF9933', blue: '#66CCFF' };
 import {
   DailyAverageCard,
   MonthProjectionCard,
@@ -56,19 +62,38 @@ const Dashboard = () => {
     futureItems,
     user,
     addNotice,
+    updateNotice,
     deleteNotice,
+    pinNotice,
+    unpinNotice,
     addTask,
-    toggleTask,
+    createQuickTask,
+    completeTask,
     deleteTask
   } = useApp();
 
   const { showSuccess, showError } = useToastNotifications();
   const [newNotice, setNewNotice] = useState('');
+  const [selectedColor, setSelectedColor] = useState('yellow');
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isNewNoticeOpen, setIsNewNoticeOpen] = useState(false);
   const MAX_NOTICE_LENGTH = 200;
 
-  const handleAddNotice = useCallback(() => {
+  // Mensagem motivacional estável (não muda com re-renders)
+  const motivationalMessage = useRef((() => {
+    const messages = [
+      'Vamos organizar o dia de hoje?',
+      'Seu lar merece o melhor!',
+      'Pronto para conquistar suas metas?',
+      'Juntos, a organização fica mais fácil!',
+      'Um dia produtivo começa aqui!',
+      'Vamos manter tudo em ordem?',
+      'Sua família conta com você!',
+    ];
+    return messages[Math.floor(Math.random() * messages.length)];
+  })()).current;
+
+  const handleAddNotice = useCallback(async () => {
     const trimmedNotice = newNotice.trim();
 
     if (!trimmedNotice) {
@@ -81,26 +106,79 @@ const Dashboard = () => {
       return;
     }
 
-    addNotice({
-      text: trimmedNotice,
-      author: 'Você',
-      createdBy: 'Você',
-      date: new Date().toISOString().split('T')[0]
-    });
+    try {
+      await addNotice(trimmedNotice, selectedColor);
+      setNewNotice('');
+      setIsNewNoticeOpen(false);
+      showSuccess('Aviso adicionado!');
+    } catch {
+      showError('Erro ao adicionar aviso. Tente novamente.');
+    }
+  }, [newNotice, selectedColor, addNotice, showSuccess, showError]);
 
-    setNewNotice('');
-    setIsNewNoticeOpen(false);
-    showSuccess('Aviso adicionado!');
-  }, [newNotice, addNotice, showSuccess, showError]);
+  const handleEditNotice = useCallback(async (noticeId, message) => {
+    try {
+      await updateNotice(noticeId, message);
+      showSuccess('Aviso atualizado!');
+    } catch {
+      showError('Erro ao atualizar aviso.');
+    }
+  }, [updateNotice, showSuccess, showError]);
 
-  const handleRemoveNotice = useCallback((id) => {
-    deleteNotice(id);
-    showSuccess('Aviso removido!');
-  }, [deleteNotice, showSuccess]);
+  const handleRemoveNotice = useCallback(async (noticeId) => {
+    try {
+      await deleteNotice(noticeId);
+      showSuccess('Aviso removido!');
+    } catch {
+      showError('Erro ao remover aviso.');
+    }
+  }, [deleteNotice, showSuccess, showError]);
 
-  // Separar avisos atuais (últimos 4) e histórico
-  const currentNotices = useMemo(() => notices.slice(0, 4), [notices]);
-  const historicalNotices = useMemo(() => notices.slice(4), [notices]);
+  const handlePinNotice = useCallback(async (noticeId) => {
+    try {
+      await pinNotice(noticeId);
+      showSuccess('Aviso fixado!');
+    } catch {
+      showError('Erro ao fixar aviso.');
+    }
+  }, [pinNotice, showSuccess, showError]);
+
+  const handleUnpinNotice = useCallback(async (noticeId) => {
+    try {
+      await unpinNotice(noticeId);
+      showSuccess('Aviso desafixado.');
+    } catch {
+      showError('Erro ao desafixar aviso.');
+    }
+  }, [unpinNotice, showSuccess, showError]);
+
+  // Avisos ativos: pinados primeiro, depois por data — exibe até 6
+  const activeNotices = useMemo(() =>
+    [...notices]
+      .filter(n => n.isActive !== false)
+      .sort((a, b) => {
+        if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      })
+      .slice(0, 6),
+    [notices]
+  );
+  // Histórico de avisos — carregado via API ao abrir o dialog
+  const [noticeHistory, setNoticeHistory] = useState([]);
+  const [noticeHistoryLoading, setNoticeHistoryLoading] = useState(false);
+  const noticeHistoryLoaded = useRef(false);
+
+  const handleOpenHistory = useCallback((open) => {
+    setIsHistoryOpen(open);
+    if (open && !noticeHistoryLoaded.current) {
+      noticeHistoryLoaded.current = true;
+      setNoticeHistoryLoading(true);
+      noticeService.getNoticeHistory(1, 50)
+        .then(result => setNoticeHistory(result.items))
+        .catch(() => {})
+        .finally(() => setNoticeHistoryLoading(false));
+    }
+  }, []);
 
   // Cálculos das métricas - Separados para melhor performance
   const expenseMetrics = useMemo(() => {
@@ -138,8 +216,8 @@ const Dashboard = () => {
       previousTaskStats.completionRate
     );
     
-    const pendingTasks = tasks.filter(t => !t.completed).length;
-    const completedTasks = tasks.filter(t => t.completed).length;
+    const pendingTasks = tasks.filter(t => !t.isCompleted).length;
+    const completedTasks = tasks.filter(t => t.isCompleted).length;
     const totalTasks = tasks.length;
     
     return {
@@ -224,26 +302,12 @@ const Dashboard = () => {
     };
   }, [expenses, tasks]);
 
-  // Obtém a saudação de acordo com o horário
-  const getGreeting = useCallback(() => {
+  // Saudação estável por horário
+  const greeting = useMemo(() => {
     const hour = new Date().getHours();
     if (hour >= 5 && hour < 12) return 'Bom dia';
     if (hour >= 12 && hour < 18) return 'Boa tarde';
     return 'Boa noite';
-  }, []);
-
-  // Obtém mensagem motivacional aleatória
-  const getMotivationalMessage = useCallback(() => {
-    const messages = [
-      'Vamos organizar o dia de hoje?',
-      'Seu lar merece o melhor!',
-      'Pronto para conquistar suas metas?',
-      'Juntos, a organização fica mais fácil!',
-      'Um dia produtivo começa aqui!',
-      'Vamos manter tudo em ordem?',
-      'Sua família conta com você!'
-    ];
-    return messages[Math.floor(Math.random() * messages.length)];
   }, []);
 
   return (
@@ -254,11 +318,11 @@ const Dashboard = () => {
           <div className="flex items-center space-x-3">
             <div>
               <h1 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                {getGreeting()}, {user?.callmeby || 'Usuário'}!
+                {greeting}, {user?.callmeby || 'Usuário'}!
                 <span className="text-2xl animate-wave inline-block">👋</span>
               </h1>
               <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">
-                {getMotivationalMessage()}
+                {motivationalMessage}
               </p>
             </div>
           </div>
@@ -432,11 +496,31 @@ const Dashboard = () => {
                     
                     {/* Textarea estilizada como Post-It */}
                     <div className="space-y-3">
+                      {/* Seletor de cor */}
+                      <div>
+                        <p className="text-xs font-medium text-gray-600 dark:text-gray-700 mb-1.5">Cor do post-it</p>
+                        <div className="flex gap-2">
+                          {NOTICE_COLOR_KEYS.map(key => (
+                            <button
+                              key={key}
+                              title={NOTICE_COLOR_LABELS[key]}
+                              onClick={() => setSelectedColor(key)}
+                              className="w-7 h-7 rounded-full border-2 transition-transform hover:scale-110"
+                              style={{
+                                background: NOTICE_COLOR_BG[key],
+                                borderColor: selectedColor === key ? '#374151' : 'transparent',
+                                boxShadow: selectedColor === key ? '0 0 0 1px #374151' : 'none',
+                              }}
+                            />
+                          ))}
+                        </div>
+                      </div>
                       <textarea
                         placeholder="Digite seu aviso aqui..."
                         value={newNotice}
                         onChange={(e) => setNewNotice(e.target.value.slice(0, MAX_NOTICE_LENGTH))}
-                        className="w-full min-h-[120px] p-3 bg-yellow-50 dark:bg-yellow-50 text-gray-800 dark:text-gray-900 placeholder:text-gray-500 dark:placeholder:text-gray-600 border-2 border-yellow-300 dark:border-yellow-400 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-400 dark:focus:ring-yellow-500 resize-none"
+                        className="w-full min-h-[120px] p-3 text-gray-800 placeholder:text-gray-500 border-2 rounded-md focus:outline-none focus:ring-2 resize-none"
+                        style={{ background: NOTICE_COLOR_BG[selectedColor], borderColor: '#c0a000', color: '#3a2e00' }}
                         autoFocus
                       />
                       
@@ -491,7 +575,7 @@ const Dashboard = () => {
                 </DialogContent>
               </Dialog>
 
-              <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
+              <Dialog open={isHistoryOpen} onOpenChange={handleOpenHistory}>
                 <DialogTrigger className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-foreground hover:bg-accent rounded-md transition-colors border border-border">
                   <Clock size={16} />
                 </DialogTrigger>
@@ -500,23 +584,32 @@ const Dashboard = () => {
                     <DialogTitle>Histórico de Avisos</DialogTitle>
                   </DialogHeader>
                   <div className="mt-4">
-                    {historicalNotices.length === 0 ? (
+                    {noticeHistoryLoading ? (
+                      <div className="text-center py-12 text-gray-500 dark:text-dark-text-tertiary">
+                        <Clock className="mx-auto mb-2" size={32} />
+                        <p>Carregando...</p>
+                      </div>
+                    ) : noticeHistory.length === 0 ? (
                       <div className="text-center py-12 text-gray-500 dark:text-dark-text-tertiary">
                         <Clock className="mx-auto mb-2" size={32} />
                         <p>Nenhum aviso no histórico</p>
                       </div>
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {historicalNotices.map((notice, index) => (
+                        {noticeHistory.map((notice, index) => (
                           <PostIt
-                            key={notice.id}
-                            id={notice.id}
-                            text={notice.text}
-                            author={notice.author}
+                            key={notice.noticeId}
+                            noticeId={notice.noticeId}
+                            message={notice.message}
                             date={notice.date}
-                            createdBy={notice.createdBy || notice.author}
-                            currentUser="Você"
-                            onRemove={handleRemoveNotice}
+                            isPinned={notice.isPinned}
+                            expiresAt={notice.expiresAt}
+                            isActive={notice.isActive}
+                            createdBy={notice.createdBy}
+                            createdAt={notice.createdAt}
+                            authorName={notice.authorName}
+                            currentUserId={user?.id}
+                            color={notice.color}
                             index={index}
                           />
                         ))}
@@ -528,32 +621,54 @@ const Dashboard = () => {
             </div>
             }
           >
-            {/* Grid de Post-its - Mostra apenas os 4 mais recentes */}
-            {currentNotices.length === 0 ? (
-              <div className="text-center py-12 text-gray-500 dark:text-dark-text-tertiary">
-                <p className="text-lg mb-2">📝</p>
-                <p>Nenhum aviso no momento</p>
-                <p className="text-sm mt-1">Adicione o primeiro aviso acima!</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 auto-rows-fr">
-                <AnimatePresence mode="popLayout">
-                  {currentNotices.map((notice, index) => (
-                    <PostIt
-                      key={notice.id}
-                      id={notice.id}
-                      text={notice.text}
-                      author={notice.author}
-                      date={notice.date}
-                      createdBy={notice.createdBy || notice.author}
-                      currentUser="Você"
-                      onRemove={handleRemoveNotice}
-                      index={index}
-                    />
-                  ))}
-                </AnimatePresence>
-              </div>
-            )}
+            {/* Quadro de Cortiça */}
+            <div
+              className="rounded-lg p-4 min-h-[160px]"
+              style={{
+                background: `
+                  radial-gradient(ellipse at 15% 20%, rgba(196,135,58,0.6) 0%, transparent 45%),
+                  radial-gradient(ellipse at 85% 80%, rgba(160,105,42,0.5) 0%, transparent 45%),
+                  radial-gradient(ellipse at 50% 50%, rgba(180,118,46,0.3) 0%, transparent 70%),
+                  #b8762e
+                `,
+                boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.3), 0 2px 6px rgba(0,0,0,0.15)',
+                border: '6px solid #8B5E3C',
+              }}
+            >
+              {activeNotices.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 text-amber-100/80">
+                  <p className="text-2xl mb-2">📌</p>
+                  <p className="text-sm font-medium">Nenhum aviso no quadro</p>
+                  <p className="text-xs mt-1 opacity-70">Adicione o primeiro aviso acima!</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-5 pt-3">
+                  <AnimatePresence mode="popLayout">
+                    {activeNotices.map((notice, index) => (
+                      <PostIt
+                        key={notice.noticeId}
+                        noticeId={notice.noticeId}
+                        message={notice.message}
+                        date={notice.date}
+                        isPinned={notice.isPinned}
+                        expiresAt={notice.expiresAt}
+                        isActive={notice.isActive}
+                        createdBy={notice.createdBy}
+                        createdAt={notice.createdAt}
+                        authorName={notice.authorName}
+                        currentUserId={user?.id}
+                        color={notice.color}
+                        onRemove={handleRemoveNotice}
+                        onPin={handlePinNotice}
+                        onUnpin={handleUnpinNotice}
+                        onEdit={handleEditNotice}
+                        index={index}
+                      />
+                    ))}
+                  </AnimatePresence>
+                </div>
+              )}
+            </div>
           </Card>
         </div>
 
@@ -562,7 +677,8 @@ const Dashboard = () => {
           <DashboardTasksSection
             tasks={tasks}
             onAddTask={addTask}
-            onToggleTask={toggleTask}
+            onQuickAddTask={createQuickTask}
+            onCompleteTask={completeTask}
             onDeleteTask={deleteTask}
           />
         </div>

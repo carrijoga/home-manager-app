@@ -95,3 +95,39 @@ export const UNIT_TYPE_LABELS: Record<number, string> = {
   6: 'cx',
   7: 'pct',
 };
+
+// Prioridade de tarefa: 0 = Urgente, 1 = Alta, 2 = Media, 3 = Baixa
+export const ApiPrioritySchema = z.number().int();
+export type ApiPriorityType = z.infer<typeof ApiPrioritySchema>;
+export const ApiPriority = {
+  Urgente: 0,
+  Alta: 1,
+  Media: 2,
+  Baixa: 3,
+} as const;
+
+export const PRIORITY_LABELS: Record<number, string> = {
+  0: 'Urgente',
+  1: 'Alta',
+  2: 'Média',
+  3: 'Baixa',
+};
+
+// Categoria de tarefa: 0 = Geral, 1 = Limpeza, 2 = Manutenção, 3 = Finanças, 4 = Outros
+export const ApiCategorySchema = z.number().int();
+export type ApiCategoryType = z.infer<typeof ApiCategorySchema>;
+export const ApiCategory = {
+  Geral: 0,
+  Limpeza: 1,
+  Manutencao: 2,
+  Financas: 3,
+  Outros: 4,
+} as const;
+
+export const CATEGORY_LABELS: Record<number, string> = {
+  0: 'Geral',
+  1: 'Limpeza',
+  2: 'Manutenção',
+  3: 'Finanças',
+  4: 'Outros',
+};

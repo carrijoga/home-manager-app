@@ -89,6 +89,30 @@ export const ENDPOINTS = {
     delete: (id: string) => `/api/shopping-category/${id}`,
   },
 
+  // Avisos (Notices)
+  notices: {
+    list: '/api/notices',
+    create: '/api/notices',
+    history: '/api/notices/history',
+    update: (id: string) => `/api/notices/${id}`,
+    delete: (id: string) => `/api/notices/${id}`,
+    pin: (id: string) => `/api/notices/${id}/pin`,
+    unpin: (id: string) => `/api/notices/${id}/unpin`,
+  },
+
+  // Tarefas (Tasks)
+  tasks: {
+    list: '/api/tasks',
+    create: '/api/tasks',
+    createQuick: '/api/tasks/quick',
+    history: '/api/tasks/history',
+    getById: (id: string) => `/api/tasks/${id}`,
+    update: (id: string) => `/api/tasks/${id}`,
+    delete: (id: string) => `/api/tasks/${id}`,
+    complete: (id: string) => `/api/tasks/${id}/complete`,
+    uncomplete: (id: string) => `/api/tasks/${id}/uncomplete`,
+  },
+
   // Health
   health: '/health',
 } as const;

@@ -5,11 +5,28 @@
 
 // ==================== ENUMS ====================
 
-/** Níveis de prioridade — usados em Task e FutureItem */
+/** Níveis de prioridade — usados em Task e FutureItem (legado) */
 export enum Priority {
   HIGH = 'alta',
   MEDIUM = 'média',
   LOW = 'baixa',
+}
+
+/** Prioridade de tarefa — enum numérico conforme API */
+export enum ApiPriority {
+  Urgente = 0,
+  Alta = 1,
+  Media = 2,
+  Baixa = 3,
+}
+
+/** Categoria de tarefa — enum numérico conforme API */
+export enum ApiCategory {
+  Geral = 0,
+  Limpeza = 1,
+  Manutencao = 2,
+  Financas = 3,
+  Outros = 4,
 }
 
 /** IDs dos módulos da aplicação */
@@ -78,26 +95,46 @@ export interface AppUser {
   notifications?: AppNotification[];
 }
 
-/** Aviso do quadro (módulo Notices, mock-only por enquanto) */
+/** Aviso do quadro (módulo Notices) */
 export interface Notice {
-  id: string;
-  text: string;
-  author: string;
-  date: string; // ISO format YYYY-MM-DD
-  createdAt?: string;
+  noticeId: string;
+  message: string;
+  date: string;
+  isPinned: boolean;
+  expiresAt: string | null;
+  isActive: boolean;
+  createdBy: string; // UUID do autor
+  createdAt: string;
+  authorName?: string; // nome legível, enriquecido no frontend
+  color?: string; // chave de cor do post-it (yellow|pink|green|orange|blue)
 }
 
-/** Tarefa (módulo Tasks, mock-only por enquanto) */
+/** Tarefa (módulo Tasks) */
 export interface Task {
-  id: string;
+  taskId: string;
   title: string;
-  assignedTo: string;
-  completed: boolean;
-  dueDate: string; // ISO format YYYY-MM-DD
-  description?: string;
-  priority?: Priority;
-  category?: string;
-  createdAt?: string;
+  description?: string | null;
+  details?: string | null;
+  assignedTo?: string | null; // UUID do usuário ou null = Geral
+  dueDate?: string | null;
+  priority: ApiPriority;
+  priorityLabel: string;
+  category: ApiCategory;
+  categoryLabel: string;
+  date: string;
+  isCompleted: boolean;
+  completedAt?: string | null;
+  isOverdue: boolean;
+  createdBy: string;
+  createdAt: string;
+}
+
+/** Resposta paginada genérica */
+export interface PaginatedResponse<T> {
+  items: T[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
 }
 
 /** Categoria de compra (default do sistema ou personalizada do nest) */

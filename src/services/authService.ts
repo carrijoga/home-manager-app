@@ -2,7 +2,7 @@ import { LoginRequestSchema, RegisterRequestSchema } from '@/schemas/auth';
 import type { AuthTokenResponse, LoginRequest, RegisterRequest } from '@/schemas/auth';
 import { UserProfileResponseSchema } from '@/schemas/user';
 import type { UserProfileResponse } from '@/schemas/user';
-import { httpClient } from './api/httpClient';
+import { ApiError, httpClient } from './api/httpClient';
 import { ENDPOINTS } from './api/endpoints';
 import { DATA_MODE } from './api/config';
 import { mockNotifications } from '@/mocks/data';
@@ -52,7 +52,6 @@ export async function generateUsername(
   lastName: string,
 ): Promise<{ username: string }> {
   if (!firstName || !lastName) {
-    const { ApiError } = await import('./api/httpClient');
     throw new ApiError('O nome e sobrenome são obrigatórios.', 400);
   }
   const params = new URLSearchParams({ firstName, lastName });
@@ -91,7 +90,6 @@ export async function register(payload: RegisterRequest): Promise<{ message: str
 export async function login(payload: LoginRequest): Promise<AuthTokenResponse> {
   if (DATA_MODE === 'mock') {
     if (!payload.usernameOrEmail?.includes('@')) {
-      const { ApiError } = await import('./api/httpClient');
       throw new ApiError('Informe um e-mail válido (com @) para o modo mock.', 400);
     }
     return new Promise((resolve) =>

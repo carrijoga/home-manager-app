@@ -21,7 +21,7 @@ const Card = ({
   };
 
   return (
-    <div className={`rounded-xl shadow-md p-[var(--space-md)] hover-lift transition-all duration-[var(--dur-slow)] ${variantClasses[variant]} ${className}`}>
+    <div className={`rounded-xl shadow-md p-[var(--space-md)] hover-lift transition-all duration-[length:var(--dur-slow)] ${variantClasses[variant]} ${className}`}>
       {(title || subtitle || headerAction) && (
         <div className="flex justify-between items-center mb-4">
           <div>

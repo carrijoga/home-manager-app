@@ -126,7 +126,7 @@ function ProgressBar({ value, max, className }: { value: number; max: number; cl
   return (
     <div className={cn('w-full h-1.5 bg-linen-300 dark:bg-muted rounded-full overflow-hidden', className)}>
       <div
-        className="h-full bg-gradient-to-r from-terracotta-400 to-honey-400 rounded-full transition-all duration-[var(--dur-slow)]"
+        className="h-full bg-gradient-to-r from-terracotta-400 to-honey-400 rounded-full transition-all duration-[length:var(--dur-slow)]"
         style={{ width: `${pct}%` }}
       />
     </div>

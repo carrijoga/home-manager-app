@@ -218,25 +218,26 @@ export default function CarouselMetrics({
           />
         ))}
 
-        {/* Botão Play/Pause ao lado dos dots */}
-        <button
-          onClick={handlePlayPauseClick}
-          className={cn(
-            "flex items-center justify-center rounded-full",
-            "transition-all duration-300",
-            "focus:outline-none focus:ring-2 focus:ring-ring",
-            isPlaying
-              ? "bg-primary/20 hover:bg-primary/30"
-              : "bg-border hover:bg-muted-foreground/30"
-          )}
-          aria-label={isPlaying ? "Pausar" : "Reproduzir"}
-        >
-          {isPlaying ? (
-            <Pause className="w-3 h-3 text-foreground" />
-          ) : (
-            <Play className="w-3 h-3 text-foreground" />
-          )}
-        </button>
+        {!stopButton && (
+          <button
+            onClick={handlePlayPauseClick}
+            className={cn(
+              "flex items-center justify-center rounded-full",
+              "transition-all duration-300",
+              "focus:outline-none focus:ring-2 focus:ring-ring",
+              isPlaying
+                ? "bg-primary/20 hover:bg-primary/30"
+                : "bg-border hover:bg-muted-foreground/30"
+            )}
+            aria-label={isPlaying ? "Pausar" : "Reproduzir"}
+          >
+            {isPlaying ? (
+              <Pause className="w-3 h-3 text-foreground" />
+            ) : (
+              <Play className="w-3 h-3 text-foreground" />
+            )}
+          </button>
+        )}
       </div>
     </div>
   );

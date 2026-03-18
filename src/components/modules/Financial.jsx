@@ -160,7 +160,7 @@ const Financial = memo(() => {
         <div className="space-y-2">
           <h3 className="font-semibold text-foreground mb-3">Histórico de Gastos</h3>
           {sortedExpenses.map(expense => (
-            <div key={expense.id} className="flex items-center justify-between p-4 bg-card rounded-xl border border-border hover:bg-linen-100 dark:hover:bg-muted transition-colors duration-[var(--dur-base)]">
+            <div key={expense.id} className="flex items-center justify-between p-4 bg-card rounded-xl border border-border hover:bg-linen-100 dark:hover:bg-muted transition-colors duration-[length:var(--dur-base)]">
               <div className="flex-1">
                 <p className="text-foreground font-medium">{expense.description}</p>
                 <p className="text-sm text-muted-foreground">

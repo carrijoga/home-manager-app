@@ -6,6 +6,7 @@ import {
   ClipboardList,
   MoreVertical,
   Plus,
+  Pencil,
   Trash2
 } from 'lucide-react';
 import { memo, useCallback, useMemo, useState } from 'react';
@@ -35,10 +36,10 @@ import {
 
 // Mapeamentos de prioridade e categoria (refletem os enums da API)
 const PRIORITY_COLORS = {
-  0: { label: 'Urgente', bg: 'bg-red-100 dark:bg-red-900/30', border: 'border-red-500' },
-  1: { label: 'Alta',    bg: 'bg-orange-50 dark:bg-orange-900/20', border: 'border-orange-400' },
-  2: { label: 'Média',   bg: 'bg-yellow-50 dark:bg-yellow-900/20', border: 'border-yellow-400' },
-  3: { label: 'Baixa',   bg: 'bg-green-50 dark:bg-green-900/20', border: 'border-green-400' },
+  0: { label: 'Urgente', bg: 'bg-terracotta-50 dark:bg-terracotta-900/20', border: 'border-terracotta-600' },
+  1: { label: 'Alta',    bg: 'bg-honey-50 dark:bg-honey-900/20', border: 'border-honey-500' },
+  2: { label: 'Média',   bg: 'bg-linen-100 dark:bg-linen-900/20', border: 'border-honey-300' },
+  3: { label: 'Baixa',   bg: 'bg-sage-50 dark:bg-sage-900/20', border: 'border-sage-400' },
 };
 
 const PRIORITIES = [
@@ -59,7 +60,7 @@ const CATEGORIES = [
 /**
  * Item de tarefa memoizado
  */
-const TaskItem = memo(({ task, onComplete, onDelete, onNavigate }) => {
+const TaskItem = memo(({ task, onComplete, onEdit, onDelete, onNavigate }) => {
   const p = PRIORITY_COLORS[task.priority] ?? PRIORITY_COLORS[3];
 
   return (
@@ -70,46 +71,46 @@ const TaskItem = memo(({ task, onComplete, onDelete, onNavigate }) => {
       transition={{ duration: 0.2 }}
       className={`flex items-center justify-between p-3 rounded-lg border-l-4 border transition-all duration-200 ${
         task.isCompleted
-          ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-400'
+          ? 'bg-muted/50 border-sage-400'
           : `${p.bg} ${p.border}`
-      } border-r border-t border-b border-gray-200 dark:border-dark-border-secondary`}
+      } border-r border-t border-b border-border`}
     >
       <div className="flex items-center space-x-3 flex-1 min-w-0">
         <Checkbox
           checked={task.isCompleted}
           onCheckedChange={() => !task.isCompleted && onComplete(task.taskId)}
           disabled={task.isCompleted}
-          className={task.isCompleted ? 'data-[state=checked]:bg-emerald-500' : ''}
+          className={task.isCompleted ? 'data-[state=checked]:bg-sage-400' : ''}
         />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap">
             <p className={`text-sm font-medium ${
               task.isCompleted
-                ? 'line-through text-gray-500 dark:text-gray-400'
-                : 'text-gray-900 dark:text-dark-text-primary'
+                ? 'line-through text-muted-foreground'
+                : 'text-foreground'
             }`}>
               {task.title}
             </p>
             {task.isOverdue && !task.isCompleted && (
-              <AlertCircle size={12} className="text-red-500 shrink-0" />
+              <AlertCircle size={12} className="text-terracotta-500 dark:text-terracotta-400 shrink-0" />
             )}
           </div>
           <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
             <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
-              task.priority === 0 ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' :
-              task.priority === 1 ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300' :
-              task.priority === 2 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300' :
-              'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+              task.priority === 0 ? 'bg-terracotta-100 text-terracotta-700 dark:bg-terracotta-900/40 dark:text-terracotta-300' :
+              task.priority === 1 ? 'bg-honey-100 text-honey-700 dark:bg-honey-900/40 dark:text-honey-300' :
+              task.priority === 2 ? 'bg-linen-200 text-honey-700 dark:bg-linen-900/30 dark:text-honey-200' :
+              'bg-sage-100 text-sage-700 dark:bg-sage-900/40 dark:text-sage-300'
             }`}>
               {task.priorityLabel}
             </span>
-            <span className="text-xs text-gray-400 dark:text-dark-text-tertiary">
+            <span className="text-xs text-muted-foreground">
               {task.categoryLabel}
             </span>
             {task.dueDate && (
               <>
-                <span className="text-xs text-gray-400">•</span>
-                <span className={`text-xs ${task.isOverdue && !task.isCompleted ? 'text-red-500 font-medium' : 'text-gray-500 dark:text-dark-text-tertiary'}`}>
+                <span className="text-xs text-muted-foreground">•</span>
+                <span className={`text-xs ${task.isOverdue && !task.isCompleted ? 'text-terracotta-600 dark:text-terracotta-400 font-medium' : 'text-muted-foreground'}`}>
                   {new Date(task.dueDate).toLocaleDateString('pt-BR')}
                 </span>
               </>
@@ -120,23 +121,30 @@ const TaskItem = memo(({ task, onComplete, onDelete, onNavigate }) => {
       </div>
 
       <DropdownMenu>
-        <DropdownMenuTrigger className="ml-2 p-1 hover:bg-gray-100 dark:hover:bg-dark-bg-secondary rounded transition-colors shrink-0">
-          <MoreVertical size={16} className="text-gray-500 dark:text-dark-text-tertiary" />
+        <DropdownMenuTrigger className="ml-2 p-1 hover:bg-muted rounded transition-colors shrink-0">
+          <MoreVertical size={16} className="text-muted-foreground" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={onNavigate}>
+            <ClipboardList className="mr-2 h-4 w-4" />
+            Ir para a tarefa
+          </DropdownMenuItem>
           {!task.isCompleted && (
             <DropdownMenuItem onClick={() => onComplete(task.taskId)}>
               <CheckCircle2 className="mr-2 h-4 w-4" />
               Marcar como concluída
             </DropdownMenuItem>
           )}
-          <DropdownMenuItem onClick={onNavigate}>
-            <ClipboardList className="mr-2 h-4 w-4" />
-            Ver na página de tarefas
-          </DropdownMenuItem>
+
+          {!task.isCompleted && (
+            <DropdownMenuItem onClick={() => onEdit(task.taskId)}>
+              <Pencil className="mr-2 h-4 w-4" />
+              Editar
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem
             onClick={() => onDelete(task.taskId)}
-            className="text-red-600 dark:text-red-400"
+            className="text-destructive dark:text-destructive"
           >
             <Trash2 className="mr-2 h-4 w-4" />
             Excluir
@@ -155,6 +163,7 @@ TaskItem.displayName = 'TaskItem';
 const DashboardTasksSection = memo(({
   tasks,
   onAddTask,
+  onEditTask,
   onQuickAddTask,
   onCompleteTask,
   onDeleteTask,
@@ -167,6 +176,16 @@ const DashboardTasksSection = memo(({
     title: '',
     description: '',
     dueDate: undefined,   // Date | undefined
+    priority: '3',
+    category: '0',
+  });
+
+  const [editingTask, setEditingTask] = useState(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editForm, setEditForm] = useState({
+    title: '',
+    description: '',
+    dueDate: undefined,
     priority: '3',
     category: '0',
   });
@@ -235,17 +254,49 @@ const DashboardTasksSection = memo(({
     }
   }, [onDeleteTask, showSuccess, showError]);
 
+  const handleEditOpen = useCallback((taskId) => {
+    const task = tasks.find(t => t.taskId === taskId);
+    if (!task) return;
+    setEditingTask(task);
+    setEditForm({
+      title: task.title ?? '',
+      description: task.description ?? '',
+      dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
+      priority: String(task.priority ?? 3),
+      category: String(task.category ?? 0),
+    });
+    setIsEditDialogOpen(true);
+  }, [tasks]);
+
+  const handleEditSubmit = useCallback(async () => {
+    if (!editForm.title.trim()) { showError('Digite um título'); return; }
+    try {
+      await onEditTask(editingTask.taskId, {
+        title: editForm.title.trim(),
+        description: editForm.description || null,
+        dueDate: editForm.dueDate ? editForm.dueDate.toISOString() : null,
+        priority: Number(editForm.priority),
+        category: Number(editForm.category),
+      });
+      setIsEditDialogOpen(false);
+      setEditingTask(null);
+      showSuccess('Tarefa atualizada!');
+    } catch {
+      showError('Erro ao atualizar tarefa');
+    }
+  }, [editForm, editingTask, onEditTask, showSuccess, showError]);
+
   return (
     <Card
       title={
         <div className="flex items-center gap-2">
-          <ClipboardList size={20} className="text-indigo-600 dark:text-dark-accent-indigo" />
+          <ClipboardList size={20} className="text-primary" />
           <span>Minhas Tarefas</span>
         </div>
       }
       headerAction={
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-dark-accent-indigo dark:hover:bg-purple-600 rounded-md transition-colors">
+          <DialogTrigger className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-md transition-colors">
             <Plus size={16} />
             Nova Tarefa
           </DialogTrigger>
@@ -255,7 +306,7 @@ const DashboardTasksSection = memo(({
             </DialogHeader>
             <div className="space-y-4 mt-4">
               <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1 block">Título *</label>
+                <label className="text-sm font-medium text-foreground mb-1 block">Título *</label>
                 <Input
                   placeholder="Nome da tarefa..."
                   value={newTask.title}
@@ -263,7 +314,7 @@ const DashboardTasksSection = memo(({
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1 block">Descrição</label>
+                <label className="text-sm font-medium text-foreground mb-1 block">Descrição</label>
                 <Textarea
                   placeholder="Detalhes opcionais..."
                   value={newTask.description}
@@ -273,7 +324,7 @@ const DashboardTasksSection = memo(({
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1 block">Data limite</label>
+                  <label className="text-sm font-medium text-foreground mb-1 block">Data limite</label>
                   <DatePicker
                     value={newTask.dueDate}
                     onChange={(date) => setNewTask({ ...newTask, dueDate: date })}
@@ -282,7 +333,7 @@ const DashboardTasksSection = memo(({
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1 block">Prioridade</label>
+                  <label className="text-sm font-medium text-foreground mb-1 block">Prioridade</label>
                   <Select value={newTask.priority} onValueChange={(v) => setNewTask({ ...newTask, priority: v })}>
                     <SelectTrigger>
                       <SelectValue />
@@ -296,7 +347,7 @@ const DashboardTasksSection = memo(({
                 </div>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1 block">Categoria</label>
+                <label className="text-sm font-medium text-foreground mb-1 block">Categoria</label>
                 <Select value={newTask.category} onValueChange={(v) => setNewTask({ ...newTask, category: v })}>
                   <SelectTrigger>
                     <SelectValue />
@@ -308,11 +359,11 @@ const DashboardTasksSection = memo(({
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex justify-end gap-2 pt-4 border-t dark:border-dark-border-secondary">
-                <button onClick={() => setIsDialogOpen(false)} className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
+              <div className="flex justify-end gap-2 pt-4 border-t border-border">
+                <button onClick={() => setIsDialogOpen(false)} className="px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground rounded-md transition-colors">
                   Cancelar
                 </button>
-                <button onClick={handleFullCreate} className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md transition-colors">
+                <button onClick={handleFullCreate} className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-md transition-colors">
                   Criar Tarefa
                 </button>
               </div>
@@ -321,30 +372,105 @@ const DashboardTasksSection = memo(({
         </Dialog>
       }
     >
+      {/* Edit dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={(open) => { setIsEditDialogOpen(open); if (!open) setEditingTask(null); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Editar Tarefa</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-4">
+            <div>
+              <label className="text-sm font-medium text-foreground mb-1 block">Título *</label>
+              <Input
+                placeholder="Nome da tarefa..."
+                value={editForm.title}
+                onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-foreground mb-1 block">Descrição</label>
+              <Textarea
+                placeholder="Detalhes opcionais..."
+                value={editForm.description}
+                onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                rows={2}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1 block">Data limite</label>
+                <DatePicker
+                  value={editForm.dueDate}
+                  onChange={(date) => setEditForm({ ...editForm, dueDate: date })}
+                  fromDate={new Date()}
+                  placeholder="Selecione..."
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1 block">Prioridade</label>
+                <Select value={editForm.priority} onValueChange={(v) => setEditForm({ ...editForm, priority: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {PRIORITIES.map(p => (
+                      <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-foreground mb-1 block">Categoria</label>
+              <Select value={editForm.category} onValueChange={(v) => setEditForm({ ...editForm, category: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {CATEGORIES.map(c => (
+                    <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex justify-end gap-2 pt-4 border-t border-border">
+              <button
+                onClick={() => setIsEditDialogOpen(false)}
+                className="px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground rounded-md transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleEditSubmit}
+                className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-md transition-colors"
+              >
+                Salvar
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Quick add */}
       <div className="mb-4">
         <Input
-          placeholder="Tarefa rápida... (pressione Enter)"
+          placeholder="Tarefa rápida... (Enter para criar)"
           value={quickTaskInput}
           onChange={(e) => setQuickTaskInput(e.target.value)}
           onKeyDown={handleQuickTask}
+          maxLength={200}
         />
-        <p className="text-xs text-gray-500 dark:text-dark-text-tertiary mt-1">
-          Pressione Enter para criar com prioridade Baixa
-        </p>
       </div>
 
       {/* Lista de tarefas pendentes */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <span className="font-semibold text-sm text-gray-700 dark:text-dark-text-primary">Pendentes</span>
+          <span className="font-semibold text-sm text-foreground">Pendentes</span>
           <Badge variant="secondary">{totalPending}</Badge>
         </div>
 
         {pendingTasks.length === 0 ? (
-          <div className="text-center py-8 text-gray-500 dark:text-dark-text-tertiary">
-            <CheckCircle2 className="mx-auto mb-2 text-emerald-500" size={32} />
-            <p>Nenhuma tarefa pendente!</p>
+          <div className="flex flex-col items-center py-8 gap-2 text-muted-foreground">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-sage-100 to-sage-50 dark:from-sage-900/30 dark:to-muted border border-sage-200/60 dark:border-sage-800/30 flex items-center justify-center">
+              <CheckCircle2 size={22} className="text-sage-500 dark:text-sage-400" />
+            </div>
+            <p className="text-sm">Nenhuma tarefa pendente!</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -354,6 +480,7 @@ const DashboardTasksSection = memo(({
                   key={task.taskId}
                   task={task}
                   onComplete={handleComplete}
+                  onEdit={handleEditOpen}
                   onDelete={handleDelete}
                   onNavigate={() => navigate('/tasks')}
                 />
@@ -362,7 +489,7 @@ const DashboardTasksSection = memo(({
             {hasMore && (
               <button
                 onClick={() => navigate('/tasks')}
-                className="w-full py-2 text-sm text-indigo-600 dark:text-dark-accent-indigo font-medium transition-colors hover:underline"
+                className="w-full py-2 text-sm text-primary font-medium transition-colors hover:underline"
               >
                 Ver mais ({totalPending - 5} tarefas)...
               </button>

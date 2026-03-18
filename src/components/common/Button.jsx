@@ -19,13 +19,13 @@ const Button = ({
   const baseClasses = 'py-2 px-4 rounded-lg transition font-medium focus:outline-none focus:ring-2 focus:ring-offset-2';
 
   const variantClasses = {
-    primary: 'bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white focus:ring-primary-400 dark:bg-primary-600 dark:hover:bg-primary-700',
-    secondary: 'bg-secondary-500 hover:bg-secondary-600 active:bg-secondary-700 text-white focus:ring-secondary-400 dark:bg-secondary-600 dark:hover:bg-secondary-700',
+    primary: 'bg-primary hover:bg-primary/90 active:bg-primary/80 text-primary-foreground focus:ring-primary',
+    secondary: 'bg-secondary hover:bg-secondary/80 active:bg-secondary/70 text-secondary-foreground focus:ring-secondary',
     success: 'bg-green-600 hover:bg-green-700 text-white focus:ring-green-500 dark:bg-green-500 dark:hover:bg-green-600',
     danger: 'bg-red-600 hover:bg-red-700 text-white focus:ring-red-500 dark:bg-red-500 dark:hover:bg-red-600',
     warning: 'bg-yellow-500 hover:bg-yellow-600 text-white focus:ring-yellow-400 dark:bg-yellow-600 dark:hover:bg-yellow-700',
     purple: 'bg-purple-600 dark:bg-purple-500 text-white hover:bg-purple-700 dark:hover:bg-purple-600 focus:ring-purple-500',
-    outline: 'border-2 border-primary-500 text-primary-600 hover:bg-primary-50 dark:border-primary-600 dark:text-primary-400 dark:hover:bg-gray-700 focus:ring-primary-400'
+    outline: 'border-2 border-primary text-primary hover:bg-primary/10 dark:hover:bg-primary/20 focus:ring-primary'
   };
 
   const widthClass = fullWidth ? 'w-full' : '';

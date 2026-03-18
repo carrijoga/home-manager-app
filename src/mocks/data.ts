@@ -7,6 +7,8 @@
 import type { AppNotification, AppShoppingCategory, AppShoppingItem, AppShoppingList, AppShoppingListSummary, FutureItem, Notice, Task } from '@/types';
 import { ApiCategory, ApiPriority, FutureItemStatus, Priority } from '@/types';
 
+const MOCK_USER_ID = 'user-mock-0001';
+
 // ── Notificações ─────────────────────────────────────────────────────────────
 
 export const mockNotifications = [
@@ -59,7 +61,7 @@ export const mockNotices: Notice[] = [
     isPinned: true,
     expiresAt: null,
     isActive: true,
-    createdBy: 'user-mock-0001',
+    createdBy: MOCK_USER_ID,
     createdAt: new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString(),
     authorName: 'João',
     color: 'yellow',
@@ -95,7 +97,7 @@ export const mockNotices: Notice[] = [
     isPinned: false,
     expiresAt: in24h,
     isActive: true,
-    createdBy: 'user-mock-0001',
+    createdBy: MOCK_USER_ID,
     createdAt: now.toISOString(),
     authorName: 'Você',
     color: 'blue',
@@ -140,8 +142,6 @@ export const mockNotices: Notice[] = [
 ];
 
 // ── Tarefas ───────────────────────────────────────────────────────────────────
-
-const MOCK_USER_ID = 'user-mock-0001';
 
 export const mockTasks: Task[] = [
   // Pendentes — prioridades variadas

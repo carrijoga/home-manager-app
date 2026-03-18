@@ -31,9 +31,9 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 // Paleta de cores para seleção ao criar aviso
-const NOTICE_COLOR_KEYS = ['yellow', 'pink', 'green', 'orange', 'blue'];
-const NOTICE_COLOR_LABELS = { yellow: 'Amarelo', pink: 'Rosa', green: 'Verde', orange: 'Laranja', blue: 'Azul' };
-const NOTICE_COLOR_BG = { yellow: '#FFF700', pink: '#FF66CC', green: '#CCFF00', orange: '#FF9933', blue: '#66CCFF' };
+const NOTICE_COLOR_KEYS = ['sun', 'blush', 'mint', 'sky', 'peach'];
+const NOTICE_COLOR_LABELS = { sun: 'Amarelo', blush: 'Rosa', mint: 'Verde', sky: 'Azul', peach: 'Pêssego' };
+const NOTICE_COLOR_BG = { sun: '#f5e6b2', blush: '#f0d0ce', mint: '#d2edd8', sky: '#c8ddf0', peach: '#f0d9c0' };
 import {
   DailyAverageCard,
   MonthProjectionCard,
@@ -67,6 +67,7 @@ const Dashboard = () => {
     pinNotice,
     unpinNotice,
     addTask,
+    updateTask,
     createQuickTask,
     completeTask,
     deleteTask
@@ -74,7 +75,7 @@ const Dashboard = () => {
 
   const { showSuccess, showError } = useToastNotifications();
   const [newNotice, setNewNotice] = useState('');
-  const [selectedColor, setSelectedColor] = useState('yellow');
+  const [selectedColor, setSelectedColor] = useState('sun');
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isNewNoticeOpen, setIsNewNoticeOpen] = useState(false);
   const MAX_NOTICE_LENGTH = 200;
@@ -313,34 +314,37 @@ const Dashboard = () => {
   return (
     <div className="space-y-6 max-w-full overflow-x-hidden">
       {/* Saudação Personalizada */}
-      <div className="bg-gradient-to-r from-gray-50 to-indigo-50/30 dark:from-gray-800/50 dark:to-indigo-900/10 rounded-lg p-4 border border-gray-200 dark:border-gray-700 shadow-sm">
-        <div className="flex items-center justify-between">
+      <div className="relative overflow-hidden bg-gradient-to-r from-honey-400/20 via-linen-200/60 to-terracotta-100/30 dark:from-honey-900/25 dark:via-muted/80 dark:to-terracotta-900/20 rounded-xl p-5 border border-honey-200 dark:border-honey-900/40 shadow-sm">
+        {/* Warm glow accent */}
+        <div className="absolute inset-0 bg-gradient-to-br from-honey-300/10 via-transparent to-transparent pointer-events-none" />
+        <div className="flex items-center justify-between relative">
           <div className="flex items-center space-x-3">
             <div>
-              <h1 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <h1 className="font-display text-[var(--text-xl)] font-bold text-foreground flex items-center gap-2">
                 {greeting}, {user?.callmeby || 'Usuário'}!
                 <span className="text-2xl animate-wave inline-block">👋</span>
               </h1>
-              <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">
+              <p className="text-honey-700 dark:text-honey-300 text-sm mt-1 font-medium">
                 {motivationalMessage}
               </p>
             </div>
           </div>
-          <div className="hidden sm:block opacity-60">
-            <Sparkles className="text-indigo-500 dark:text-indigo-400" size={20} />
+          <div className="hidden sm:block">
+            <Sparkles className="text-honey-500 dark:text-honey-400" size={22} />
           </div>
         </div>
       </div>
 
       {/* Carrossel de Métricas */}
       <div className="group max-w-full">
-        <CarouselMetrics autoPlayDelay={5000}>
+        {/* <CarouselMetrics autoPlayDelay={5000}> */}
+        <CarouselMetrics autoPlayDelay={5000} >
           {/* Card 1: Total de Gastos do Mês */}
           <MetricCard
             icon={DollarSign}
             title="Gastos do Mês"
             value={formatCurrency(metrics.expenses.current)}
-            color="#10b981" // emerald-500
+            tone="sage"
             chartData={metrics.expenses.trend}
             comparison={{
               value: metrics.expenses.change,
@@ -350,7 +354,7 @@ const Dashboard = () => {
             animationDelay={0.1}
             footer={
               metrics.expenses.isAboveAverage && (
-                <div className="flex items-center space-x-1 text-xs text-amber-600 dark:text-amber-400">
+                <div className="flex items-center space-x-1 text-xs text-honey-700 dark:text-honey-400">
                   <TrendingUp size={14} />
                   <span>Acima da média mensal</span>
                 </div>
@@ -363,7 +367,7 @@ const Dashboard = () => {
             icon={CheckCircle2}
             title="Tarefas Concluídas"
             value={`${metrics.tasks.completed}/${metrics.tasks.total}`}
-            color="#6366f1" // indigo-500
+            tone="terracotta"
             comparison={{
               value: metrics.tasks.change,
               label: 'taxa de conclusão'
@@ -375,9 +379,9 @@ const Dashboard = () => {
                   <span>Progresso</span>
                   <span className="font-semibold">{metrics.tasks.completionRate}%</span>
                 </div>
-                <div className="w-full bg-muted rounded-full h-2">
-                  <div 
-                    className="bg-indigo-500 h-2 rounded-full transition-all duration-500"
+                <div className="w-full bg-terracotta-100 dark:bg-terracotta-900/30 rounded-full h-2 overflow-hidden">
+                  <div
+                    className="bg-gradient-to-r from-terracotta-400 to-terracotta-500 h-2 rounded-full transition-all duration-500"
                     style={{ width: `${metrics.tasks.completionRate}%` }}
                   />
                 </div>
@@ -390,20 +394,22 @@ const Dashboard = () => {
             icon={ShoppingCart}
             title="Itens a Comprar"
             value={metrics.shopping.pending}
-            color="#06b6d4" // cyan-500
+            tone="sky"
             animationDelay={0.3}
             footer={
               <div className="space-y-1 text-xs">
                 {metrics.shopping.estimatedValue > 0 && (
-                  <div className="flex justify-between text-gray-600 dark:text-dark-text-tertiary">
+                  <div className="flex justify-between text-muted-foreground">
                     <span>Valor estimado:</span>
                     <span className="font-semibold">{formatCurrency(metrics.shopping.estimatedValue)}</span>
                   </div>
                 )}
-                <div className="flex justify-between text-gray-600 dark:text-dark-text-tertiary">
-                  <span>Categoria principal:</span>
-                  <span className="font-semibold">{metrics.shopping.topCategory}</span>
-                </div>
+                {metrics.shopping.topCategory && (
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Categoria principal:</span>
+                    <span className="font-semibold">{metrics.shopping.topCategory}</span>
+                  </div>
+                )}
               </div>
             }
           />
@@ -413,15 +419,15 @@ const Dashboard = () => {
             icon={Sparkles}
             title="Compras Futuras"
             value={metrics.future.prioritized}
-            color="#a855f7" // purple-500
+            tone="honey"
             animationDelay={0.4}
             footer={
               <div className="space-y-1 text-xs">
-                <div className="flex justify-between text-gray-600 dark:text-dark-text-tertiary">
+                <div className="flex justify-between text-muted-foreground">
                   <span>Valor total:</span>
                   <span className="font-semibold">{formatCurrency(metrics.future.totalValue)}</span>
                 </div>
-                <div className="text-gray-600 dark:text-dark-text-tertiary">
+                <div className="text-muted-foreground">
                   <span className="font-semibold">Prioridade:</span> {metrics.future.topItem}
                 </div>
               </div>
@@ -472,7 +478,7 @@ const Dashboard = () => {
           <Card 
             title={
               <div className="flex items-center gap-2">
-                <Pin size={20} className="text-indigo-600 dark:text-dark-accent-indigo" />
+                <Pin size={20} className="text-terracotta-500 dark:text-honey-400" />
                 <span>Quadro de Avisos</span>
               </div>
             }
@@ -486,10 +492,10 @@ const Dashboard = () => {
                     Novo Aviso
                   </button>
                 </DialogTrigger>
-                <DialogContent className="max-w-md p-0 overflow-hidden border-yellow-200 dark:border-yellow-300">
-                  <div className="bg-yellow-50 dark:bg-yellow-100 p-6 rounded-lg border-2 border-yellow-200 dark:border-yellow-300 shadow-lg">
+                <DialogContent className="max-w-md p-0 overflow-hidden border-linen-300 dark:border-linen-400">
+                  <div className="bg-linen-100 dark:bg-card p-6 rounded-lg border-2 border-linen-300 dark:border-border shadow-lg">
                     <DialogHeader className="mb-4">
-                      <DialogTitle className="text-gray-800 dark:text-gray-900 font-semibold text-lg">
+                      <DialogTitle className="text-foreground font-semibold text-lg">
                         📝 Novo Aviso
                       </DialogTitle>
                     </DialogHeader>
@@ -498,7 +504,7 @@ const Dashboard = () => {
                     <div className="space-y-3">
                       {/* Seletor de cor */}
                       <div>
-                        <p className="text-xs font-medium text-gray-600 dark:text-gray-700 mb-1.5">Cor do post-it</p>
+                        <p className="text-xs font-medium text-muted-foreground mb-1.5">Cor do post-it</p>
                         <div className="flex gap-2">
                           {NOTICE_COLOR_KEYS.map(key => (
                             <button
@@ -508,8 +514,8 @@ const Dashboard = () => {
                               className="w-7 h-7 rounded-full border-2 transition-transform hover:scale-110"
                               style={{
                                 background: NOTICE_COLOR_BG[key],
-                                borderColor: selectedColor === key ? '#374151' : 'transparent',
-                                boxShadow: selectedColor === key ? '0 0 0 1px #374151' : 'none',
+                                borderColor: selectedColor === key ? 'oklch(0.4 0.01 250)' : 'transparent',
+                                boxShadow: selectedColor === key ? '0 0 0 2px oklch(0.68 0.13 55)' : 'none',
                               }}
                             />
                           ))}
@@ -519,25 +525,25 @@ const Dashboard = () => {
                         placeholder="Digite seu aviso aqui..."
                         value={newNotice}
                         onChange={(e) => setNewNotice(e.target.value.slice(0, MAX_NOTICE_LENGTH))}
-                        className="w-full min-h-[120px] p-3 text-gray-800 placeholder:text-gray-500 border-2 rounded-md focus:outline-none focus:ring-2 resize-none"
+                        className="w-full min-h-[120px] p-3 text-foreground placeholder:text-muted-foreground border-2 rounded-md focus:outline-none focus:ring-2 resize-none"
                         style={{ background: NOTICE_COLOR_BG[selectedColor], borderColor: '#c0a000', color: '#3a2e00' }}
                         autoFocus
                       />
                       
                       {/* Contador de caracteres */}
-                      <div className="flex justify-between items-center text-xs text-gray-600 dark:text-gray-700">
+                      <div className="flex justify-between items-center text-xs text-muted-foreground">
                         <span className="font-medium">
                           {newNotice.length}/{MAX_NOTICE_LENGTH} caracteres
                         </span>
                         {newNotice.length > MAX_NOTICE_LENGTH * 0.9 && (
-                          <span className="text-amber-600 dark:text-amber-700 font-semibold">
+                          <span className="text-honey-700 dark:text-honey-600 font-semibold">
                             ⚠️ Limite próximo
                           </span>
                         )}
                       </div>
                       
                       {/* Rodapé com autor e data (preview) */}
-                      <div className="pt-3 border-t border-yellow-300 dark:border-yellow-400 flex justify-between items-center text-xs text-gray-600 dark:text-gray-700">
+                      <div className="pt-3 border-t border-honey-300 dark:border-border flex justify-between items-center text-xs text-muted-foreground">
                         <span className="font-medium flex items-center gap-1">
                           <span className="inline-block">👤</span>
                           Você
@@ -558,14 +564,14 @@ const Dashboard = () => {
                             setNewNotice('');
                             setIsNewNoticeOpen(false);
                           }}
-                          className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-800 bg-white dark:bg-yellow-200 border border-yellow-300 dark:border-yellow-400 rounded-md hover:bg-gray-50 dark:hover:bg-yellow-300 transition-colors"
+                          className="flex-1 px-4 py-2 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-muted transition-colors"
                         >
                           Cancelar
                         </button>
                         <button
                           onClick={handleAddNotice}
                           disabled={!newNotice.trim()}
-                          className="flex-1 px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-indigo-600"
+                          className="flex-1 px-4 py-2 text-sm font-medium text-white bg-terracotta-500 hover:bg-terracotta-600 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Adicionar
                         </button>
@@ -576,7 +582,7 @@ const Dashboard = () => {
               </Dialog>
 
               <Dialog open={isHistoryOpen} onOpenChange={handleOpenHistory}>
-                <DialogTrigger className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-foreground hover:bg-accent rounded-md transition-colors border border-border">
+                <DialogTrigger aria-label="Histórico de avisos" className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-foreground hover:bg-accent rounded-md transition-colors border border-border">
                   <Clock size={16} />
                 </DialogTrigger>
                 <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
@@ -585,14 +591,18 @@ const Dashboard = () => {
                   </DialogHeader>
                   <div className="mt-4">
                     {noticeHistoryLoading ? (
-                      <div className="text-center py-12 text-gray-500 dark:text-dark-text-tertiary">
-                        <Clock className="mx-auto mb-2" size={32} />
-                        <p>Carregando...</p>
+                      <div className="flex flex-col items-center justify-center py-12 gap-3 text-muted-foreground">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-honey-100 to-linen-200 dark:from-honey-900/30 dark:to-muted border border-honey-200/60 dark:border-honey-800/30 flex items-center justify-center">
+                          <Clock size={22} className="text-honey-600 dark:text-honey-400 animate-spin" />
+                        </div>
+                        <p className="text-sm">Carregando...</p>
                       </div>
                     ) : noticeHistory.length === 0 ? (
-                      <div className="text-center py-12 text-gray-500 dark:text-dark-text-tertiary">
-                        <Clock className="mx-auto mb-2" size={32} />
-                        <p>Nenhum aviso no histórico</p>
+                      <div className="flex flex-col items-center justify-center py-12 gap-3 text-muted-foreground">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-honey-100 to-linen-200 dark:from-honey-900/30 dark:to-muted border border-honey-200/60 dark:border-honey-800/30 flex items-center justify-center">
+                          <Clock size={22} className="text-honey-600 dark:text-honey-400" />
+                        </div>
+                        <p className="text-sm">Nenhum aviso no histórico</p>
                       </div>
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -677,6 +687,7 @@ const Dashboard = () => {
           <DashboardTasksSection
             tasks={tasks}
             onAddTask={addTask}
+            onEditTask={updateTask}
             onQuickAddTask={createQuickTask}
             onCompleteTask={completeTask}
             onDeleteTask={deleteTask}

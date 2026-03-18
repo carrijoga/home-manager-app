@@ -31,22 +31,27 @@ interface PostItProps {
   index?: number;
 }
 
-// ── Paleta Neon ──────────────────────────────────────────────────────────────
-// line: cor escura para as linhas horizontais (visível sobre o fundo neon)
+// ── Paleta Pastel ─────────────────────────────────────────────────────────────
+// line: cor escura para as linhas horizontais (visível sobre o fundo pastel)
 const POST_IT_PALETTE: Record<string, {
   bg: string; border: string; text: string; line: string; shadow: string;
 }> = {
-  yellow: { bg: '#FFF700', border: '#bfb600', text: '#3a2e00', line: '#a08800', shadow: 'rgba(160,140,0,0.35)' },
-  pink:   { bg: '#FF66CC', border: '#cc2299', text: '#4a0028', line: '#990044', shadow: 'rgba(160,0,80,0.28)' },
-  green:  { bg: '#CCFF00', border: '#77bb00', text: '#1e3800', line: '#558800', shadow: 'rgba(60,130,0,0.28)' },
-  orange: { bg: '#FF9933', border: '#cc5500', text: '#3a1200', line: '#993300', shadow: 'rgba(140,60,0,0.28)' },
-  blue:   { bg: '#66CCFF', border: '#0088cc', text: '#001e3a', line: '#005599', shadow: 'rgba(0,80,160,0.28)' },
+  // sun = vanilla yellow  (oklch 0.91 0.09 88)
+  sun:   { bg: '#f5e6b2', border: '#c8b56a', text: '#3a2e00', line: '#b09050', shadow: 'rgba(160,130,0,0.22)' },
+  // blush = soft rose     (oklch 0.88 0.07 10)
+  blush: { bg: '#f0d0ce', border: '#c49090', text: '#3a1010', line: '#b07070', shadow: 'rgba(140,60,60,0.22)' },
+  // mint = sage mint      (oklch 0.90 0.07 155)
+  mint:  { bg: '#d2edd8', border: '#7ab890', text: '#1a3820', line: '#50986a', shadow: 'rgba(40,110,60,0.22)' },
+  // sky = dusty blue      (oklch 0.88 0.07 225)
+  sky:   { bg: '#c8ddf0', border: '#7aacd4', text: '#0a2040', line: '#4a80b8', shadow: 'rgba(30,80,140,0.22)' },
+  // peach = warm apricot  (oklch 0.89 0.09 50) — used for pinned notes
+  peach: { bg: '#f0d9c0', border: '#c89868', text: '#3a1800', line: '#a87040', shadow: 'rgba(140,80,0,0.22)' },
 };
 
-const COLOR_KEYS = ['pink', 'green', 'orange', 'blue', 'yellow'];
+const COLOR_KEYS = ['sun', 'blush', 'mint', 'sky', 'peach'];
 
 function resolveColor(noticeId: string, isPinned: boolean, colorKey?: string) {
-  if (isPinned) return POST_IT_PALETTE.yellow;
+  if (isPinned) return POST_IT_PALETTE.peach;
   if (colorKey && POST_IT_PALETTE[colorKey]) return POST_IT_PALETTE[colorKey];
   const hash = noticeId.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
   return POST_IT_PALETTE[COLOR_KEYS[hash % COLOR_KEYS.length]];
@@ -88,6 +93,7 @@ const PostIt = forwardRef<HTMLDivElement, PostItProps>(
     const [showConfirm, setShowConfirm] = useState(false);
     const [editing, setEditing] = useState(false);
     const [editValue, setEditValue] = useState(message);
+    const [hovered, setHovered] = useState(false);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     const color = resolveColor(noticeId, isPinned, colorKey);
@@ -117,9 +123,11 @@ const PostIt = forwardRef<HTMLDivElement, PostItProps>(
           initial={{ opacity: 0, scale: 0.75, y: -30, rotate: rotation }}
           animate={{ opacity: 1, scale: 1, y: 0, rotate: rotation }}
           whileHover={{ scale: 1.06, y: -10, rotate: 0, zIndex: 10 }}
+          onHoverStart={() => setHovered(true)}
+          onHoverEnd={() => setHovered(false)}
           exit={{ opacity: 0, scale: 0.7, rotate: rotation + 20, transition: { duration: 0.25 } }}
           transition={{ type: "spring", stiffness: 280, damping: 22, delay: index * 0.05 }}
-          className="relative cursor-default group"
+          className="relative cursor-default"
           style={{ transformOrigin: 'top center', position: 'relative' }}
         >
           {/* Pushpin */}
@@ -129,13 +137,13 @@ const PostIt = forwardRef<HTMLDivElement, PostItProps>(
               style={{
                 background: isPinned
                   ? 'radial-gradient(circle at 35% 35%, #f87171, #dc2626)'
-                  : 'radial-gradient(circle at 35% 35%, #d1d5db, #9ca3af)',
-                borderColor: isPinned ? '#b91c1c' : '#6b7280',
+                  : 'radial-gradient(circle at 35% 35%, #e0d4c8, #b8a898)',
+                borderColor: isPinned ? '#b91c1c' : '#a89888',
               }}
             >
               <div className="w-1.5 h-1.5 rounded-full bg-white/70" />
             </div>
-            <div className="w-0.5 h-2.5 mx-auto" style={{ background: isPinned ? '#991b1b' : '#6b7280' }} />
+            <div className="w-0.5 h-2.5 mx-auto" style={{ background: isPinned ? '#991b1b' : '#a89888' }} />
           </div>
 
           {/* Corpo do post-it */}
@@ -159,7 +167,7 @@ const PostIt = forwardRef<HTMLDivElement, PostItProps>(
             <div
               className="absolute inset-0 pointer-events-none"
               style={{
-                backgroundImage: `repeating-linear-gradient(to bottom, transparent, transparent 22px, ${color.line}55 22px, ${color.line}55 23px)`,
+                backgroundImage: `repeating-linear-gradient(to bottom, transparent, transparent 22px, ${color.line}20 22px, ${color.line}20 23px)`,
                 backgroundPosition: '0 24px',
               }}
             />
@@ -192,7 +200,7 @@ const PostIt = forwardRef<HTMLDivElement, PostItProps>(
             >
               <span className="font-semibold truncate max-w-[45%]">{authorName ?? '—'}</span>
               <div className="flex items-center gap-1.5 pr-5">
-                {isPinned && <span className="font-bold text-red-700 text-xs">Fixado</span>}
+                {isPinned && <span className="font-bold text-xs" style={{ color: color.text }}>Fixado</span>}
                 {!isPinned && expiryLabel && (
                   <span className="text-xs" style={{ color: expiryLabel === 'Expirado' ? '#b91c1c' : color.text }}>
                     {expiryLabel}
@@ -214,13 +222,13 @@ const PostIt = forwardRef<HTMLDivElement, PostItProps>(
           {/* ── Botões de ação ─────────────────────────────────────────────────
               Sempre presentes no DOM mas visíveis via CSS group-hover (nativo,
               sem dependência de estado JS) — funciona em todos os navegadores. */}
-          <div className="absolute -top-1 right-0 flex gap-1 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+          <div className={`absolute -top-1 right-0 flex gap-1 z-30 transition-opacity duration-150 ${hovered ? 'opacity-100' : 'opacity-0'}`}>
             {/* Salvar edição */}
             {editing && (
               <button
                 onClick={handleSaveEdit}
                 title="Salvar (Ctrl+Enter)"
-                className="rounded-full p-1.5 shadow bg-emerald-500 text-white hover:bg-emerald-600 transition-colors"
+                className="rounded-full p-1.5 shadow bg-sage-400 text-white hover:bg-sage-500 transition-colors"
               >
                 <Save size={11} />
               </button>
@@ -231,7 +239,7 @@ const PostIt = forwardRef<HTMLDivElement, PostItProps>(
               <button
                 onClick={() => { setEditing(false); setEditValue(message); }}
                 title="Cancelar"
-                className="rounded-full p-1.5 shadow bg-gray-500 text-white hover:bg-gray-600 transition-colors"
+                className="rounded-full p-1.5 shadow bg-[#c8b090] text-white hover:bg-[#b89878] transition-colors"
               >
                 <X size={11} />
               </button>

@@ -36,6 +36,7 @@ import {
   Tag,
   Trash2,
 } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 
 // ── Types ───────────────────────────────────────────────────────────────────────
@@ -123,9 +124,9 @@ const emptyPurchaseForm = (est?: number | null): PurchaseFormData => ({
 function ProgressBar({ value, max, className }: { value: number; max: number; className?: string }) {
   const pct = max === 0 ? 0 : Math.min(100, Math.round((value / max) * 100));
   return (
-    <div className={cn('w-full h-1.5 bg-slate-200 dark:bg-dark-border-default rounded-full overflow-hidden', className)}>
+    <div className={cn('w-full h-1.5 bg-linen-300 dark:bg-muted rounded-full overflow-hidden', className)}>
       <div
-        className="h-full bg-emerald-500 dark:bg-emerald-400 rounded-full transition-all duration-500"
+        className="h-full bg-gradient-to-r from-terracotta-400 to-honey-400 rounded-full transition-all duration-[var(--dur-slow)]"
         style={{ width: `${pct}%` }}
       />
     </div>
@@ -181,6 +182,7 @@ function ListFormDialog({ open, onClose, initialData, onSubmit, title }: ListFor
               onChange={(e) => setData((d) => ({ ...d, name: e.target.value }))}
               required
               autoFocus
+              maxLength={100}
             />
           </div>
           <div className="space-y-1.5">
@@ -267,6 +269,7 @@ function ItemFormDialog({ open, onClose, initialData, onSubmit, title, categorie
               onChange={(e) => setData((d) => ({ ...d, name: e.target.value }))}
               required
               autoFocus
+              maxLength={150}
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -386,7 +389,7 @@ function MarkAsPurchasedDialog({ open, onClose, item, onSubmit }: MarkAsPurchase
       <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <CheckCircle2 className="text-emerald-500" size={20} />
+            <CheckCircle2 className="text-sage-500" size={20} />
             Marcar como comprado
           </DialogTitle>
         </DialogHeader>
@@ -429,7 +432,8 @@ function MarkAsPurchasedDialog({ open, onClose, item, onSubmit }: MarkAsPurchase
             </Button>
             <Button
               type="submit"
-              className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white dark:bg-emerald-600 dark:hover:bg-emerald-700"
+              variant="secondary"
+              className="flex-1"
               disabled={saving}
             >
               {saving ? 'Confirmando...' : 'Confirmar'}
@@ -502,6 +506,7 @@ function ManageCategoriesDialog({
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             className="flex-1"
+            maxLength={50}
           />
           <Button type="submit" size="sm" className="px-3" disabled={saving || !newName.trim()}>
             <Plus size={16} />
@@ -587,6 +592,7 @@ const ShoppingList = memo(() => {
 
   // ── Filter state ────────────────────────────────────────────────────────────
   const [filterMonth, setFilterMonth] = useState(currentMonthValue);
+  const [monthNavDir, setMonthNavDir] = useState<1 | -1>(1);
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
 
   // ── Dialog state ────────────────────────────────────────────────────────────
@@ -854,12 +860,19 @@ const ShoppingList = memo(() => {
   // ── Render: lists view ──────────────────────────────────────────────────────
   if (viewMode === 'lists') {
     return (
-      <div className="space-y-6 max-w-full">
+      <motion.div
+        key="lists"
+        initial={{ opacity: 0, x: -24 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: -24 }}
+        transition={{ duration: 0.25, ease: [0.25, 1, 0.5, 1] }}
+        className="space-y-6 max-w-full"
+      >
         {/* Header */}
-        <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex items-center justify-between gap-4 flex-wrap rounded-xl bg-gradient-to-r from-linen-400 to-linen-200 dark:from-muted dark:to-background border border-linen-200 dark:border-muted px-5 py-4">
           <div>
-            <h2 className="text-2xl font-bold text-foreground">Listas de Compras</h2>
-            <p className="text-muted-foreground text-sm mt-0.5">Organize suas compras por lista e mês</p>
+            <h2 className="text-2xl font-bold text-foreground font-display">Listas de Compras</h2>
+            <p className="text-honey-700 dark:text-honey-300 text-sm mt-0.5 font-medium">Organize suas compras por lista e mês</p>
           </div>
           <Button className="gap-1.5 shrink-0" onClick={() => setShowCreateList(true)}>
             <Plus size={16} />
@@ -869,54 +882,86 @@ const ShoppingList = memo(() => {
 
         {/* Month navigation */}
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => setFilterMonth((m) => addMonths(m, -1))}
+          <motion.button
+            whileTap={{ scale: 0.85 }}
+            transition={{ duration: 0.1 }}
+            onClick={() => { setMonthNavDir(-1); setFilterMonth((m) => addMonths(m, -1)); }}
             className="p-1.5 rounded-md hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
           >
             <ChevronLeft size={18} />
-          </button>
-          <span className="text-sm font-semibold text-foreground min-w-[130px] text-center capitalize">
-            {formatMonthYearShort(filterMonth)}
-          </span>
-          <button
-            onClick={() => setFilterMonth((m) => addMonths(m, 1))}
+          </motion.button>
+          <div className="relative overflow-hidden min-w-[130px] text-center">
+            <AnimatePresence mode="popLayout" initial={false}>
+              <motion.span
+                key={filterMonth}
+                initial={{ opacity: 0, x: monthNavDir * 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: monthNavDir * -20 }}
+                transition={{ duration: 0.2, ease: [0.25, 1, 0.5, 1] }}
+                className="block text-sm font-semibold text-foreground capitalize"
+              >
+                {formatMonthYearShort(filterMonth)}
+              </motion.span>
+            </AnimatePresence>
+          </div>
+          <motion.button
+            whileTap={{ scale: 0.85 }}
+            transition={{ duration: 0.1 }}
+            onClick={() => { setMonthNavDir(1); setFilterMonth((m) => addMonths(m, 1)); }}
             className="p-1.5 rounded-md hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
           >
             <ChevronRight size={18} />
-          </button>
+          </motion.button>
         </div>
 
         {/* Month stats strip */}
         {filteredLists.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="rounded-lg border bg-card p-3 text-center space-y-0.5">
+          <motion.div
+            className="grid grid-cols-2 sm:grid-cols-4 gap-3"
+            initial="hidden"
+            animate="visible"
+            variants={{ visible: { transition: { staggerChildren: 0.07, delayChildren: 0.05 } } }}
+          >
+            <motion.div
+              variants={{ hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0, transition: { duration: 0.25 } } }}
+              className="rounded-lg border border-border bg-card p-3 text-center space-y-0.5"
+            >
               <p className="text-xs text-muted-foreground leading-tight">Listas</p>
               <p className="text-xl font-bold text-foreground">{filteredLists.length}</p>
-            </div>
-            <div className="rounded-lg border bg-card p-3 text-center space-y-0.5">
-              <p className="text-xs text-muted-foreground leading-tight">Itens pendentes</p>
-              <p className="text-xl font-bold text-foreground">{monthStats.pendingItems}</p>
-            </div>
-            <div className="rounded-lg border bg-card p-3 text-center space-y-0.5">
+            </motion.div>
+            <motion.div
+              variants={{ hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0, transition: { duration: 0.25 } } }}
+              className="rounded-lg border border-honey-200 dark:border-honey-900/40 bg-honey-50 dark:bg-honey-900/10 p-3 text-center space-y-0.5"
+            >
+              <p className="text-xs text-honey-600 dark:text-honey-400 leading-tight">Itens pendentes</p>
+              <p className="text-xl font-bold text-honey-700 dark:text-honey-300">{monthStats.pendingItems}</p>
+            </motion.div>
+            <motion.div
+              variants={{ hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0, transition: { duration: 0.25 } } }}
+              className="rounded-lg border border-linen-300 dark:border-linen-800/40 bg-linen-50 dark:bg-linen-900/10 p-3 text-center space-y-0.5"
+            >
               <p className="text-xs text-muted-foreground leading-tight">Estimado</p>
               <p className="text-lg font-bold text-foreground truncate">
                 {monthStats.totalEstimated > 0 ? formatCurrency(monthStats.totalEstimated) : '—'}
               </p>
-            </div>
-            <div className="rounded-lg border bg-card p-3 text-center space-y-0.5">
-              <p className="text-xs text-muted-foreground leading-tight">Gasto</p>
-              <p className="text-lg font-bold text-foreground truncate">
+            </motion.div>
+            <motion.div
+              variants={{ hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0, transition: { duration: 0.25 } } }}
+              className="rounded-lg border border-sage-200 dark:border-sage-900/40 bg-sage-50 dark:bg-sage-900/10 p-3 text-center space-y-0.5"
+            >
+              <p className="text-xs text-sage-600 dark:text-sage-400 leading-tight">Gasto</p>
+              <p className="text-lg font-bold text-sage-700 dark:text-sage-300 truncate">
                 {monthStats.totalPurchasedEstimated > 0 ? formatCurrency(monthStats.totalPurchasedEstimated) : '—'}
               </p>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         )}
 
         {/* Lists grid */}
         {filteredLists.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 space-y-4 text-center">
-            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
-              <ShoppingCart size={28} className="text-muted-foreground" />
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-honey-100 to-linen-200 dark:from-honey-900/30 dark:to-muted border border-honey-200/60 dark:border-honey-800/30 flex items-center justify-center">
+              <ShoppingCart size={28} className="text-honey-600 dark:text-honey-400" />
             </div>
             <div>
               <p className="font-medium text-foreground">Nenhuma lista em {formatMonthYearShort(filterMonth)}</p>
@@ -928,14 +973,24 @@ const ShoppingList = memo(() => {
             </Button>
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
+          <motion.div
+            className="grid gap-4 sm:grid-cols-2"
+            initial="hidden"
+            animate="visible"
+            variants={{ visible: { transition: { staggerChildren: 0.06 } } }}
+          >
             {filteredLists.map((list) => {
               const isComplete = list.totalItems > 0 && list.purchasedItems === list.totalItems;
               const isEmpty = list.totalItems === 0;
               return (
-                <button
+                <motion.button
                   key={list.shoppingListId}
-                  className="text-left p-5 rounded-xl border bg-card hover:border-primary/40 hover:shadow-md transition-all duration-200 space-y-4 group"
+                  variants={{
+                    hidden: { opacity: 0, y: 12 },
+                    visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.25, 1, 0.5, 1] } },
+                  }}
+                  whileHover={{ y: -2, transition: { duration: 0.15 } }}
+                  className="text-left p-5 rounded-xl border border-border bg-card hover:border-honey-300 dark:hover:border-honey-700 hover:bg-linen-50/80 dark:hover:bg-honey-900/10 hover:shadow-md transition-all duration-200 space-y-4 group"
                   onClick={() => openListDetail(list.shoppingListId)}
                 >
                   {/* Card header */}
@@ -949,12 +1004,8 @@ const ShoppingList = memo(() => {
                       </p>
                     </div>
                     <Badge
-                      variant={isComplete ? 'default' : 'secondary'}
-                      className={cn(
-                        'shrink-0 text-xs',
-                        isComplete && 'bg-emerald-500 hover:bg-emerald-500 text-white',
-                        isEmpty && 'text-muted-foreground',
-                      )}
+                      variant={isComplete ? 'success' : isEmpty ? 'secondary' : 'warm'}
+                      className="shrink-0 text-xs"
                     >
                       {isComplete ? 'Concluída' : isEmpty ? 'Vazia' : 'Em progresso'}
                     </Badge>
@@ -983,15 +1034,15 @@ const ShoppingList = memo(() => {
                     </span>
                     <span>
                       Gasto:{' '}
-                      <span className={cn('font-medium', list.totalSpent ? 'text-emerald-600 dark:text-emerald-400' : 'text-foreground')}>
+                      <span className={cn('font-medium', list.totalSpent ? 'text-sage-600 dark:text-sage-400' : 'text-foreground')}>
                         {list.totalSpent ? formatCurrency(list.totalSpent) : '—'}
                       </span>
                     </span>
                   </div>
-                </button>
+                </motion.button>
               );
             })}
-          </div>
+          </motion.div>
         )}
 
         <ListFormDialog
@@ -1000,7 +1051,7 @@ const ShoppingList = memo(() => {
           onSubmit={handleCreateList}
           title="Nova Lista de Compras"
         />
-      </div>
+      </motion.div>
     );
   }
 
@@ -1011,7 +1062,14 @@ const ShoppingList = memo(() => {
   const detailPct = detailTotalItems === 0 ? 0 : Math.round((detailPurchasedItems / detailTotalItems) * 100);
 
   return (
-    <div className="space-y-5 max-w-full">
+    <motion.div
+      key="detail"
+      initial={{ opacity: 0, x: 24 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 24 }}
+      transition={{ duration: 0.25, ease: [0.25, 1, 0.5, 1] }}
+      className="space-y-5 max-w-full"
+    >
       {/* Breadcrumb toolbar */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <button
@@ -1074,7 +1132,7 @@ const ShoppingList = memo(() => {
                 </p>
               )}
               {(summary?.totalSpent ?? 0) > 0 && (
-                <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                <p className="text-xs text-sage-600 dark:text-sage-400 font-medium">
                   {formatCurrency(summary!.totalSpent!)} gastos
                 </p>
               )}
@@ -1110,11 +1168,12 @@ const ShoppingList = memo(() => {
             key={cat}
             onClick={() => setCategoryFilter(cat === categoryFilter ? null : cat)}
             className={cn(
-              'px-3 py-1 rounded-full text-xs font-medium transition-colors border',
+              'px-3 py-1 rounded-full text-xs font-medium transition-colors border max-w-[120px] truncate',
               categoryFilter === cat
                 ? 'bg-primary text-primary-foreground border-primary'
                 : 'bg-transparent text-muted-foreground border-border hover:border-primary/40 hover:text-foreground',
             )}
+            title={cat}
           >
             {cat}
           </button>
@@ -1146,8 +1205,8 @@ const ShoppingList = memo(() => {
         </div>
       ) : detailData && detailData.items.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 space-y-4 text-center">
-          <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center">
-            <ListChecks size={24} className="text-muted-foreground" />
+          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-honey-100 to-linen-200 dark:from-honey-900/30 dark:to-muted border border-honey-200/60 dark:border-honey-800/30 flex items-center justify-center">
+            <ListChecks size={24} className="text-honey-600 dark:text-honey-400" />
           </div>
           <div>
             <p className="font-medium text-foreground">Lista vazia</p>
@@ -1172,20 +1231,26 @@ const ShoppingList = memo(() => {
                 </span>
               </div>
               <div className="space-y-2">
+              <AnimatePresence mode="popLayout">
                 {items.map((item) => (
-                  <div
+                  <motion.div
                     key={item.shoppingItemId}
+                    layout
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: item.isPurchased ? 0.6 : 1, y: 0 }}
+                    exit={{ opacity: 0, x: -30, scale: 0.97 }}
+                    transition={{ duration: 0.22, ease: [0.25, 1, 0.5, 1] }}
                     className={cn(
-                      'flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-all duration-200',
+                      'flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-colors duration-200',
                       item.isPurchased
-                        ? 'bg-muted/30 border-border opacity-60'
+                        ? 'bg-muted/30 border-border'
                         : 'bg-card border-border hover:border-primary/30',
                     )}
                   >
                     {/* Checkbox / unmark button */}
                     {item.isPurchased ? (
                       <button
-                        className="shrink-0 text-emerald-500 hover:text-amber-500 transition-colors rounded"
+                        className="shrink-0 text-sage-500 hover:text-honey-500 transition-colors rounded"
                         onClick={() => handleUnmarkAsPurchased(item)}
                         title="Desmarcar como comprado"
                       >
@@ -1207,7 +1272,7 @@ const ShoppingList = memo(() => {
                       <p
                         className={cn(
                           'text-sm font-medium text-foreground',
-                          item.isPurchased && 'line-through text-muted-foreground',
+                          item.isPurchased && 'line-through decoration-honey-500 text-muted-foreground',
                         )}
                       >
                         {item.name}
@@ -1225,7 +1290,7 @@ const ShoppingList = memo(() => {
 
                     {/* Badge comprado */}
                     {item.isPurchased && (
-                      <Badge variant="secondary" className="text-xs text-emerald-600 dark:text-emerald-400 shrink-0">
+                      <Badge variant="success" className="text-xs shrink-0">
                         Comprado
                       </Badge>
                     )}
@@ -1252,8 +1317,9 @@ const ShoppingList = memo(() => {
                         <Trash2 size={13} />
                       </button>
                     )}
-                  </div>
+                  </motion.div>
                 ))}
+              </AnimatePresence>
               </div>
             </div>
           ))}
@@ -1332,7 +1398,7 @@ const ShoppingList = memo(() => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </motion.div>
   );
 });
 

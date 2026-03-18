@@ -70,14 +70,14 @@ const NotificationsMenu: React.FC<NotificationsMenuProps> = ({
         <button
           className={cn(
             "relative p-2 rounded-lg transition-all duration-200",
-            "hover:bg-indigo-50 dark:hover:bg-dark-bg-hover",
-            "focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-dark-accent-indigo"
+            "hover:bg-accent",
+            "focus:outline-none focus:ring-2 focus:ring-ring"
           )}
           aria-label="Notificações"
         >
           <Bell
             size={20}
-            className="text-slate-700 dark:text-dark-text-secondary"
+            className="text-foreground"
           />
           {unreadCount > 0 && (
             <Badge
@@ -91,23 +91,23 @@ const NotificationsMenu: React.FC<NotificationsMenuProps> = ({
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
-        className="w-80 max-h-96 overflow-y-auto bg-white dark:bg-dark-bg-elevated border-gray-200 dark:border-dark-border-default"
+        className="w-80 max-h-96 overflow-y-auto"
       >
-        <DropdownMenuLabel className="flex items-center justify-between dark:text-dark-text-primary">
+        <DropdownMenuLabel className="flex items-center justify-between">
           <span>Notificações</span>
           {unreadCount > 0 && onMarkAllAsRead && (
             <button
               onClick={onMarkAllAsRead}
-              className="text-xs text-indigo-600 dark:text-dark-accent-indigo hover:underline font-normal"
+              className="text-xs text-primary hover:underline font-normal"
             >
               Marcar todas como lidas
             </button>
           )}
         </DropdownMenuLabel>
-        <DropdownMenuSeparator className="dark:bg-dark-border-subtle" />
+        <DropdownMenuSeparator />
 
         {notifications.length === 0 ? (
-          <div className="p-4 text-center text-sm text-gray-500 dark:text-dark-text-muted">
+          <div className="p-4 text-center text-sm text-muted-foreground">
             Nenhuma notificação
           </div>
         ) : (
@@ -116,8 +116,8 @@ const NotificationsMenu: React.FC<NotificationsMenuProps> = ({
               key={notification.id}
               className={cn(
                 "flex flex-col items-start gap-1 p-3 cursor-pointer",
-                "dark:hover:bg-dark-bg-hover dark:focus:bg-dark-bg-hover",
-                !notification.read && "bg-indigo-50 dark:bg-dark-bg-secondary"
+                "dark:hover:bg-accent dark:focus:bg-accent",
+                !notification.read && "bg-accent/50"
               )}
               onClick={() => onNotificationClick?.(notification.id)}
             >
@@ -126,18 +126,18 @@ const NotificationsMenu: React.FC<NotificationsMenuProps> = ({
                   {getNotificationIcon(notification.type)}
                 </span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 dark:text-dark-text-primary">
+                  <p className="text-sm font-medium text-foreground">
                     {notification.title}
                   </p>
-                  <p className="text-xs text-gray-600 dark:text-dark-text-secondary line-clamp-2">
+                  <p className="text-xs text-muted-foreground line-clamp-2">
                     {notification.message}
                   </p>
-                  <p className="text-xs text-gray-400 dark:text-dark-text-muted mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     {formatTimestamp(notification.timestamp)}
                   </p>
                 </div>
                 {!notification.read && (
-                  <div className="w-2 h-2 rounded-full bg-indigo-600 dark:bg-dark-accent-indigo flex-shrink-0 mt-1" />
+                  <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-1" />
                 )}
               </div>
             </DropdownMenuItem>

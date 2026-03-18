@@ -53,6 +53,7 @@ export const ThemeProvider = ({ children }) => {
 
     // Adiciona a nova classe
     root.classList.add(newEffectiveTheme);
+    root.style.colorScheme = newEffectiveTheme;
 
     // Salva no localStorage
     localStorage.setItem('ninho-theme', theme);
@@ -65,6 +66,7 @@ export const ThemeProvider = ({ children }) => {
         setEffectiveTheme(systemTheme);
         root.classList.remove('light', 'dark');
         root.classList.add(systemTheme);
+        root.style.colorScheme = systemTheme;
       };
 
       mediaQuery.addEventListener('change', handleChange);

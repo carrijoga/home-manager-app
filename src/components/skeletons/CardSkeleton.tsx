@@ -42,7 +42,7 @@ export function MetricCardSkeleton({ className = "" }: { className?: string }) {
         <Skeleton className="h-12 w-full" />
 
         {/* Footer */}
-        <div className="pt-3 border-t border-gray-100 dark:border-dark-border-primary space-y-2">
+        <div className="pt-3 border-t border-linen-200 dark:border-muted space-y-2">
           <Skeleton className="h-3 w-full" />
           <Skeleton className="h-3 w-3/4" />
         </div>

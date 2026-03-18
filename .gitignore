@@ -38,3 +38,7 @@ build
 
 # Database migrations (mantidas fora do versionamento)
 migrations/
+
+CLAUDE.md
+.claude
+.playwright-mcp

@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import Autoplay from "embla-carousel-autoplay";
 import useEmblaCarousel from "embla-carousel-react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 /**
@@ -20,12 +20,14 @@ import { useCallback, useEffect, useState } from "react";
 interface CarouselMetricsProps {
   children: React.ReactNode[];
   autoPlayDelay?: number;
+  stopButton?: boolean;
   className?: string;
 }
 
 export default function CarouselMetrics({
   children,
   autoPlayDelay = 5000,
+  stopButton = false,
   className,
 }: CarouselMetricsProps) {
   const [emblaRef, emblaApi] = useEmblaCarousel(
@@ -79,16 +81,41 @@ export default function CarouselMetrics({
     };
   }, [emblaApi, onSelect]);
 
+
+  // Estado para saber se está tocando
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [isHovered, setIsHovered] = useState(false);
+
+  // Play/Pause botão
+  const handlePlayPauseClick = useCallback(() => {
+    const autoplay = emblaApi?.plugins()?.autoplay;
+    if (!autoplay) return;
+
+    setIsPlaying((prev) => {
+      const next = !prev;
+
+      if (!next) {
+        autoplay.stop();
+      } else if (!isHovered) {
+        autoplay.play();
+      }
+
+      return next;
+    });
+  }, [emblaApi, isHovered]);
+
   // Pausa ao hover
   const handleMouseEnter = useCallback(() => {
+    setIsHovered(true);
     const autoplay = emblaApi?.plugins()?.autoplay;
-    if (autoplay) autoplay.stop();
-  }, [emblaApi]);
+    if (autoplay && isPlaying) autoplay.stop();
+  }, [emblaApi, isPlaying]);
 
   const handleMouseLeave = useCallback(() => {
+    setIsHovered(false);
     const autoplay = emblaApi?.plugins()?.autoplay;
-    if (autoplay) autoplay.play();
-  }, [emblaApi]);
+    if (autoplay && isPlaying) autoplay.play();
+  }, [emblaApi, isPlaying]);
 
   // Navegação por teclado
   useEffect(() => {
@@ -137,18 +164,18 @@ export default function CarouselMetrics({
           className={cn(
             "absolute left-2 top-1/2 -translate-y-1/2",
             "z-10 p-2 rounded-full",
-            "bg-white/90 dark:bg-dark-bg-secondary/90",
-            "border border-gray-200 dark:border-dark-border",
+            "bg-background/90",
+            "border border-border",
             "shadow-lg",
-            "hover:bg-white dark:hover:bg-dark-bg-secondary",
+            "hover:bg-background",
             "hover:scale-110",
             "transition-all duration-300",
-            "focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-dark-accent-indigo",
+            "focus:outline-none focus:ring-2 focus:ring-ring",
             "opacity-0 group-hover:opacity-100"
           )}
           aria-label="Anterior"
         >
-          <ChevronLeft className="w-5 h-5 text-gray-700 dark:text-dark-text-primary" />
+          <ChevronLeft className="w-5 h-5 text-foreground" />
         </button>
       )}
 
@@ -158,18 +185,18 @@ export default function CarouselMetrics({
           className={cn(
             "absolute right-2 top-1/2 -translate-y-1/2",
             "z-10 p-2 rounded-full",
-            "bg-white/90 dark:bg-dark-bg-secondary/90",
-            "border border-gray-200 dark:border-dark-border",
+            "bg-background/90",
+            "border border-border",
             "shadow-lg",
-            "hover:bg-white dark:hover:bg-dark-bg-secondary",
+            "hover:bg-background",
             "hover:scale-110",
             "transition-all duration-300",
-            "focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-dark-accent-indigo",
+            "focus:outline-none focus:ring-2 focus:ring-ring",
             "opacity-0 group-hover:opacity-100"
           )}
           aria-label="Próximo"
         >
-          <ChevronRight className="w-5 h-5 text-gray-700 dark:text-dark-text-primary" />
+          <ChevronRight className="w-5 h-5 text-foreground" />
         </button>
       )}
 
@@ -181,15 +208,35 @@ export default function CarouselMetrics({
             onClick={() => scrollTo(index)}
             className={cn(
               "w-2 h-2 rounded-full transition-all duration-300",
-              "focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-dark-accent-indigo",
+              "focus:outline-none focus:ring-2 focus:ring-ring",
               index === selectedIndex
-                ? "bg-indigo-600 dark:bg-dark-accent-indigo w-8"
-                : "bg-gray-300 dark:bg-dark-border hover:bg-gray-400 dark:hover:bg-gray-600"
+                ? "bg-primary w-8"
+                : "bg-border hover:bg-muted-foreground"
             )}
             aria-label={`Ir para slide ${index + 1}`}
             aria-current={index === selectedIndex ? "true" : "false"}
           />
         ))}
+
+        {/* Botão Play/Pause ao lado dos dots */}
+        <button
+          onClick={handlePlayPauseClick}
+          className={cn(
+            "flex items-center justify-center rounded-full",
+            "transition-all duration-300",
+            "focus:outline-none focus:ring-2 focus:ring-ring",
+            isPlaying
+              ? "bg-primary/20 hover:bg-primary/30"
+              : "bg-border hover:bg-muted-foreground/30"
+          )}
+          aria-label={isPlaying ? "Pausar" : "Reproduzir"}
+        >
+          {isPlaying ? (
+            <Pause className="w-3 h-3 text-foreground" />
+          ) : (
+            <Play className="w-3 h-3 text-foreground" />
+          )}
+        </button>
       </div>
     </div>
   );

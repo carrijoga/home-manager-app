@@ -13,7 +13,7 @@ export { ApiError } from './api/httpClient';
 // ── Mock user (usado quando DATA_MODE === 'mock') ─────────────────────────────
 
 const MOCK_USER_PROFILE: UserProfileResponse = {
-  userId: 'mock-user-id-0000-0000-000000000001',
+  userId: 'user-mock-0001',
   firstName: 'Usuário',
   lastName: 'Mock',
   fullName: 'Usuário Mock',

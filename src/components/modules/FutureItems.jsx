@@ -62,7 +62,7 @@ const FutureItems = memo(() => {
     <div className="space-y-6">
       <Card title="Itens para Comprar no Futuro">
         {/* Formulário de Novo Item */}
-        <div className="mb-6 space-y-3 p-4 bg-slate-50 dark:bg-dark-bg-secondary rounded-lg border border-slate-200 dark:border-dark-border-default">
+        <div className="mb-6 space-y-3 p-4 bg-muted/50 rounded-lg border border-border">
           <Input
             placeholder="Nome do item..."
             value={newItem.name}
@@ -72,7 +72,7 @@ const FutureItems = memo(() => {
             <select
               value={newItem.priority}
               onChange={(e) => setNewItem({ ...newItem, priority: e.target.value })}
-              className="p-2 border border-slate-300 dark:border-dark-border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-white dark:bg-dark-bg-secondary text-slate-900 dark:text-dark-text-primary"
+              className="p-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring bg-background text-foreground"
             >
               <option value={PriorityLevels.HIGH}>Alta prioridade</option>
               <option value={PriorityLevels.MEDIUM}>Média prioridade</option>
@@ -97,7 +97,7 @@ const FutureItems = memo(() => {
 
             return (
               <div key={priority}>
-                <h3 className="font-semibold text-slate-700 dark:text-dark-text-primary mb-2 capitalize">
+                <h3 className="font-semibold text-foreground mb-2 capitalize">
                   Prioridade {priority}
                 </h3>
                 {itemsInPriority.map(item => (
@@ -106,8 +106,8 @@ const FutureItems = memo(() => {
                     className={`flex items-center justify-between p-4 rounded-lg border-l-4 mb-2 hover:opacity-90 transition-all duration-200 ${priorityColors[priority]}`}
                   >
                     <div className="flex-1">
-                      <p className="text-slate-800 dark:text-dark-text-primary font-medium">{item.name}</p>
-                      <p className="text-sm text-slate-600 dark:text-dark-text-secondary">{item.estimatedCost}</p>
+                      <p className="text-foreground font-medium">{item.name}</p>
+                      <p className="text-sm text-muted-foreground">{item.estimatedCost}</p>
                     </div>
                     <button
                       onClick={() => handleDeleteItem(item.id)}

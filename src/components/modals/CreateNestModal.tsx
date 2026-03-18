@@ -149,7 +149,7 @@ export function CreateNestModal({ open, onClose, mode = 'create', nest }: Create
                     onClick={() => setValue('icon', name)}
                     className={`flex flex-col items-center gap-0.5 rounded-md p-1.5 text-xs transition-colors
                       ${isSelected
-                        ? 'bg-indigo-100 text-indigo-700 ring-2 ring-indigo-500 dark:bg-indigo-900 dark:text-indigo-300'
+                        ? 'bg-primary/10 text-primary ring-2 ring-primary dark:bg-primary/20'
                         : 'hover:bg-muted text-muted-foreground'
                       }`}
                   >

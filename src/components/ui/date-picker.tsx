@@ -118,7 +118,7 @@ export function DatePicker({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-auto p-0 bg-background text-foreground dark:bg-dark-bg-tertiary dark:text-dark-text-primary"
+        className="w-auto p-0"
         align="start"
       >
         <Calendar
@@ -128,7 +128,7 @@ export function DatePicker({
           initialFocus
           locale={ptBR}
           disabled={fromDate ? (date) => date < fromDate : undefined}
-          className="bg-background text-foreground dark:bg-dark-bg-tertiary dark:text-dark-text-primary"
+          className="bg-background text-foreground"
         />
       </PopoverContent>
     </Popover>

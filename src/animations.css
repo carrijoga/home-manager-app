@@ -45,50 +45,50 @@
 
 /* Classes de animação */
 .animate-fade-in {
-  animation: fadeIn 0.3s ease-out;
+  animation: fadeIn 0.3s var(--ease-out-quart);
 }
 
 .animate-slide-in {
-  animation: slideInRight 0.4s ease-out;
+  animation: slideInRight 0.4s var(--ease-out-quart);
 }
 
 .animate-scale-in {
-  animation: scaleIn 0.3s ease-out;
+  animation: scaleIn 0.3s var(--ease-out-quart);
 }
 
 .animate-pulse-soft {
-  animation: pulse 2s ease-in-out infinite;
+  animation: pulse 2s var(--ease-out-quart) infinite;
 }
 
 /* Transições suaves */
 .transition-smooth {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s var(--ease-out-quart);
 }
 
 .transition-colors-smooth {
   transition:
-    color 0.2s ease,
-    background-color 0.2s ease,
-    border-color 0.2s ease;
+    color 0.2s var(--ease-out-quart),
+    background-color 0.2s var(--ease-out-quart),
+    border-color 0.2s var(--ease-out-quart);
 }
 
 /* Hover effects */
 .hover-lift {
   transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+    transform 0.2s var(--ease-out-quart),
+    box-shadow 0.2s var(--ease-out-quart);
 }
 
 .hover-lift:hover {
   transform: translateY(-2px);
   box-shadow:
-    0 10px 25px -5px rgba(99, 102, 241, 0.1),
-    0 8px 10px -6px rgba(99, 102, 241, 0.1);
+    0 10px 25px -5px color-mix(in oklch, var(--primary) 15%, transparent),
+    0 8px 10px -6px color-mix(in oklch, var(--primary) 15%, transparent);
 }
 
 /* Stagger animation for lists */
 .stagger-item {
-  animation: fadeIn 0.4s ease-out backwards;
+  animation: fadeIn 0.4s var(--ease-out-quart) backwards;
 }
 
 .stagger-item:nth-child(1) {
@@ -121,14 +121,14 @@
 }
 
 .skeleton {
-  background: linear-gradient(to right, #f0f0f0 4%, #e0e0e0 25%, #f0f0f0 36%);
+  background: linear-gradient(to right, oklch(0.91 0.016 72) 4%, oklch(0.87 0.018 65) 25%, oklch(0.91 0.016 72) 36%);
   background-size: 1000px 100%;
   animation: shimmer 2s infinite linear;
 }
 
 /* Focus states */
 .focus-ring {
-  @apply focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2;
+  @apply focus:outline-none focus:ring-2 focus:ring-[var(--ring)] focus:ring-offset-2;
 }
 
 /* Smooth scroll */
@@ -138,14 +138,14 @@ html {
 
 /* Card hover animation */
 .card-interactive {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s var(--ease-out-quart);
 }
 
 .card-interactive:hover {
   transform: translateY(-4px);
   box-shadow:
-    0 20px 25px -5px rgba(99, 102, 241, 0.15),
-    0 10px 10px -5px rgba(99, 102, 241, 0.1);
+    0 20px 25px -5px color-mix(in oklch, var(--primary) 15%, transparent),
+    0 10px 10px -5px color-mix(in oklch, var(--primary) 15%, transparent);
 }
 
 /* Animação de mão acenando */
@@ -177,6 +177,40 @@ html {
 }
 
 .animate-wave {
-  animation: wave 2.5s ease-in-out infinite;
+  animation: wave 2.5s var(--ease-out-quart) infinite;
   transform-origin: 70% 70%;
+}
+
+/* Expand animation */
+@keyframes expandDown {
+  from { grid-template-rows: 0fr; }
+  to   { grid-template-rows: 1fr; }
+}
+
+.animate-expand {
+  display: grid;
+  animation: expandDown 0.3s var(--ease-out-quart) forwards;
+}
+
+.animate-expand > * {
+  overflow: hidden;
+}
+
+/* Accessibility: respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in,
+  .animate-slide-in,
+  .animate-scale-in,
+  .animate-pulse-soft,
+  .animate-wave,
+  .animate-expand,
+  .stagger-item {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+
+  .hover-lift:hover,
+  .card-interactive:hover {
+    transform: none;
+  }
 }

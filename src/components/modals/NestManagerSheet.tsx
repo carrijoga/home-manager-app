@@ -98,7 +98,7 @@ export function NestManagerSheet({ open, onClose }: NestManagerSheetProps) {
                       {nest.name}
                     </span>
                     {isActive && (
-                      <Check className="size-3.5 shrink-0 text-indigo-500" />
+                       <Check className="size-3.5 shrink-0 text-primary" />
                     )}
                     <div className="flex items-center gap-1 shrink-0">
                       <Button

@@ -40,40 +40,40 @@ import {
 
 const PRIORITY_CONFIG = {
   0: {
-    label: 'Urgente', dot: 'bg-red-500',
-    text: 'text-red-700 dark:text-red-300',
-    dimText: 'text-red-600 dark:text-red-400',
-    bg: 'bg-red-50 dark:bg-red-950/20',
-    headerBg: 'bg-red-100 dark:bg-red-900/30',
-    border: 'border-l-red-500',
-    pill: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
+    label: 'Urgente', dot: 'bg-terracotta-600',
+    text: 'text-terracotta-700 dark:text-terracotta-300',
+    dimText: 'text-terracotta-600 dark:text-terracotta-400',
+    bg: 'bg-terracotta-50 dark:bg-terracotta-900/20',
+    headerBg: 'bg-terracotta-100 dark:bg-terracotta-900/30',
+    border: 'border-l-terracotta-600',
+    pill: 'bg-terracotta-100 text-terracotta-700 dark:bg-terracotta-900/40 dark:text-terracotta-300',
   },
   1: {
-    label: 'Alta', dot: 'bg-orange-400',
-    text: 'text-orange-700 dark:text-orange-300',
-    dimText: 'text-orange-600 dark:text-orange-400',
-    bg: 'bg-orange-50 dark:bg-orange-950/20',
-    headerBg: 'bg-orange-100 dark:bg-orange-900/30',
-    border: 'border-l-orange-400',
-    pill: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300',
+    label: 'Alta', dot: 'bg-honey-500',
+    text: 'text-honey-700 dark:text-honey-300',
+    dimText: 'text-honey-600 dark:text-honey-400',
+    bg: 'bg-honey-50 dark:bg-honey-900/20',
+    headerBg: 'bg-honey-100 dark:bg-honey-900/30',
+    border: 'border-l-honey-500',
+    pill: 'bg-honey-100 text-honey-700 dark:bg-honey-900/40 dark:text-honey-300',
   },
   2: {
-    label: 'Média', dot: 'bg-yellow-400',
-    text: 'text-yellow-700 dark:text-yellow-300',
-    dimText: 'text-yellow-600 dark:text-yellow-400',
-    bg: 'bg-yellow-50 dark:bg-yellow-950/20',
-    headerBg: 'bg-yellow-100 dark:bg-yellow-900/30',
-    border: 'border-l-yellow-400',
-    pill: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300',
+    label: 'Média', dot: 'bg-honey-300',
+    text: 'text-honey-600 dark:text-honey-200',
+    dimText: 'text-honey-500 dark:text-honey-300',
+    bg: 'bg-linen-100 dark:bg-linen-900/20',
+    headerBg: 'bg-linen-200 dark:bg-linen-900/30',
+    border: 'border-l-honey-300',
+    pill: 'bg-linen-200 text-honey-700 dark:bg-linen-900/30 dark:text-honey-200',
   },
   3: {
-    label: 'Baixa', dot: 'bg-green-500',
-    text: 'text-green-700 dark:text-green-300',
-    dimText: 'text-green-600 dark:text-green-400',
-    bg: 'bg-green-50 dark:bg-green-950/20',
-    headerBg: 'bg-green-100 dark:bg-green-900/30',
-    border: 'border-l-green-500',
-    pill: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
+    label: 'Baixa', dot: 'bg-sage-400',
+    text: 'text-sage-700 dark:text-sage-300',
+    dimText: 'text-sage-600 dark:text-sage-400',
+    bg: 'bg-sage-50 dark:bg-sage-900/20',
+    headerBg: 'bg-sage-100 dark:bg-sage-900/30',
+    border: 'border-l-sage-400',
+    pill: 'bg-sage-100 text-sage-700 dark:bg-sage-900/40 dark:text-sage-300',
   },
 };
 
@@ -112,29 +112,35 @@ const TaskCard = memo(forwardRef(function TaskCard(
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: -40, scale: 0.97 }}
       transition={{ type: 'spring', stiffness: 340, damping: 32 }}
-      className={`group relative flex items-start gap-3 px-3 py-2.5 rounded-lg border border-gray-200 dark:border-dark-border-secondary border-l-4 ${cfg.border} ${
-        task.isCompleted ? 'bg-gray-50 dark:bg-dark-bg-tertiary' : cfg.bg
+      className={`group relative flex items-start gap-3 px-3 py-2.5 rounded-lg border border-border border-l-4 ${cfg.border} ${
+        task.isCompleted ? 'bg-muted/50 dark:bg-muted/30' : cfg.bg
       } transition-colors`}
     >
       {/* Checkbox */}
-      <Checkbox
-        checked={task.isCompleted}
-        onCheckedChange={() => task.isCompleted ? onUncomplete?.(task.taskId) : onComplete(task.taskId)}
-        className={`mt-0.5 shrink-0 ${task.isCompleted ? 'data-[state=checked]:bg-emerald-500' : ''}`}
-      />
+      <motion.div
+        whileTap={{ scale: 0.82 }}
+        transition={{ duration: 0.12, ease: [0.25, 1, 0.5, 1] }}
+        className="mt-0.5 shrink-0"
+      >
+        <Checkbox
+          checked={task.isCompleted}
+          onCheckedChange={() => task.isCompleted ? onUncomplete?.(task.taskId) : onComplete(task.taskId)}
+          className={task.isCompleted ? 'data-[state=checked]:bg-sage-400' : ''}
+        />
+      </motion.div>
 
       {/* Conteúdo */}
       <div className="flex-1 min-w-0">
-        <p className={`text-sm font-medium leading-snug ${
+        <p className={`text-sm font-medium leading-snug ${compact ? 'line-clamp-2' : 'break-words'} ${
           task.isCompleted
-            ? 'line-through text-gray-400 dark:text-gray-500'
-            : 'text-gray-900 dark:text-dark-text-primary'
+            ? 'line-through text-muted-foreground'
+            : 'text-foreground'
         }`}>
           {task.title}
         </p>
 
         {!compact && task.description && (
-          <p className="text-xs text-gray-500 dark:text-dark-text-tertiary mt-0.5 line-clamp-1">
+          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
             {task.description}
           </p>
         )}
@@ -142,7 +148,7 @@ const TaskCard = memo(forwardRef(function TaskCard(
         {/* Meta */}
         <div className="flex flex-wrap items-center gap-1.5 mt-1">
           {/* Categoria */}
-          <span className="inline-flex items-center gap-0.5 text-xs text-gray-400 dark:text-dark-text-tertiary">
+          <span className="inline-flex items-center gap-0.5 text-xs text-muted-foreground">
             <Tag size={9} />
             {task.categoryLabel}
           </span>
@@ -151,8 +157,8 @@ const TaskCard = memo(forwardRef(function TaskCard(
           {task.dueDate && (
             <span className={`inline-flex items-center gap-0.5 text-xs ${
               task.isOverdue && !task.isCompleted
-                ? 'text-red-600 dark:text-red-400 font-medium'
-                : 'text-gray-400 dark:text-dark-text-tertiary'
+                ? 'text-terracotta-600 dark:text-terracotta-400 font-medium'
+                : 'text-muted-foreground'
             }`}>
               {task.isOverdue && !task.isCompleted
                 ? <><AlertCircle size={9} /> {overdueDays}d atrasada</>
@@ -163,7 +169,7 @@ const TaskCard = memo(forwardRef(function TaskCard(
 
           {/* Concluída em */}
           {task.isCompleted && task.completedAt && (
-            <span className="inline-flex items-center gap-0.5 text-xs text-emerald-600 dark:text-emerald-400">
+            <span className="inline-flex items-center gap-0.5 text-xs text-sage-500 dark:text-sage-400">
               <CheckCircle2 size={9} />
               {new Date(task.completedAt).toLocaleDateString('pt-BR')}
             </span>
@@ -171,12 +177,12 @@ const TaskCard = memo(forwardRef(function TaskCard(
         </div>
       </div>
 
-      {/* Ações — visíveis no hover (CSS group) */}
-      <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-150 mt-0.5">
+      {/* Ações — visíveis no hover (hover) ou sempre visíveis em touch */}
+      <div className="flex items-center gap-0.5 shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-150 mt-0.5">
         {onEdit && !task.isCompleted && (
           <button
             onClick={() => onEdit(task)}
-            className="p-1 rounded text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 transition-colors"
+            className="p-1 rounded text-muted-foreground hover:text-terracotta-600 dark:hover:text-terracotta-400 hover:bg-terracotta-50 dark:hover:bg-terracotta-900/30 transition-colors"
             title="Editar"
           >
             <Edit2 size={13} />
@@ -185,7 +191,7 @@ const TaskCard = memo(forwardRef(function TaskCard(
         {task.isCompleted && onUncomplete && (
           <button
             onClick={() => onUncomplete(task.taskId)}
-            className="p-1 rounded text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors"
+            className="p-1 rounded text-muted-foreground hover:text-honey-600 hover:bg-honey-50 dark:hover:bg-honey-900/30 transition-colors"
             title="Reabrir"
           >
             <RotateCcw size={13} />
@@ -193,7 +199,7 @@ const TaskCard = memo(forwardRef(function TaskCard(
         )}
         <button
           onClick={() => onDelete(task.taskId, task)}
-          className="p-1 rounded text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+          className="p-1 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
           title="Excluir"
         >
           <Trash2 size={13} />
@@ -212,7 +218,7 @@ const PriorityGroup = memo(({ priority, tasks, onComplete, onUncomplete, onDelet
   if (tasks.length === 0) return null;
 
   return (
-    <div className="rounded-xl border border-gray-200 dark:border-dark-border-secondary overflow-hidden">
+    <div className="rounded-xl border border-linen-200 dark:border-border overflow-hidden">
       {/* Header do grupo */}
       <button
         onClick={() => setOpen(p => !p)}
@@ -228,32 +234,29 @@ const PriorityGroup = memo(({ priority, tasks, onComplete, onUncomplete, onDelet
         {open ? <ChevronUp size={15} className={cfg.dimText} /> : <ChevronDown size={15} className={cfg.dimText} />}
       </button>
 
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ height: 0 }}
-            animate={{ height: 'auto' }}
-            exit={{ height: 0 }}
-            transition={{ duration: 0.18, ease: 'easeInOut' }}
-            className="overflow-hidden"
-          >
-            <div className="p-2 space-y-1.5">
-              <AnimatePresence mode="popLayout">
-                {tasks.map(task => (
-                  <TaskCard
-                    key={task.taskId}
-                    task={task}
-                    onComplete={onComplete}
-                    onUncomplete={onUncomplete}
-                    onDelete={onDelete}
-                    onEdit={onEdit}
-                  />
-                ))}
-              </AnimatePresence>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <motion.div
+        initial={false}
+        animate={{ gridTemplateRows: open ? '1fr' : '0fr' }}
+        transition={{ duration: 0.2, ease: [0.25, 1, 0.5, 1] }}
+        style={{ display: 'grid' }}
+      >
+        <div style={{ overflow: 'hidden' }}>
+          <div className="p-2 space-y-1.5">
+            <AnimatePresence mode="popLayout">
+              {tasks.map(task => (
+                <TaskCard
+                  key={task.taskId}
+                  task={task}
+                  onComplete={onComplete}
+                  onUncomplete={onUncomplete}
+                  onDelete={onDelete}
+                  onEdit={onEdit}
+                />
+              ))}
+            </AnimatePresence>
+          </div>
+        </div>
+      </motion.div>
     </div>
   );
 });
@@ -276,7 +279,7 @@ const KanbanColumn = memo(({ priority, tasks, onComplete, onUncomplete, onDelete
         </span>
       </div>
       {/* Body */}
-      <div className={`flex-1 rounded-b-xl border border-t-0 border-gray-200 dark:border-dark-border-secondary p-2 space-y-1.5 min-h-[100px] ${cfg.bg}`}>
+      <div className={`flex-1 rounded-b-xl border border-t-0 border-border p-2 space-y-1.5 min-h-[100px] ${cfg.bg}`}>
         <AnimatePresence mode="popLayout">
           {tasks.map(task => (
             <TaskCard
@@ -291,7 +294,7 @@ const KanbanColumn = memo(({ priority, tasks, onComplete, onUncomplete, onDelete
           ))}
         </AnimatePresence>
         {tasks.length === 0 && (
-          <p className="text-center text-xs text-gray-400 dark:text-dark-text-tertiary py-4">
+          <p className="text-center text-xs text-muted-foreground py-4">
             Sem tarefas
           </p>
         )}
@@ -306,15 +309,15 @@ KanbanColumn.displayName = 'KanbanColumn';
 const HistoryItem = memo(({ task }) => {
   const cfg = PRIORITY_CONFIG[task.priority] ?? PRIORITY_CONFIG[3];
   return (
-    <div className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 dark:bg-dark-bg-tertiary border border-gray-200 dark:border-dark-border-secondary">
-      <CheckCircle2 size={15} className="text-emerald-500 shrink-0 mt-0.5" />
+    <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/40 border border-border">
+      <CheckCircle2 size={15} className="text-sage-500 shrink-0 mt-0.5" />
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium line-through text-gray-500 dark:text-gray-400">{task.title}</p>
+        <p className="text-sm font-medium line-through text-muted-foreground break-words line-clamp-2">{task.title}</p>
         <div className="flex flex-wrap gap-1.5 mt-1">
           <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${cfg.pill}`}>{task.priorityLabel}</span>
-          <span className="text-xs text-gray-400 px-1.5 py-0.5 bg-gray-200 dark:bg-dark-bg-secondary rounded">{task.categoryLabel}</span>
+          <span className="text-xs text-muted-foreground px-1.5 py-0.5 bg-muted rounded">{task.categoryLabel}</span>
           {task.completedAt && (
-            <span className="text-xs text-gray-400 flex items-center gap-1">
+            <span className="text-xs text-muted-foreground flex items-center gap-1">
               <CheckCircle2 size={9} />
               {new Date(task.completedAt).toLocaleDateString('pt-BR')}
             </span>
@@ -379,21 +382,22 @@ const TaskFormDialog = memo(({ open, onOpenChange, onSubmit, initialTask, dialog
         <div className="space-y-3 mt-2">
           {/* Título */}
           <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1 block">
-              Título <span className="text-red-500">*</span>
+            <label className="text-sm font-medium text-foreground mb-1 block">
+              Título <span className="text-destructive">*</span>
             </label>
             <Input
               placeholder="Nome da tarefa..."
               value={form.title}
               onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
               onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+              maxLength={200}
             />
           </div>
 
           {/* Prioridade + Categoria (lado a lado) */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1 block">Prioridade</label>
+              <label className="text-sm font-medium text-foreground mb-1 block">Prioridade</label>
               <Select value={form.priority} onValueChange={v => setForm(f => ({ ...f, priority: v }))}>
                 <SelectTrigger>
                   <SelectValue />
@@ -406,7 +410,7 @@ const TaskFormDialog = memo(({ open, onOpenChange, onSubmit, initialTask, dialog
               </Select>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1 block">Categoria</label>
+              <label className="text-sm font-medium text-foreground mb-1 block">Categoria</label>
               <Select value={form.category} onValueChange={v => setForm(f => ({ ...f, category: v }))}>
                 <SelectTrigger>
                   <SelectValue />
@@ -422,7 +426,7 @@ const TaskFormDialog = memo(({ open, onOpenChange, onSubmit, initialTask, dialog
 
           {/* Data limite */}
           <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1 block">
+            <label className="text-sm font-medium text-foreground mb-1 block">
               Data limite
             </label>
             <DatePicker
@@ -435,7 +439,7 @@ const TaskFormDialog = memo(({ open, onOpenChange, onSubmit, initialTask, dialog
 
           {/* Descrição */}
           <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1 block">Descrição</label>
+            <label className="text-sm font-medium text-foreground mb-1 block">Descrição</label>
             <Textarea
               placeholder="Detalhes da tarefa..."
               value={form.description}
@@ -446,7 +450,7 @@ const TaskFormDialog = memo(({ open, onOpenChange, onSubmit, initialTask, dialog
 
           {/* Detalhes adicionais */}
           <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1 block">Informações extras</label>
+            <label className="text-sm font-medium text-foreground mb-1 block">Informações extras</label>
             <Textarea
               placeholder="Observações, links, referências..."
               value={form.details}
@@ -456,17 +460,17 @@ const TaskFormDialog = memo(({ open, onOpenChange, onSubmit, initialTask, dialog
           </div>
 
           {/* Ações */}
-          <div className="flex justify-end gap-2 pt-2 border-t dark:border-dark-border-secondary">
+          <div className="flex justify-end gap-2 pt-2 border-t border-border">
             <button
               onClick={() => onOpenChange(false)}
-              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-dark-text-secondary hover:bg-gray-100 dark:hover:bg-dark-bg-tertiary rounded-lg transition-colors"
+              className="px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground rounded-lg transition-colors"
             >
               Cancelar
             </button>
             <button
               onClick={handleSubmit}
               disabled={loading}
-              className="px-5 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 rounded-lg transition-colors"
+              className="px-5 py-2 text-sm font-semibold text-primary-foreground bg-primary hover:bg-primary/90 disabled:opacity-50 rounded-lg transition-colors"
             >
               {loading ? 'Salvando...' : (initialTask ? 'Salvar alterações' : 'Criar tarefa')}
             </button>
@@ -554,17 +558,22 @@ function Tasks() {
       .finally(() => setHistoryLoading(false));
   }, [showError]);
 
+  const [quickLoading, setQuickLoading] = useState(false);
+
   const handleQuickCreate = useCallback(async (e) => {
-    if (e.key !== 'Enter' || !quickInput.trim()) return;
+    if (e.key !== 'Enter' || !quickInput.trim() || quickLoading) return;
     e.preventDefault();
+    setQuickLoading(true);
     try {
       await createQuickTask(quickInput.trim());
       setQuickInput('');
       showSuccess('Tarefa criada!');
     } catch {
       showError('Erro ao criar tarefa');
+    } finally {
+      setQuickLoading(false);
     }
-  }, [quickInput, createQuickTask, showSuccess, showError]);
+  }, [quickInput, quickLoading, createQuickTask, showSuccess, showError]);
 
   const handleAddTask = useCallback(async (payload) => {
     try { await addTask(payload); showSuccess('Tarefa criada!'); }
@@ -609,21 +618,22 @@ function Tasks() {
     <div className="space-y-5">
 
       {/* ── Header ────────────────────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-4 flex-wrap rounded-xl bg-gradient-to-r from-linen-400 to-linen-200 dark:from-muted dark:to-background border border-linen-200 dark:border-muted px-5 py-4">
         <div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-dark-text-primary">Quadro de Tarefas</h1>
-          <div className="flex flex-wrap items-center gap-2 mt-1">
+          <h1 className="text-2xl font-bold text-foreground font-display">Quadro de Tarefas</h1>
+          <p className="text-honey-700 dark:text-honey-300 text-sm mt-0.5 font-medium">Organize suas tarefas</p>
+          <div className="flex flex-wrap items-center gap-2 mt-3">
             {/* Stats chips */}
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-honey-100 text-honey-700 dark:bg-honey-900/30 dark:text-honey-300">
               <List size={11} /> {pendingCount} pendentes
             </span>
             {overdueCount > 0 && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-terracotta-100 text-terracotta-700 dark:bg-terracotta-900/30 dark:text-terracotta-300">
                 <AlertCircle size={11} /> {overdueCount} atrasada{overdueCount > 1 ? 's' : ''}
               </span>
             )}
             {completedToday.length > 0 && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-sage-100 text-sage-700 dark:bg-sage-900/30 dark:text-sage-300">
                 <CheckCircle2 size={11} /> {completedToday.length} hoje
               </span>
             )}
@@ -633,7 +643,7 @@ function Tasks() {
         {/* Controles */}
         <div className="flex items-center gap-2">
           {/* Toggle Lista / Kanban */}
-          <div className="flex rounded-lg border border-gray-200 dark:border-dark-border-secondary overflow-hidden text-sm">
+          <div className="flex rounded-lg border border-border overflow-hidden text-sm">
             {[
               { mode: 'list',   Icon: List,          label: 'Lista'  },
               { mode: 'kanban', Icon: KanbanSquare,  label: 'Kanban' },
@@ -643,8 +653,8 @@ function Tasks() {
                 onClick={() => setViewMode(mode)}
                 className={`px-3 py-1.5 flex items-center gap-1.5 transition-colors ${
                   viewMode === mode
-                    ? 'bg-indigo-600 text-white'
-                    : 'text-gray-600 dark:text-dark-text-secondary hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary'
+                    ? 'bg-primary text-primary-foreground dark:bg-honey-900/30 dark:text-honey-300'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                 }`}
               >
                 <Icon size={14} />
@@ -656,7 +666,7 @@ function Tasks() {
           {/* Nova Tarefa */}
           <button
             onClick={() => { setEditingTask(null); setIsDialogOpen(true); }}
-            className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-primary-foreground bg-primary hover:bg-primary/90 rounded-lg transition-colors shadow-sm"
           >
             <Plus size={16} /> Nova Tarefa
           </button>
@@ -671,14 +681,10 @@ function Tasks() {
             value={quickInput}
             onChange={e => setQuickInput(e.target.value)}
             onKeyDown={handleQuickCreate}
+            disabled={quickLoading}
+            maxLength={200}
           />
         </div>
-        <button
-          onClick={() => { setEditingTask(null); setIsDialogOpen(true); }}
-          className="shrink-0 flex items-center gap-1 px-3 py-2 text-sm border border-gray-300 dark:border-dark-border-secondary rounded-lg hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary transition-colors text-gray-600 dark:text-dark-text-secondary"
-        >
-          <Plus size={14} /> Completa
-        </button>
       </div>
 
       {/* ── Filtro por categoria ───────────────────────────────────────────── */}
@@ -693,8 +699,8 @@ function Tasks() {
               onClick={() => setCategoryFilter(cat.value)}
               className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                 categoryFilter === cat.value
-                  ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'bg-gray-100 dark:bg-dark-bg-tertiary text-gray-600 dark:text-dark-text-secondary hover:bg-gray-200 dark:hover:bg-dark-bg-secondary'
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground'
               }`}
             >
               {cat.label} {count > 0 && <span className="ml-0.5 opacity-75">({count})</span>}
@@ -719,10 +725,12 @@ function Tasks() {
           ))}
 
           {totalPending === 0 && (
-            <div className="text-center py-16 text-gray-500 dark:text-dark-text-tertiary">
-              <CheckCircle2 size={44} className="mx-auto mb-3 text-emerald-500 opacity-50" />
-              <p className="font-semibold text-base">Tudo em dia!</p>
-              <p className="text-sm mt-1 opacity-70">Nenhuma tarefa pendente. Adicione uma nova para começar.</p>
+            <div className="text-center py-16 text-muted-foreground">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-sage-100 to-sage-50 dark:from-sage-900/30 dark:to-muted border border-sage-200/60 dark:border-sage-800/30 flex items-center justify-center mx-auto mb-3">
+                <CheckCircle2 size={28} className="text-sage-500 dark:text-sage-400" />
+              </div>
+              <p className="font-semibold text-base text-foreground">Tudo em dia!</p>
+              <p className="text-sm mt-1">Nenhuma tarefa pendente. Adicione uma nova para começar.</p>
             </div>
           )}
         </div>
@@ -749,51 +757,48 @@ function Tasks() {
 
       {/* ── Concluídas hoje ────────────────────────────────────────────────── */}
       {completedToday.length > 0 && (
-        <div className="rounded-xl border border-emerald-200 dark:border-emerald-800/40 overflow-hidden">
+        <div className="rounded-xl border border-sage-200 dark:border-sage-800/40 overflow-hidden">
           <button
             onClick={() => setCompletedExpanded(p => !p)}
-            className="w-full flex items-center justify-between px-4 py-2.5 bg-emerald-50 dark:bg-emerald-950/20 transition-colors"
+            className="w-full flex items-center justify-between px-4 py-2.5 bg-sage-50 dark:bg-sage-900/20 hover:bg-sage-100 dark:hover:bg-sage-900/30 transition-colors"
           >
             <div className="flex items-center gap-2">
-              <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400" />
-              <span className="text-sm font-bold text-emerald-700 dark:text-emerald-300">
+              <CheckCircle2 size={16} className="text-sage-600 dark:text-sage-400" />
+              <span className="text-sm font-bold text-sage-700 dark:text-sage-300">
                 Concluídas hoje
               </span>
-              <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+              <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-sage-100 text-sage-700 dark:bg-sage-900/40 dark:text-sage-300">
                 {completedToday.length}
               </span>
             </div>
             {completedExpanded
-              ? <ChevronUp size={15} className="text-emerald-500" />
-              : <ChevronDown size={15} className="text-emerald-500" />}
+              ? <ChevronUp size={15} className="text-sage-500" />
+              : <ChevronDown size={15} className="text-sage-500" />}
           </button>
 
-          <AnimatePresence>
-            {completedExpanded && (
-              <motion.div
-                initial={{ height: 0 }}
-                animate={{ height: 'auto' }}
-                exit={{ height: 0 }}
-                transition={{ duration: 0.18 }}
-                className="overflow-hidden"
-              >
-                <div className="p-2 space-y-1.5 bg-emerald-50/50 dark:bg-emerald-950/10">
-                  <AnimatePresence mode="popLayout">
-                    {completedToday.map(task => (
-                      <TaskCard
-                        key={task.taskId}
-                        task={task}
-                        onComplete={handleComplete}
-                        onUncomplete={handleUncomplete}
-                        onDelete={handleDelete}
-                        onEdit={handleEditOpen}
-                      />
-                    ))}
-                  </AnimatePresence>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <motion.div
+            initial={false}
+            animate={{ gridTemplateRows: completedExpanded ? '1fr' : '0fr' }}
+            transition={{ duration: 0.2, ease: [0.25, 1, 0.5, 1] }}
+            style={{ display: 'grid' }}
+          >
+            <div style={{ overflow: 'hidden' }}>
+              <div className="p-2 space-y-1.5 bg-sage-50/50 dark:bg-sage-900/10">
+                <AnimatePresence mode="popLayout">
+                  {completedToday.map(task => (
+                    <TaskCard
+                      key={task.taskId}
+                      task={task}
+                      onComplete={handleComplete}
+                      onUncomplete={handleUncomplete}
+                      onDelete={handleDelete}
+                      onEdit={handleEditOpen}
+                    />
+                  ))}
+                </AnimatePresence>
+              </div>
+            </div>
+          </motion.div>
         </div>
       )}
 
@@ -801,33 +806,34 @@ function Tasks() {
       <Card>
         <button
           onClick={handleToggleHistory}
-          className="flex items-center justify-between w-full text-left"
+          className="flex items-center justify-between w-full text-left rounded-lg px-1 py-0.5 -mx-1 hover:bg-muted/50 transition-colors"
         >
           <div className="flex items-center gap-2">
-            <History size={17} className="text-gray-500" />
-            <span className="font-semibold text-sm text-gray-700 dark:text-dark-text-primary">Histórico de Tarefas</span>
+            <History size={17} className="text-muted-foreground" />
+            <span className="font-semibold text-sm text-foreground">Histórico de Tarefas</span>
           </div>
-          {showHistory ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
+          {showHistory ? <ChevronUp size={16} className="text-muted-foreground" /> : <ChevronDown size={16} className="text-muted-foreground" />}
         </button>
 
-        <AnimatePresence>
-          {showHistory && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.22 }}
-              className="overflow-hidden"
-            >
-              <div className="mt-3 pt-3 border-t dark:border-dark-border-secondary">
+        <motion.div
+          initial={false}
+          animate={{ gridTemplateRows: showHistory ? '1fr' : '0fr' }}
+          transition={{ duration: 0.22, ease: [0.25, 1, 0.5, 1] }}
+          style={{ display: 'grid' }}
+        >
+          <div style={{ overflow: 'hidden' }}>
+            {showHistory && (
+              <div className="mt-3 pt-3 border-t border-border">
                 {historyLoading ? (
-                  <div className="text-center py-8 text-gray-400">
-                    <Clock size={28} className="mx-auto mb-2 animate-spin opacity-50" />
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Clock size={28} className="mx-auto mb-2 text-honey-400 animate-spin opacity-70" />
                     <p className="text-sm">Carregando...</p>
                   </div>
                 ) : history.items.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500 dark:text-dark-text-tertiary">
-                    <Clock size={32} className="mx-auto mb-2 opacity-40" />
+                  <div className="flex flex-col items-center py-8 gap-2 text-muted-foreground">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-honey-100 to-linen-200 dark:from-honey-900/30 dark:to-muted border border-honey-200/60 dark:border-honey-800/30 flex items-center justify-center">
+                      <Clock size={18} className="text-honey-600 dark:text-honey-400" />
+                    </div>
                     <p className="text-sm">Nenhuma tarefa no histórico</p>
                   </div>
                 ) : (
@@ -838,21 +844,21 @@ function Tasks() {
                       ))}
                     </div>
                     {history.totalCount > history.pageSize && (
-                      <div className="flex justify-center gap-2 mt-4 pt-3 border-t dark:border-dark-border-secondary">
+                      <div className="flex justify-center gap-2 mt-4 pt-3 border-t border-border">
                         <button
                           onClick={() => loadHistoryPage(historyPage - 1)}
                           disabled={historyPage === 1}
-                          className="px-3 py-1.5 text-xs font-medium border border-gray-300 dark:border-dark-border-secondary rounded-lg disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary transition-colors"
+                          className="px-3 py-1.5 text-xs font-medium border border-border rounded-lg disabled:opacity-40 hover:bg-muted transition-colors"
                         >
                           ← Anterior
                         </button>
-                        <span className="px-3 py-1.5 text-xs text-gray-500">
+                        <span className="px-3 py-1.5 text-xs text-muted-foreground">
                           {historyPage}/{Math.ceil(history.totalCount / history.pageSize)}
                         </span>
                         <button
                           onClick={() => loadHistoryPage(historyPage + 1)}
                           disabled={historyPage >= Math.ceil(history.totalCount / history.pageSize)}
-                          className="px-3 py-1.5 text-xs font-medium border border-gray-300 dark:border-dark-border-secondary rounded-lg disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary transition-colors"
+                          className="px-3 py-1.5 text-xs font-medium border border-border rounded-lg disabled:opacity-40 hover:bg-muted transition-colors"
                         >
                           Próxima →
                         </button>
@@ -861,9 +867,9 @@ function Tasks() {
                   </>
                 )}
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            )}
+          </div>
+        </motion.div>
       </Card>
 
       {/* ── Dialog de criação / edição ─────────────────────────────────────── */}

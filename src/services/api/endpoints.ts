@@ -113,6 +113,18 @@ export const ENDPOINTS = {
     uncomplete: (id: string) => `/api/tasks/${id}/uncomplete`,
   },
 
+  // Configurações do usuário (mock-only por ora)
+  settings: {
+    profile: '/api/users/me/profile',
+    username: '/api/users/me/username',
+    notifications: '/api/users/me/notifications',
+    changePassword: '/api/users/me/change-password',
+    logoutOthers: '/api/auth/logout-others',
+    avatar: '/api/users/me/avatar',
+    privacy: '/api/users/me/privacy',
+    data: '/api/users/me/data',
+  },
+
   // Health
   health: '/health',
 } as const;

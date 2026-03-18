@@ -20,11 +20,13 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useApp } from "@/contexts/AppContext";
 import { getIconComponent } from "@/lib/nestIcons";
 import { NestManagerSheet } from "@/components/modals/NestManagerSheet";
+import { SettingsModal } from "@/components/modals/SettingsModal";
 import type { AppUser } from "@/types";
 import {
   AlertTriangle,
@@ -64,10 +66,10 @@ function getNotificationIcon(type: number) {
 }
 
 const NOTIFICATION_ICON_COLOR: Record<number, string> = {
-  0: 'text-blue-500',
-  1: 'text-amber-500',
-  2: 'text-red-500',
-  3: 'text-emerald-500',
+  0: 'text-sky-500',
+  1: 'text-honey-500',
+  2: 'text-terracotta-500',
+  3: 'text-sage-400',
 };
 
 interface Module {
@@ -114,6 +116,8 @@ export function AppSidebar({ user }: AppSidebarProps) {
     clearAllNotifications,
   } = useApp();
   const [manageNestsOpen, setManageNestsOpen] = React.useState(false);
+  const [settingsOpen, setSettingsOpen] = React.useState(false);
+  const { isMobile, setOpenMobile } = useSidebar();
 
   const nests = user?.nests ?? [];
   const activeNest = nests.find(n => n.nestId === activeNestId)
@@ -168,7 +172,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
   };
 
   const handleSettingsClick = () => {
-    console.log("Settings clicked");
+    setSettingsOpen(true);
   };
 
   const [isLoggingOut, setIsLoggingOut] = React.useState(false);
@@ -191,6 +195,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
   return (
     <Sidebar collapsible="icon">
       <NestManagerSheet open={manageNestsOpen} onClose={() => setManageNestsOpen(false)} />
+      <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -201,7 +206,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
                   disabled={nests.length === 0}
                   className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                 >
-                  <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-lg">
+                  <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-gradient-to-br from-terracotta-500 to-honey-400 text-white text-lg">
                     {activeNest?.icon
                       ? React.createElement(getIconComponent(activeNest.icon), { className: 'size-4' })
                       : '🪺'
@@ -246,7 +251,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
                   })}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    className="gap-2 p-2 text-indigo-600 dark:text-indigo-400"
+                    className="gap-2 p-2 text-terracotta-500 dark:text-honey-400"
                     onClick={() => setManageNestsOpen(true)}
                   >
                     <div className="flex size-6 items-center justify-center rounded-sm border">
@@ -275,7 +280,10 @@ export function AppSidebar({ user }: AppSidebarProps) {
                     <SidebarMenuButton
                       isActive={active}
                       tooltip={module.name}
-                      onClick={() => navigate(module.path)}
+                      onClick={() => {
+                        navigate(module.path);
+                        if (isMobile) setOpenMobile(false);
+                      }}
                     >
                       <Icon />
                       <span>{module.name}</span>
@@ -381,7 +389,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
                                 {notification.title}
                               </span>
                               {!notification.isRead && (
-                                <span className="shrink-0 size-1.5 rounded-full bg-blue-500" />
+                                <span className="shrink-0 size-1.5 rounded-full bg-honey-400" />
                               )}
                             </div>
                             <p className="text-xs text-muted-foreground line-clamp-2">{notification.message}</p>
@@ -426,7 +434,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
                 >
                   <Avatar className="h-8 w-8 rounded-lg">
                     <AvatarImage src={avatarSrc ?? currentUser.avatar} alt={currentUser.name} />
-                    <AvatarFallback className="rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
+                    <AvatarFallback className="rounded-lg bg-gradient-to-br from-terracotta-500 to-honey-400 text-white">
                       {currentUser.name
                         .split(" ")
                         .map((n: string) => n[0])
@@ -455,7 +463,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
                   <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                       <Avatar className="h-8 w-8 rounded-lg">
                       <AvatarImage src={avatarSrc ?? currentUser.avatar} alt={currentUser.name} />
-                      <AvatarFallback className="rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
+                      <AvatarFallback className="rounded-lg bg-gradient-to-br from-terracotta-500 to-honey-400 text-white">
                         {currentUser.name
                           .split(" ")
                           .map((n: string) => n[0])

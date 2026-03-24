@@ -78,9 +78,19 @@ export const CreateNestRequestSchema = z.object({
 });
 export type CreateNestRequest = z.infer<typeof CreateNestRequestSchema>;
 
+export const UpdateNestMembersSchema = z.object({
+  userId: UuidSchema,
+  role: z.string(),
+});
+export type UpdateNestMembers = z.infer<typeof UpdateNestMembersSchema>;
+
 export const UpdateNestRequestSchema = z.object({
+  userId: UuidSchema.optional(),
+  nestId: UuidSchema,
   name: z.string().min(1, 'Nome do ninho é obrigatório'),
   description: z.string().optional(),
   icon: z.string().nullable().optional(),
+  isDefault: z.boolean().optional(),
+  members: z.array(UpdateNestMembersSchema).optional(),
 });
 export type UpdateNestRequest = z.infer<typeof UpdateNestRequestSchema>;

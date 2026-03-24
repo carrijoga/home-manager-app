@@ -3,7 +3,7 @@
  * NÃO adicionar rotas que não existam no contrato da API.
  *
  * Rotas sem contrato de API (mock-only):
- *   tasks, shopping, notices, future-items
+ *   future-items
  */
 
 export const ENDPOINTS = {
@@ -30,8 +30,7 @@ export const ENDPOINTS = {
   // Nest (grupo/família)
   nests: {
     create: '/api/nests/create',
-    // TODO: confirmar rota exata quando os endpoints estiverem no contrato da API
-    update: (nestId: string) => `/api/nests/${nestId}`,
+    update: '/api/nests/update',
     delete: (nestId: string) => `/api/nests/${nestId}`,
   },
 

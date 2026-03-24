@@ -6,7 +6,6 @@ import { useApp } from '@/contexts/AppContext';
 import { getIconComponent, CURATED_NEST_ICONS } from '@/lib/nestIcons';
 import {
   CreateNestRequestSchema,
-  UpdateNestRequestSchema,
   type CreateNestRequest,
   type UpdateNestRequest,
 } from '@/schemas';
@@ -50,7 +49,7 @@ export function CreateNestModal({ open, onClose, mode = 'create', nest }: Create
     reset,
     formState: { errors, isSubmitting },
   } = useForm<NestFormValues>({
-    resolver: zodResolver(isEdit ? UpdateNestRequestSchema : CreateNestRequestSchema) as unknown as Resolver<NestFormValues>,
+    resolver: zodResolver(CreateNestRequestSchema) as unknown as Resolver<NestFormValues>,
     defaultValues: {
       name: '',
       description: '',

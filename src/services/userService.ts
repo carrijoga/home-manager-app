@@ -55,16 +55,12 @@ export async function createNest(payload: CreateNestRequest): Promise<void> {
   await httpClient.post<void>(ENDPOINTS.nests.create, payload);
 }
 
-/** Atualiza um ninho existente
- * TODO: confirmar rota e método HTTP quando o endpoint estiver no contrato da API
- */
+/** Atualiza um ninho existente */
 export async function updateNest(nestId: string, payload: UpdateNestRequest): Promise<void> {
-  await httpClient.put<void>(ENDPOINTS.nests.update(nestId), payload);
+  await httpClient.put<void>(ENDPOINTS.nests.update, { ...payload, nestId }, nestId);
 }
 
-/** Remove um ninho
- * TODO: confirmar rota e método HTTP quando o endpoint estiver no contrato da API
- */
+/** Remove um ninho */
 export async function deleteNest(nestId: string): Promise<void> {
-  await httpClient.del(ENDPOINTS.nests.delete(nestId));
+  await httpClient.del(ENDPOINTS.nests.delete(nestId), nestId);
 }

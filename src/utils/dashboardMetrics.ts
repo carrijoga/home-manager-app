@@ -65,7 +65,7 @@ export function getPreviousMonth(): string {
 export function groupExpensesByMonth(expenses: any[]): Record<string, number> {
     const grouped: Record<string, number> = {};
 
-    expenses.forEach(expense => {
+    (expenses ?? []).forEach(expense => {
         const month = expense.date.substring(0, 7); // Extrai 'YYYY-MM' de 'YYYY-MM-DD'
         grouped[month] = (grouped[month] || 0) + expense.value;
     });

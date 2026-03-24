@@ -120,7 +120,7 @@ async function parseResponse<T>(response: Response): Promise<T> {
 
 // ── Nest header helper ───────────────────────────────────────────────────────
 
-const NEST_HEADER_EXCLUDED_PREFIXES = ['/api/auth', '/api/users', '/api/admin'];
+const NEST_HEADER_EXCLUDED_PREFIXES = ['/api/auth', '/api/users', '/api/admin', '/api/nests/create'];
 
 function shouldIncludeNestHeader(path: string): boolean {
   return !NEST_HEADER_EXCLUDED_PREFIXES.some(prefix => path.startsWith(prefix));

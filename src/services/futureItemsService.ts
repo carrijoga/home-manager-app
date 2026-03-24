@@ -13,7 +13,7 @@ export async function getAllFutureItems(): Promise<FutureItem[]> {
   }
 
   // TODO: API not available yet
-  throw new Error('[futureItemsService] API mode not implemented.');
+  return [];
 }
 
 export async function addFutureItem(item: Omit<FutureItem, 'id'>): Promise<FutureItem> {
@@ -35,7 +35,7 @@ export async function addFutureItem(item: Omit<FutureItem, 'id'>): Promise<Futur
   }
 
   // TODO: API not available yet
-  throw new Error('[futureItemsService] API mode not implemented.');
+  return newItem;
 }
 
 export async function updateFutureItem(id: string, updates: Partial<FutureItem>): Promise<FutureItem> {
@@ -46,7 +46,7 @@ export async function updateFutureItem(id: string, updates: Partial<FutureItem>)
   }
 
   // TODO: API not available yet
-  throw new Error('[futureItemsService] API mode not implemented.');
+  return { id, ...updates } as FutureItem;
 }
 
 export async function deleteFutureItem(_id: string): Promise<void> {
@@ -55,7 +55,6 @@ export async function deleteFutureItem(_id: string): Promise<void> {
   }
 
   // TODO: API not available yet
-  throw new Error('[futureItemsService] API mode not implemented.');
 }
 
 export async function getFutureItemsByPriority(priority: Priority): Promise<FutureItem[]> {
@@ -67,7 +66,7 @@ export async function getFutureItemsByPriority(priority: Priority): Promise<Futu
   }
 
   // TODO: API not available yet
-  throw new Error('[futureItemsService] API mode not implemented.');
+  return [];
 }
 
 export function groupItemsByPriority(items: FutureItem[]): Record<Priority, FutureItem[]> {

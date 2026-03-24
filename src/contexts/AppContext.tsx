@@ -469,7 +469,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // ========== LOAD INITIAL DATA ==========
   useEffect(() => {
     if (!user) return;
-    if (hasLoaded.current) return;
+    if (!activeNestId) return;
     hasLoaded.current = true;
 
     const loadData = async () => {
@@ -477,11 +477,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setLoading(true);
         const [noticesResult, tasksResult, shoppingListsResult, shoppingCatsResult, expensesResult, futureResult] =
           await Promise.allSettled([
-            noticeService.getActiveNotices(activeNestId ?? undefined),
-            taskService.getActiveTasks(activeNestId ?? undefined),
-            shoppingService.getShoppingLists(undefined, activeNestId ?? undefined),
-            shoppingService.getShoppingCategories(activeNestId ?? undefined),
-            financialService.getAllExpenses(),
+            noticeService.getActiveNotices(activeNestId),
+            taskService.getActiveTasks(activeNestId),
+            shoppingService.getShoppingLists(undefined, activeNestId),
+            shoppingService.getShoppingCategories(activeNestId),
+            financialService.listTransactions(undefined, activeNestId),
             futureItemsService.getAllFutureItems(),
           ]);
 
@@ -497,7 +497,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         if (shoppingCatsResult.status === 'fulfilled') setShoppingCategories(shoppingCatsResult.value);
         else console.error('Erro ao carregar categorias de compras:', shoppingCatsResult.reason);
 
-        if (expensesResult.status === 'fulfilled') setExpenses(expensesResult.value);
+        if (expensesResult.status === 'fulfilled') setExpenses(
+          expensesResult.value.items.map(t => ({
+            id: t.financialTransactionId,
+            description: t.description,
+            value: t.value,
+            date: t.transactionDate?.substring(0, 10) ?? '',
+            category: t.categoryName ?? '',
+          }))
+        );
         else console.error('Erro ao carregar gastos:', expensesResult.reason);
 
         if (futureResult.status === 'fulfilled') setFutureItems(futureResult.value);
@@ -508,7 +516,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     };
 
     loadData();
-  }, [user]);
+  }, [user, activeNestId]);
 
   // ========== MEMOIZED VALUE ==========
   const value = useMemo<AppContextValue>(() => ({

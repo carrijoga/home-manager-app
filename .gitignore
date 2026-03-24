@@ -42,3 +42,6 @@ migrations/
 CLAUDE.md
 .claude
 .playwright-mcp
+
+v1.json
+api.json

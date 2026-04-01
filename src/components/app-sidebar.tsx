@@ -1,6 +1,9 @@
 import { cn } from "@/lib/utils";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,87 +18,69 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { useTheme } from "@/contexts/ThemeContext";
 import { useApp } from "@/contexts/AppContext";
 import { getIconComponent } from "@/lib/nestIcons";
 import { NestManagerSheet } from "@/components/modals/NestManagerSheet";
 import { SettingsModal } from "@/components/modals/SettingsModal";
 import type { AppUser } from "@/types";
 import {
-  AlertTriangle,
-  Bell,
   Calendar,
   Check,
-  CheckCircle2,
   CheckSquare,
+  ChevronRight,
   ChevronsUpDown,
   DollarSign,
+  HelpCircle,
   Home,
-  Info,
-  LogOut,
-  Moon,
-  Package,
-  Settings,
+  LayoutGrid,
+  RefreshCw,
+  Send,
   Settings2,
   ShoppingCart,
-  Sun,
-  User as UserIcon,
-  X,
-  XCircle,
+  TrendingUp,
 } from "lucide-react";
+import { motion } from "framer-motion";
 import * as React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { toAvatarSrc } from "@/lib/avatarUtils";
-import * as authService from "@/services/authService";
-
-// Notification type icon + color helpers
-function getNotificationIcon(type: number) {
-  switch (type) {
-    case 1: return AlertTriangle; // Warning
-    case 2: return XCircle;       // Error
-    case 3: return CheckCircle2;  // Success
-    default: return Info;         // Info (0) + fallback
-  }
-}
-
-const NOTIFICATION_ICON_COLOR: Record<number, string> = {
-  0: 'text-sky-500',
-  1: 'text-honey-500',
-  2: 'text-terracotta-500',
-  3: 'text-sage-400',
-};
 
 interface Module {
   id: string;
   name: string;
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   path: string;
 }
 
-const MODULES: Module[] = [
-  { id: "dashboard", name: "Dashboard", icon: Home, path: "/dashboard" },
+interface FinancasSubItem {
+  id: string;
+  name: string;
+  icon: React.ComponentType<{ className?: string }>;
+  path: string;
+}
+
+const FINANCAS_SUB_ITEMS: FinancasSubItem[] = [
+  { id: "financial-dashboard", name: "Dashboard", icon: LayoutGrid, path: "/financial" },
+  { id: "financial-lancamentos", name: "Lançamentos", icon: DollarSign, path: "/financial" },
+  { id: "financial-metas", name: "Metas", icon: TrendingUp, path: "/financial" },
+  { id: "financial-recorrencias", name: "Recorrências", icon: RefreshCw, path: "/financial" },
+];
+
+const TOP_MODULES: Module[] = [
+  { id: "dashboard", name: "Início", icon: Home, path: "/dashboard" },
   { id: "tasks", name: "Tarefas", icon: CheckSquare, path: "/tasks" },
-  {
-    id: "shopping",
-    name: "Lista de Compras",
-    icon: ShoppingCart,
-    path: "/shopping",
-  },
-  { id: "financial", name: "Financeiro", icon: DollarSign, path: "/financial" },
-  {
-    id: "future",
-    name: "Compras Futuras",
-    icon: Package,
-    path: "/future",
-  },
-  { id: "calendar", name: "Calendário", icon: Calendar, path: "/calendar" },
+  { id: "shopping", name: "Lista de Compras", icon: ShoppingCart, path: "/shopping" },
+];
+
+const BOTTOM_MODULES: Module[] = [
+  { id: "calendar", name: "Agenda", icon: Calendar, path: "/calendar" },
 ];
 
 interface AppSidebarProps {
@@ -105,19 +90,18 @@ interface AppSidebarProps {
 export function AppSidebar({ user }: AppSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { theme, setTheme } = useTheme();
-  const {
-    activeNestId,
-    setActiveNestId,
-    notifications,
-    markAsRead,
-    markAllAsRead,
-    clearNotification,
-    clearAllNotifications,
-  } = useApp();
+  const { activeNestId, setActiveNestId } = useApp();
   const [manageNestsOpen, setManageNestsOpen] = React.useState(false);
   const [settingsOpen, setSettingsOpen] = React.useState(false);
-  const { isMobile, setOpenMobile } = useSidebar();
+  const { isMobile, setOpenMobile, state: sidebarState } = useSidebar();
+
+  const isFinancasActive = location.pathname === "/financial";
+  const [financasOpen, setFinancasOpen] = React.useState(isFinancasActive);
+
+  // Auto-expand Finanças when navigating to /financial
+  React.useEffect(() => {
+    if (isFinancasActive) setFinancasOpen(true);
+  }, [isFinancasActive]);
 
   const nests = user?.nests ?? [];
   const activeNest = nests.find(n => n.nestId === activeNestId)
@@ -125,107 +109,195 @@ export function AppSidebar({ user }: AppSidebarProps) {
     ?? nests[0]
     ?? null;
 
-  // Usuário padrão para desenvolvimento
-  const defaultUser: AppUser = {
-    id: "1",
-    name: "Usuário",
-    callmeby: "Você",
-    email: "usuario@ninho.app",
-  };
-
-  const currentUser = user || defaultUser;
-
-  const [avatarSrc, setAvatarSrc] = React.useState<string | undefined>(undefined);
-
-  React.useEffect(() => {
-    let mounted = true;
-    let createdObjectUrl: string | undefined;
-
-    (async () => {
-      const src = await toAvatarSrc(currentUser.avatar, "image/png");
-      if (!mounted) {
-        if (src && src.startsWith("blob:")) URL.revokeObjectURL(src);
-        return;
-      }
-      if (src && src.startsWith("blob:")) createdObjectUrl = src;
-      setAvatarSrc(src);
-    })();
-
-    return () => {
-      mounted = false;
-      if (createdObjectUrl) URL.revokeObjectURL(createdObjectUrl);
-    };
-  }, [currentUser.avatar]);
-
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
-
-  const handleNinhoChange = (nestId: string) => {
-    setActiveNestId(nestId);
-  };
-
-  const handleThemeToggle = () => {
-    setTheme(theme === "light" ? "dark" : "light");
-  };
-
-  const handleProfileClick = () => {
-    console.log("Profile clicked");
-  };
-
-  const handleSettingsClick = () => {
-    setSettingsOpen(true);
-  };
-
-  const [isLoggingOut, setIsLoggingOut] = React.useState(false);
-  const handleLogoutClick = async () => {
-    setIsLoggingOut(true);
-    try {
-      await authService.logout();
-      // Limpar estado do usuário, se houver (opcional: useApp()?.setUser(null))
-      navigate("/login");
-    } catch (error) {
-      // Exibir erro (opcional: toast)
-      console.error("Erro ao sair:", error);
-    } finally {
-      setIsLoggingOut(false);
-    }
-  };
-
   const isActive = (path: string) => location.pathname === path;
+
+  const handleNavClick = (path: string) => {
+    navigate(path);
+    if (isMobile) setOpenMobile(false);
+  };
+
+  const isCollapsed = sidebarState === "collapsed";
+
+  const renderNavItem = (module: Module) => {
+    const Icon = module.icon;
+    const active = isActive(module.path);
+    return (
+      <SidebarMenuItem key={module.id} className="relative">
+        {active && (
+          <motion.div
+            layoutId="sidebar-active-pill"
+            className="absolute inset-0 rounded-[24px] bg-background"
+            transition={{ type: "spring", stiffness: 380, damping: 38 }}
+            style={{ zIndex: 0 }}
+          />
+        )}
+        <SidebarMenuButton
+          isActive={active}
+          tooltip={module.name}
+          onClick={() => handleNavClick(module.path)}
+          className={cn(
+            "relative rounded-[24px] px-4 py-3 text-base transition-colors !gap-3",
+            active
+              ? "!bg-transparent !text-primary font-semibold"
+              : "font-normal text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+          )}
+          style={{ zIndex: 1 }}
+        >
+          <Icon className="size-[18px]" />
+          <span>{module.name}</span>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    );
+  };
 
   return (
     <Sidebar collapsible="icon">
       <NestManagerSheet open={manageNestsOpen} onClose={() => setManageNestsOpen(false)} />
       <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
-      <SidebarHeader>
+
+      {/* Header — App Branding */}
+      <SidebarHeader className="pb-10">
+        {isCollapsed ? (
+          <div className="flex items-center justify-center px-2">
+            <div className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-terracotta-500 to-honey-400 text-white text-base shrink-0">
+              🪺
+            </div>
+          </div>
+        ) : (
+          <div className="px-4 flex items-center gap-3">
+            <div className="flex size-9 items-center justify-center rounded-lg bg-gradient-to-br from-terracotta-500 to-honey-400 text-white text-lg shrink-0">
+              🪺
+            </div>
+            <div className="flex flex-col gap-0">
+              <span className="font-editorial font-bold text-xl tracking-tight text-primary leading-6">Ninho</span>
+              <span className="text-[10px] font-normal tracking-[0.5px] text-sidebar-foreground/60">Seu lar, organizado</span>
+            </div>
+          </div>
+        )}
+      </SidebarHeader>
+
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu className="gap-2">
+              {/* Top modules: Início, Tarefas, Lista de Compras */}
+              {TOP_MODULES.map(renderNavItem)}
+
+              {/* Finanças — collapsible group */}
+              <SidebarMenuItem className="relative">
+                {isFinancasActive && (
+                  <motion.div
+                    layoutId="sidebar-active-pill"
+                    className="absolute inset-0 rounded-[24px] bg-background"
+                    transition={{ type: "spring", stiffness: 380, damping: 38 }}
+                    style={{ zIndex: 0 }}
+                  />
+                )}
+                <Collapsible open={financasOpen} onOpenChange={setFinancasOpen}>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton
+                      isActive={isFinancasActive}
+                      tooltip="Finanças"
+                      className={cn(
+                        "relative rounded-[24px] px-4 py-3 text-base transition-colors !gap-3",
+                        isFinancasActive
+                          ? "!bg-transparent !text-primary font-semibold"
+                          : "font-normal text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                      )}
+                      style={{ zIndex: 1 }}
+                    >
+                      <DollarSign className="size-[18px]" />
+                      <span>Finanças</span>
+                      <motion.div
+                        className="ml-auto"
+                        animate={{ rotate: financasOpen ? 90 : 0 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <ChevronRight className="size-4" />
+                      </motion.div>
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      {FINANCAS_SUB_ITEMS.map((item) => {
+                        const SubIcon = item.icon;
+                        return (
+                          <SidebarMenuSubItem key={item.id}>
+                            <SidebarMenuSubButton
+                              onClick={() => handleNavClick(item.path)}
+                              isActive={isFinancasActive}
+                            >
+                              <SubIcon className="size-3.5" />
+                              <span>{item.name}</span>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        );
+                      })}
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </Collapsible>
+              </SidebarMenuItem>
+
+              {/* Bottom modules: Agenda */}
+              {BOTTOM_MODULES.map(renderNavItem)}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+
+      <SidebarFooter>
         <SidebarMenu>
+          {/* Support */}
           <SidebarMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuButton
-                  size="lg"
-                  disabled={nests.length === 0}
-                  className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-                >
-                  <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-gradient-to-br from-terracotta-500 to-honey-400 text-white text-lg">
-                    {activeNest?.icon
-                      ? React.createElement(getIconComponent(activeNest.icon), { className: 'size-4' })
-                      : '🪺'
-                    }
-                  </div>
-                  <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">Ninho</span>
-                    <span className="truncate text-xs text-muted-foreground">
-                      {activeNest?.name ?? 'Nenhum ninho'}
-                    </span>
-                  </div>
-                  {nests.length > 0 && <ChevronsUpDown className="ml-auto" />}
-                </SidebarMenuButton>
-              </DropdownMenuTrigger>
-              {nests.length > 0 && (
+            <SidebarMenuButton
+              tooltip="Suporte"
+              className="rounded-[24px] px-4 py-3 text-base font-normal text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground !gap-3"
+            >
+              <HelpCircle className="size-[18px]" />
+              <span>Suporte</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+
+          {/* Feedback */}
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              tooltip="Feedback"
+              className="rounded-[24px] px-4 py-3 text-base font-normal text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground !gap-3"
+            >
+              <Send className="size-[18px]" />
+              <span>Feedback</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+
+          {/* Divider */}
+          <div className="my-1 h-px bg-sidebar-border mx-4" />
+
+          {/* Nest switcher */}
+          {nests.length > 0 && (
+            <SidebarMenuItem>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <SidebarMenuButton
+                    size="lg"
+                    className="rounded-[24px] bg-sidebar-background shadow-sm data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                  >
+                    <div className="flex aspect-square size-8 items-center justify-center rounded-full bg-secondary text-secondary-foreground text-xs font-semibold shrink-0">
+                      {activeNest?.name
+                        ? activeNest.name.split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2)
+                        : '🪺'
+                      }
+                    </div>
+                    <div className="grid flex-1 text-left text-sm leading-tight">
+                      <span className="truncate font-semibold text-sidebar-foreground">{activeNest?.name ?? 'Nenhum ninho'}</span>
+                      <span className="truncate text-[10px] tracking-[1px] uppercase text-sidebar-foreground/50">Grupo Familiar</span>
+                    </div>
+                    <ChevronsUpDown className="ml-auto size-4 shrink-0" />
+                  </SidebarMenuButton>
+                </DropdownMenuTrigger>
                 <DropdownMenuContent
                   className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
                   align="start"
-                  side="bottom"
+                  side="top"
                   sideOffset={4}
                 >
                   <DropdownMenuLabel className="text-xs text-muted-foreground">
@@ -236,7 +308,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
                     return (
                       <DropdownMenuItem
                         key={nest.nestId}
-                        onClick={() => handleNinhoChange(nest.nestId)}
+                        onClick={() => setActiveNestId(nest.nestId)}
                         className="gap-2 p-2"
                       >
                         <div className="flex size-6 items-center justify-center rounded-sm border">
@@ -260,257 +332,9 @@ export function AppSidebar({ user }: AppSidebarProps) {
                     Gerenciar ninhos
                   </DropdownMenuItem>
                 </DropdownMenuContent>
-              )}
-            </DropdownMenu>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarHeader>
-
-      <SidebarContent>
-        {/* Menu Principal */}
-        <SidebarGroup>
-          <SidebarGroupLabel>Menu</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {MODULES.map((module) => {
-                const Icon = module.icon;
-                const active = isActive(module.path);
-                return (
-                  <SidebarMenuItem key={module.id}>
-                    <SidebarMenuButton
-                      isActive={active}
-                      tooltip={module.name}
-                      onClick={() => {
-                        navigate(module.path);
-                        if (isMobile) setOpenMobile(false);
-                      }}
-                    >
-                      <Icon />
-                      <span>{module.name}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-
-      <SidebarFooter>
-        <SidebarMenu>
-          {/* Notificações */}
-          <SidebarMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuButton
-                  size="lg"
-                  className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-                >
-                  <div className="relative">
-                    <Bell className="size-4" />
-                    {unreadCount > 0 && (
-                      <Badge
-                        variant="destructive"
-                        className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-[10px]"
-                      >
-                        {unreadCount}
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">Notificações</span>
-                    <span className="truncate text-xs text-muted-foreground">
-                      {unreadCount > 0 ? `${unreadCount} não lidas` : 'Nenhuma nova'}
-                    </span>
-                  </div>
-                </SidebarMenuButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                className="w-80 rounded-lg p-0"
-                side="bottom"
-                align="end"
-                sideOffset={4}
-              >
-                {/* Header */}
-                <div className="flex items-center justify-between px-3 py-2 border-b">
-                  <span className="text-sm font-semibold">Notificações</span>
-                  {notifications.length > 0 && (
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={markAllAsRead}
-                        className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        Marcar todas
-                      </button>
-                      <span className="text-muted-foreground/40 text-xs">·</span>
-                      <button
-                        type="button"
-                        onClick={clearAllNotifications}
-                        className="text-xs text-muted-foreground hover:text-destructive transition-colors"
-                      >
-                        Limpar tudo
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {/* List */}
-                <div className="max-h-72 overflow-y-auto">
-                  {notifications.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-8 gap-2 text-muted-foreground">
-                      <Bell className="size-8 opacity-30" />
-                      <span className="text-sm">Nenhuma notificação</span>
-                    </div>
-                  ) : (
-                    notifications.map((notification) => {
-                      const Icon = getNotificationIcon(notification.type);
-                      const iconColor = NOTIFICATION_ICON_COLOR[notification.type] ?? 'text-blue-500';
-                      return (
-                        <div
-                          key={notification.notificationId}
-                          role="button"
-                          tabIndex={0}
-                          onClick={() => markAsRead(notification.notificationId)}
-                          onKeyDown={(e) => e.key === 'Enter' && markAsRead(notification.notificationId)}
-                          className={cn(
-                            "group flex items-start gap-3 px-3 py-2.5 cursor-pointer",
-                            "hover:bg-muted/60 transition-colors border-b last:border-0",
-                            !notification.isRead && "bg-muted/30"
-                          )}
-                        >
-                          <Icon className={cn("size-4 mt-0.5 shrink-0", iconColor)} />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5">
-                              <span className={cn(
-                                "text-sm truncate",
-                                !notification.isRead && "font-semibold"
-                              )}>
-                                {notification.title}
-                              </span>
-                              {!notification.isRead && (
-                                <span className="shrink-0 size-1.5 rounded-full bg-honey-400" />
-                              )}
-                            </div>
-                            <p className="text-xs text-muted-foreground line-clamp-2">{notification.message}</p>
-                          </div>
-                          <button
-                            type="button"
-                            aria-label="Remover notificação"
-                            onClick={(e) => { e.stopPropagation(); clearNotification(notification.notificationId); }}
-                            className="shrink-0 rounded p-0.5 opacity-0 group-hover:opacity-100 hover:bg-muted transition-all"
-                          >
-                            <X className="size-3" />
-                          </button>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-
-                {/* Footer */}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  className="gap-2 text-muted-foreground"
-                  onClick={() => {
-                    // TODO: navigate to notification settings or open preferences modal
-                    handleSettingsClick();
-                  }}
-                >
-                  <Settings className="size-4" />
-                  Configurar notificações
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </SidebarMenuItem>
-
-          {/* Menu do Usuário */}
-          <SidebarMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuButton
-                  size="lg"
-                  className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-                >
-                  <Avatar className="h-8 w-8 rounded-lg">
-                    <AvatarImage src={avatarSrc ?? currentUser.avatar} alt={currentUser.name} />
-                    <AvatarFallback className="rounded-lg bg-gradient-to-br from-terracotta-500 to-honey-400 text-white">
-                      {currentUser.name
-                        .split(" ")
-                        .map((n: string) => n[0])
-                        .join("")
-                        .toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">
-                      {currentUser.name}
-                    </span>
-                    <span className="truncate text-xs text-muted-foreground">
-                      {currentUser.email}
-                    </span>
-                  </div>
-                  <ChevronsUpDown className="ml-auto size-4" />
-                </SidebarMenuButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-                side="bottom"
-                align="end"
-                sideOffset={4}
-              >
-                <DropdownMenuLabel className="p-0 font-normal">
-                  <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                      <Avatar className="h-8 w-8 rounded-lg">
-                      <AvatarImage src={avatarSrc ?? currentUser.avatar} alt={currentUser.name} />
-                      <AvatarFallback className="rounded-lg bg-gradient-to-br from-terracotta-500 to-honey-400 text-white">
-                        {currentUser.name
-                          .split(" ")
-                          .map((n: string) => n[0])
-                          .join("")
-                          .toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="grid flex-1 text-left text-sm leading-tight">
-                      <span className="truncate font-semibold">
-                        {currentUser.name}
-                      </span>
-                      <span className="truncate text-xs text-muted-foreground">
-                        {currentUser.email}
-                      </span>
-                    </div>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleProfileClick}>
-                  <UserIcon />
-                  Perfil
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleSettingsClick}>
-                  <Settings />
-                  Configurações
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleThemeToggle}>
-                  {theme === "light" ? <Moon /> : <Sun />}
-                  {theme === "light" ? "Modo Escuro" : "Modo Claro"}
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={isLoggingOut ? undefined : handleLogoutClick} disabled={isLoggingOut} className={isLoggingOut ? "opacity-60 pointer-events-none" : ""}>
-                  {isLoggingOut ? (
-                    <>
-                      <LogOut className="animate-spin mr-1" />
-                      Saindo...
-                    </>
-                  ) : (
-                    <>
-                      <LogOut />
-                      Sair
-                    </>
-                  )}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </SidebarMenuItem>
+              </DropdownMenu>
+            </SidebarMenuItem>
+          )}
         </SidebarMenu>
       </SidebarFooter>
     </Sidebar>

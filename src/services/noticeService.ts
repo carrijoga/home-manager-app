@@ -4,6 +4,7 @@
  */
 
 import type { Notice, PaginatedResponse } from '@/types';
+import { ApiPriority } from '@/types';
 import type { CreateNoticeRequest, UpdateNoticeRequest } from '@/schemas/notices';
 import { NoticeResponseSchema, NoticeHistoryResponseSchema } from '@/schemas/notices';
 import { mockNotices } from '../mocks/data';
@@ -14,10 +15,27 @@ import { DATA_MODE } from './api/config';
 // ── Mappers ───────────────────────────────────────────────────────────────────
 
 function apiToNotice(raw: unknown): Notice {
+  const normalizeReactions = (value: unknown): Notice['reactions'] => {
+    if (!Array.isArray(value)) return undefined;
+    return value
+      .map((r) => {
+        const rec = r as Record<string, unknown>;
+        const emoji = typeof rec.emoji === 'string' ? rec.emoji : '';
+        const count = Number(rec.count ?? 0);
+        if (!emoji || Number.isNaN(count)) return null;
+        return { emoji, count };
+      })
+      .filter((r): r is { emoji: string; count: number } => r !== null);
+  };
+
   const parsed = NoticeResponseSchema.safeParse(raw);
   if (parsed.success) {
     const r = raw as Record<string, unknown>;
-    return { ...parsed.data as Notice, color: (r.color as string) ?? undefined };
+    return {
+      ...parsed.data as Notice,
+      color: (r.color as string) ?? undefined,
+      reactions: normalizeReactions(r.reactions),
+    };
   }
   // fallback permissivo
   const r = raw as Record<string, unknown>;
@@ -26,11 +44,13 @@ function apiToNotice(raw: unknown): Notice {
     message: String(r.message ?? ''),
     date: String(r.date ?? ''),
     isPinned: Boolean(r.isPinned ?? false),
+    priority: (r.priority as ApiPriority) ?? ApiPriority.Baixa,
     expiresAt: (r.expiresAt as string) ?? null,
     isActive: Boolean(r.isActive ?? true),
     createdBy: String(r.createdBy ?? ''),
     createdAt: String(r.createdAt ?? ''),
     color: (r.color as string) ?? undefined,
+    reactions: normalizeReactions(r.reactions),
   };
 }
 
@@ -61,6 +81,7 @@ export async function createNotice(payload: CreateNoticeRequest, nestId?: string
       message: payload.message,
       date: payload.date ?? now,
       isPinned: false,
+      priority: ApiPriority.Baixa,
       expiresAt: payload.expiresAt ?? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
       isActive: true,
       createdBy: 'user-mock-0001',
@@ -76,7 +97,7 @@ export async function createNotice(payload: CreateNoticeRequest, nestId?: string
   const data = await httpClient.get<unknown>(ENDPOINTS.notices.list, nestId);
   const list = Array.isArray(data) ? data : [];
   const created = list.find((n: unknown) => (n as Record<string, unknown>).noticeId === id);
-  return created ? apiToNotice(created) : { noticeId: id, message: payload.message, date: payload.date ?? new Date().toISOString(), isPinned: false, expiresAt: payload.expiresAt ?? null, isActive: true, createdBy: '', createdAt: new Date().toISOString() };
+  return created ? apiToNotice(created) : { noticeId: id, message: payload.message, date: payload.date ?? new Date().toISOString(), isPinned: false, priority: ApiPriority.Baixa, expiresAt: payload.expiresAt ?? null, isActive: true, createdBy: '', createdAt: new Date().toISOString() };
 }
 
 export async function updateNotice(id: string, payload: UpdateNoticeRequest, nestId?: string): Promise<void> {

@@ -9,6 +9,15 @@ import { ApiCategory, ApiPriority, FutureItemStatus, Priority } from '@/types';
 
 const MOCK_USER_ID = 'user-mock-0001';
 
+export const mockWeather = {
+  city: 'São Paulo',
+  temperature: 24,
+  description: 'Parcialmente nublado',
+  source: 'manual',
+  conditionCode: 'partly-cloudy',
+  observedAt: null,
+} as const;
+
 // ── Notificações ─────────────────────────────────────────────────────────────
 
 export const mockNotifications = [
@@ -59,42 +68,57 @@ export const mockNotices: Notice[] = [
     message: 'Reunião de condomínio sexta-feira às 19h. Favor confirmar presença!',
     date: new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString(),
     isPinned: true,
+    priority: ApiPriority.Urgente,
     expiresAt: null,
     isActive: true,
     createdBy: MOCK_USER_ID,
     createdAt: new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString(),
     authorName: 'João',
     color: 'yellow',
+    reactions: [
+      { emoji: '👍', count: 3 },
+      { emoji: '❤️', count: 1 },
+    ],
   },
   {
     noticeId: 'notice-mock-0002',
     message: 'Encanador virá amanhã para verificar o chuveiro. Liberar acesso ao banheiro.',
     date: new Date(now.getTime() - 1 * 60 * 60 * 1000).toISOString(),
     isPinned: false,
+    priority: ApiPriority.Alta,
     expiresAt: in24h,
     isActive: true,
     createdBy: 'user-mock-0002',
     createdAt: new Date(now.getTime() - 1 * 60 * 60 * 1000).toISOString(),
     authorName: 'Maria',
     color: 'pink',
+    reactions: [
+      { emoji: '👏', count: 2 },
+      { emoji: '❤️', count: 1 },
+    ],
   },
   {
     noticeId: 'notice-mock-0003',
     message: 'Pagar conta de água até dia 15. Boleto no armário da cozinha.',
     date: new Date(now.getTime() - 30 * 60 * 1000).toISOString(),
     isPinned: false,
+    priority: ApiPriority.Media,
     expiresAt: in12h,
     isActive: true,
     createdBy: 'user-mock-0003',
     createdAt: new Date(now.getTime() - 30 * 60 * 1000).toISOString(),
     authorName: 'Pedro',
     color: 'green',
+    reactions: [
+      { emoji: '✅', count: 4 },
+    ],
   },
   {
     noticeId: 'notice-mock-0004',
     message: 'Não esquecer de comprar detergente e sabão em pó na próxima saída.',
     date: now.toISOString(),
     isPinned: false,
+    priority: ApiPriority.Baixa,
     expiresAt: in24h,
     isActive: true,
     createdBy: MOCK_USER_ID,
@@ -108,6 +132,7 @@ export const mockNotices: Notice[] = [
     message: 'Conta de luz paga com sucesso! Vencimento era dia 10.',
     date: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString(),
     isPinned: false,
+    priority: ApiPriority.Baixa,
     expiresAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(),
     isActive: false,
     createdBy: 'user-mock-0001',
@@ -120,6 +145,7 @@ export const mockNotices: Notice[] = [
     message: 'Limpeza geral da casa foi concluída! Ótimo trabalho equipe! 🎉',
     date: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
     isPinned: false,
+    priority: ApiPriority.Baixa,
     expiresAt: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000).toISOString(),
     isActive: false,
     createdBy: 'user-mock-0002',
@@ -132,6 +158,7 @@ export const mockNotices: Notice[] = [
     message: 'Manutenção do portão agendada para semana passada foi realizada.',
     date: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(),
     isPinned: false,
+    priority: ApiPriority.Baixa,
     expiresAt: new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000).toISOString(),
     isActive: false,
     createdBy: 'user-mock-0003',
@@ -301,15 +328,29 @@ export const mockShoppingCategories: AppShoppingCategory[] = [
 
 // ── Lista de compras ──────────────────────────────────────────────────────────
 
+const toIsoDate = (date: Date): string => date.toISOString().split('T')[0];
+const toIsoDateTimeDaysAgo = (daysAgo: number, hour = 10): string => {
+  const date = new Date(now);
+  date.setDate(now.getDate() - daysAgo);
+  date.setHours(hour, 0, 0, 0);
+  return date.toISOString();
+};
+const getMonthStartIso = (monthsAgo: number): string =>
+  new Date(now.getFullYear(), now.getMonth() - monthsAgo, 1).toISOString();
+const getMonthLabel = (monthsAgo: number): string =>
+  new Intl.DateTimeFormat('pt-BR', { month: 'long' }).format(new Date(now.getFullYear(), now.getMonth() - monthsAgo, 1));
+const getDateInMonth = (monthsAgo: number, day: number): string =>
+  toIsoDate(new Date(now.getFullYear(), now.getMonth() - monthsAgo, day));
+
 const mockShoppingItemsWeek1: AppShoppingItem[] = [
-  { shoppingItemId: 'item-0001', shoppingListId: 'list-0001', name: 'Arroz',          quantity: 5,  unitType: 1, shoppingCategoryId: 'cat-0001-0000-0000-000000000001', categoryName: 'Alimentos', isPurchased: true,  price: 32,   estimatedPrice: 30,  purchasedAt: '2026-03-05T10:00:00Z', notes: null },
-  { shoppingItemId: 'item-0002', shoppingListId: 'list-0001', name: 'Feijão',         quantity: 2,  unitType: 1, shoppingCategoryId: 'cat-0001-0000-0000-000000000001', categoryName: 'Alimentos', isPurchased: true,  price: 16,   estimatedPrice: 15,  purchasedAt: '2026-03-05T10:00:00Z', notes: null },
+  { shoppingItemId: 'item-0001', shoppingListId: 'list-0001', name: 'Arroz',          quantity: 5,  unitType: 1, shoppingCategoryId: 'cat-0001-0000-0000-000000000001', categoryName: 'Alimentos', isPurchased: true,  price: 34,   estimatedPrice: 32,  purchasedAt: toIsoDateTimeDaysAgo(26), notes: null },
+  { shoppingItemId: 'item-0002', shoppingListId: 'list-0001', name: 'Feijão',         quantity: 2,  unitType: 1, shoppingCategoryId: 'cat-0001-0000-0000-000000000001', categoryName: 'Alimentos', isPurchased: true,  price: 19,   estimatedPrice: 18,  purchasedAt: toIsoDateTimeDaysAgo(26), notes: null },
   { shoppingItemId: 'item-0003', shoppingListId: 'list-0001', name: 'Macarrão',       quantity: 3,  unitType: 7, shoppingCategoryId: 'cat-0001-0000-0000-000000000001', categoryName: 'Alimentos', isPurchased: false, price: null, estimatedPrice: 12,  purchasedAt: null,                   notes: null },
-  { shoppingItemId: 'item-0004', shoppingListId: 'list-0001', name: 'Café',           quantity: 500, unitType: 2, shoppingCategoryId: 'cat-0001-0000-0000-000000000001', categoryName: 'Alimentos', isPurchased: false, price: null, estimatedPrice: 22,  purchasedAt: null,                   notes: null },
-  { shoppingItemId: 'item-0005', shoppingListId: 'list-0001', name: 'Detergente',     quantity: 3,  unitType: 0, shoppingCategoryId: 'cat-0001-0000-0000-000000000002', categoryName: 'Limpeza',   isPurchased: true,  price: 9,    estimatedPrice: 9,   purchasedAt: '2026-03-05T10:00:00Z', notes: null },
+  { shoppingItemId: 'item-0004', shoppingListId: 'list-0001', name: 'Café',           quantity: 500, unitType: 2, shoppingCategoryId: 'cat-0001-0000-0000-000000000001', categoryName: 'Alimentos', isPurchased: false, price: null, estimatedPrice: 24,  purchasedAt: null,                   notes: null },
+  { shoppingItemId: 'item-0005', shoppingListId: 'list-0001', name: 'Detergente',     quantity: 3,  unitType: 0, shoppingCategoryId: 'cat-0001-0000-0000-000000000002', categoryName: 'Limpeza',   isPurchased: true,  price: 11,   estimatedPrice: 10,  purchasedAt: toIsoDateTimeDaysAgo(26), notes: null },
   { shoppingItemId: 'item-0006', shoppingListId: 'list-0001', name: 'Sabão em pó',    quantity: 2,  unitType: 0, shoppingCategoryId: 'cat-0001-0000-0000-000000000002', categoryName: 'Limpeza',   isPurchased: false, price: null, estimatedPrice: 25,  purchasedAt: null,                   notes: null },
-  { shoppingItemId: 'item-0007', shoppingListId: 'list-0001', name: 'Papel higiênico', quantity: 12, unitType: 0, shoppingCategoryId: 'cat-0001-0000-0000-000000000002', categoryName: 'Limpeza',   isPurchased: false, price: null, estimatedPrice: 35,  purchasedAt: null,                   notes: null },
-  { shoppingItemId: 'item-0008', shoppingListId: 'list-0001', name: 'Shampoo',        quantity: 1,  unitType: 0, shoppingCategoryId: 'cat-0001-0000-0000-000000000003', categoryName: 'Higiene',   isPurchased: false, price: null, estimatedPrice: 18,  purchasedAt: null,                   notes: 'Sem parabenos' },
+  { shoppingItemId: 'item-0007', shoppingListId: 'list-0001', name: 'Papel higiênico', quantity: 12, unitType: 0, shoppingCategoryId: 'cat-0001-0000-0000-000000000002', categoryName: 'Limpeza',   isPurchased: false, price: null, estimatedPrice: 39,  purchasedAt: null,                   notes: null },
+  { shoppingItemId: 'item-0008', shoppingListId: 'list-0001', name: 'Shampoo',        quantity: 1,  unitType: 0, shoppingCategoryId: 'cat-0001-0000-0000-000000000003', categoryName: 'Higiene',   isPurchased: false, price: null, estimatedPrice: 21,  purchasedAt: null,                   notes: 'Sem sulfato' },
 ] satisfies AppShoppingItem[];
 
 const mockShoppingItemsWeek2: AppShoppingItem[] = [
@@ -322,9 +363,9 @@ const mockShoppingItemsWeek2: AppShoppingItem[] = [
 export const mockShoppingLists: AppShoppingListSummary[] = [
   {
     shoppingListId: 'list-0001',
-    name: 'Semana 1 de Março',
-    monthYear: '2026-03-01T00:00:00Z',
-    notes: 'Compras do início do mês',
+    name: `Fechamento de ${getMonthLabel(1)}`,
+    monthYear: getMonthStartIso(1),
+    notes: 'Lista fechada do mês anterior',
     totalItems: mockShoppingItemsWeek1.length,
     purchasedItems: mockShoppingItemsWeek1.filter(i => i.isPurchased).length,
     totalEstimated: mockShoppingItemsWeek1.reduce((s, i) => s + (i.estimatedPrice ?? 0), 0),
@@ -332,9 +373,9 @@ export const mockShoppingLists: AppShoppingListSummary[] = [
   },
   {
     shoppingListId: 'list-0002',
-    name: 'Semana 2 de Março',
-    monthYear: '2026-03-01T00:00:00Z',
-    notes: null,
+    name: `Planejamento de ${getMonthLabel(0)}`,
+    monthYear: getMonthStartIso(0),
+    notes: 'Reposição da semana atual',
     totalItems: mockShoppingItemsWeek2.length,
     purchasedItems: 0,
     totalEstimated: mockShoppingItemsWeek2.reduce((s, i) => s + (i.estimatedPrice ?? 0), 0),
@@ -345,16 +386,16 @@ export const mockShoppingLists: AppShoppingListSummary[] = [
 export const mockShoppingListDetails: Record<string, AppShoppingList> = {
   'list-0001': {
     shoppingListId: 'list-0001',
-    name: 'Semana 1 de Março',
-    monthYear: '2026-03-01T00:00:00Z',
-    notes: 'Compras do início do mês',
+    name: `Fechamento de ${getMonthLabel(1)}`,
+    monthYear: getMonthStartIso(1),
+    notes: 'Lista fechada do mês anterior',
     items: mockShoppingItemsWeek1,
   } satisfies AppShoppingList,
   'list-0002': {
     shoppingListId: 'list-0002',
-    name: 'Semana 2 de Março',
-    monthYear: '2026-03-01T00:00:00Z',
-    notes: null,
+    name: `Planejamento de ${getMonthLabel(0)}`,
+    monthYear: getMonthStartIso(0),
+    notes: 'Reposição da semana atual',
     items: mockShoppingItemsWeek2,
   } satisfies AppShoppingList,
 };
@@ -369,46 +410,189 @@ export interface MockExpense {
   category: string;
 }
 
-export const mockExpenses: MockExpense[] = [
-  // Outubro 2025
-  { id: '1', description: 'Conserto do chuveiro', value: 150, date: '2025-10-25', category: 'Manutenção' },
-  { id: '2', description: 'Micro-ondas novo', value: 450, date: '2025-10-20', category: 'Novo item' },
-  { id: '3', description: 'Aluguel', value: 1500, date: '2025-10-05', category: 'Fixo' },
-  { id: '4', description: 'Conta de luz', value: 250, date: '2025-10-10', category: 'Fixo' },
-  { id: '5', description: 'Conta de água', value: 80, date: '2025-10-12', category: 'Fixo' },
-  { id: '6', description: 'Internet', value: 120, date: '2025-10-15', category: 'Fixo' },
-  { id: '7', description: 'Compras do mês', value: 800, date: '2025-10-18', category: 'Geral' },
-  // Setembro 2025
-  { id: '8', description: 'Aluguel', value: 1500, date: '2025-09-05', category: 'Fixo' },
-  { id: '9', description: 'Conta de luz', value: 280, date: '2025-09-10', category: 'Fixo' },
-  { id: '10', description: 'Conta de água', value: 75, date: '2025-09-12', category: 'Fixo' },
-  { id: '11', description: 'Internet', value: 120, date: '2025-09-15', category: 'Fixo' },
-  { id: '12', description: 'Compras do mês', value: 650, date: '2025-09-20', category: 'Geral' },
-  // Agosto 2025
-  { id: '13', description: 'Aluguel', value: 1500, date: '2025-08-05', category: 'Fixo' },
-  { id: '14', description: 'Conta de luz', value: 220, date: '2025-08-10', category: 'Fixo' },
-  { id: '15', description: 'Conta de água', value: 85, date: '2025-08-12', category: 'Fixo' },
-  { id: '16', description: 'Internet', value: 120, date: '2025-08-15', category: 'Fixo' },
-  { id: '17', description: 'Compras do mês', value: 700, date: '2025-08-18', category: 'Geral' },
-  // Julho 2025
-  { id: '18', description: 'Aluguel', value: 1500, date: '2025-07-05', category: 'Fixo' },
-  { id: '19', description: 'Conta de luz', value: 300, date: '2025-07-10', category: 'Fixo' },
-  { id: '20', description: 'Conta de água', value: 90, date: '2025-07-12', category: 'Fixo' },
-  { id: '21', description: 'Internet', value: 120, date: '2025-07-15', category: 'Fixo' },
-  { id: '22', description: 'Compras do mês', value: 850, date: '2025-07-18', category: 'Geral' },
-  // Junho 2025
-  { id: '23', description: 'Aluguel', value: 1500, date: '2025-06-05', category: 'Fixo' },
-  { id: '24', description: 'Conta de luz', value: 240, date: '2025-06-10', category: 'Fixo' },
-  { id: '25', description: 'Conta de água', value: 70, date: '2025-06-12', category: 'Fixo' },
-  { id: '26', description: 'Internet', value: 120, date: '2025-06-15', category: 'Fixo' },
-  { id: '27', description: 'Compras do mês', value: 600, date: '2025-06-18', category: 'Geral' },
-  // Maio 2025
-  { id: '28', description: 'Aluguel', value: 1500, date: '2025-05-05', category: 'Fixo' },
-  { id: '29', description: 'Conta de luz', value: 230, date: '2025-05-10', category: 'Fixo' },
-  { id: '30', description: 'Conta de água', value: 80, date: '2025-05-12', category: 'Fixo' },
-  { id: '31', description: 'Internet', value: 120, date: '2025-05-15', category: 'Fixo' },
-  { id: '32', description: 'Compras do mês', value: 750, date: '2025-05-18', category: 'Geral' },
+interface MonthlyExpenseSeed {
+  monthsAgo: number;
+  rent: number;
+  power: number;
+  water: number;
+  internet: number;
+  groceries: number;
+  extras: Array<{
+    description: string;
+    value: number;
+    day: number;
+    category: string;
+  }>;
+}
+
+const monthlyExpenseSeeds: MonthlyExpenseSeed[] = [
+  {
+    monthsAgo: 0,
+    rent: 1850,
+    power: 278,
+    water: 94,
+    internet: 129,
+    groceries: 915,
+    extras: [
+      { description: 'Farmácia', value: 174, day: 23, category: 'Saúde' },
+      { description: 'Gás de cozinha', value: 128, day: 17, category: 'Casa' },
+    ],
+  },
+  {
+    monthsAgo: 1,
+    rent: 1850,
+    power: 301,
+    water: 88,
+    internet: 129,
+    groceries: 972,
+    extras: [
+      { description: 'Conserto da torneira', value: 160, day: 21, category: 'Manutenção' },
+    ],
+  },
+  {
+    monthsAgo: 2,
+    rent: 1800,
+    power: 264,
+    water: 82,
+    internet: 119,
+    groceries: 886,
+    extras: [
+      { description: 'Material escolar', value: 242, day: 10, category: 'Família' },
+    ],
+  },
+  {
+    monthsAgo: 3,
+    rent: 1800,
+    power: 246,
+    water: 79,
+    internet: 119,
+    groceries: 838,
+    extras: [
+      { description: 'Petshop', value: 118, day: 14, category: 'Pet' },
+      { description: 'Manutenção do portão', value: 210, day: 26, category: 'Manutenção' },
+    ],
+  },
+  {
+    monthsAgo: 4,
+    rent: 1750,
+    power: 232,
+    water: 76,
+    internet: 115,
+    groceries: 804,
+    extras: [
+      { description: 'Presente de aniversário', value: 140, day: 8, category: 'Família' },
+    ],
+  },
+  {
+    monthsAgo: 5,
+    rent: 1750,
+    power: 219,
+    water: 73,
+    internet: 115,
+    groceries: 792,
+    extras: [
+      { description: 'Consulta médica', value: 220, day: 19, category: 'Saúde' },
+    ],
+  },
 ];
+
+export const mockExpenses: MockExpense[] = monthlyExpenseSeeds
+  .flatMap(seed => {
+    const fixed: MockExpense[] = [
+      { id: '', description: 'Aluguel', value: seed.rent, date: getDateInMonth(seed.monthsAgo, 5), category: 'Fixo' },
+      { id: '', description: 'Conta de luz', value: seed.power, date: getDateInMonth(seed.monthsAgo, 10), category: 'Fixo' },
+      { id: '', description: 'Conta de água', value: seed.water, date: getDateInMonth(seed.monthsAgo, 12), category: 'Fixo' },
+      { id: '', description: 'Internet', value: seed.internet, date: getDateInMonth(seed.monthsAgo, 15), category: 'Fixo' },
+      { id: '', description: 'Compras do mês', value: seed.groceries, date: getDateInMonth(seed.monthsAgo, 18), category: 'Geral' },
+    ];
+
+    const extras: MockExpense[] = seed.extras.map(extra => ({
+      id: '',
+      description: extra.description,
+      value: extra.value,
+      date: getDateInMonth(seed.monthsAgo, extra.day),
+      category: extra.category,
+    }));
+
+    return [...fixed, ...extras];
+  })
+  .map((expense, index) => ({
+    ...expense,
+    id: String(index + 1),
+  }));
+
+// ── Metas da família (dashboard) ─────────────────────────────────────────────
+
+export const mockGoals = [
+  {
+    id: 'goal-0001',
+    categoryLabel: 'FINANÇAS',
+    title: 'Reserva de emergência',
+    progress: 0.62,
+    remainingLabel: 'Faltam R$ 1.900 para concluir',
+  },
+  {
+    id: 'goal-0002',
+    categoryLabel: 'CASA',
+    title: 'Reforma da cozinha',
+    progress: 0.34,
+    remainingLabel: 'Planejamento e orçamento em andamento',
+  },
+  {
+    id: 'goal-0003',
+    categoryLabel: 'FAMÍLIA',
+    title: 'Viagem de férias',
+    progress: 0.8,
+    remainingLabel: 'Faltam 2 parcelas do pacote',
+  },
+] satisfies Array<{
+  id: string;
+  categoryLabel: string;
+  title: string;
+  progress: number;
+  remainingLabel: string;
+}>;
+
+// ── Eventos da agenda (dashboard) ───────────────────────────────────────────
+
+const toIsoDateTimeInDays = (daysFromNow: number, hour: number, minute = 0): string => {
+  const date = new Date(now);
+  date.setDate(now.getDate() + daysFromNow);
+  date.setHours(hour, minute, 0, 0);
+  return date.toISOString();
+};
+
+export const mockCalendarEvents = [
+  {
+    id: 'event-0001',
+    title: 'Reunião da escola da Laura',
+    startsAt: toIsoDateTimeInDays(0, 19, 30),
+    location: 'Colégio Horizonte',
+  },
+  {
+    id: 'event-0002',
+    title: 'Consulta pediátrica',
+    startsAt: toIsoDateTimeInDays(1, 10, 0),
+    location: 'Clínica Vida',
+  },
+  {
+    id: 'event-0003',
+    title: 'Aniversário da vovó Célia',
+    startsAt: toIsoDateTimeInDays(2, 16, 0),
+    location: 'Casa da vovó',
+  },
+  {
+    id: 'event-0004',
+    title: 'Entrega do gás',
+    startsAt: toIsoDateTimeInDays(4, 9, 0),
+    location: 'Apartamento',
+  },
+] satisfies Array<{
+  id: string;
+  title: string;
+  startsAt: string;
+  location?: string;
+}>;
 
 // ── Itens futuros ─────────────────────────────────────────────────────────────
 

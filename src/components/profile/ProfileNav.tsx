@@ -1,30 +1,28 @@
-import { Database, Globe, Info, MapPin, Palette } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { BellRing, LayoutGrid, Lock, User } from 'lucide-react';
 
-export type SectionId = 'geral' | 'aparencia' | 'localizacao-clima' | 'dados-privacidade' | 'sobre';
+export type ProfileSectionId = 'perfil' | 'conta' | 'seguranca' | 'notificacoes';
 
-export const SECTIONS: { id: SectionId; label: string; icon: React.ElementType }[] = [
-  { id: 'geral', label: 'Geral', icon: Globe },
-  { id: 'aparencia', label: 'Aparência', icon: Palette },
-  { id: 'localizacao-clima', label: 'Localização & Clima', icon: MapPin },
-  { id: 'dados-privacidade', label: 'Dados & Privacidade', icon: Database },
-  { id: 'sobre', label: 'Sobre', icon: Info },
+export const PROFILE_SECTIONS: { id: ProfileSectionId; label: string; icon: React.ElementType }[] = [
+  { id: 'perfil', label: 'Perfil', icon: LayoutGrid },
+  { id: 'conta', label: 'Conta', icon: User },
+  { id: 'seguranca', label: 'Segurança', icon: Lock },
+  { id: 'notificacoes', label: 'Notificações', icon: BellRing },
 ];
 
-interface SettingsNavProps {
-  active: SectionId;
-  onSelect: (id: SectionId) => void;
+interface ProfileNavProps {
+  active: ProfileSectionId;
+  onSelect: (id: ProfileSectionId) => void;
 }
 
-export function SettingsNav({ active, onSelect }: SettingsNavProps) {
+export function ProfileNav({ active, onSelect }: ProfileNavProps) {
   return (
     <>
-      {/* Desktop: vertical sidebar */}
       <nav className="hidden md:flex flex-col w-52 shrink-0 border-r p-3 gap-0.5">
         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 py-2">
-          Configurações
+          Perfil
         </p>
-        {SECTIONS.map(({ id, label, icon: Icon }) => (
+        {PROFILE_SECTIONS.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             type="button"
@@ -42,9 +40,8 @@ export function SettingsNav({ active, onSelect }: SettingsNavProps) {
         ))}
       </nav>
 
-      {/* Mobile: horizontal tab strip */}
       <nav className="flex md:hidden border-b overflow-x-auto shrink-0">
-        {SECTIONS.map(({ id, label, icon: Icon }) => (
+        {PROFILE_SECTIONS.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             type="button"

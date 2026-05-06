@@ -169,9 +169,9 @@ export default function CarouselMetrics({
             "shadow-lg",
             "hover:bg-background",
             "hover:scale-110",
-            "transition-all duration-300",
-            "focus:outline-none focus:ring-2 focus:ring-ring",
-            "opacity-0 group-hover:opacity-100"
+            "transition-all duration-[length:var(--dur-base)]",
+            "focus:outline-none focus:ring-2 focus:ring-ring focus:opacity-100",
+            isHovered ? "opacity-100" : "opacity-0"
           )}
           aria-label="Anterior"
         >
@@ -190,9 +190,9 @@ export default function CarouselMetrics({
             "shadow-lg",
             "hover:bg-background",
             "hover:scale-110",
-            "transition-all duration-300",
-            "focus:outline-none focus:ring-2 focus:ring-ring",
-            "opacity-0 group-hover:opacity-100"
+            "transition-all duration-[length:var(--dur-base)]",
+            "focus:outline-none focus:ring-2 focus:ring-ring focus:opacity-100",
+            isHovered ? "opacity-100" : "opacity-0"
           )}
           aria-label="Próximo"
         >
@@ -207,7 +207,7 @@ export default function CarouselMetrics({
             key={index}
             onClick={() => scrollTo(index)}
             className={cn(
-              "w-2 h-2 rounded-full transition-all duration-300",
+              "w-2 h-2 rounded-full transition-all duration-[length:var(--dur-base)]",
               "focus:outline-none focus:ring-2 focus:ring-ring",
               index === selectedIndex
                 ? "bg-primary w-8"
@@ -222,8 +222,8 @@ export default function CarouselMetrics({
           <button
             onClick={handlePlayPauseClick}
             className={cn(
-              "flex items-center justify-center rounded-full",
-              "transition-all duration-300",
+              "flex items-center justify-center w-6 h-6 rounded-full",
+              "transition-all duration-[length:var(--dur-base)]",
               "focus:outline-none focus:ring-2 focus:ring-ring",
               isPlaying
                 ? "bg-primary/20 hover:bg-primary/30"

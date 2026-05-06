@@ -498,12 +498,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         else console.error('Erro ao carregar categorias de compras:', shoppingCatsResult.reason);
 
         if (expensesResult.status === 'fulfilled') setExpenses(
-          expensesResult.value.items.map(t => ({
-            id: t.financialTransactionId,
-            description: t.description,
-            value: t.value,
-            date: t.transactionDate?.substring(0, 10) ?? '',
-            category: t.categoryName ?? '',
+          expensesResult.value.items.map((t: Record<string, unknown>) => ({
+            id: (t.financialTransactionId as string) || (t.id as string) || '',
+            description: (t.description as string) || '',
+            value: Number(t.value ?? 0),
+            date: ((t.transactionDate as string) || (t.date as string) || '').substring(0, 10),
+            category: (t.categoryName as string) || (t.category as string) || 'Outros',
           }))
         );
         else console.error('Erro ao carregar gastos:', expensesResult.reason);

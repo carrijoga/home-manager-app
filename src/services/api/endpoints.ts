@@ -21,6 +21,7 @@ export const ENDPOINTS = {
   users: {
     me: '/api/users/me',
     meProfile: '/api/users/me/profile',
+    meWeather: '/api/users/me/weather',
     meConfiguration: '/api/users/me/configuration',
     meNotifications: '/api/users/me/notification',
     meNests: '/api/users/me/nests',

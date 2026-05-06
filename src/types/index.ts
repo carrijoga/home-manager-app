@@ -95,18 +95,30 @@ export interface AppUser {
   notifications?: AppNotification[];
 }
 
+/** Clima atual apresentado no dashboard */
+export interface AppWeather {
+  city: string;
+  temperature: number;
+  description: string;
+  source?: 'gps' | 'ip' | 'manual';
+  conditionCode?: string | null;
+  observedAt?: string | null;
+}
+
 /** Aviso do quadro (módulo Notices) */
 export interface Notice {
   noticeId: string;
   message: string;
   date: string;
   isPinned: boolean;
+  priority: ApiPriority;
   expiresAt: string | null;
   isActive: boolean;
   createdBy: string; // UUID do autor
   createdAt: string;
   authorName?: string; // nome legível, enriquecido no frontend
   color?: string; // chave de cor do post-it (yellow|pink|green|orange|blue)
+  reactions?: Array<{ emoji: string; count: number }>;
 }
 
 /** Tarefa (módulo Tasks) */

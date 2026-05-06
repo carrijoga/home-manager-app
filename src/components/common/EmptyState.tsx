@@ -17,8 +17,8 @@ const EmptyState = ({ icon: Icon, title, description, action, className }: Empty
       className
     )}>
       {Icon && (
-        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-honey-100 to-linen-200 dark:from-honey-900/30 dark:to-muted flex items-center justify-center border border-honey-200/60 dark:border-honey-800/30">
-          <Icon size={22} className="text-honey-600 dark:text-honey-400" />
+        <div className="w-12 h-12 rounded-full flex items-center justify-center border border-border" style={{ background: "var(--primary-subtle)" }}>
+          <Icon size={22} className="text-primary" />
         </div>
       )}
       <div className="space-y-1">

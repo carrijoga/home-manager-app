@@ -8,7 +8,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { Edit2, Pin, PinOff, Save, X } from "lucide-react";
 import { forwardRef, useRef, useState } from "react";
 
@@ -96,8 +96,9 @@ const PostIt = forwardRef<HTMLDivElement, PostItProps>(
     const [hovered, setHovered] = useState(false);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+    const prefersReducedMotion = useReducedMotion();
     const color = resolveColor(noticeId, isPinned, colorKey);
-    const rotation = ((noticeId.charCodeAt(0) + noticeId.charCodeAt(1)) % 9) - 4;
+    const rotation = prefersReducedMotion ? 0 : ((noticeId.charCodeAt(0) + noticeId.charCodeAt(1)) % 9) - 4;
     const expiryLabel = formatExpiry(expiresAt);
 
     const canEdit = !createdBy || !currentUserId || createdBy === currentUserId;
@@ -120,13 +121,13 @@ const PostIt = forwardRef<HTMLDivElement, PostItProps>(
         <motion.div
           ref={ref}
           layout
-          initial={{ opacity: 0, scale: 0.75, y: -30, rotate: rotation }}
-          animate={{ opacity: 1, scale: 1, y: 0, rotate: rotation }}
-          whileHover={{ scale: 1.06, y: -10, rotate: 0, zIndex: 10 }}
+          initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.75, y: -30, rotate: rotation }}
+          animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, scale: 1, y: 0, rotate: rotation }}
+          whileHover={prefersReducedMotion ? undefined : { scale: 1.06, y: -10, rotate: 0, zIndex: 10 }}
           onHoverStart={() => setHovered(true)}
           onHoverEnd={() => setHovered(false)}
-          exit={{ opacity: 0, scale: 0.7, rotate: rotation + 20, transition: { duration: 0.25 } }}
-          transition={{ type: "spring", stiffness: 280, damping: 22, delay: index * 0.05 }}
+          exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.7, rotate: rotation + 20, transition: { duration: 0.2 } }}
+          transition={prefersReducedMotion ? { duration: 0.15 } : { type: "spring", stiffness: 280, damping: 22, delay: index * 0.05 }}
           className="relative cursor-default"
           style={{ transformOrigin: 'top center', position: 'relative' }}
         >
@@ -175,17 +176,29 @@ const PostIt = forwardRef<HTMLDivElement, PostItProps>(
             {/* Mensagem / Editor */}
             <div className="relative flex-1 px-3 pt-1 pb-2">
               {editing ? (
-                <textarea
-                  ref={textareaRef}
-                  autoFocus
-                  value={editValue}
-                  onChange={e => setEditValue(e.target.value)}
-                  onKeyDown={handleEditKeyDown}
-                  maxLength={200}
-                  rows={4}
-                  className="w-full resize-none text-sm leading-relaxed bg-transparent outline-none border-b-2 border-dashed"
-                  style={{ color: color.text, borderColor: color.border }}
-                />
+                <>
+                  <textarea
+                    ref={textareaRef}
+                    autoFocus
+                    value={editValue}
+                    onChange={e => setEditValue(e.target.value)}
+                    onKeyDown={handleEditKeyDown}
+                    maxLength={200}
+                    rows={4}
+                    aria-label="Editar mensagem do post-it"
+                    aria-keyshortcuts="Control+Enter"
+                    aria-describedby={`postit-hint-${noticeId}`}
+                    className="w-full resize-none text-sm leading-relaxed bg-transparent outline-none border-b-2 border-dashed"
+                    style={{ color: color.text, borderColor: color.border }}
+                  />
+                  <p
+                    id={`postit-hint-${noticeId}`}
+                    className="mt-1 opacity-60"
+                    style={{ fontSize: "var(--text-xs)", color: color.text }}
+                  >
+                    Ctrl+Enter para salvar · Esc para cancelar
+                  </p>
+                </>
               ) : (
                 <p className="text-sm leading-relaxed break-words" style={{ color: color.text, fontWeight: 500 }}>
                   {message}
@@ -196,13 +209,13 @@ const PostIt = forwardRef<HTMLDivElement, PostItProps>(
             {/* Rodapé */}
             <div
               className="relative px-3 py-1.5 flex justify-between items-center text-xs"
-              style={{ borderTop: `1px solid ${color.border}60`, color: color.text, opacity: 0.85 }}
+              style={{ color: color.text, opacity: 0.85 }}
             >
               <span className="font-semibold truncate max-w-[45%]">{authorName ?? '—'}</span>
               <div className="flex items-center gap-1.5 pr-5">
                 {isPinned && <span className="font-bold text-xs" style={{ color: color.text }}>Fixado</span>}
                 {!isPinned && expiryLabel && (
-                  <span className="text-xs" style={{ color: expiryLabel === 'Expirado' ? '#b91c1c' : color.text }}>
+                  <span className="text-xs" style={{ color: expiryLabel === 'Expirado' ? 'var(--destructive)' : color.text }}>
                     {expiryLabel}
                   </span>
                 )}
@@ -220,17 +233,20 @@ const PostIt = forwardRef<HTMLDivElement, PostItProps>(
           </motion.div>
 
           {/* ── Botões de ação ─────────────────────────────────────────────────
-              Sempre presentes no DOM mas visíveis via CSS group-hover (nativo,
-              sem dependência de estado JS) — funciona em todos os navegadores. */}
-          <div className={`absolute -top-1 right-0 flex gap-1 z-30 transition-opacity duration-150 ${hovered ? 'opacity-100' : 'opacity-0'}`}>
+              Visíveis sempre em touch (pointer: coarse), aparecem no hover em
+              dispositivos com mouse (pointer: fine). A classe postit-actions
+              cuida da visibilidade via @media em index.css. */}
+          <div className={`postit-actions absolute -top-1 right-0 flex gap-1 z-30 transition-opacity duration-[length:var(--dur-fast)] ${hovered ? 'opacity-100' : 'opacity-0'}`}>
             {/* Salvar edição */}
             {editing && (
               <button
                 onClick={handleSaveEdit}
                 title="Salvar (Ctrl+Enter)"
-                className="rounded-full p-1.5 shadow bg-sage-400 text-white hover:bg-sage-500 transition-colors"
+                aria-label="Salvar nota (Ctrl+Enter)"
+                className="rounded-full p-2.5 shadow transition-colors hover:opacity-80 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                style={{ background: color.border, color: color.text }}
               >
-                <Save size={11} />
+                <Save size={13} />
               </button>
             )}
 
@@ -239,9 +255,11 @@ const PostIt = forwardRef<HTMLDivElement, PostItProps>(
               <button
                 onClick={() => { setEditing(false); setEditValue(message); }}
                 title="Cancelar"
-                className="rounded-full p-1.5 shadow bg-[#c8b090] text-white hover:bg-[#b89878] transition-colors"
+                aria-label="Cancelar edição"
+                className="rounded-full p-2.5 shadow transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center hover:opacity-80"
+                style={{ background: color.border, color: color.text }}
               >
-                <X size={11} />
+                <X size={13} />
               </button>
             )}
 
@@ -250,10 +268,11 @@ const PostIt = forwardRef<HTMLDivElement, PostItProps>(
               <button
                 onClick={() => { setEditing(true); setEditValue(message); }}
                 title="Editar"
-                className="rounded-full p-1.5 shadow text-white transition-colors"
-                style={{ background: color.border }}
+                aria-label="Editar nota"
+                className="rounded-full p-2.5 shadow transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center hover:opacity-80"
+                style={{ background: color.border, color: color.text }}
               >
-                <Edit2 size={11} />
+                <Edit2 size={13} />
               </button>
             )}
 
@@ -262,20 +281,22 @@ const PostIt = forwardRef<HTMLDivElement, PostItProps>(
               <button
                 onClick={() => onUnpin(noticeId)}
                 title="Desafixar"
-                className="rounded-full p-1.5 shadow text-white transition-colors"
-                style={{ background: color.border }}
+                aria-label="Desafixar nota"
+                className="rounded-full p-2.5 shadow transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center hover:opacity-80"
+                style={{ background: color.border, color: color.text }}
               >
-                <PinOff size={11} />
+                <PinOff size={13} />
               </button>
             )}
             {!editing && !isPinned && onPin && (
               <button
                 onClick={() => onPin(noticeId)}
                 title="Fixar"
-                className="rounded-full p-1.5 shadow text-white transition-colors"
-                style={{ background: color.border }}
+                aria-label="Fixar nota"
+                className="rounded-full p-2.5 shadow transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center hover:opacity-80"
+                style={{ background: color.border, color: color.text }}
               >
-                <Pin size={11} />
+                <Pin size={13} />
               </button>
             )}
 
@@ -284,9 +305,10 @@ const PostIt = forwardRef<HTMLDivElement, PostItProps>(
               <button
                 onClick={() => setShowConfirm(true)}
                 title="Remover"
-                className="rounded-full p-1.5 shadow bg-red-500 hover:bg-red-600 text-white transition-colors"
+                aria-label="Remover nota"
+                className="rounded-full p-2.5 shadow bg-destructive hover:opacity-80 text-destructive-foreground transition-opacity min-w-[44px] min-h-[44px] flex items-center justify-center"
               >
-                <X size={11} />
+                <X size={13} />
               </button>
             )}
           </div>
@@ -302,7 +324,7 @@ const PostIt = forwardRef<HTMLDivElement, PostItProps>(
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
               <AlertDialogAction
                 onClick={() => { onRemove?.(noticeId); setShowConfirm(false); }}
-                className="bg-red-500 hover:bg-red-600 text-white"
+                className="bg-destructive hover:opacity-80 text-destructive-foreground"
               >
                 Remover
               </AlertDialogAction>

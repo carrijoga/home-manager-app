@@ -32,56 +32,175 @@ import { getIconComponent } from "@/lib/nestIcons";
 import { NestManagerSheet } from "@/components/modals/NestManagerSheet";
 import { SettingsModal } from "@/components/modals/SettingsModal";
 import type { AppUser } from "@/types";
-import {
-  Calendar,
-  Check,
-  CheckSquare,
-  ChevronRight,
-  ChevronsUpDown,
-  DollarSign,
-  HelpCircle,
-  Home,
-  LayoutGrid,
-  RefreshCw,
-  Send,
-  Settings2,
-  ShoppingCart,
-  TrendingUp,
-} from "lucide-react";
+import { Check, Settings2 } from "lucide-react";
+import { HomeIcon } from "@/components/ui/animated-icons/home";
+import { CheckIcon } from "@/components/ui/animated-icons/check";
+import { CartIcon } from "@/components/ui/animated-icons/cart";
+import { DollarSignIcon, type DollarSignIconHandle } from "@/components/ui/animated-icons/dollar-sign";
+import { LayoutPanelTopIcon } from "@/components/ui/animated-icons/layout-panel-top";
+import { TrendingUpIcon } from "@/components/ui/animated-icons/trending-up";
+import { RefreshCWIcon } from "@/components/ui/animated-icons/refresh-cw";
+import { CalendarDaysIcon } from "@/components/ui/animated-icons/calendar-days";
+import { CircleHelpIcon } from "@/components/ui/animated-icons/circle-help";
+import { SendIcon } from "@/components/ui/animated-icons/send";
+import { ChevronRightIcon, type ChevronRightIconHandle } from "@/components/ui/animated-icons/chevron-right";
+import { ChevronsUpDownIcon } from "@/components/ui/animated-icons/chevrons-up-down";
 import { motion } from "framer-motion";
 import * as React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
+interface AnimatedIconHandle {
+  startAnimation: () => void;
+  stopAnimation: () => void;
+}
+
+type AnimatedIconComponent = React.ForwardRefExoticComponent<
+  { size?: number; className?: string } & React.RefAttributes<AnimatedIconHandle>
+>;
+
 interface Module {
   id: string;
   name: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: AnimatedIconComponent;
   path: string;
 }
 
 interface FinancasSubItem {
   id: string;
   name: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: AnimatedIconComponent;
   path: string;
 }
 
 const FINANCAS_SUB_ITEMS: FinancasSubItem[] = [
-  { id: "financial-dashboard", name: "Dashboard", icon: LayoutGrid, path: "/financial" },
-  { id: "financial-lancamentos", name: "Lançamentos", icon: DollarSign, path: "/financial" },
-  { id: "financial-metas", name: "Metas", icon: TrendingUp, path: "/financial" },
-  { id: "financial-recorrencias", name: "Recorrências", icon: RefreshCw, path: "/financial" },
+  { id: "financial-dashboard", name: "Dashboard", icon: LayoutPanelTopIcon, path: "/financial" },
+  { id: "financial-lancamentos", name: "Lançamentos", icon: DollarSignIcon, path: "/financial" },
+  { id: "financial-metas", name: "Metas", icon: TrendingUpIcon, path: "/financial" },
+  { id: "financial-recorrencias", name: "Recorrências", icon: RefreshCWIcon, path: "/financial" },
 ];
 
 const TOP_MODULES: Module[] = [
-  { id: "dashboard", name: "Início", icon: Home, path: "/dashboard" },
-  { id: "tasks", name: "Tarefas", icon: CheckSquare, path: "/tasks" },
-  { id: "shopping", name: "Lista de Compras", icon: ShoppingCart, path: "/shopping" },
+  { id: "dashboard", name: "Início", icon: HomeIcon, path: "/dashboard" },
+  { id: "tasks", name: "Tarefas", icon: CheckIcon, path: "/tasks" },
+  { id: "shopping", name: "Lista de Compras", icon: CartIcon, path: "/shopping" },
 ];
 
 const BOTTOM_MODULES: Module[] = [
-  { id: "calendar", name: "Agenda", icon: Calendar, path: "/calendar" },
+  { id: "calendar", name: "Agenda", icon: CalendarDaysIcon, path: "/calendar" },
 ];
+
+// Sub-components that own their icon refs so hover triggers animations
+
+function FinancasGroup({
+  isFinancasActive,
+  financasOpen,
+  setFinancasOpen,
+  handleNavClick,
+}: {
+  isFinancasActive: boolean;
+  financasOpen: boolean;
+  setFinancasOpen: (open: boolean) => void;
+  handleNavClick: (path: string) => void;
+}) {
+  const dollarRef = React.useRef<DollarSignIconHandle>(null);
+  const chevronRef = React.useRef<ChevronRightIconHandle>(null);
+
+  return (
+    <Collapsible open={financasOpen} onOpenChange={setFinancasOpen}>
+      <CollapsibleTrigger asChild>
+        <SidebarMenuButton
+          isActive={isFinancasActive}
+          tooltip="Finanças"
+          onClick={() => handleNavClick("/financial")}
+          onMouseEnter={() => { dollarRef.current?.startAnimation(); chevronRef.current?.startAnimation(); }}
+          onMouseLeave={() => { dollarRef.current?.stopAnimation(); chevronRef.current?.stopAnimation(); }}
+          className={cn(
+            "relative rounded-[24px] px-4 py-3 text-base transition-colors !gap-3",
+            isFinancasActive
+              ? "!bg-transparent !text-primary font-semibold"
+              : "font-normal text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+          )}
+          style={{ zIndex: 1 }}
+        >
+          <DollarSignIcon ref={dollarRef} size={18} />
+          <span>Finanças</span>
+          <motion.div
+            className="ml-auto"
+            animate={{ rotate: financasOpen ? 90 : 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <ChevronRightIcon ref={chevronRef} size={16} />
+          </motion.div>
+        </SidebarMenuButton>
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <SidebarMenuSub>
+          {FINANCAS_SUB_ITEMS.map((item, index) => (
+            <FinancasSubItemRow
+              key={item.id}
+              item={item}
+              isActive={isFinancasActive && index === 0}
+              handleNavClick={handleNavClick}
+            />
+          ))}
+        </SidebarMenuSub>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
+function FinancasSubItemRow({
+  item,
+  isActive,
+  handleNavClick,
+}: {
+  item: { id: string; name: string; icon: AnimatedIconComponent; path: string };
+  isActive: boolean;
+  handleNavClick: (path: string) => void;
+}) {
+  const SubIcon = item.icon;
+  const iconRef = React.useRef<AnimatedIconHandle>(null);
+
+  return (
+    <SidebarMenuSubItem>
+      <SidebarMenuSubButton
+        onClick={() => handleNavClick(item.path)}
+        onMouseEnter={() => iconRef.current?.startAnimation()}
+        onMouseLeave={() => iconRef.current?.stopAnimation()}
+        isActive={isActive}
+      >
+        <SubIcon ref={iconRef} size={14} />
+        <span>{item.name}</span>
+      </SidebarMenuSubButton>
+    </SidebarMenuSubItem>
+  );
+}
+
+function FooterIconButton({
+  tooltip,
+  Icon,
+  label,
+}: {
+  tooltip: string;
+  Icon: AnimatedIconComponent;
+  label: string;
+}) {
+  const iconRef = React.useRef<AnimatedIconHandle>(null);
+
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        tooltip={tooltip}
+        onMouseEnter={() => iconRef.current?.startAnimation()}
+        onMouseLeave={() => iconRef.current?.stopAnimation()}
+        className="rounded-[24px] px-4 py-3 text-base font-normal text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground !gap-3"
+      >
+        <Icon ref={iconRef} size={18} />
+        <span>{label}</span>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
+}
 
 interface AppSidebarProps {
   user?: AppUser;
@@ -98,9 +217,9 @@ export function AppSidebar({ user }: AppSidebarProps) {
   const isFinancasActive = location.pathname === "/financial";
   const [financasOpen, setFinancasOpen] = React.useState(isFinancasActive);
 
-  // Auto-expand Finanças when navigating to /financial
+  // Sync Finanças open state with route
   React.useEffect(() => {
-    if (isFinancasActive) setFinancasOpen(true);
+    setFinancasOpen(isFinancasActive);
   }, [isFinancasActive]);
 
   const nests = user?.nests ?? [];
@@ -118,15 +237,16 @@ export function AppSidebar({ user }: AppSidebarProps) {
 
   const isCollapsed = sidebarState === "collapsed";
 
-  const renderNavItem = (module: Module) => {
+  const NavItem = ({ module }: { module: Module }) => {
     const Icon = module.icon;
+    const iconRef = React.useRef<AnimatedIconHandle>(null);
     const active = isActive(module.path);
     return (
-      <SidebarMenuItem key={module.id} className="relative">
+      <SidebarMenuItem className="relative">
         {active && (
           <motion.div
             layoutId="sidebar-active-pill"
-            className="absolute inset-0 rounded-[24px] bg-background"
+            className="absolute inset-0 rounded-[24px] bg-sidebar-accent"
             transition={{ type: "spring", stiffness: 380, damping: 38 }}
             style={{ zIndex: 0 }}
           />
@@ -135,6 +255,8 @@ export function AppSidebar({ user }: AppSidebarProps) {
           isActive={active}
           tooltip={module.name}
           onClick={() => handleNavClick(module.path)}
+          onMouseEnter={() => iconRef.current?.startAnimation()}
+          onMouseLeave={() => iconRef.current?.stopAnimation()}
           className={cn(
             "relative rounded-[24px] px-4 py-3 text-base transition-colors !gap-3",
             active
@@ -143,7 +265,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
           )}
           style={{ zIndex: 1 }}
         >
-          <Icon className="size-[18px]" />
+          <Icon ref={iconRef} size={18} />
           <span>{module.name}</span>
         </SidebarMenuButton>
       </SidebarMenuItem>
@@ -156,7 +278,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
       <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
 
       {/* Header — App Branding */}
-      <SidebarHeader className="pb-10">
+      <SidebarHeader className="py-6">
         {isCollapsed ? (
           <div className="flex items-center justify-center px-2">
             <div className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-terracotta-500 to-honey-400 text-white text-base shrink-0">
@@ -170,7 +292,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
             </div>
             <div className="flex flex-col gap-0">
               <span className="font-editorial font-bold text-xl tracking-tight text-primary leading-6">Ninho</span>
-              <span className="text-[10px] font-normal tracking-[0.5px] text-sidebar-foreground/60">Seu lar, organizado</span>
+              <span className="font-normal tracking-wide text-sidebar-foreground/60" style={{ fontSize: "var(--text-xs)" }}>Seu lar, organizado</span>
             </div>
           </div>
         )}
@@ -181,65 +303,28 @@ export function AppSidebar({ user }: AppSidebarProps) {
           <SidebarGroupContent>
             <SidebarMenu className="gap-2">
               {/* Top modules: Início, Tarefas, Lista de Compras */}
-              {TOP_MODULES.map(renderNavItem)}
+              {TOP_MODULES.map(m => <NavItem key={m.id} module={m} />)}
 
               {/* Finanças — collapsible group */}
               <SidebarMenuItem className="relative">
                 {isFinancasActive && (
                   <motion.div
                     layoutId="sidebar-active-pill"
-                    className="absolute inset-0 rounded-[24px] bg-background"
+                    className="absolute inset-0 rounded-[24px] bg-sidebar-accent"
                     transition={{ type: "spring", stiffness: 380, damping: 38 }}
                     style={{ zIndex: 0 }}
                   />
                 )}
-                <Collapsible open={financasOpen} onOpenChange={setFinancasOpen}>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuButton
-                      isActive={isFinancasActive}
-                      tooltip="Finanças"
-                      className={cn(
-                        "relative rounded-[24px] px-4 py-3 text-base transition-colors !gap-3",
-                        isFinancasActive
-                          ? "!bg-transparent !text-primary font-semibold"
-                          : "font-normal text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                      )}
-                      style={{ zIndex: 1 }}
-                    >
-                      <DollarSign className="size-[18px]" />
-                      <span>Finanças</span>
-                      <motion.div
-                        className="ml-auto"
-                        animate={{ rotate: financasOpen ? 90 : 0 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <ChevronRight className="size-4" />
-                      </motion.div>
-                    </SidebarMenuButton>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                      {FINANCAS_SUB_ITEMS.map((item) => {
-                        const SubIcon = item.icon;
-                        return (
-                          <SidebarMenuSubItem key={item.id}>
-                            <SidebarMenuSubButton
-                              onClick={() => handleNavClick(item.path)}
-                              isActive={isFinancasActive}
-                            >
-                              <SubIcon className="size-3.5" />
-                              <span>{item.name}</span>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                        );
-                      })}
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </Collapsible>
+                <FinancasGroup
+                  isFinancasActive={isFinancasActive}
+                  financasOpen={financasOpen}
+                  setFinancasOpen={setFinancasOpen}
+                  handleNavClick={handleNavClick}
+                />
               </SidebarMenuItem>
 
               {/* Bottom modules: Agenda */}
-              {BOTTOM_MODULES.map(renderNavItem)}
+              {BOTTOM_MODULES.map(m => <NavItem key={m.id} module={m} />)}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -248,26 +333,10 @@ export function AppSidebar({ user }: AppSidebarProps) {
       <SidebarFooter>
         <SidebarMenu>
           {/* Support */}
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              tooltip="Suporte"
-              className="rounded-[24px] px-4 py-3 text-base font-normal text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground !gap-3"
-            >
-              <HelpCircle className="size-[18px]" />
-              <span>Suporte</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+          <FooterIconButton tooltip="Suporte" Icon={CircleHelpIcon} label="Suporte" />
 
           {/* Feedback */}
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              tooltip="Feedback"
-              className="rounded-[24px] px-4 py-3 text-base font-normal text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground !gap-3"
-            >
-              <Send className="size-[18px]" />
-              <span>Feedback</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+          <FooterIconButton tooltip="Feedback" Icon={SendIcon} label="Feedback" />
 
           {/* Divider */}
           <div className="my-1 h-px bg-sidebar-border mx-4" />
@@ -289,9 +358,9 @@ export function AppSidebar({ user }: AppSidebarProps) {
                     </div>
                     <div className="grid flex-1 text-left text-sm leading-tight">
                       <span className="truncate font-semibold text-sidebar-foreground">{activeNest?.name ?? 'Nenhum ninho'}</span>
-                      <span className="truncate text-[10px] tracking-[1px] uppercase text-sidebar-foreground/50">Grupo Familiar</span>
+                      <span className="truncate tracking-widest uppercase text-sidebar-foreground/50" style={{ fontSize: "var(--text-xs)" }}>Grupo Familiar</span>
                     </div>
-                    <ChevronsUpDown className="ml-auto size-4 shrink-0" />
+                    <ChevronsUpDownIcon size={16} className="ml-auto shrink-0" />
                   </SidebarMenuButton>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent

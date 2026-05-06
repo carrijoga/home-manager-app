@@ -117,7 +117,7 @@ const MetricCard = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: animationDelay, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
       className={cn(
-        "text-card-foreground rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border",
+        "text-card-foreground rounded-xl shadow-sm hover:shadow-md transition-all duration-[length:var(--dur-base)] overflow-hidden border",
         "h-full flex flex-col",
         toneStyles ? toneStyles.cardBg : 'bg-card',
         toneStyles ? toneStyles.borderColor : 'border-border',
@@ -168,7 +168,7 @@ const MetricCard = ({
             )}
             {isNegative && (
               <>
-                <TrendingDown size={16} className="text-terracotta-500" />
+                <TrendingDown size={16} className="text-terracotta-500 dark:text-terracotta-400" />
                 <span className="text-sm font-medium text-terracotta-600 dark:text-terracotta-400">{comparison.value}%</span>
               </>
             )}

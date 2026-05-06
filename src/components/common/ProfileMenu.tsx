@@ -82,7 +82,7 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
       <DropdownMenuTrigger asChild>
         <button
           className={cn(
-            "flex items-center gap-2 p-1 rounded-lg transition-all duration-200",
+            "flex items-center gap-2 p-1 rounded-lg transition-all duration-[length:var(--dur-base)]",
             "hover:bg-accent",
             "focus:outline-none focus:ring-2 focus:ring-ring"
           )}
@@ -132,7 +132,7 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
         >
           {soundEnabled ? (
             <>
-              <Volume2 className="mr-2 h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+              <Volume2 className="mr-2 h-4 w-4 text-primary" />
               <span>Sons Ativos</span>
             </>
           ) : (

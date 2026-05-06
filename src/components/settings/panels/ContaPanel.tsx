@@ -6,8 +6,8 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
+  Badge,
   Button,
-  Checkbox,
   Input,
   Label,
   Separator,
@@ -26,14 +26,6 @@ export function ContaPanel() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | undefined>(user?.avatar);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
-
-  // Notifications state
-  const [notifications, setNotifications] = useState({
-    tasks: true,
-    financial: true,
-    shopping: true,
-    notices: true,
-  });
 
   const profileForm = useForm<UpdateProfileData>({
     resolver: zodResolver(updateProfileSchema),
@@ -103,35 +95,35 @@ export function ContaPanel() {
     }
   };
 
-  const handleNotificationToggle = async (key: keyof typeof notifications, checked: boolean) => {
-    const next = { ...notifications, [key]: checked };
-    setNotifications(next);
-    try {
-      await settingsService.updateNotifications(next);
-    } catch {
-      setNotifications(notifications);
-      toast.error('Erro ao salvar notificações.');
-    }
-  };
-
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-lg font-semibold">Conta</h2>
+      <div className="rounded-3xl border p-5 sm:p-6 bg-[linear-gradient(135deg,color-mix(in_srgb,var(--primary)_10%,var(--card))_0%,color-mix(in_srgb,var(--secondary)_8%,var(--card))_100%)]">
+        <p className="text-xs font-semibold uppercase tracking-[1.2px] text-muted-foreground">Conta</p>
+        <h2 className="mt-1 text-lg font-semibold">Dados da sua conta</h2>
         <p className="text-sm text-muted-foreground mt-1">
           Gerencie as informações da sua conta.
         </p>
       </div>
 
       {/* Avatar */}
-      <div className="flex items-center gap-4">
-        <Avatar className="h-16 w-16 border-2 border-border">
-          <AvatarImage src={avatarPreview} />
-          <AvatarFallback className="bg-primary text-primary-foreground text-lg">
-            {getInitials(user?.name ?? 'U')}
-          </AvatarFallback>
-        </Avatar>
-        <div className="flex flex-col gap-2">
+      <section className="rounded-2xl border p-4">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-4">
+            <Avatar className="h-16 w-16 border-2 border-border">
+              <AvatarImage src={avatarPreview} />
+              <AvatarFallback className="bg-primary text-primary-foreground text-lg">
+                {getInitials(user?.name ?? 'U')}
+              </AvatarFallback>
+            </Avatar>
+            <div className="space-y-1">
+              <p className="text-sm font-semibold">Foto de perfil</p>
+              <p className="text-xs text-muted-foreground">Use uma imagem para facilitar sua identificação.</p>
+            </div>
+          </div>
+          <Badge variant="secondary">Conta ativa</Badge>
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-center gap-2">
           <input
             ref={fileInputRef}
             type="file"
@@ -142,6 +134,7 @@ export function ContaPanel() {
           <Button
             variant="outline"
             size="sm"
+            className="rounded-2xl"
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploadingAvatar}
           >
@@ -151,49 +144,57 @@ export function ContaPanel() {
             <Button
               variant="ghost"
               size="sm"
+              className="rounded-2xl text-destructive hover:text-destructive"
               onClick={handleRemoveAvatar}
               disabled={isUploadingAvatar}
-              className="text-destructive hover:text-destructive"
             >
               Remover
             </Button>
           )}
         </div>
-      </div>
+      </section>
 
       {/* Profile form */}
-      <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-3">
-        <div className="space-y-1">
-          <Label htmlFor="name">Nome</Label>
-          <Input id="name" {...profileForm.register('name')} />
-          {profileForm.formState.errors.name && (
-            <p className="text-xs text-destructive">{profileForm.formState.errors.name.message}</p>
-          )}
+      <section className="rounded-2xl border p-4">
+        <div className="mb-4">
+          <h3 className="text-sm font-semibold">Informações pessoais</h3>
+          <p className="text-xs text-muted-foreground mt-1">Esses dados aparecem no seu perfil dentro do Ninho.</p>
         </div>
-        <div className="space-y-1">
-          <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" {...profileForm.register('email')} />
-          {profileForm.formState.errors.email && (
-            <p className="text-xs text-destructive">{profileForm.formState.errors.email.message}</p>
-          )}
-        </div>
-        <div className="space-y-1">
-          <Label htmlFor="callmeby">Apelido</Label>
-          <Input id="callmeby" {...profileForm.register('callmeby')} placeholder="Como prefere ser chamado?" />
-        </div>
-        <Button
-          type="submit"
-          size="sm"
-          disabled={profileForm.formState.isSubmitting}
-        >
-          {profileForm.formState.isSubmitting ? 'Salvando...' : 'Salvar perfil'}
-        </Button>
-      </form>
+
+        <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-3">
+          <div className="space-y-1">
+            <Label htmlFor="name">Nome</Label>
+            <Input id="name" {...profileForm.register('name')} />
+            {profileForm.formState.errors.name && (
+              <p className="text-xs text-destructive">{profileForm.formState.errors.name.message}</p>
+            )}
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="email">Email</Label>
+            <Input id="email" type="email" {...profileForm.register('email')} />
+            {profileForm.formState.errors.email && (
+              <p className="text-xs text-destructive">{profileForm.formState.errors.email.message}</p>
+            )}
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="callmeby">Apelido</Label>
+            <Input id="callmeby" {...profileForm.register('callmeby')} placeholder="Como prefere ser chamado?" />
+          </div>
+          <Button
+            type="submit"
+            size="sm"
+            className="rounded-2xl"
+            disabled={profileForm.formState.isSubmitting}
+          >
+            {profileForm.formState.isSubmitting ? 'Salvando...' : 'Salvar perfil'}
+          </Button>
+        </form>
+      </section>
 
       <Separator />
 
       {/* Username */}
-      <div className="space-y-3">
+      <section className="space-y-3 rounded-2xl border p-4 bg-card/60">
         <h3 className="text-sm font-semibold">Perfil público</h3>
         <form onSubmit={usernameForm.handleSubmit(onUsernameSubmit)} className="space-y-3">
           <div className="space-y-1">
@@ -207,40 +208,15 @@ export function ContaPanel() {
             type="submit"
             size="sm"
             variant="outline"
+            className="rounded-2xl"
             disabled={usernameForm.formState.isSubmitting}
           >
             {usernameForm.formState.isSubmitting ? 'Salvando...' : 'Atualizar username'}
           </Button>
         </form>
-      </div>
+      </section>
 
       <Separator />
-
-      {/* Notifications */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-semibold">Notificações</h3>
-        <div className="space-y-3">
-          {(
-            [
-              { key: 'tasks' as const, label: 'Tarefas' },
-              { key: 'financial' as const, label: 'Financeiro' },
-              { key: 'shopping' as const, label: 'Compras' },
-              { key: 'notices' as const, label: 'Aviso do Ninho' },
-            ] as const
-          ).map(({ key, label }) => (
-            <div key={key} className="flex items-center gap-3">
-              <Checkbox
-                id={`notif-${key}`}
-                checked={notifications[key]}
-                onCheckedChange={(checked) => handleNotificationToggle(key, Boolean(checked))}
-              />
-              <label htmlFor={`notif-${key}`} className="text-sm cursor-pointer">
-                {label}
-              </label>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }

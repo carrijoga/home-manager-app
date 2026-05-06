@@ -1,699 +1,457 @@
 import { useApp } from '@/contexts/AppContext';
-import { useToastNotifications } from '@/hooks/use-toast-notifications';
-import * as noticeService from '@/services/noticeService';
 import {
-  calculateAverage,
-  calculateMonthlySavings,
-  calculatePercentageChange,
   formatCurrency,
-  generateTrendData,
   getCurrentMonth,
-  getDailyAverageExpense,
-  getDaysUntilNextBill,
-  getMonthlyExpenseProjection,
-  getOverdueTasks,
   getPreviousMonth,
-  getTopExpenseCategory,
   groupExpensesByMonth,
-  groupTasksByMonth
+  groupTasksByMonth,
 } from '@/utils/dashboardMetrics';
-import { AnimatePresence } from 'framer-motion';
 import {
+  Calendar,
   CheckCircle2,
-  Clock,
   DollarSign,
-  Pin,
-  Plus,
   ShoppingCart,
-  Sparkles,
-  TrendingUp
 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { motion } from 'framer-motion';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
-// Paleta de cores para seleção ao criar aviso
-const NOTICE_COLOR_KEYS = ['sun', 'blush', 'mint', 'sky', 'peach'];
-const NOTICE_COLOR_LABELS = { sun: 'Amarelo', blush: 'Rosa', mint: 'Verde', sky: 'Azul', peach: 'Pêssego' };
-const NOTICE_COLOR_BG = { sun: '#f5e6b2', blush: '#f0d0ce', mint: '#d2edd8', sky: '#c8ddf0', peach: '#f0d9c0' };
-import {
-  DailyAverageCard,
-  MonthProjectionCard,
-  NextBillCard,
-  OverdueTasksCard,
-  SavingsCard,
-  TopCategoryCard
-} from '../common/AdditionalMetricCards';
-import Card from '../common/Card';
-import CarouselMetrics from '../common/CarouselMetrics';
-import MetricCard from '../common/MetricCard';
-import PostIt from '../common/PostIt';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui';
+import BulletinBoard from '../common/BulletinBoard';
+import DashboardHeader from '../common/DashboardHeader';
+import FamilyGoalCard from '../common/FamilyGoalCard';
+import ModuleMetricWidget from '../common/ModuleMetricWidget';
+import SpendingByCategory from '../common/SpendingByCategory';
+import UpcomingEvents from '../common/UpcomingEvents';
 import DashboardTasksSection from './DashboardTasksSection';
+import { getWeatherPreferences, WEATHER_PREFERENCES_UPDATED_EVENT } from '@/lib/weatherPreferences';
+import { DATA_MODE } from '@/services/api/config';
+import * as calendarService from '@/services/calendarService';
+import * as goalsService from '@/services/goalsService';
+import * as weatherService from '@/services/weatherService';
+import { ApiPriority } from '@/types';
+
+function formatRelativeNoticeTime(dateValue) {
+  const createdAt = new Date(dateValue);
+
+  if (Number.isNaN(createdAt.getTime())) return undefined;
+
+  const diffMs = Date.now() - createdAt.getTime();
+  const minute = 60 * 1000;
+  const hour = 60 * minute;
+  const day = 24 * hour;
+  const week = 7 * day;
+  const month = 30 * day;
+  const year = 365 * day;
+
+  if (diffMs < minute) return 'agora mesmo';
+
+  if (diffMs < hour) {
+    const minutes = Math.floor(diffMs / minute);
+    return `há ${minutes} minuto${minutes === 1 ? '' : 's'}`;
+  }
+
+  if (diffMs < day) {
+    const hours = Math.floor(diffMs / hour);
+    return `há ${hours} hora${hours === 1 ? '' : 's'}`;
+  }
+
+  if (diffMs < week) {
+    const days = Math.floor(diffMs / day);
+    return `há ${days} dia${days === 1 ? '' : 's'}`;
+  }
+
+  if (diffMs < month) {
+    const weeks = Math.floor(diffMs / week);
+    return `há ${weeks} semana${weeks === 1 ? '' : 's'}`;
+  }
+
+  if (diffMs < year) {
+    const months = Math.floor(diffMs / month);
+    return `há ${months} mês${months === 1 ? '' : 'es'}`;
+  }
+
+  const years = Math.floor(diffMs / year);
+  return `há ${years} ano${years === 1 ? '' : 's'}`;
+}
 
 /**
- * Módulo Dashboard - Visão geral da casa
+ * Dashboard — Visão geral da casa (Domestic Sanctuary design)
  */
 const Dashboard = () => {
-  // Obtém estados e ações do contexto global
   const {
     notices,
     tasks,
     shoppingLists,
     expenses,
-    futureItems,
     user,
-    addNotice,
-    updateNotice,
-    deleteNotice,
     pinNotice,
     unpinNotice,
     addTask,
     updateTask,
     createQuickTask,
     completeTask,
-    deleteTask
+    deleteTask,
   } = useApp();
+  const [weatherState, setWeatherState] = useState({
+    loading: false,
+    error: false,
+    city: '',
+    description: '',
+    temperatureLabel: '--',
+    visible: false,
+  });
+  const [familyGoals, setFamilyGoals] = useState([]);
+  const [calendarEvents, setCalendarEvents] = useState([]);
 
-  const { showSuccess, showError } = useToastNotifications();
-  const [newNotice, setNewNotice] = useState('');
-  const [selectedColor, setSelectedColor] = useState('sun');
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-  const [isNewNoticeOpen, setIsNewNoticeOpen] = useState(false);
-  const MAX_NOTICE_LENGTH = 200;
+  const formatEventDateLabel = useCallback((startsAt) => {
+    const date = new Date(startsAt);
+    if (Number.isNaN(date.getTime())) return 'Em breve';
 
-  // Mensagem motivacional estável (não muda com re-renders)
-  const motivationalMessage = useRef((() => {
-    const messages = [
-      'Vamos organizar o dia de hoje?',
-      'Seu lar merece o melhor!',
-      'Pronto para conquistar suas metas?',
-      'Juntos, a organização fica mais fácil!',
-      'Um dia produtivo começa aqui!',
-      'Vamos manter tudo em ordem?',
-      'Sua família conta com você!',
-    ];
-    return messages[Math.floor(Math.random() * messages.length)];
-  })()).current;
+    const today = new Date();
+    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const startOfEvent = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const dayDiff = Math.round((startOfEvent.getTime() - startOfToday.getTime()) / (24 * 60 * 60 * 1000));
 
-  const handleAddNotice = useCallback(async () => {
-    const trimmedNotice = newNotice.trim();
+    const timeLabel = new Intl.DateTimeFormat('pt-BR', {
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(date);
 
-    if (!trimmedNotice) {
-      showError('Digite um aviso para adicionar');
+    if (dayDiff === 0) return `Hoje • ${timeLabel}`;
+    if (dayDiff === 1) return `Amanhã • ${timeLabel}`;
+
+    const weekday = new Intl.DateTimeFormat('pt-BR', { weekday: 'short' })
+      .format(date)
+      .replace('.', '');
+    return `${weekday} • ${timeLabel}`;
+  }, []);
+
+  const loadWeather = useCallback(async () => {
+    const isMockMode = DATA_MODE === 'mock';
+    const prefs = getWeatherPreferences();
+    const manualCity = prefs.manualCity.trim();
+    const canUseGeo = prefs.consentGiven && Boolean(prefs.coords);
+    const canUseApproximate = prefs.consentGiven && prefs.useApproximateLocation;
+    const shouldShow = isMockMode || Boolean(manualCity || canUseGeo || canUseApproximate);
+
+    if (!shouldShow) {
+      setWeatherState(prev => ({ ...prev, visible: false, loading: false }));
       return;
     }
 
-    if (trimmedNotice.length > MAX_NOTICE_LENGTH) {
-      showError(`O aviso deve ter no máximo ${MAX_NOTICE_LENGTH} caracteres`);
-      return;
-    }
+    setWeatherState(prev => ({ ...prev, visible: true, loading: true, error: false }));
 
     try {
-      await addNotice(trimmedNotice, selectedColor);
-      setNewNotice('');
-      setIsNewNoticeOpen(false);
-      showSuccess('Aviso adicionado!');
-    } catch {
-      showError('Erro ao adicionar aviso. Tente novamente.');
-    }
-  }, [newNotice, selectedColor, addNotice, showSuccess, showError]);
+      const weather = await weatherService.getMyWeather(
+        manualCity
+          ? { city: manualCity, source: 'manual' }
+          : canUseGeo
+            ? {
+              latitude: prefs.coords.latitude,
+              longitude: prefs.coords.longitude,
+              source: 'gps',
+            }
+            : { source: 'ip' }
+      );
 
-  const handleEditNotice = useCallback(async (noticeId, message) => {
-    try {
-      await updateNotice(noticeId, message);
-      showSuccess('Aviso atualizado!');
+      setWeatherState({
+        loading: false,
+        error: false,
+        visible: true,
+        city: weather.city,
+        description: weather.description,
+        temperatureLabel: `${Math.round(weather.temperature)}°C`,
+      });
     } catch {
-      showError('Erro ao atualizar aviso.');
+      setWeatherState(prev => ({ ...prev, loading: false, error: true }));
     }
-  }, [updateNotice, showSuccess, showError]);
+  }, []);
 
-  const handleRemoveNotice = useCallback(async (noticeId) => {
-    try {
-      await deleteNotice(noticeId);
-      showSuccess('Aviso removido!');
-    } catch {
-      showError('Erro ao remover aviso.');
-    }
-  }, [deleteNotice, showSuccess, showError]);
+  useEffect(() => {
+    loadWeather();
 
-  const handlePinNotice = useCallback(async (noticeId) => {
-    try {
-      await pinNotice(noticeId);
-      showSuccess('Aviso fixado!');
-    } catch {
-      showError('Erro ao fixar aviso.');
-    }
-  }, [pinNotice, showSuccess, showError]);
+    const onWeatherPreferencesUpdated = () => {
+      loadWeather();
+    };
 
-  const handleUnpinNotice = useCallback(async (noticeId) => {
-    try {
-      await unpinNotice(noticeId);
-      showSuccess('Aviso desafixado.');
-    } catch {
-      showError('Erro ao desafixar aviso.');
-    }
-  }, [unpinNotice, showSuccess, showError]);
+    window.addEventListener(WEATHER_PREFERENCES_UPDATED_EVENT, onWeatherPreferencesUpdated);
 
-  // Avisos ativos: pinados primeiro, depois por data — exibe até 6
-  const activeNotices = useMemo(() =>
+    return () => {
+      window.removeEventListener(WEATHER_PREFERENCES_UPDATED_EVENT, onWeatherPreferencesUpdated);
+    };
+  }, [loadWeather]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadGoals = async () => {
+      const goals = await goalsService.getAllGoals();
+      if (isMounted) setFamilyGoals(goals);
+    };
+
+    loadGoals();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadUpcomingEvents = async () => {
+      const events = await calendarService.getUpcomingEvents(4);
+      if (isMounted) setCalendarEvents(events);
+    };
+
+    loadUpcomingEvents();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // ── Metrics ────────────────────────────────────────────────────────────────
+  const MONTHLY_BUDGET_LIMIT = 6500;
+
+  const expenseMetrics = useMemo(() => {
+    const cur = getCurrentMonth();
+    const prev = getPreviousMonth();
+    const byMonth = groupExpensesByMonth(expenses);
+    const current = byMonth[cur] || 0;
+    const previous = byMonth[prev] || 0;
+    const remaining = Math.max(0, MONTHLY_BUDGET_LIMIT - current);
+    return { current, previous, remaining };
+  }, [expenses]);
+
+  const taskMetrics = useMemo(() => {
+    const cur = getCurrentMonth();
+    const byMonth = groupTasksByMonth(tasks);
+    const stats = byMonth[cur] || { total: 0, completed: 0, completionRate: 0 };
+    return {
+      pending: tasks.filter(t => !t.isCompleted).length,
+      completed: tasks.filter(t => t.isCompleted).length,
+      completionRate: stats.completionRate,
+    };
+  }, [tasks]);
+
+  const shoppingMetrics = useMemo(() => {
+    const now = new Date();
+    const yr = now.getFullYear();
+    const mo = now.getMonth() + 1;
+    const lists = shoppingLists.filter(l => {
+      const d = new Date(l.monthYear);
+      return d.getUTCFullYear() === yr && (d.getUTCMonth() + 1) === mo;
+    });
+    const total = lists.reduce((s, l) => s + l.totalItems, 0);
+    const purchased = lists.reduce((s, l) => s + l.purchasedItems, 0);
+    // Count items with no estimated price as "sem estoque" alerts
+    const outOfStockAlerts = lists.reduce((s, l) => s + (l.outOfStockCount ?? 0), 0);
+    return {
+      pending: total - purchased,
+      estimatedValue: lists.reduce((s, l) => s + (l.totalEstimated ?? 0), 0),
+      outOfStockAlerts,
+    };
+  }, [shoppingLists]);
+
+  const bulletinNotes = useMemo(() =>
     [...notices]
       .filter(n => n.isActive !== false)
       .sort((a, b) => {
         if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       })
-      .slice(0, 6),
+      .slice(0, 6)
+      .map(n => ({
+        id: n.noticeId,
+        priority: n.isPinned ? ApiPriority.Urgente : n.priority,
+        content: n.message,
+        isPinned: n.isPinned,
+        authorName: n.authorName,
+        timeLabel: n.createdAt ? formatRelativeNoticeTime(n.createdAt) : undefined,
+        reactions: n.reactions,
+      })),
     [notices]
   );
-  // Histórico de avisos — carregado via API ao abrir o dialog
-  const [noticeHistory, setNoticeHistory] = useState([]);
-  const [noticeHistoryLoading, setNoticeHistoryLoading] = useState(false);
-  const noticeHistoryLoaded = useRef(false);
 
-  const handleOpenHistory = useCallback((open) => {
-    setIsHistoryOpen(open);
-    if (open && !noticeHistoryLoaded.current) {
-      noticeHistoryLoaded.current = true;
-      setNoticeHistoryLoading(true);
-      noticeService.getNoticeHistory(1, 50)
-        .then(result => setNoticeHistory(result.items))
-        .catch(() => {})
-        .finally(() => setNoticeHistoryLoading(false));
-    }
-  }, []);
+  const upcomingEvents = useMemo(() =>
+    calendarEvents.map((event, index) => ({
+      id: event.id,
+      title: event.title,
+      location: event.location,
+      dateLabel: formatEventDateLabel(event.startsAt),
+      isNext: index === 0,
+    })),
+  [calendarEvents, formatEventDateLabel]);
 
-  // Cálculos das métricas - Separados para melhor performance
-  const expenseMetrics = useMemo(() => {
-    const currentMonth = getCurrentMonth();
-    const previousMonth = getPreviousMonth();
-    
-    const expensesByMonth = groupExpensesByMonth(expenses);
-    const currentExpenses = expensesByMonth[currentMonth] || 0;
-    const previousExpenses = expensesByMonth[previousMonth] || 0;
-    const expenseChange = calculatePercentageChange(currentExpenses, previousExpenses);
-    const expenseTrend = generateTrendData(expensesByMonth, 6);
-    
-    // Média de gastos dos últimos 6 meses
-    const last6MonthsExpenses = expenseTrend.map(d => d.value);
-    const averageExpenses = calculateAverage(last6MonthsExpenses);
-    const isAboveAverage = currentExpenses > averageExpenses;
-    
-    return {
-      current: currentExpenses,
-      change: expenseChange,
-      trend: expenseTrend,
-      isAboveAverage
-    };
+  // ── Agenda event count for metric widget ──────────────────────────────────
+  const agendaCount = upcomingEvents.length;
+  const nextEventPreview = upcomingEvents[0]
+    ? `${upcomingEvents[0].dateLabel.split('•')[1]?.trim() ?? ''} ${upcomingEvents[0].title}`
+    : null;
+
+  // Spending categories derived from real expense data
+  const spendingCategories = useMemo(() => {
+    if (!expenses?.length) return [];
+    const totals = {};
+    expenses.forEach(e => {
+      const cat = e.category || 'Outros';
+      totals[cat] = (totals[cat] || 0) + (e.value || 0);
+    });
+    const max = Math.max(...Object.values(totals), 1);
+    const COLORS = ['var(--primary)', 'var(--secondary)', 'var(--chart-2)', 'var(--chart-5)'];
+    return Object.entries(totals)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 4)
+      .map(([label, amount], i) => ({
+        label,
+        amount: formatCurrency(amount),
+        ratio: amount / max,
+        color: COLORS[i % COLORS.length],
+      }));
   }, [expenses]);
 
-  const taskMetrics = useMemo(() => {
-    const currentMonth = getCurrentMonth();
-    const previousMonth = getPreviousMonth();
-    
-    const tasksByMonth = groupTasksByMonth(tasks);
-    const currentTaskStats = tasksByMonth[currentMonth] || { total: 0, completed: 0, completionRate: 0 };
-    const previousTaskStats = tasksByMonth[previousMonth] || { total: 0, completed: 0, completionRate: 0 };
-    const taskCompletionChange = calculatePercentageChange(
-      currentTaskStats.completionRate, 
-      previousTaskStats.completionRate
-    );
-    
-    const pendingTasks = tasks.filter(t => !t.isCompleted).length;
-    const completedTasks = tasks.filter(t => t.isCompleted).length;
-    const totalTasks = tasks.length;
-    
-    return {
-      pending: pendingTasks,
-      completed: completedTasks,
-      total: totalTasks,
-      completionRate: currentTaskStats.completionRate,
-      change: taskCompletionChange
-    };
-  }, [tasks]);
+  // ── Animation helpers ────────────────────────────────────────────────────
+  const rowVariants = {
+    hidden: {},
+    show: { transition: { staggerChildren: 0.08 } },
+  };
 
-  const shoppingMetrics = useMemo(() => {
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth() + 1; // 1-based
+  const cardSlide = {
+    hidden: { opacity: 0, y: 24, scale: 0.97 },
+    show: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: { duration: 0.45, ease: [0.25, 1, 0.5, 1] },
+    },
+  };
 
-    const currentMonthLists = shoppingLists.filter(l => {
-      const d = new Date(l.monthYear);
-      return d.getUTCFullYear() === currentYear && (d.getUTCMonth() + 1) === currentMonth;
-    });
-
-    const totalItems = currentMonthLists.reduce((s, l) => s + l.totalItems, 0);
-    const purchasedItems = currentMonthLists.reduce((s, l) => s + l.purchasedItems, 0);
-    const pendingItems = totalItems - purchasedItems;
-    const estimatedValue = currentMonthLists.reduce((s, l) => s + (l.totalEstimated ?? 0), 0);
-
-    return {
-      pending: pendingItems,
-      total: totalItems,
-      estimatedValue,
-      topCategory: '',
-    };
-  }, [shoppingLists]);
-
-  const futureMetrics = useMemo(() => {
-    const prioritizedItems = futureItems?.filter(item => 
-      item.priority === 'alta' && item.status !== 'purchased'
-    ).length || 0;
-    
-    const totalFutureValue = futureItems?.reduce((sum, item) => {
-      const value = typeof item.estimatedValue === 'number' 
-        ? item.estimatedValue 
-        : parseFloat(item.estimatedCost?.replace(/[^\d,]/g, '').replace(',', '.') || '0');
-      return sum + value;
-    }, 0) || 0;
-    
-    const highestPriorityItem = futureItems?.find(item => 
-      item.priority === 'alta' && item.status !== 'purchased'
-    )?.name || 'Nenhum';
-    
-    return {
-      prioritized: prioritizedItems,
-      totalValue: totalFutureValue,
-      topItem: highestPriorityItem
-    };
-  }, [futureItems]);
-
-  // Agrega todas as métricas
-  const metrics = useMemo(() => ({
-    expenses: expenseMetrics,
-    tasks: taskMetrics,
-    shopping: shoppingMetrics,
-    future: futureMetrics
-  }), [expenseMetrics, taskMetrics, shoppingMetrics, futureMetrics]);
-
-  // Métricas adicionais para o carrossel
-  const additionalMetrics = useMemo(() => {
-    const savings = calculateMonthlySavings(expenses);
-    const topCategory = getTopExpenseCategory(expenses);
-    const nextBill = getDaysUntilNextBill(expenses);
-    const overdueTasks = getOverdueTasks(tasks);
-    const dailyAverage = getDailyAverageExpense(expenses);
-    const monthProjection = getMonthlyExpenseProjection(expenses);
-
-    return {
-      savings,
-      topCategory,
-      nextBill,
-      overdueTasks,
-      dailyAverage,
-      monthProjection
-    };
-  }, [expenses, tasks]);
-
-  // Saudação estável por horário
-  const greeting = useMemo(() => {
-    const hour = new Date().getHours();
-    if (hour >= 5 && hour < 12) return 'Bom dia';
-    if (hour >= 12 && hour < 18) return 'Boa tarde';
-    return 'Boa noite';
-  }, []);
-
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-6 max-w-full overflow-x-hidden">
-      {/* Saudação Personalizada */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-honey-400/20 via-linen-200/60 to-terracotta-100/30 dark:from-honey-900/25 dark:via-muted/80 dark:to-terracotta-900/20 rounded-xl p-5 border border-honey-200 dark:border-honey-900/40 shadow-sm">
-        {/* Warm glow accent */}
-        <div className="absolute inset-0 bg-gradient-to-br from-honey-300/10 via-transparent to-transparent pointer-events-none" />
-        <div className="flex items-center justify-between relative">
-          <div className="flex items-center space-x-3">
-            <div>
-              <h1 className="font-display text-[var(--text-xl)] font-bold text-foreground flex items-center gap-2">
-                {greeting}, {user?.callmeby || 'Usuário'}!
-                <span className="text-2xl animate-wave inline-block">👋</span>
-              </h1>
-              <p className="text-honey-700 dark:text-honey-300 text-sm mt-1 font-medium">
-                {motivationalMessage}
-              </p>
-            </div>
-          </div>
-          <div className="hidden sm:block">
-            <Sparkles className="text-honey-500 dark:text-honey-400" size={22} />
-          </div>
-        </div>
-      </div>
+    <div className="flex flex-col gap-6 md:gap-10 max-w-full overflow-x-hidden">
 
-      {/* Carrossel de Métricas */}
-      <div className="group max-w-full">
-        {/* <CarouselMetrics autoPlayDelay={5000}> */}
-        <CarouselMetrics autoPlayDelay={5000} >
-          {/* Card 1: Total de Gastos do Mês */}
-          <MetricCard
-            icon={DollarSign}
-            title="Gastos do Mês"
-            value={formatCurrency(metrics.expenses.current)}
-            tone="sage"
-            chartData={metrics.expenses.trend}
-            comparison={{
-              value: metrics.expenses.change,
-              label: 'vs mês anterior'
+      {/* ── Row 0: Header ── */}
+      <DashboardHeader
+        userName={user?.callmeby || user?.name || 'Família'}
+        pendingTasksCount={taskMetrics.pending}
+        showWeather={weatherState.visible}
+        weatherCity={weatherState.city || 'São Paulo'}
+        weatherDescription={weatherState.description || 'Tempo indisponível'}
+        weatherTemperatureLabel={weatherState.temperatureLabel}
+        isWeatherLoading={weatherState.loading}
+        isWeatherError={weatherState.error}
+        onRefreshWeather={loadWeather}
+      />
+
+      {/* ── Row 1: Module Metric Widgets ── */}
+      <motion.div
+        className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 md:gap-6"
+        variants={rowVariants}
+        initial="hidden"
+        animate="show"
+      >
+        <motion.div variants={cardSlide}>
+          <ModuleMetricWidget
+            icon={<DollarSign size={20} strokeWidth={1.5} />}
+            iconColor='var(--primary)'
+            category="Finanças"
+            label="Restante do mês"
+            value={formatCurrency(expenseMetrics.remaining)}
+            footer={[
+              { label: 'Limite', value: formatCurrency(MONTHLY_BUDGET_LIMIT) },
+              { label: 'Gasto', value: formatCurrency(expenseMetrics.current), valueColor: 'var(--destructive)' },
+            ]}
+            progress={Math.min(1, expenseMetrics.current / MONTHLY_BUDGET_LIMIT)}
+            progressColor={expenseMetrics.current / MONTHLY_BUDGET_LIMIT > 0.8 ? 'var(--destructive)' : 'var(--chart-2)'}
+            progressLabel={expenseMetrics.current / MONTHLY_BUDGET_LIMIT > 0.8 ? 'Acima do planejado' : 'Dentro do planejado'}
+            progressLabelColor={expenseMetrics.current / MONTHLY_BUDGET_LIMIT > 0.8 ? 'var(--destructive)' : 'var(--chart-2)'}
+          />
+        </motion.div>
+
+        <motion.div variants={cardSlide}>
+          <ModuleMetricWidget
+            icon={<ShoppingCart size={20} strokeWidth={1.5} />}
+            iconColor='var(--secondary)'
+            category="Lista de Compras"
+            label="Itens para comprar"
+            value={`${shoppingMetrics.pending} Itens`}
+            footer={[
+              { label: 'Custo Est.', value: formatCurrency(shoppingMetrics.estimatedValue) },
+              shoppingMetrics.outOfStockAlerts > 0
+                ? { label: 'Alertas', value: `${shoppingMetrics.outOfStockAlerts} SEM ESTOQUE`, valueColor: 'var(--destructive)' }
+                : undefined,
+            ].filter(Boolean)}
+          />
+        </motion.div>
+
+        <motion.div variants={cardSlide}>
+          <ModuleMetricWidget
+            icon={<CheckCircle2 size={20} strokeWidth={1.5} />}
+            iconColor='var(--chart-2)'
+            category="Tarefas"
+            label="Tarefas de hoje"
+            value={`${taskMetrics.pending} Pendentes`}
+            footer={[
+              { label: 'Finalizadas', value: `${taskMetrics.completed} Tarefas` },
+              { label: 'Ritmo', value: `${taskMetrics.completionRate}%`, valueColor: 'var(--chart-2)' },
+            ]}
+          />
+        </motion.div>
+
+        <motion.div variants={cardSlide}>
+          <ModuleMetricWidget
+            icon={<Calendar size={20} strokeWidth={1.5} />}
+            iconColor='var(--chart-5)'
+            category="Agenda"
+            label="Esta semana"
+            value={`${agendaCount} Eventos`}
+            footer={nextEventPreview ? [
+              { label: 'Próximo', value: nextEventPreview },
+            ] : undefined}
+          />
+        </motion.div>
+      </motion.div>
+
+      {/* ── Row 2: Mural de Recados + Próximos Eventos ── */}
+      <motion.div
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6"
+        variants={{ hidden: {}, show: { transition: { staggerChildren: 0.1, delayChildren: 0.3 } } }}
+        initial="hidden"
+        animate="show"
+      >
+        <motion.div variants={cardSlide} className="md:col-span-2 lg:col-span-2 h-full">
+          <BulletinBoard
+            notes={bulletinNotes}
+            onTogglePin={async (noteId, isPinned) => {
+              if (isPinned) {
+                await unpinNotice(noteId);
+                return;
+              }
+              await pinNotice(noteId);
             }}
-            alertType={metrics.expenses.isAboveAverage ? 'warning' : undefined}
-            animationDelay={0.1}
-            footer={
-              metrics.expenses.isAboveAverage && (
-                <div className="flex items-center space-x-1 text-xs text-honey-700 dark:text-honey-400">
-                  <TrendingUp size={14} />
-                  <span>Acima da média mensal</span>
-                </div>
-              )
-            }
+            onCreateNote={() => {}}
+            className="h-full"
           />
+        </motion.div>
+        <motion.div variants={cardSlide} className="md:col-span-2 lg:col-span-1 h-full">
+          <UpcomingEvents events={upcomingEvents} className="h-full" />
+        </motion.div>
+      </motion.div>
 
-          {/* Card 2: Tarefas Concluídas */}
-          <MetricCard
-            icon={CheckCircle2}
-            title="Tarefas Concluídas"
-            value={`${metrics.tasks.completed}/${metrics.tasks.total}`}
-            tone="terracotta"
-            comparison={{
-              value: metrics.tasks.change,
-              label: 'taxa de conclusão'
-            }}
-            animationDelay={0.2}
-            footer={
-              <div className="space-y-2">
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Progresso</span>
-                  <span className="font-semibold">{metrics.tasks.completionRate}%</span>
-                </div>
-                <div className="w-full bg-terracotta-100 dark:bg-terracotta-900/30 rounded-full h-2 overflow-hidden">
-                  <div
-                    className="bg-gradient-to-r from-terracotta-400 to-terracotta-500 h-2 rounded-full transition-all duration-500"
-                    style={{ width: `${metrics.tasks.completionRate}%` }}
-                  />
-                </div>
-              </div>
-            }
-          />
-
-          {/* Card 3: Itens a Comprar */}
-          <MetricCard
-            icon={ShoppingCart}
-            title="Itens a Comprar"
-            value={metrics.shopping.pending}
-            tone="sky"
-            animationDelay={0.3}
-            footer={
-              <div className="space-y-1 text-xs">
-                {metrics.shopping.estimatedValue > 0 && (
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>Valor estimado:</span>
-                    <span className="font-semibold">{formatCurrency(metrics.shopping.estimatedValue)}</span>
-                  </div>
-                )}
-                {metrics.shopping.topCategory && (
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>Categoria principal:</span>
-                    <span className="font-semibold">{metrics.shopping.topCategory}</span>
-                  </div>
-                )}
-              </div>
-            }
-          />
-
-          {/* Card 4: Compras Futuras */}
-          <MetricCard
-            icon={Sparkles}
-            title="Compras Futuras"
-            value={metrics.future.prioritized}
-            tone="honey"
-            animationDelay={0.4}
-            footer={
-              <div className="space-y-1 text-xs">
-                <div className="flex justify-between text-muted-foreground">
-                  <span>Valor total:</span>
-                  <span className="font-semibold">{formatCurrency(metrics.future.totalValue)}</span>
-                </div>
-                <div className="text-muted-foreground">
-                  <span className="font-semibold">Prioridade:</span> {metrics.future.topItem}
-                </div>
-              </div>
-            }
-          />
-
-          {/* Cards Adicionais do Carrossel */}
-          <SavingsCard 
-            savings={additionalMetrics.savings.savings}
-            percentage={additionalMetrics.savings.percentage}
-            animationDelay={0.5}
-          />
-
-          <TopCategoryCard
-            category={additionalMetrics.topCategory.category}
-            value={additionalMetrics.topCategory.value}
-            animationDelay={0.6}
-          />
-
-          <NextBillCard
-            days={additionalMetrics.nextBill.days}
-            bill={additionalMetrics.nextBill.bill}
-            animationDelay={0.7}
-          />
-
-          <OverdueTasksCard
-            count={additionalMetrics.overdueTasks}
-            animationDelay={0.8}
-          />
-
-          <DailyAverageCard
-            average={additionalMetrics.dailyAverage}
-            animationDelay={0.9}
-          />
-
-          <MonthProjectionCard
-            projection={additionalMetrics.monthProjection}
-            current={metrics.expenses.current}
-            animationDelay={1.0}
-          />
-        </CarouselMetrics>
-      </div>
-
-      {/* Quadro de Avisos e Minhas Tarefas lado a lado */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Quadro de Avisos - Ocupa 1 coluna */}
-        <div className="lg:col-span-1">
-          <Card 
-            title={
-              <div className="flex items-center gap-2">
-                <Pin size={20} className="text-terracotta-500 dark:text-honey-400" />
-                <span>Quadro de Avisos</span>
-              </div>
-            }
-            headerAction={
-              <div className="flex items-center gap-2">
-              {/* Dialog para Novo Aviso */}
-              <Dialog open={isNewNoticeOpen} onOpenChange={setIsNewNoticeOpen}>
-                <DialogTrigger asChild>
-                  <button className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-md transition-colors">
-                    <Plus size={16} />
-                    Novo Aviso
-                  </button>
-                </DialogTrigger>
-                <DialogContent className="max-w-md p-0 overflow-hidden border-linen-300 dark:border-linen-400">
-                  <div className="bg-linen-100 dark:bg-card p-6 rounded-lg border-2 border-linen-300 dark:border-border shadow-lg">
-                    <DialogHeader className="mb-4">
-                      <DialogTitle className="text-foreground font-semibold text-lg">
-                        📝 Novo Aviso
-                      </DialogTitle>
-                    </DialogHeader>
-                    
-                    {/* Textarea estilizada como Post-It */}
-                    <div className="space-y-3">
-                      {/* Seletor de cor */}
-                      <div>
-                        <p className="text-xs font-medium text-muted-foreground mb-1.5">Cor do post-it</p>
-                        <div className="flex gap-2">
-                          {NOTICE_COLOR_KEYS.map(key => (
-                            <button
-                              key={key}
-                              title={NOTICE_COLOR_LABELS[key]}
-                              onClick={() => setSelectedColor(key)}
-                              className="w-7 h-7 rounded-full border-2 transition-transform hover:scale-110"
-                              style={{
-                                background: NOTICE_COLOR_BG[key],
-                                borderColor: selectedColor === key ? 'oklch(0.4 0.01 250)' : 'transparent',
-                                boxShadow: selectedColor === key ? '0 0 0 2px oklch(0.68 0.13 55)' : 'none',
-                              }}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                      <textarea
-                        placeholder="Digite seu aviso aqui..."
-                        value={newNotice}
-                        onChange={(e) => setNewNotice(e.target.value.slice(0, MAX_NOTICE_LENGTH))}
-                        className="w-full min-h-[120px] p-3 text-foreground placeholder:text-muted-foreground border-2 rounded-md focus:outline-none focus:ring-2 resize-none"
-                        style={{ background: NOTICE_COLOR_BG[selectedColor], borderColor: '#c0a000', color: '#3a2e00' }}
-                        autoFocus
-                      />
-                      
-                      {/* Contador de caracteres */}
-                      <div className="flex justify-between items-center text-xs text-muted-foreground">
-                        <span className="font-medium">
-                          {newNotice.length}/{MAX_NOTICE_LENGTH} caracteres
-                        </span>
-                        {newNotice.length > MAX_NOTICE_LENGTH * 0.9 && (
-                          <span className="text-honey-700 dark:text-honey-600 font-semibold">
-                            ⚠️ Limite próximo
-                          </span>
-                        )}
-                      </div>
-                      
-                      {/* Rodapé com autor e data (preview) */}
-                      <div className="pt-3 border-t border-honey-300 dark:border-border flex justify-between items-center text-xs text-muted-foreground">
-                        <span className="font-medium flex items-center gap-1">
-                          <span className="inline-block">👤</span>
-                          Você
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <span className="inline-block">📅</span>
-                          {new Date().toLocaleDateString("pt-BR", {
-                            day: "2-digit",
-                            month: "2-digit",
-                          })}
-                        </span>
-                      </div>
-                      
-                      {/* Botões de ação */}
-                      <div className="flex gap-2 pt-2">
-                        <button
-                          onClick={() => {
-                            setNewNotice('');
-                            setIsNewNoticeOpen(false);
-                          }}
-                          className="flex-1 px-4 py-2 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-muted transition-colors"
-                        >
-                          Cancelar
-                        </button>
-                        <button
-                          onClick={handleAddNotice}
-                          disabled={!newNotice.trim()}
-                          className="flex-1 px-4 py-2 text-sm font-medium text-white bg-terracotta-500 hover:bg-terracotta-600 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          Adicionar
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-
-              <Dialog open={isHistoryOpen} onOpenChange={handleOpenHistory}>
-                <DialogTrigger aria-label="Histórico de avisos" className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-foreground hover:bg-accent rounded-md transition-colors border border-border">
-                  <Clock size={16} />
-                </DialogTrigger>
-                <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>Histórico de Avisos</DialogTitle>
-                  </DialogHeader>
-                  <div className="mt-4">
-                    {noticeHistoryLoading ? (
-                      <div className="flex flex-col items-center justify-center py-12 gap-3 text-muted-foreground">
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-honey-100 to-linen-200 dark:from-honey-900/30 dark:to-muted border border-honey-200/60 dark:border-honey-800/30 flex items-center justify-center">
-                          <Clock size={22} className="text-honey-600 dark:text-honey-400 animate-spin" />
-                        </div>
-                        <p className="text-sm">Carregando...</p>
-                      </div>
-                    ) : noticeHistory.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center py-12 gap-3 text-muted-foreground">
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-honey-100 to-linen-200 dark:from-honey-900/30 dark:to-muted border border-honey-200/60 dark:border-honey-800/30 flex items-center justify-center">
-                          <Clock size={22} className="text-honey-600 dark:text-honey-400" />
-                        </div>
-                        <p className="text-sm">Nenhum aviso no histórico</p>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {noticeHistory.map((notice, index) => (
-                          <PostIt
-                            key={notice.noticeId}
-                            noticeId={notice.noticeId}
-                            message={notice.message}
-                            date={notice.date}
-                            isPinned={notice.isPinned}
-                            expiresAt={notice.expiresAt}
-                            isActive={notice.isActive}
-                            createdBy={notice.createdBy}
-                            createdAt={notice.createdAt}
-                            authorName={notice.authorName}
-                            currentUserId={user?.id}
-                            color={notice.color}
-                            index={index}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-            }
-          >
-            {/* Quadro de Cortiça */}
-            <div
-              className="rounded-lg p-4 min-h-[160px]"
-              style={{
-                background: `
-                  radial-gradient(ellipse at 15% 20%, rgba(196,135,58,0.6) 0%, transparent 45%),
-                  radial-gradient(ellipse at 85% 80%, rgba(160,105,42,0.5) 0%, transparent 45%),
-                  radial-gradient(ellipse at 50% 50%, rgba(180,118,46,0.3) 0%, transparent 70%),
-                  #b8762e
-                `,
-                boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.3), 0 2px 6px rgba(0,0,0,0.15)',
-                border: '6px solid #8B5E3C',
-              }}
-            >
-              {activeNotices.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-10 text-amber-100/80">
-                  <p className="text-2xl mb-2">📌</p>
-                  <p className="text-sm font-medium">Nenhum aviso no quadro</p>
-                  <p className="text-xs mt-1 opacity-70">Adicione o primeiro aviso acima!</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-5 pt-3">
-                  <AnimatePresence mode="popLayout">
-                    {activeNotices.map((notice, index) => (
-                      <PostIt
-                        key={notice.noticeId}
-                        noticeId={notice.noticeId}
-                        message={notice.message}
-                        date={notice.date}
-                        isPinned={notice.isPinned}
-                        expiresAt={notice.expiresAt}
-                        isActive={notice.isActive}
-                        createdBy={notice.createdBy}
-                        createdAt={notice.createdAt}
-                        authorName={notice.authorName}
-                        currentUserId={user?.id}
-                        color={notice.color}
-                        onRemove={handleRemoveNotice}
-                        onPin={handlePinNotice}
-                        onUnpin={handleUnpinNotice}
-                        onEdit={handleEditNotice}
-                        index={index}
-                      />
-                    ))}
-                  </AnimatePresence>
-                </div>
-              )}
-            </div>
-          </Card>
-        </div>
-
-        {/* Minhas Tarefas - Ocupa 1 coluna */}
-        <div className="lg:col-span-1">
-          <DashboardTasksSection
-            tasks={tasks}
-            onAddTask={addTask}
-            onEditTask={updateTask}
-            onQuickAddTask={createQuickTask}
-            onCompleteTask={completeTask}
-            onDeleteTask={deleteTask}
-          />
-        </div>
-      </div>
+      {/* ── Row 3: Gastos por Categoria + Metas da Família ── */}
+      <motion.div
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6"
+        variants={{ hidden: {}, show: { transition: { staggerChildren: 0.1, delayChildren: 0.5 } } }}
+        initial="hidden"
+        animate="show"
+      >
+        <motion.div variants={cardSlide} className="md:col-span-2 lg:col-span-2 h-full">
+          <SpendingByCategory categories={spendingCategories} className="h-full" />
+        </motion.div>
+        <motion.div variants={cardSlide} className="md:col-span-2 lg:col-span-1 h-full">
+          <FamilyGoalCard goals={familyGoals} className="h-full" />
+        </motion.div>
+      </motion.div>
     </div>
   );
 };

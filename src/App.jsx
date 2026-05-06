@@ -1,11 +1,11 @@
 import { lazy, Suspense } from 'react';
-import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
+import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { AppSidebar } from './components/app-sidebar';
 import { FadeIn } from './components/common/FadeIn';
 import RequireAuth from './components/common/RequireAuth';
+import { TopNavbar } from './components/common/TopNavbar';
 import { DashboardSkeleton, ExpenseListSkeleton, ShoppingListSkeleton, TaskListSkeleton } from './components/skeletons';
-import { Separator } from './components/ui/separator';
-import { SidebarInset, SidebarProvider, SidebarTrigger } from './components/ui/sidebar';
+import { SidebarInset, SidebarProvider } from './components/ui/sidebar';
 import { Toaster } from './components/ui/sonner';
 import { AppProvider, useApp } from './contexts/AppContext';
 import { useTheme } from './contexts/ThemeContext';
@@ -124,35 +124,12 @@ const HomeLayout = () => {
   // User do contexto
   const { user } = useApp();
 
-  // Location para título dinâmico
-  const location = useLocation();
-
-  // Mapa de títulos por rota
-  const pageTitles = {
-    '/dashboard': 'Dashboard',
-    '/tasks': 'Tarefas',
-    '/shopping': 'Lista de Compras',
-    '/financial': 'Financeiro',
-    '/future': 'Compras Futuras',
-    '/calendar': 'Calendário',
-  };
-
-  const pageTitle = pageTitles[location.pathname] || 'Ninho';
-
   return (
     <SidebarProvider>
       <AppSidebar user={user} />
       <SidebarInset className="overflow-x-hidden">
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-background px-4 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
-          <div className="flex items-center gap-2 flex-1">
-            <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-2 h-4" />
-            <h1 className="text-lg font-semibold text-foreground">
-              {pageTitle}
-            </h1>
-          </div>
-        </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 overflow-x-hidden">
+        <TopNavbar />
+        <div className="flex flex-1 flex-col gap-4 p-3 sm:p-4 md:p-6 overflow-x-hidden">
           <div className="flex-1 max-w-full">
             <Outlet />
           </div>

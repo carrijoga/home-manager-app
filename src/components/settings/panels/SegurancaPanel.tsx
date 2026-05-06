@@ -55,25 +55,26 @@ export function SegurancaPanel() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-lg font-semibold">Segurança</h2>
+      <div className="rounded-3xl border p-5 sm:p-6 bg-[linear-gradient(135deg,color-mix(in_srgb,var(--primary)_10%,var(--card))_0%,color-mix(in_srgb,var(--destructive)_8%,var(--card))_100%)]">
+        <p className="text-xs font-semibold uppercase tracking-[1.2px] text-muted-foreground">Segurança</p>
+        <h2 className="mt-1 text-lg font-semibold">Proteção da sua conta</h2>
         <p className="text-sm text-muted-foreground mt-1">
           Gerencie sua senha e acesso ao Ninho.
         </p>
       </div>
 
-      <div className="space-y-4">
+      <section className="space-y-4 rounded-2xl border p-4">
         <h3 className="text-sm font-semibold">Senha</h3>
 
         <Collapsible open={passwordOpen} onOpenChange={setPasswordOpen}>
           <CollapsibleTrigger asChild>
-            <Button variant="outline" size="sm" className="flex items-center gap-2">
+            <Button variant="outline" size="sm" className="flex items-center gap-2 rounded-2xl">
               Alterar Senha
               <ChevronDown className={`size-4 transition-transform ${passwordOpen ? 'rotate-180' : ''}`} />
             </Button>
           </CollapsibleTrigger>
           <CollapsibleContent className="mt-3">
-            <form onSubmit={handleSubmit(onPasswordSubmit)} className="space-y-3 rounded-lg border p-4">
+            <form onSubmit={handleSubmit(onPasswordSubmit)} className="space-y-3 rounded-2xl border p-4 bg-card/60">
               <div className="space-y-1">
                 <Label htmlFor="currentPassword">Senha atual</Label>
                 <Input
@@ -108,13 +109,14 @@ export function SegurancaPanel() {
                 )}
               </div>
               <div className="flex gap-2">
-                <Button type="submit" size="sm" disabled={isSubmitting}>
+                <Button type="submit" size="sm" className="rounded-2xl" disabled={isSubmitting}>
                   {isSubmitting ? 'Salvando...' : 'Salvar senha'}
                 </Button>
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
+                  className="rounded-2xl"
                   onClick={() => { reset(); setPasswordOpen(false); }}
                 >
                   Cancelar
@@ -127,22 +129,23 @@ export function SegurancaPanel() {
         <Button
           variant="destructive"
           size="sm"
+          className="rounded-2xl"
           onClick={handleLogoutOthers}
           disabled={isLoggingOut}
         >
           {isLoggingOut ? 'Saindo...' : 'Logout de outros dispositivos'}
         </Button>
-      </div>
+      </section>
 
       <Separator />
 
-      <div className="space-y-2">
+      <section className="space-y-2 rounded-2xl border p-4 bg-card/60">
         <h3 className="text-sm font-semibold">Avançado / Social Login</h3>
-        <div className="rounded-lg border border-dashed p-4 flex items-center gap-2">
+        <div className="rounded-xl border border-dashed p-4 flex items-center gap-2">
           <p className="text-sm text-muted-foreground">Em breve</p>
           <Badge variant="secondary">Em breve</Badge>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

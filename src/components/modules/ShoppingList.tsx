@@ -1487,7 +1487,8 @@ const ShoppingList = memo(() => {
               <div className="flex items-center gap-2 mb-2">
                 {isBulkMode && (() => {
                   const unpurchased = items.filter((i) => !i.isPurchased);
-                  const allSelected = unpurchased.length > 0 && unpurchased.every((i) => selectedItemIds.has(i.shoppingItemId));
+                  if (unpurchased.length === 0) return null;
+                  const allSelected = unpurchased.every((i) => selectedItemIds.has(i.shoppingItemId));
                   const someSelected = unpurchased.some((i) => selectedItemIds.has(i.shoppingItemId));
                   return (
                     <Checkbox

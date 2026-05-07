@@ -697,13 +697,11 @@ const ShoppingList = memo(() => {
     });
   }, []);
 
-  // TODO: remove this block once bulk UI is wired in subsequent tasks
-  void isBulkMode;
+  // suppress noUnusedLocals until tasks 3-7 wire these into JSX
   void showBulkEdit; void setShowBulkEdit;
   void showBulkDelete; void setShowBulkDelete;
   void selectedItems;
   void exitBulkMode;
-  void toggleItemSelection;
 
   // ── Derived: filtered lists ─────────────────────────────────────────────────
   const [filterYear, filterMonthNum] = filterMonth.split('-').map(Number);

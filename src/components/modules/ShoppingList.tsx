@@ -1485,6 +1485,28 @@ const ShoppingList = memo(() => {
           {Object.entries(groupedItems).map(([category, items]) => (
             <div key={category}>
               <div className="flex items-center gap-2 mb-2">
+                {isBulkMode && (() => {
+                  const unpurchased = items.filter((i) => !i.isPurchased);
+                  const allSelected = unpurchased.length > 0 && unpurchased.every((i) => selectedItemIds.has(i.shoppingItemId));
+                  const someSelected = unpurchased.some((i) => selectedItemIds.has(i.shoppingItemId));
+                  return (
+                    <Checkbox
+                      checked={allSelected}
+                      data-state={someSelected && !allSelected ? 'indeterminate' : undefined}
+                      onCheckedChange={(checked) => {
+                        setSelectedItemIds((prev) => {
+                          const next = new Set(prev);
+                          unpurchased.forEach((i) => {
+                            if (checked) next.add(i.shoppingItemId);
+                            else next.delete(i.shoppingItemId);
+                          });
+                          return next;
+                        });
+                      }}
+                      className="shrink-0"
+                    />
+                  );
+                })()}
                 <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
                   {category}
                 </span>

@@ -1635,7 +1635,7 @@ const ShoppingList = memo(() => {
             <Button
               variant="outline"
               size="sm"
-              className="flex-1 gap-1.5 text-xs border-[rgba(120,160,255,0.4)] bg-[rgba(120,160,255,0.08)] text-[#7ba0ff] hover:bg-[rgba(120,160,255,0.16)] hover:text-[#7ba0ff]"
+              className="flex-1 gap-1.5 text-xs text-primary border-primary/40 bg-primary/10 hover:bg-primary/15 hover:text-primary"
               onClick={() => setShowBulkEdit(true)}
             >
               <Pencil size={13} />

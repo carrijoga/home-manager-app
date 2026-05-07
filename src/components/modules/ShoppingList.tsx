@@ -689,7 +689,7 @@ function BulkEditDialog({ open, onClose, selectedItems, categories, onSubmit }: 
           <DialogTitle>Editar itens selecionados ({selectedItems.length})</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-3 pt-2">
-          <p className="text-xs text-muted-foreground rounded-lg border border-[rgba(120,160,255,0.2)] bg-[rgba(120,160,255,0.07)] px-3 py-2">
+          <p className="text-xs text-muted-foreground rounded-lg border border-primary/20 bg-primary/5 px-3 py-2">
             Apenas os campos preenchidos serão alterados. Campos em branco não serão modificados.
           </p>
 

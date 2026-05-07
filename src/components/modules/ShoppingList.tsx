@@ -14,6 +14,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -29,15 +31,19 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  Flame,
   ListChecks,
+  MoreVertical,
   Pencil,
   Plus,
+  Upload,
   ShoppingCart,
+  Sparkles,
   Tag,
   Trash2,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 // ── Types ───────────────────────────────────────────────────────────────────────
 
@@ -232,14 +238,26 @@ interface ItemFormDialogProps {
 function ItemFormDialog({ open, onClose, initialData, onSubmit, title, categories }: ItemFormDialogProps) {
   const [data, setData] = useState<ItemFormData>(initialData ?? emptyItemForm());
   const [saving, setSaving] = useState(false);
+  const [categoryOpen, setCategoryOpen] = useState(false);
 
   useEffect(() => {
     if (open) {
       setData(initialData ?? emptyItemForm());
       setSaving(false);
+      setCategoryOpen(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
+
+  const sortedCategories = useMemo(
+    () => [...categories].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')),
+    [categories],
+  );
+
+  const selectedCategoryName = useMemo(
+    () => categories.find((c) => c.shoppingCategoryId === data.categoryId)?.name ?? null,
+    [categories, data.categoryId],
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -304,19 +322,53 @@ function ItemFormDialog({ open, onClose, initialData, onSubmit, title, categorie
           </div>
           <div className="space-y-1.5">
             <Label>Categoria</Label>
-            <Select value={data.categoryId || '__none__'} onValueChange={(v) => setData((d) => ({ ...d, categoryId: v === '__none__' ? '' : v }))}>
-              <SelectTrigger>
-                <SelectValue placeholder="Sem categoria" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">Sem categoria</SelectItem>
-                {categories.map((c) => (
-                  <SelectItem key={c.shoppingCategoryId} value={c.shoppingCategoryId}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={categoryOpen}
+                  className="w-full justify-between font-normal"
+                >
+                  <span className={selectedCategoryName ? 'text-foreground' : 'text-muted-foreground'}>
+                    {selectedCategoryName ?? 'Sem categoria'}
+                  </span>
+                  <svg className="ml-2 h-4 w-4 shrink-0 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 9l4-4 4 4M16 15l-4 4-4-4" /></svg>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                <Command>
+                  <CommandInput placeholder="Buscar categoria..." />
+                  <CommandList>
+                    <CommandEmpty>Nenhuma categoria encontrada.</CommandEmpty>
+                    <CommandGroup>
+                      <CommandItem
+                        value="__none__"
+                        onSelect={() => {
+                          setData((d) => ({ ...d, categoryId: '' }));
+                          setCategoryOpen(false);
+                        }}
+                      >
+                        Sem categoria
+                      </CommandItem>
+                      {sortedCategories.map((c) => (
+                        <CommandItem
+                          key={c.shoppingCategoryId}
+                          value={c.name}
+                          onSelect={() => {
+                            setData((d) => ({ ...d, categoryId: c.shoppingCategoryId }));
+                            setCategoryOpen(false);
+                          }}
+                        >
+                          {c.name}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="item-price">Preço estimado (R$)</Label>
@@ -578,6 +630,7 @@ const ShoppingList = memo(() => {
     deleteShoppingItem,
     markItemAsPurchased,
     unmarkItemAsPurchased,
+    uploadShoppingItems,
     createShoppingCategory,
     deleteShoppingCategory,
   } = useApp();
@@ -604,7 +657,53 @@ const ShoppingList = memo(() => {
   const [showCategories, setShowCategories] = useState(false);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [selectedItem, setSelectedItem] = useState<AppShoppingItem | null>(null);
+  const [editingListId, setEditingListId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const uploadInputRef = useRef<HTMLInputElement | null>(null);
+
+  // ── Bulk selection state ────────────────────────────────────────────────────
+  const [isBulkMode, setIsBulkMode] = useState(false);
+  const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
+  const [showBulkEdit, setShowBulkEdit] = useState(false);
+  const [showBulkDelete, setShowBulkDelete] = useState(false);
+
+  const uniqueCategories = useMemo(() => {
+    const map = new Map<string, { shoppingCategoryId: string; name: string; isDefault: boolean }>();
+    shoppingCategories.forEach((c) => {
+      if (!map.has(c.shoppingCategoryId)) {
+        map.set(c.shoppingCategoryId, c);
+      }
+    });
+    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+  }, [shoppingCategories]);
+
+  const selectedItems = useMemo(
+    () => detailData?.items.filter((i) => selectedItemIds.has(i.shoppingItemId)) ?? [],
+    [detailData, selectedItemIds],
+  );
+
+  const exitBulkMode = useCallback(() => {
+    setIsBulkMode(false);
+    setSelectedItemIds(new Set());
+  }, []);
+
+  const toggleItemSelection = useCallback((id: string) => {
+    setSelectedItemIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  // TODO: remove this block once bulk UI is wired in subsequent tasks
+  void isBulkMode;
+  void showBulkEdit; void setShowBulkEdit;
+  void showBulkDelete; void setShowBulkDelete;
+  void selectedItems;
+  void exitBulkMode;
+  void toggleItemSelection;
 
   // ── Derived: filtered lists ─────────────────────────────────────────────────
   const [filterYear, filterMonthNum] = filterMonth.split('-').map(Number);
@@ -617,14 +716,6 @@ const ShoppingList = memo(() => {
     [shoppingLists, filterYear, filterMonthNum],
   );
 
-  // ── Derived: month summary stats ────────────────────────────────────────────
-  const monthStats = useMemo(() => {
-    const totalItems = filteredLists.reduce((s, l) => s + l.totalItems, 0);
-    const pendingItems = filteredLists.reduce((s, l) => s + (l.totalItems - l.purchasedItems), 0);
-    const totalEstimated = filteredLists.reduce((s, l) => s + (l.totalEstimated ?? 0), 0);
-    const totalPurchasedEstimated = filteredLists.reduce((s, l) => s + (l.totalSpent ?? 0), 0);
-    return { totalItems, pendingItems, totalEstimated, totalPurchasedEstimated };
-  }, [filteredLists]);
 
   // ── Derived: categories present in the detail ───────────────────────────────
   const categoriesInDetail = useMemo((): string[] => {
@@ -697,6 +788,14 @@ const ShoppingList = memo(() => {
     };
   }, [detailData]);
 
+  // derived from shoppingLists summary for lists-view context menu
+  const editingListSummaryData = useMemo((): ListFormData | undefined => {
+    if (!editingListId) return undefined;
+    const s = shoppingLists.find((l) => l.shoppingListId === editingListId);
+    if (!s) return undefined;
+    return { name: s.name, monthYear: fromISOMonthYear(s.monthYear), notes: s.notes ?? '' };
+  }, [editingListId, shoppingLists]);
+
   const handleEditList = useCallback(
     async (data: ListFormData) => {
       if (!selectedListId) return;
@@ -726,6 +825,32 @@ const ShoppingList = memo(() => {
       setShowDeleteAlert(false);
     }
   }, [selectedListId, deleteShoppingList, backToLists, showSuccess, showError]);
+
+  // ── Handlers: edit/delete list from lists view ──────────────────────────────
+  const handleEditListFromGrid = useCallback(
+    async (data: ListFormData) => {
+      if (!editingListId) return;
+      await updateShoppingList(editingListId, data.name, toISOMonthYear(data.monthYear), data.notes || undefined);
+      showSuccess('Lista atualizada!');
+      setEditingListId(null);
+    },
+    [editingListId, updateShoppingList, showSuccess],
+  );
+
+  const handleDeleteListFromGrid = useCallback(async () => {
+    if (!editingListId) return;
+    setIsDeleting(true);
+    try {
+      await deleteShoppingList(editingListId);
+      showSuccess('Lista excluída!');
+    } catch {
+      showError('Erro ao excluir lista.');
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteAlert(false);
+      setEditingListId(null);
+    }
+  }, [editingListId, deleteShoppingList, showSuccess, showError]);
 
   // ── Handlers: add item ──────────────────────────────────────────────────────
   const handleAddItem = useCallback(
@@ -857,8 +982,38 @@ const ShoppingList = memo(() => {
     [selectedListId, unmarkItemAsPurchased, showSuccess],
   );
 
+  const handleUploadFile = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      event.target.value = '';
+      if (!file || !selectedListId) return;
+      setIsUploading(true);
+      try {
+        const detail = await uploadShoppingItems(selectedListId, file);
+        setDetailData(detail);
+        showSuccess('Itens importados!');
+      } catch {
+        showError('Erro ao importar itens.');
+      } finally {
+        setIsUploading(false);
+      }
+    },
+    [selectedListId, uploadShoppingItems, showSuccess, showError],
+  );
+
   // ── Render: lists view ──────────────────────────────────────────────────────
   if (viewMode === 'lists') {
+    const cardIcons = [ShoppingCart, Flame, Sparkles] as const;
+    const cardIconBgs = [
+      'bg-honey-400/10 text-honey-400',
+      'bg-terracotta-400/10 text-terracotta-400',
+      'bg-sage-500/10 text-sage-500',
+    ] as const;
+
+    const activeLists = filteredLists.filter((l) => l.purchasedItems < l.totalItems || l.totalItems === 0).length;
+    const totalItems = filteredLists.reduce((s, l) => s + l.totalItems, 0);
+    const totalSpent = filteredLists.reduce((s, l) => s + (l.totalSpent ?? 0), 0);
+
     return (
       <motion.div
         key="lists"
@@ -866,98 +1021,89 @@ const ShoppingList = memo(() => {
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: -24 }}
         transition={{ duration: 0.25, ease: [0.25, 1, 0.5, 1] }}
-        className="space-y-6 max-w-full"
+        className="space-y-8 max-w-full pb-24"
       >
-        {/* Header */}
-        <div className="flex items-center justify-between gap-4 flex-wrap rounded-xl bg-gradient-to-r from-linen-400 to-linen-200 dark:from-muted dark:to-background border border-linen-200 dark:border-muted px-5 py-4">
-          <div>
-            <h2 className="text-2xl font-bold text-foreground font-display">Listas de Compras</h2>
-            <p className="text-honey-700 dark:text-honey-300 text-sm mt-0.5 font-medium">Organize suas compras por lista e mês</p>
+        {/* Editorial header */}
+        <div className="flex items-end justify-between gap-4 flex-wrap">
+          <div className="border-l-4 border-honey-400 pl-7 space-y-1">
+            <p className="text-xs font-semibold tracking-[0.15em] uppercase text-honey-400">
+              Lista de Compras
+            </p>
+            <div className="relative overflow-hidden" style={{ minHeight: '2.5rem' }}>
+              <AnimatePresence mode="popLayout" initial={false}>
+                <motion.h2
+                  key={filterMonth}
+                  initial={{ opacity: 0, x: monthNavDir * 24 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: monthNavDir * -24, position: 'absolute' }}
+                  transition={{ duration: 0.22, ease: [0.25, 1, 0.5, 1] }}
+                  className="font-display font-bold text-3xl text-foreground"
+                >
+                  {(() => { const s = formatMonthYearPT(filterMonth); return s.charAt(0).toUpperCase() + s.slice(1); })()}
+                </motion.h2>
+              </AnimatePresence>
+            </div>
           </div>
-          <Button className="gap-1.5 shrink-0" onClick={() => setShowCreateList(true)}>
-            <Plus size={16} />
-            Nova Lista
-          </Button>
+
+          {/* Month nav */}
+          <div className="flex items-center gap-2">
+            <motion.button
+              whileTap={{ scale: 0.85 }}
+              transition={{ duration: 0.1 }}
+              onClick={() => { setMonthNavDir(-1); setFilterMonth((m) => addMonths(m, -1)); }}
+              className="p-2.5 rounded-xl hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
+            >
+              <ChevronLeft size={16} />
+            </motion.button>
+            <button
+              onClick={() => { setMonthNavDir(1); setFilterMonth(currentMonthValue()); }}
+              className="px-5 py-2 rounded-lg border border-border bg-card text-sm font-medium text-foreground hover:bg-accent transition-colors"
+            >
+              Hoje
+            </button>
+            <motion.button
+              whileTap={{ scale: 0.85 }}
+              transition={{ duration: 0.1 }}
+              onClick={() => { setMonthNavDir(1); setFilterMonth((m) => addMonths(m, 1)); }}
+              className="p-2.5 rounded-xl hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
+            >
+              <ChevronRight size={16} />
+            </motion.button>
+          </div>
         </div>
 
-        {/* Month navigation */}
-        <div className="flex items-center gap-3">
-          <motion.button
-            whileTap={{ scale: 0.85 }}
-            transition={{ duration: 0.1 }}
-            onClick={() => { setMonthNavDir(-1); setFilterMonth((m) => addMonths(m, -1)); }}
-            className="p-1.5 rounded-md hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
-          >
-            <ChevronLeft size={18} />
-          </motion.button>
-          <div className="relative overflow-hidden min-w-[130px] text-center">
-            <AnimatePresence mode="popLayout" initial={false}>
-              <motion.span
-                key={filterMonth}
-                initial={{ opacity: 0, x: monthNavDir * 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: monthNavDir * -20 }}
-                transition={{ duration: 0.2, ease: [0.25, 1, 0.5, 1] }}
-                className="block text-sm font-semibold text-foreground capitalize"
-              >
-                {formatMonthYearShort(filterMonth)}
-              </motion.span>
-            </AnimatePresence>
-          </div>
-          <motion.button
-            whileTap={{ scale: 0.85 }}
-            transition={{ duration: 0.1 }}
-            onClick={() => { setMonthNavDir(1); setFilterMonth((m) => addMonths(m, 1)); }}
-            className="p-1.5 rounded-md hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
-          >
-            <ChevronRight size={18} />
-          </motion.button>
-        </div>
-
-        {/* Month stats strip */}
+        {/* Stats summary card */}
         {filteredLists.length > 0 && (
           <motion.div
-            className="grid grid-cols-2 sm:grid-cols-4 gap-3"
-            initial="hidden"
-            animate="visible"
-            variants={{ visible: { transition: { staggerChildren: 0.07, delayChildren: 0.05 } } }}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, delay: 0.05 }}
+            className="rounded-2xl border border-border bg-card px-8 py-7 flex items-center justify-around gap-4"
           >
-            <motion.div
-              variants={{ hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0, transition: { duration: 0.25 } } }}
-              className="rounded-lg border border-border bg-card p-3 text-center space-y-0.5"
-            >
-              <p className="text-xs text-muted-foreground leading-tight">Listas</p>
-              <p className="text-xl font-bold text-foreground">{filteredLists.length}</p>
-            </motion.div>
-            <motion.div
-              variants={{ hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0, transition: { duration: 0.25 } } }}
-              className="rounded-lg border border-honey-200 dark:border-honey-900/40 bg-honey-50 dark:bg-honey-900/10 p-3 text-center space-y-0.5"
-            >
-              <p className="text-xs text-honey-600 dark:text-honey-400 leading-tight">Itens pendentes</p>
-              <p className="text-xl font-bold text-honey-700 dark:text-honey-300">{monthStats.pendingItems}</p>
-            </motion.div>
-            <motion.div
-              variants={{ hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0, transition: { duration: 0.25 } } }}
-              className="rounded-lg border border-linen-300 dark:border-linen-800/40 bg-linen-50 dark:bg-linen-900/10 p-3 text-center space-y-0.5"
-            >
-              <p className="text-xs text-muted-foreground leading-tight">Estimado</p>
-              <p className="text-lg font-bold text-foreground truncate">
-                {monthStats.totalEstimated > 0 ? formatCurrency(monthStats.totalEstimated) : '—'}
+            <div className="flex-1 text-center space-y-1">
+              <p className="text-[10px] font-medium tracking-widest uppercase text-muted-foreground">Gasto no Mês</p>
+              <p className="text-2xl font-bold font-display text-honey-400 dark:text-honey-300">
+                {totalSpent > 0 ? formatCurrency(totalSpent) : '—'}
               </p>
-            </motion.div>
-            <motion.div
-              variants={{ hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0, transition: { duration: 0.25 } } }}
-              className="rounded-lg border border-sage-200 dark:border-sage-900/40 bg-sage-50 dark:bg-sage-900/10 p-3 text-center space-y-0.5"
-            >
-              <p className="text-xs text-sage-600 dark:text-sage-400 leading-tight">Gasto</p>
-              <p className="text-lg font-bold text-sage-700 dark:text-sage-300 truncate">
-                {monthStats.totalPurchasedEstimated > 0 ? formatCurrency(monthStats.totalPurchasedEstimated) : '—'}
+            </div>
+            <div className="w-px h-12 bg-border shrink-0" />
+            <div className="flex-1 text-center space-y-1">
+              <p className="text-[10px] font-medium tracking-widest uppercase text-muted-foreground">Listas Ativas</p>
+              <p className="text-2xl font-bold font-display" style={{ color: '#adc6ff' }}>
+                {String(activeLists).padStart(2, '0')}
               </p>
-            </motion.div>
+            </div>
+            <div className="w-px h-12 bg-border shrink-0" />
+            <div className="flex-1 text-center space-y-1">
+              <p className="text-[10px] font-medium tracking-widest uppercase text-muted-foreground">Items Totais</p>
+              <p className="text-2xl font-bold font-display text-foreground">
+                {totalItems}
+              </p>
+            </div>
           </motion.div>
         )}
 
-        {/* Lists grid */}
+        {/* Bento grid / empty state */}
         {filteredLists.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 space-y-4 text-center">
             <div className="w-16 h-16 rounded-full bg-gradient-to-br from-honey-100 to-linen-200 dark:from-honey-900/30 dark:to-muted border border-honey-200/60 dark:border-honey-800/30 flex items-center justify-center">
@@ -965,92 +1111,168 @@ const ShoppingList = memo(() => {
             </div>
             <div>
               <p className="font-medium text-foreground">Nenhuma lista em {formatMonthYearShort(filterMonth)}</p>
-              <p className="text-sm text-muted-foreground mt-1">Crie uma lista para começar a organizar suas compras.</p>
+              <p className="text-sm text-muted-foreground mt-1">Use o botão + para criar uma lista.</p>
             </div>
-            <Button variant="outline" className="gap-1.5" onClick={() => setShowCreateList(true)}>
-              <Plus size={15} />
-              Criar lista
-            </Button>
           </div>
         ) : (
           <motion.div
-            className="grid gap-4 sm:grid-cols-2"
+            className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
             initial="hidden"
             animate="visible"
-            variants={{ visible: { transition: { staggerChildren: 0.06 } } }}
+            variants={{ visible: { transition: { staggerChildren: 0.07 } } }}
           >
-            {filteredLists.map((list) => {
+            {filteredLists.map((list, idx) => {
               const isComplete = list.totalItems > 0 && list.purchasedItems === list.totalItems;
-              const isEmpty = list.totalItems === 0;
+              const Icon = cardIcons[idx % 3];
+              const iconBg = cardIconBgs[idx % 3];
               return (
-                <motion.button
+                <motion.div
                   key={list.shoppingListId}
                   variants={{
-                    hidden: { opacity: 0, y: 12 },
+                    hidden: { opacity: 0, y: 14 },
                     visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.25, 1, 0.5, 1] } },
                   }}
-                  whileHover={{ y: -2, transition: { duration: 0.15 } }}
-                  className="text-left p-5 rounded-xl border border-border bg-card hover:border-honey-300 dark:hover:border-honey-700 hover:bg-linen-50/80 dark:hover:bg-honey-900/10 hover:shadow-md transition-all duration-200 space-y-4 group"
-                  onClick={() => openListDetail(list.shoppingListId)}
+                  className="relative group"
                 >
-                  {/* Card header */}
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="font-semibold text-foreground group-hover:text-primary transition-colors truncate">
-                        {list.name}
-                      </p>
-                      <p className="text-xs text-muted-foreground capitalize mt-0.5">
-                        {formatMonthYearPT(list.monthYear)}
-                      </p>
-                    </div>
-                    <Badge
-                      variant={isComplete ? 'success' : isEmpty ? 'secondary' : 'warm'}
-                      className="shrink-0 text-xs"
-                    >
-                      {isComplete ? 'Concluída' : isEmpty ? 'Vazia' : 'Em progresso'}
-                    </Badge>
-                  </div>
-
-                  {/* Progress */}
-                  {!isEmpty && (
-                    <div className="space-y-1.5">
-                      <div className="flex justify-between text-xs text-muted-foreground">
-                        <span>
-                          {list.purchasedItems}/{list.totalItems} comprados
-                        </span>
-                        <span>{list.totalItems > 0 ? Math.round((list.purchasedItems / list.totalItems) * 100) : 0}%</span>
+                  {/* 3-dots context menu */}
+                  <div className="absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="relative">
+                      <button
+                        className="p-2 rounded-lg hover:bg-accent transition-colors text-muted-foreground hover:text-foreground peer"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <MoreVertical size={16} />
+                      </button>
+                      <div className="absolute right-0 top-full mt-1 w-36 bg-card border border-border rounded-xl shadow-lg overflow-hidden hidden peer-focus:flex focus-within:flex flex-col z-20">
+                        <button
+                          className="flex items-center gap-2 px-3 py-2.5 text-sm text-foreground hover:bg-accent transition-colors w-full text-left"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingListId(list.shoppingListId);
+                            setShowEditList(true);
+                          }}
+                        >
+                          <Pencil size={13} />
+                          Editar
+                        </button>
+                        <button
+                          className="flex items-center gap-2 px-3 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors w-full text-left"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingListId(list.shoppingListId);
+                            setShowDeleteAlert(true);
+                          }}
+                        >
+                          <Trash2 size={13} />
+                          Excluir
+                        </button>
                       </div>
-                      <ProgressBar value={list.purchasedItems} max={list.totalItems} />
                     </div>
-                  )}
-
-                  {/* Financial */}
-                  <div className="flex justify-between text-xs text-muted-foreground border-t pt-3">
-                    <span>
-                      Estimado:{' '}
-                      <span className="font-medium text-foreground">
-                        {list.totalEstimated ? formatCurrency(list.totalEstimated) : '—'}
-                      </span>
-                    </span>
-                    <span>
-                      Gasto:{' '}
-                      <span className={cn('font-medium', list.totalSpent ? 'text-sage-600 dark:text-sage-400' : 'text-foreground')}>
-                        {list.totalSpent ? formatCurrency(list.totalSpent) : '—'}
-                      </span>
-                    </span>
                   </div>
-                </motion.button>
+
+                  {/* Card body */}
+                  <button
+                    className="w-full text-left bg-card border border-border rounded-3xl p-6 hover:border-honey-300 dark:hover:border-honey-700 hover:shadow-md transition-all duration-200 space-y-4"
+                    onClick={() => openListDetail(list.shoppingListId)}
+                  >
+                    {/* Icon + badge */}
+                    <div className="flex items-start justify-between">
+                      <div className={cn('w-12 h-12 rounded-2xl flex items-center justify-center shrink-0', iconBg)}>
+                        <Icon size={20} />
+                      </div>
+                      {isComplete ? (
+                        <span className="text-[10px] font-semibold tracking-wide uppercase px-3 py-1 rounded-xl bg-sage-500/15 text-sage-500">
+                          Finalizada
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-semibold tracking-wide uppercase px-3 py-1 rounded-xl" style={{ background: 'rgba(173,198,255,0.15)', color: '#adc6ff' }}>
+                          Em aberto
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Name */}
+                    <p className="font-display font-bold text-xl text-foreground leading-snug">
+                      {list.name}
+                    </p>
+
+                    {/* Notes */}
+                    {list.notes && (
+                      <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+                        {list.notes}
+                      </p>
+                    )}
+
+                    {/* Divider + footer stats */}
+                    <div className="border-t border-border pt-5 grid grid-cols-2 gap-4">
+                      <div className="space-y-0.5">
+                        <p className="text-[10px] font-medium tracking-widest uppercase text-muted-foreground">Itens</p>
+                        <p className="text-base font-semibold text-foreground">{list.totalItems} produtos</p>
+                      </div>
+                      <div className="space-y-0.5">
+                        <p className="text-[10px] font-medium tracking-widest uppercase text-muted-foreground">Total Est.</p>
+                        <p className="text-base font-semibold text-foreground">
+                          {list.totalEstimated ? formatCurrency(list.totalEstimated) : '—'}
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+                </motion.div>
               );
             })}
           </motion.div>
         )}
 
+        {/* Dialogs */}
         <ListFormDialog
           open={showCreateList}
           onClose={() => setShowCreateList(false)}
           onSubmit={handleCreateList}
           title="Nova Lista de Compras"
         />
+        <ListFormDialog
+          open={showEditList && !!editingListId}
+          onClose={() => { setShowEditList(false); setEditingListId(null); }}
+          onSubmit={handleEditListFromGrid}
+          initialData={editingListSummaryData}
+          title="Editar Lista"
+        />
+        <AlertDialog open={showDeleteAlert && !!editingListId} onOpenChange={(o) => { if (!o) { setShowDeleteAlert(false); setEditingListId(null); } }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir lista?</AlertDialogTitle>
+              <AlertDialogDescription>Esta ação não pode ser desfeita. Todos os itens serão removidos.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteListFromGrid} disabled={isDeleting}>
+                {isDeleting ? 'Excluindo…' : 'Excluir'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Floating Action Button */}
+        <motion.div
+          className="fixed bottom-6 right-6 z-50 group"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          transition={{ duration: 0.15 }}
+        >
+          <div className="relative flex items-center">
+            <span className="absolute right-[72px] whitespace-nowrap bg-card border border-border text-foreground text-sm font-medium px-4 py-2 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+              Nova Lista
+            </span>
+            <button
+              className="w-16 h-16 rounded-xl flex items-center justify-center shadow-2xl"
+              style={{ backgroundColor: '#adc6ff' }}
+              onClick={() => setShowCreateList(true)}
+              aria-label="Nova Lista"
+            >
+              <Plus size={20} style={{ color: '#131313' }} />
+            </button>
+          </div>
+        </motion.div>
       </motion.div>
     );
   }
@@ -1179,8 +1401,19 @@ const ShoppingList = memo(() => {
           </button>
         ))}
         <Button
+          variant="outline"
           size="sm"
           className="ml-auto gap-1.5 text-xs shrink-0"
+          onClick={() => uploadInputRef.current?.click()}
+          disabled={!detailData || isUploading}
+          title="Importar itens por arquivo"
+        >
+          <Upload size={14} />
+          {isUploading ? 'Importando...' : 'Importar arquivo'}
+        </Button>
+        <Button
+          size="sm"
+          className="gap-1.5 text-xs shrink-0"
           onClick={() => setShowAddItem(true)}
           disabled={!detailData}
         >
@@ -1188,6 +1421,14 @@ const ShoppingList = memo(() => {
           Adicionar Item
         </Button>
       </div>
+
+      <input
+        ref={uploadInputRef}
+        type="file"
+        accept=".csv,.txt"
+        onChange={handleUploadFile}
+        className="hidden"
+      />
 
       {/* Item list */}
       {isLoadingDetail ? (
@@ -1339,7 +1580,7 @@ const ShoppingList = memo(() => {
         onClose={() => setShowAddItem(false)}
         onSubmit={handleAddItem}
         title="Adicionar Item"
-        categories={shoppingCategories}
+        categories={uniqueCategories}
       />
       <ItemFormDialog
         open={showEditItem}
@@ -1350,7 +1591,7 @@ const ShoppingList = memo(() => {
         initialData={editItemInitialData}
         onSubmit={handleEditItem}
         title="Editar Item"
-        categories={shoppingCategories}
+        categories={uniqueCategories}
       />
       <MarkAsPurchasedDialog
         open={showPurchase}
@@ -1364,7 +1605,7 @@ const ShoppingList = memo(() => {
       <ManageCategoriesDialog
         open={showCategories}
         onClose={() => setShowCategories(false)}
-        categories={shoppingCategories}
+        categories={uniqueCategories}
         onCreateCategory={async (name) => {
           await createShoppingCategory(name);
           showSuccess('Categoria criada!');

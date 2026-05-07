@@ -1485,11 +1485,19 @@ const ShoppingList = memo(() => {
                       'flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-colors duration-200',
                       item.isPurchased
                         ? 'bg-muted/30 border-border'
-                        : 'bg-card border-border hover:border-primary/30',
+                        : isBulkMode && selectedItemIds.has(item.shoppingItemId)
+                          ? 'bg-[rgba(120,160,255,0.08)] border-[#7ba0ff]'
+                          : 'bg-card border-border hover:border-primary/30',
                     )}
                   >
-                    {/* Checkbox / unmark button */}
-                    {item.isPurchased ? (
+                    {/* Bulk checkbox (bulk mode) or unmark button (purchased) */}
+                    {isBulkMode && !item.isPurchased ? (
+                      <Checkbox
+                        checked={selectedItemIds.has(item.shoppingItemId)}
+                        onCheckedChange={() => toggleItemSelection(item.shoppingItemId)}
+                        className="shrink-0"
+                      />
+                    ) : item.isPurchased ? (
                       <button
                         className="shrink-0 text-sage-500 hover:text-honey-500 transition-colors rounded"
                         onClick={() => handleUnmarkAsPurchased(item)}
@@ -1497,16 +1505,7 @@ const ShoppingList = memo(() => {
                       >
                         <CheckCircle2 size={18} />
                       </button>
-                    ) : (
-                      <Checkbox
-                        checked={false}
-                        onCheckedChange={() => {
-                          setSelectedItem(item);
-                          setShowPurchase(true);
-                        }}
-                        className="shrink-0"
-                      />
-                    )}
+                    ) : null}
 
                     {/* Info */}
                     <div className="flex-1 min-w-0">
@@ -1536,8 +1535,25 @@ const ShoppingList = memo(() => {
                       </Badge>
                     )}
 
-                    {/* Actions */}
-                    {!item.isPurchased && (
+                    {/* Actions — hidden in bulk mode */}
+                    {!item.isPurchased && !isBulkMode && (
+                      <button
+                        className="shrink-0 px-2.5 py-1 rounded-md text-xs font-medium border transition-colors"
+                        style={{
+                          background: 'rgba(130,200,130,0.12)',
+                          color: '#5a9a6a',
+                          borderColor: 'rgba(130,200,130,0.35)',
+                        }}
+                        onClick={() => {
+                          setSelectedItem(item);
+                          setShowPurchase(true);
+                        }}
+                        title="Marcar como comprado"
+                      >
+                        ✓ Comprado
+                      </button>
+                    )}
+                    {!item.isPurchased && !isBulkMode && (
                       <button
                         className="shrink-0 text-muted-foreground hover:text-foreground transition-colors p-1 rounded"
                         onClick={() => {
@@ -1549,7 +1565,7 @@ const ShoppingList = memo(() => {
                         <Pencil size={13} />
                       </button>
                     )}
-                    {!item.isPurchased && (
+                    {!item.isPurchased && !isBulkMode && (
                       <button
                         className="shrink-0 text-muted-foreground hover:text-destructive transition-colors p-1 rounded"
                         onClick={() => handleDeleteItem(item)}

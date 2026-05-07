@@ -1874,7 +1874,7 @@ const ShoppingList = memo(() => {
 
       {/* Floating bulk action bar */}
       {isBulkMode && selectedItems.length > 0 && (
-        <div className="sticky bottom-4 z-50 mx-auto max-w-sm">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm px-4">
           <div className="flex gap-3 p-3 rounded-2xl border border-border bg-card shadow-xl">
             <Button
               variant="outline"

@@ -697,11 +697,9 @@ const ShoppingList = memo(() => {
     });
   }, []);
 
-  // suppress noUnusedLocals until tasks 3-7 wire these into JSX
+  // suppress noUnusedLocals until tasks 4-7 wire these into JSX
   void showBulkEdit; void setShowBulkEdit;
   void showBulkDelete; void setShowBulkDelete;
-  void selectedItems;
-  void exitBulkMode;
 
   // ── Derived: filtered lists ─────────────────────────────────────────────────
   const [filterYear, filterMonthNum] = filterMonth.split('-').map(Number);
@@ -1370,55 +1368,81 @@ const ShoppingList = memo(() => {
         </div>
       )}
 
-      {/* Category pills + Add button */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <button
-          onClick={() => setCategoryFilter(null)}
-          className={cn(
-            'px-3 py-1 rounded-full text-xs font-medium transition-colors border',
-            categoryFilter === null
-              ? 'bg-primary text-primary-foreground border-primary'
-              : 'bg-transparent text-muted-foreground border-border hover:border-primary/40 hover:text-foreground',
-          )}
-        >
-          Todos
-        </button>
-        {categoriesInDetail.map((cat) => (
+      {/* Toolbar — normal or bulk mode */}
+      {isBulkMode ? (
+        <div className="flex items-center gap-3 px-1 py-1 rounded-xl bg-[rgba(120,160,255,0.07)] border border-[rgba(120,160,255,0.2)]">
+          <span className="text-sm font-semibold text-[#7ba0ff] px-2">
+            {selectedItems.length} selecionado{selectedItems.length !== 1 ? 's' : ''}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            className="ml-auto text-xs shrink-0"
+            onClick={exitBulkMode}
+          >
+            Cancelar
+          </Button>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 flex-wrap">
           <button
-            key={cat}
-            onClick={() => setCategoryFilter(cat === categoryFilter ? null : cat)}
+            onClick={() => setCategoryFilter(null)}
             className={cn(
-              'px-3 py-1 rounded-full text-xs font-medium transition-colors border max-w-[120px] truncate',
-              categoryFilter === cat
+              'px-3 py-1 rounded-full text-xs font-medium transition-colors border',
+              categoryFilter === null
                 ? 'bg-primary text-primary-foreground border-primary'
                 : 'bg-transparent text-muted-foreground border-border hover:border-primary/40 hover:text-foreground',
             )}
-            title={cat}
           >
-            {cat}
+            Todos
           </button>
-        ))}
-        <Button
-          variant="outline"
-          size="sm"
-          className="ml-auto gap-1.5 text-xs shrink-0"
-          onClick={() => uploadInputRef.current?.click()}
-          disabled={!detailData || isUploading}
-          title="Importar itens por arquivo"
-        >
-          <Upload size={14} />
-          {isUploading ? 'Importando...' : 'Importar arquivo'}
-        </Button>
-        <Button
-          size="sm"
-          className="gap-1.5 text-xs shrink-0"
-          onClick={() => setShowAddItem(true)}
-          disabled={!detailData}
-        >
-          <Plus size={14} />
-          Adicionar Item
-        </Button>
-      </div>
+          {categoriesInDetail.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setCategoryFilter(cat === categoryFilter ? null : cat)}
+              className={cn(
+                'px-3 py-1 rounded-full text-xs font-medium transition-colors border max-w-[120px] truncate',
+                categoryFilter === cat
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'bg-transparent text-muted-foreground border-border hover:border-primary/40 hover:text-foreground',
+              )}
+              title={cat}
+            >
+              {cat}
+            </button>
+          ))}
+          <Button
+            variant="outline"
+            size="sm"
+            className="ml-auto gap-1.5 text-xs shrink-0"
+            onClick={() => uploadInputRef.current?.click()}
+            disabled={!detailData || isUploading}
+            title="Importar itens por arquivo"
+          >
+            <Upload size={14} />
+            {isUploading ? 'Importando...' : 'Importar arquivo'}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 text-xs shrink-0"
+            onClick={() => setIsBulkMode(true)}
+            disabled={!detailData}
+          >
+            <ListChecks size={14} />
+            Selecionar
+          </Button>
+          <Button
+            size="sm"
+            className="gap-1.5 text-xs shrink-0"
+            onClick={() => setShowAddItem(true)}
+            disabled={!detailData}
+          >
+            <Plus size={14} />
+            Adicionar Item
+          </Button>
+        </div>
+      )}
 
       <input
         ref={uploadInputRef}

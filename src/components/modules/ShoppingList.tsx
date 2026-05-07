@@ -697,9 +697,9 @@ const ShoppingList = memo(() => {
     });
   }, []);
 
-  // suppress noUnusedLocals until tasks 4-7 wire these into JSX
-  void showBulkEdit; void setShowBulkEdit;
-  void showBulkDelete; void setShowBulkDelete;
+  // suppress noUnusedLocals until tasks 6-7 wire these into JSX
+  void showBulkEdit;
+  void showBulkDelete;
 
   // ── Derived: filtered lists ─────────────────────────────────────────────────
   const [filterYear, filterMonthNum] = filterMonth.split('-').map(Number);
@@ -1625,6 +1625,32 @@ const ShoppingList = memo(() => {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Floating bulk action bar */}
+      {isBulkMode && selectedItems.length > 0 && (
+        <div className="sticky bottom-4 z-50 mx-auto max-w-sm">
+          <div className="flex gap-3 p-3 rounded-2xl border border-border bg-card shadow-xl">
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1 gap-1.5 text-xs border-[rgba(120,160,255,0.4)] bg-[rgba(120,160,255,0.08)] text-[#7ba0ff] hover:bg-[rgba(120,160,255,0.16)] hover:text-[#7ba0ff]"
+              onClick={() => setShowBulkEdit(true)}
+            >
+              <Pencil size={13} />
+              Editar selecionados
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1 gap-1.5 text-xs text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
+              onClick={() => setShowBulkDelete(true)}
+            >
+              <Trash2 size={13} />
+              Excluir selecionados
+            </Button>
+          </div>
         </div>
       )}
 

@@ -802,8 +802,6 @@ function BulkEditDialog({ open, onClose, selectedItems, categories, onSubmit }: 
     </Dialog>
   );
 }
-void BulkEditDialog;
-
 // ── Main Component ───────────────────────────────────────────────────────────────
 
 const ShoppingList = memo(() => {
@@ -885,10 +883,6 @@ const ShoppingList = memo(() => {
       return next;
     });
   }, []);
-
-  // suppress noUnusedLocals until tasks 6-7 wire these into JSX
-  void showBulkEdit;
-  void showBulkDelete;
 
   // ── Derived: filtered lists ─────────────────────────────────────────────────
   const [filterYear, filterMonthNum] = filterMonth.split('-').map(Number);
@@ -1185,6 +1179,67 @@ const ShoppingList = memo(() => {
     },
     [selectedListId, uploadShoppingItems, showSuccess, showError],
   );
+
+  const handleBulkEdit = useCallback(
+    async (patch: BulkEditPatch) => {
+      for (const item of selectedItems) {
+        await updateShoppingItem(
+          item.shoppingItemId,
+          selectedListId!,
+          item.name,
+          patch.quantity ?? item.quantity,
+          patch.unitType ?? item.unitType,
+          'categoryId' in patch ? patch.categoryId ?? null : item.shoppingCategoryId ?? null,
+          patch.estimatedPrice ?? item.estimatedPrice ?? null,
+          item.notes ?? null,
+        );
+      }
+      const catMap = new Map(shoppingCategories.map((c) => [c.shoppingCategoryId, c.name]));
+      setDetailData((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          items: prev.items.map((i) => {
+            if (!selectedItemIds.has(i.shoppingItemId)) return i;
+            const newCategoryId = 'categoryId' in patch
+              ? (patch.categoryId ?? null)
+              : (i.shoppingCategoryId ?? null);
+            return {
+              ...i,
+              quantity: patch.quantity ?? i.quantity,
+              unitType: patch.unitType ?? i.unitType,
+              shoppingCategoryId: newCategoryId,
+              categoryName: newCategoryId ? (catMap.get(newCategoryId) ?? null) : null,
+              estimatedPrice: patch.estimatedPrice ?? i.estimatedPrice,
+            };
+          }),
+        };
+      });
+      showSuccess(`${selectedItems.length} ${selectedItems.length === 1 ? 'item atualizado' : 'itens atualizados'}!`);
+      exitBulkMode();
+    },
+    [selectedItems, selectedItemIds, selectedListId, updateShoppingItem, shoppingCategories, showSuccess, exitBulkMode],
+  );
+
+  const handleBulkDelete = useCallback(async () => {
+    for (const item of selectedItems) {
+      await deleteShoppingItem(
+        item.shoppingItemId,
+        selectedListId!,
+        item.quantity,
+        item.unitType,
+        item.estimatedPrice,
+        item.isPurchased,
+        item.price,
+      );
+    }
+    const deletedIds = new Set(selectedItems.map((i) => i.shoppingItemId));
+    setDetailData((prev) =>
+      prev ? { ...prev, items: prev.items.filter((i) => !deletedIds.has(i.shoppingItemId)) } : prev,
+    );
+    showSuccess(`${selectedItems.length} ${selectedItems.length === 1 ? 'item excluído' : 'itens excluídos'}!`);
+    exitBulkMode();
+  }, [selectedItems, selectedListId, deleteShoppingItem, showSuccess, exitBulkMode]);
 
   // ── Render: lists view ──────────────────────────────────────────────────────
   if (viewMode === 'lists') {
@@ -1844,6 +1899,30 @@ const ShoppingList = memo(() => {
       )}
 
       {/* Dialogs */}
+      <BulkEditDialog
+        open={showBulkEdit}
+        onClose={() => setShowBulkEdit(false)}
+        selectedItems={selectedItems}
+        categories={uniqueCategories}
+        onSubmit={handleBulkEdit}
+      />
+      <AlertDialog open={showBulkDelete} onOpenChange={(o) => { if (!o) setShowBulkDelete(false); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir {selectedItems.length} {selectedItems.length === 1 ? 'item' : 'itens'}?</AlertDialogTitle>
+            <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBulkDelete}
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <ListFormDialog
         open={showEditList}
         onClose={() => setShowEditList(false)}

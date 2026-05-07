@@ -1779,22 +1779,14 @@ const ShoppingList = memo(() => {
                           : 'bg-card border-border hover:border-primary/30',
                     )}
                   >
-                    {/* Bulk checkbox (bulk mode) or unmark button (purchased) */}
-                    {isBulkMode && !item.isPurchased ? (
+                    {/* Bulk checkbox (bulk mode only, unpurchased items) */}
+                    {isBulkMode && !item.isPurchased && (
                       <Checkbox
                         checked={selectedItemIds.has(item.shoppingItemId)}
                         onCheckedChange={() => toggleItemSelection(item.shoppingItemId)}
                         className="shrink-0"
                       />
-                    ) : item.isPurchased ? (
-                      <button
-                        className="shrink-0 text-sage-500 hover:text-honey-500 transition-colors rounded"
-                        onClick={() => handleUnmarkAsPurchased(item)}
-                        title="Desmarcar como comprado"
-                      >
-                        <CheckCircle2 size={18} />
-                      </button>
-                    ) : null}
+                    )}
 
                     {/* Info */}
                     <div className="flex-1 min-w-0">
@@ -1817,11 +1809,15 @@ const ShoppingList = memo(() => {
                       </p>
                     </div>
 
-                    {/* Badge comprado */}
-                    {item.isPurchased && (
-                      <Badge variant="success" className="text-xs shrink-0">
-                        Comprado
-                      </Badge>
+                    {/* Unmark button (purchased items) */}
+                    {item.isPurchased && !isBulkMode && (
+                      <button
+                        className="shrink-0 px-2.5 py-1 rounded-md text-xs font-medium border border-border bg-transparent text-muted-foreground hover:border-destructive/50 hover:text-destructive hover:bg-destructive/5 transition-colors"
+                        onClick={() => handleUnmarkAsPurchased(item)}
+                        title="Desmarcar como comprado"
+                      >
+                        ✓ Comprado
+                      </button>
                     )}
 
                     {/* Actions — hidden in bulk mode */}

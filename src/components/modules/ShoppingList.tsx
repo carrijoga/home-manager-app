@@ -1827,12 +1827,7 @@ const ShoppingList = memo(() => {
                     {/* Actions — hidden in bulk mode */}
                     {!item.isPurchased && !isBulkMode && (
                       <button
-                        className="shrink-0 px-2.5 py-1 rounded-md text-xs font-medium border transition-colors"
-                        style={{
-                          background: 'rgba(130,200,130,0.12)',
-                          color: '#5a9a6a',
-                          borderColor: 'rgba(130,200,130,0.35)',
-                        }}
+                        className="shrink-0 px-2.5 py-1 rounded-md text-xs font-medium border border-border bg-transparent text-muted-foreground hover:border-primary/50 hover:text-primary hover:bg-primary/5 transition-colors"
                         onClick={() => {
                           setSelectedItem(item);
                           setShowPurchase(true);

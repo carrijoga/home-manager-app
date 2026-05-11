@@ -1068,6 +1068,7 @@ const ShoppingList = memo(() => {
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearch = useDebounce(searchTerm, 300);
   const isSearchPending = searchTerm !== debouncedSearch;
+  const [pendingId, setPendingId] = useState<string | null>(null);
 
   // ── Dialog state ────────────────────────────────────────────────────────────
   const [showCreateList, setShowCreateList] = useState(false);
@@ -1422,6 +1423,7 @@ const ShoppingList = memo(() => {
   // ── Handlers: delete item ───────────────────────────────────────────────────
   const handleDeleteItem = useCallback(
     async (item: AppShoppingItem) => {
+      setPendingId(item.shoppingItemId);
       try {
         await deleteShoppingItem(
           item.shoppingItemId,
@@ -1443,6 +1445,8 @@ const ShoppingList = memo(() => {
         showSuccess('Item removido!');
       } catch {
         showError('Erro ao remover item.');
+      } finally {
+        setPendingId(null);
       }
     },
     [deleteShoppingItem, selectedListId, showSuccess, showError]
@@ -1454,52 +1458,66 @@ const ShoppingList = memo(() => {
       if (!selectedItem) return;
       const price = parseFloat(data.price) || 0;
       const purchasedAt = `${data.purchasedAt}T12:00:00Z`;
-      await markItemAsPurchased(
-        selectedItem.shoppingItemId,
-        selectedListId!,
-        selectedItem.quantity,
-        selectedItem.unitType,
-        price,
-        purchasedAt
-      );
-      setDetailData((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          items: prev.items.map((i) =>
-            i.shoppingItemId === selectedItem.shoppingItemId
-              ? { ...i, isPurchased: true, price, purchasedAt }
-              : i
-          ),
-        };
-      });
-      showSuccess('Item marcado como comprado!');
+      setPendingId(selectedItem.shoppingItemId);
+      try {
+        await markItemAsPurchased(
+          selectedItem.shoppingItemId,
+          selectedListId!,
+          selectedItem.quantity,
+          selectedItem.unitType,
+          price,
+          purchasedAt
+        );
+        setDetailData((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            items: prev.items.map((i) =>
+              i.shoppingItemId === selectedItem.shoppingItemId
+                ? { ...i, isPurchased: true, price, purchasedAt }
+                : i
+            ),
+          };
+        });
+        showSuccess('Item marcado como comprado!');
+      } catch {
+        // AppContext handles revert; toast is shown by useToastNotifications
+      } finally {
+        setPendingId(null);
+      }
     },
-    [selectedItem, markItemAsPurchased, showSuccess]
+    [selectedItem, markItemAsPurchased, selectedListId, showSuccess]
   );
 
   // ── Handlers: unmark as purchased ───────────────────────────────────────────
   const handleUnmarkAsPurchased = useCallback(
     async (item: AppShoppingItem) => {
-      await unmarkItemAsPurchased(
-        item.shoppingItemId,
-        selectedListId!,
-        item.quantity,
-        item.unitType,
-        item.price ?? 0
-      );
-      setDetailData((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          items: prev.items.map((i) =>
-            i.shoppingItemId === item.shoppingItemId
-              ? { ...i, isPurchased: false, price: null, purchasedAt: null }
-              : i
-          ),
-        };
-      });
-      showSuccess('Item desmarcado como comprado.');
+      setPendingId(item.shoppingItemId);
+      try {
+        await unmarkItemAsPurchased(
+          item.shoppingItemId,
+          selectedListId!,
+          item.quantity,
+          item.unitType,
+          item.price ?? 0
+        );
+        setDetailData((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            items: prev.items.map((i) =>
+              i.shoppingItemId === item.shoppingItemId
+                ? { ...i, isPurchased: false, price: null, purchasedAt: null }
+                : i
+            ),
+          };
+        });
+        showSuccess('Item desmarcado como comprado.');
+      } catch {
+        // AppContext handles revert; toast is shown by useToastNotifications
+      } finally {
+        setPendingId(null);
+      }
     },
     [selectedListId, unmarkItemAsPurchased, showSuccess]
   );
@@ -2319,11 +2337,16 @@ const ShoppingList = memo(() => {
                                 Comprado
                               </span>
                               <button
-                                className="text-muted-foreground/50 hover:bg-destructive/10 shrink-0 touch-manipulation rounded-lg p-1.5 transition-all duration-150 hover:text-destructive active:scale-90"
+                                className="text-muted-foreground/50 hover:bg-destructive/10 shrink-0 touch-manipulation rounded-lg p-1.5 transition-all duration-150 hover:text-destructive active:scale-90 disabled:pointer-events-none disabled:opacity-50"
                                 onClick={() => handleUnmarkAsPurchased(item)}
                                 title="Desfazer compra"
+                                disabled={pendingId === item.shoppingItemId}
                               >
-                                <RotateCcw size={13} />
+                                {pendingId === item.shoppingItemId ? (
+                                  <Spinner size="sm" />
+                                ) : (
+                                  <RotateCcw size={13} />
+                                )}
                               </button>
                             </div>
                           )}
@@ -2412,11 +2435,16 @@ const ShoppingList = memo(() => {
                                 <Pencil size={13} />
                               </button>
                               <button
-                                className="rounded p-1.5 text-muted-foreground transition-colors hover:text-destructive"
+                                className="rounded p-1.5 text-muted-foreground transition-colors hover:text-destructive disabled:pointer-events-none disabled:opacity-50"
                                 onClick={() => handleDeleteItem(item)}
                                 title="Remover item"
+                                disabled={pendingId === item.shoppingItemId}
                               >
-                                <Trash2 size={13} />
+                                {pendingId === item.shoppingItemId ? (
+                                  <Spinner size="sm" />
+                                ) : (
+                                  <Trash2 size={13} />
+                                )}
                               </button>
                             </div>
                           </div>

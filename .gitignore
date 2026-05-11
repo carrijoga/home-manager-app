@@ -43,7 +43,7 @@ build
 migrations/
 
 CLAUDE.md
-.claude/
+.claude
 .playwright-mcp
 .superpowers
 /docs/superpowers

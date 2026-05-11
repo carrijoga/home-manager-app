@@ -1,13 +1,16 @@
 import { lazy, Suspense } from 'react';
-import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
+import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
 import { AppSidebar } from './components/app-sidebar';
 import { FadeIn } from './components/common/FadeIn';
 import RequireAuth from './components/common/RequireAuth';
+import { SplashScreen } from './components/common/SplashScreen';
+import { TopNavbar } from './components/common/TopNavbar';
 import { DashboardSkeleton, ExpenseListSkeleton, ShoppingListSkeleton, TaskListSkeleton } from './components/skeletons';
-import { Separator } from './components/ui/separator';
-import { SidebarInset, SidebarProvider, SidebarTrigger } from './components/ui/sidebar';
+import { SidebarInset, SidebarProvider } from './components/ui/sidebar';
 import { Toaster } from './components/ui/sonner';
 import { AppProvider, useApp } from './contexts/AppContext';
+import { LoadingProvider, useAppReady } from './contexts/LoadingContext';
 import { useTheme } from './contexts/ThemeContext';
 
 // Lazy loading dos módulos para code splitting
@@ -46,6 +49,18 @@ const Calendar = () => {
   return <CalendarModule />;
 };
 
+const AppShell = ({ children }) => {
+  const appReady = useAppReady();
+  return (
+    <>
+      <AnimatePresence>
+        {!appReady && <SplashScreen key="splash" />}
+      </AnimatePresence>
+      {children}
+    </>
+  );
+};
+
 /**
  * Componente principal da aplicação Home Manager
  * Gerencia o roteamento e a lógica principal da aplicação
@@ -53,63 +68,67 @@ const Calendar = () => {
 const App = () => {
   return (
     <AppProvider>
-      <Routes>
-        {/* Rota pública */}
-        <Route path="/login" element={
-          <Suspense fallback={<DashboardSkeleton />}>
-            <Login />
-          </Suspense>
-        } />
-        <Route path="/register" element={
-          <Suspense fallback={<DashboardSkeleton />}>
-            <Register />
-          </Suspense>
-        } />
-        <Route path="/auth/google/callback" element={
-          <Suspense fallback={<DashboardSkeleton />}>
-            <GoogleCallback />
-          </Suspense>
-        } />
+      <LoadingProvider>
+        <AppShell>
+          <Routes>
+            {/* Rota pública */}
+            <Route path="/login" element={
+              <Suspense fallback={<DashboardSkeleton />}>
+                <Login />
+              </Suspense>
+            } />
+            <Route path="/register" element={
+              <Suspense fallback={<DashboardSkeleton />}>
+                <Register />
+              </Suspense>
+            } />
+            <Route path="/auth/google/callback" element={
+              <Suspense fallback={<DashboardSkeleton />}>
+                <GoogleCallback />
+              </Suspense>
+            } />
 
-        {/* Rotas privadas com layout compartilhado */}
-        <Route path="/" element={<RequireAuth><HomeLayout /></RequireAuth>}>
-          <Route index element={<Navigate to="/dashboard" replace />} />
-          <Route path="dashboard" element={
-            <Suspense fallback={<DashboardSkeleton />}>
-              <FadeIn><Dashboard /></FadeIn>
-            </Suspense>
-          } />
-          <Route path="tasks" element={
-            <Suspense fallback={<TaskListSkeleton />}>
-              <FadeIn><Tasks /></FadeIn>
-            </Suspense>
-          } />
-          <Route path="shopping" element={
-            <Suspense fallback={<ShoppingListSkeleton />}>
-              <FadeIn><ShoppingList /></FadeIn>
-            </Suspense>
-          } />
-          <Route path="financial" element={
-            <Suspense fallback={<ExpenseListSkeleton />}>
-              <FadeIn><Financial /></FadeIn>
-            </Suspense>
-          } />
-          <Route path="future" element={
-            <Suspense fallback={<ExpenseListSkeleton />}>
-              <FadeIn><FutureItems /></FadeIn>
-            </Suspense>
-          } />
-          <Route path="calendar" element={
-            <Suspense fallback={<DashboardSkeleton />}>
-              <FadeIn><Calendar /></FadeIn>
-            </Suspense>
-          } />
-        </Route>
+            {/* Rotas privadas com layout compartilhado */}
+            <Route path="/" element={<RequireAuth><HomeLayout /></RequireAuth>}>
+              <Route index element={<Navigate to="/dashboard" replace />} />
+              <Route path="dashboard" element={
+                <Suspense fallback={<DashboardSkeleton />}>
+                  <FadeIn><Dashboard /></FadeIn>
+                </Suspense>
+              } />
+              <Route path="tasks" element={
+                <Suspense fallback={<TaskListSkeleton />}>
+                  <FadeIn><Tasks /></FadeIn>
+                </Suspense>
+              } />
+              <Route path="shopping" element={
+                <Suspense fallback={<ShoppingListSkeleton />}>
+                  <FadeIn><ShoppingList /></FadeIn>
+                </Suspense>
+              } />
+              <Route path="financial" element={
+                <Suspense fallback={<ExpenseListSkeleton />}>
+                  <FadeIn><Financial /></FadeIn>
+                </Suspense>
+              } />
+              <Route path="future" element={
+                <Suspense fallback={<ExpenseListSkeleton />}>
+                  <FadeIn><FutureItems /></FadeIn>
+                </Suspense>
+              } />
+              <Route path="calendar" element={
+                <Suspense fallback={<DashboardSkeleton />}>
+                  <FadeIn><Calendar /></FadeIn>
+                </Suspense>
+              } />
+            </Route>
 
-        {/* Fallback para rotas não encontradas */}
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
-      </Routes>
-      <Toaster />
+            {/* Fallback para rotas não encontradas */}
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+          <Toaster />
+        </AppShell>
+      </LoadingProvider>
     </AppProvider>
   );
 };
@@ -124,35 +143,12 @@ const HomeLayout = () => {
   // User do contexto
   const { user } = useApp();
 
-  // Location para título dinâmico
-  const location = useLocation();
-
-  // Mapa de títulos por rota
-  const pageTitles = {
-    '/dashboard': 'Dashboard',
-    '/tasks': 'Tarefas',
-    '/shopping': 'Lista de Compras',
-    '/financial': 'Financeiro',
-    '/future': 'Compras Futuras',
-    '/calendar': 'Calendário',
-  };
-
-  const pageTitle = pageTitles[location.pathname] || 'Ninho';
-
   return (
     <SidebarProvider>
       <AppSidebar user={user} />
       <SidebarInset className="overflow-x-hidden">
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-background px-4 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
-          <div className="flex items-center gap-2 flex-1">
-            <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-2 h-4" />
-            <h1 className="text-lg font-semibold text-foreground">
-              {pageTitle}
-            </h1>
-          </div>
-        </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 overflow-x-hidden">
+        <TopNavbar />
+        <div className="flex flex-1 flex-col gap-4 p-3 sm:p-4 md:p-6 overflow-x-hidden">
           <div className="flex-1 max-w-full">
             <Outlet />
           </div>

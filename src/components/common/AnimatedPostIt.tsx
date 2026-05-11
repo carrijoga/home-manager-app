@@ -47,11 +47,11 @@ export default function AnimatedPostIt({
 
   // Cores disponíveis para post-its
   const colorClasses = {
-    yellow: "bg-aconchego-100 dark:bg-aconchego-200/20 border-aconchego-300",
-    pink: "bg-pink-100 dark:bg-pink-200/20 border-pink-300",
-    blue: "bg-serenidade-100 dark:bg-serenidade-200/20 border-serenidade-300",
-    green: "bg-natureza-100 dark:bg-natureza-200/20 border-natureza-300",
-    purple: "bg-purple-100 dark:bg-purple-200/20 border-purple-300",
+     yellow: "bg-honey-100 dark:bg-honey-900/30 border-honey-300 dark:border-honey-700",
+     pink: "bg-pink-100 dark:bg-pink-900/30 border-pink-300 dark:border-pink-700",
+     blue: "bg-sky-100 dark:bg-sky-900/30 border-sky-300 dark:border-sky-700",
+     green: "bg-sage-100 dark:bg-sage-900/30 border-sage-300 dark:border-sage-700",
+     purple: "bg-purple-100 dark:bg-purple-900/30 border-purple-300 dark:border-purple-700",
   };
 
   // Delay para stagger

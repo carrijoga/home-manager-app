@@ -26,7 +26,7 @@ O Ninho é uma PWA completa, oferecendo:
 - Login com e-mail/senha e Google OAuth
 - Registro de nova conta com geração de nome de usuário
 - Toggle de visibilidade de senha
-- Redirecionamento via `/auth/google/callback`
+- Redirecionamento via `/auth/google/callback`, processado pela página `GoogleCallback`, para concluir o fluxo OAuth e validar a autenticação retornada pelo provedor
 - Rotas protegidas com `RequireAuth`
 
 ### 📊 Dashboard
@@ -185,8 +185,6 @@ VITE_ENVIRONMENT=development # development | staging | production
 VITE_API_URL=http://localhost:5026
 ```
 
-Consulte [docs/ENVIRONMENTS.md](./docs/ENVIRONMENTS.md) para guia completo de ambientes.
-
 ## 📘 TypeScript
 
 Migração híbrida em andamento (`allowJs: true`, `checkJs: false`). Services, schemas, types, contexts e pages estão em `.ts`/`.tsx`. Componentes em `src/components/modules/` ainda são `.jsx` — migrar gradualmente ao editar, nunca reescrever por completo.
@@ -197,8 +195,7 @@ Tema claro/escuro gerenciado em `ThemeContext.jsx`. Preferência salva em `local
 
 ## 📚 Documentação
 
-- [docs/ENVIRONMENTS.md](./docs/ENVIRONMENTS.md) — Configuração de ambientes
-- [docs/DEPLOY.md](./docs/DEPLOY.md) — Deploy (Vercel, Netlify, Docker)
+- A documentação versionada do projeto está concentrada neste README e no arquivo `docs/api.json`, que permanece como referência técnica em `docs/`.
 - [docs/api.json](./docs/api.json) — Spec OpenAPI do backend (~70KB, fonte da verdade)
 
 ## 🤝 Contribuindo

@@ -1,211 +1,148 @@
-const DEFAULT_API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5026').replace(/\/$/, '');
+import { LoginRequestSchema, RegisterRequestSchema } from '@/schemas/auth';
+import type { AuthTokenResponse, LoginRequest, RegisterRequest } from '@/schemas/auth';
+import { UserProfileResponseSchema } from '@/schemas/user';
+import type { UserProfileResponse } from '@/schemas/user';
+import { ApiError, httpClient } from './api/httpClient';
+import { ENDPOINTS } from './api/endpoints';
+import { DATA_MODE } from './api/config';
+import { mockNotifications } from '@/mocks/data';
 
-const AUTH_ENDPOINTS = {
-  register: '/api/auth/register',
-  login: '/api/auth/login',
-  refresh: '/api/auth/refresh',
-  logout: '/api/auth/logout',
-  googleLogin: '/api/auth/google-login',
-  profile: '/api/users/me/profile',
-  generateUsername: '/api/users/username/preview',
-} as const;
-// Gera um username sugerido a partir do nome e sobrenome
-export async function generateUsername(firstName: string, lastName: string): Promise<{ username: string }> {
-  if (!firstName || !lastName) {
-    throw new ApiError('The provided firstname and lastname are invalid.', 400);
-  }
-  const params = new URLSearchParams({ firstName: firstName, lastName: lastName });
-  return request<{ username: string }>(
-    `${AUTH_ENDPOINTS.generateUsername}?${params.toString()}`,
-    {
-      method: 'POST',
+export type { LoginRequest, RegisterRequest, AuthTokenResponse, UserProfileResponse };
+export { ApiError } from './api/httpClient';
+
+// ── Mock user (usado quando DATA_MODE === 'mock') ─────────────────────────────
+
+const MOCK_USER_PROFILE: UserProfileResponse = {
+  userId: 'user-mock-0001',
+  firstName: 'Usuário',
+  lastName: 'Mock',
+  fullName: 'Usuário Mock',
+  callbyName: 'Usuário',
+  username: 'usuario_mock',
+  email: 'mock@ninho.local',
+  profilePictureUrl: null,
+  profile: {
+    profileId: 'mock-profile-id-0000-0000-000000001',
+    userId: 'mock-user-id-0000-0000-000000000001',
+    configuration: {
+      userConfigurationId: 'mock-config-id-0000-0000-000000000001',
+      receivePushNotifications: true,
+      isDarkModeEnabled: false,
+      profileId: 'mock-profile-id-0000-0000-000000001',
     },
-    { retryOnUnauthorized: false }
+    notifications: mockNotifications,
+  },
+  nests: [
+    {
+      userId: 'mock-user-id-0000-0000-000000000001',
+      nestId: 'mock-nest-id-0000-0000-000000000001',
+      name: 'Ninho Mock',
+      icon: null,
+      isDefault: true,
+      role: 3,
+      joinedAt: new Date().toString(),
+    }
+  ],
+};
+
+// ── Geração de username sugerido ──────────────────────────────────────────────
+
+export async function generateUsername(
+  firstName: string,
+  lastName: string,
+): Promise<{ username: string }> {
+  if (!firstName || !lastName) {
+    throw new ApiError('O nome e sobrenome são obrigatórios.', 400);
+  }
+  const params = new URLSearchParams({ firstName, lastName });
+  return httpClient.post<{ username: string }>(
+    `${ENDPOINTS.users.usernamePreview}?${params}`,
+    undefined,
+    { skipRefresh: false },
   );
 }
 
-export interface RegisterRequest {
-  firstName: string;
-  lastName: string;
-  email: string;
-  password: string;
-}
+// ── Sessão ────────────────────────────────────────────────────────────────────
 
-export interface SuccessResponse {
-  message: string;
-}
-
-export interface LoginRequest {
-  UsernameOrEmail: string;
-  Password: string;
-}
-
-export interface LoginResponse {
-  message: string;
-  accessToken: string;
-  refreshToken: string;
-}
-
-export interface GoogleLoginRequest {
-  code: string;
-}
-
-export interface UserProfileResponse {
-  UserId: string;
-  FirstName: string;
-  LastName: string;
-  Username: string;
-  Email: string;
-  CallbyName: string;
-  ProfilePictureUrl: string;
-}
-
-export class ApiError extends Error {
-  status?: number;
-
-  constructor(message: string, status?: number) {
-    super(message);
-    this.name = 'ApiError';
-    this.status = status;
-  }
-}
-
-interface RequestConfig {
-  retryOnUnauthorized?: boolean;
-}
-
-async function baseRequest<T>(path: string, options: RequestInit): Promise<T> {
-  const response = await fetch(`${DEFAULT_API_URL}${path}`, {
-    method: options.method || 'GET',
-    ...options,
-    credentials: options.credentials ?? 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-      ...(options.headers ?? {}),
-    },
-  });
-
-  const text = await response.text();
-  let data: any = null;
-
-  if (text) {
-    try {
-      data = JSON.parse(text);
-    } catch {
-      data = null;
-    }
-  }
-
-  if (!response.ok) {
-    const message = data?.message || 'Erro ao comunicar com o servidor.';
-    throw new ApiError(message, response.status);
-  }
-
-  return data as T;
-}
-
-let refreshPromise: Promise<LoginResponse> | null = null;
-
-export async function refreshToken(): Promise<LoginResponse> {
-  if (!refreshPromise) {
-    refreshPromise = baseRequest<LoginResponse>(AUTH_ENDPOINTS.refresh, {
-      method: 'POST',
-      body: JSON.stringify(null), // Body vazio - API lê do cookie
-    }).finally(() => {
-      refreshPromise = null;
-    });
-  }
-
-  return refreshPromise;
-}
-
-async function request<T>(
-  path: string,
-  options: RequestInit,
-  config: RequestConfig = {}
-): Promise<T> {
-  const { retryOnUnauthorized = true } = config;
-
-  try {
-    return await baseRequest<T>(path, options);
-  } catch (error) {
-    // Só tenta refresh se for 401 E retryOnUnauthorized for true
-    if (error instanceof ApiError && error.status === 401 && retryOnUnauthorized) {
-      try {
-        await refreshToken();
-        return baseRequest<T>(path, options); // Não chama recursivamente para evitar loop
-      } catch (refreshError) {
-        // Se o refresh falhar, lança o erro original
-        throw error;
-      }
-    }
-    throw error;
-  }
-}
-
-// Verifica se o usuário está autenticado tentando fazer refresh do token
-// A API lerá o refreshToken do cookie HttpOnly
+/** Verifica se há sessão ativa tentando renovar o token via cookie HttpOnly. */
 export async function checkSession(): Promise<boolean> {
+  if (DATA_MODE === 'mock') return true;
   try {
-    // Tenta fazer refresh do token
-    // Se o cookie refreshToken for válido, a API retornará sucesso
-    await refreshToken();
+    await httpClient.refresh();
     return true;
-  } catch (error) {
-    // Se falhar (401), o cookie expirou ou não existe
+  } catch {
     return false;
   }
 }
 
-export async function register(payload: RegisterRequest): Promise<SuccessResponse> {
-  return request<SuccessResponse>(
-    AUTH_ENDPOINTS.register,
-    {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    },
-    { retryOnUnauthorized: false }
-  );
+// ── Autenticação ──────────────────────────────────────────────────────────────
+
+export async function register(payload: RegisterRequest): Promise<{ message: string }> {
+  if (DATA_MODE === 'mock') {
+    return new Promise((resolve) => setTimeout(() => resolve({ message: 'Conta criada com sucesso!' }), 100));
+  }
+  RegisterRequestSchema.parse(payload);
+  return httpClient.post<{ message: string }>(ENDPOINTS.auth.register, payload, {
+    skipRefresh: true,
+  });
 }
 
-export async function login(payload: LoginRequest): Promise<LoginResponse> {
-  // A API já configura os cookies HttpOnly automaticamente na resposta
-  return request<LoginResponse>(
-    AUTH_ENDPOINTS.login,
-    {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    },
-    { retryOnUnauthorized: false }
-  );
+export async function login(payload: LoginRequest): Promise<AuthTokenResponse> {
+  if (DATA_MODE === 'mock') {
+    if (!payload.usernameOrEmail?.includes('@')) {
+      throw new ApiError('Informe um e-mail válido (com @) para o modo mock.', 400);
+    }
+    return new Promise((resolve) =>
+      setTimeout(
+        () =>
+          resolve({
+            accessToken: 'mock-access-token',
+            refreshToken: 'mock-refresh-token',
+          }),
+        200,
+      ),
+    );
+  }
+  LoginRequestSchema.parse(payload);
+  return httpClient.post<AuthTokenResponse>(ENDPOINTS.auth.login, payload, {
+    skipRefresh: true,
+  });
 }
 
-export async function loginWithGoogle(code: string): Promise<LoginResponse> {
-  // A API já configura os cookies HttpOnly automaticamente na resposta
-  return request<LoginResponse>(
-    AUTH_ENDPOINTS.googleLogin,
-    {
-      method: 'POST',
-      body: JSON.stringify({ code }),
-    },
-    { retryOnUnauthorized: false }
+export async function loginWithGoogle(code: string): Promise<AuthTokenResponse> {
+  return httpClient.post<AuthTokenResponse>(
+    ENDPOINTS.auth.googleCallback,
+    { code },
+    { skipRefresh: true },
   );
 }
 
 export async function logout(): Promise<void> {
-  // A API removerá os cookies HttpOnly automaticamente
-  await baseRequest<void>(AUTH_ENDPOINTS.logout, {
-    method: 'POST',
-  });
+  if (DATA_MODE === 'mock') return;
+  await httpClient.post<void>(ENDPOINTS.auth.logout, null, { skipRefresh: true });
 }
 
-// Busca o perfil do usuário autenticado
+export async function refreshToken(): Promise<void> {
+  return httpClient.refresh();
+}
+
+// ── Perfil do usuário ─────────────────────────────────────────────────────────
+
 export async function getUserProfile(): Promise<UserProfileResponse> {
-  return request<UserProfileResponse>(
-    AUTH_ENDPOINTS.profile,
-    {
-      method: 'GET',
+  if (DATA_MODE === 'mock') {
+    return new Promise((resolve) => setTimeout(() => resolve(MOCK_USER_PROFILE), 100));
+  }
+
+  const raw = await httpClient.get<unknown>(ENDPOINTS.users.meProfile);
+  const result = UserProfileResponseSchema.safeParse(raw);
+
+  if (!result.success) {
+    if (import.meta.env.DEV) {
+      console.warn('[authService] getUserProfile: schema inesperado', result.error.flatten());
     }
-  );
+    // Retorna os dados brutos com cast para não travar a UI em produção
+    return raw as UserProfileResponse;
+  }
+
+  return result.data;
 }

@@ -112,7 +112,7 @@ const GlobalSearch: FC<GlobalSearchProps> = ({
     <div className="relative flex-1 max-w-md">
       <div className="relative">
         <Search
-          className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-dark-text-muted"
+          className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-muted-foreground"
           size={18}
         />
         <input
@@ -124,18 +124,18 @@ const GlobalSearch: FC<GlobalSearchProps> = ({
           placeholder={placeholder}
           className={cn(
             "w-full pl-10 pr-10 py-2 rounded-lg border transition-all duration-200",
-            "bg-white dark:bg-dark-bg-secondary",
-            "border-gray-200 dark:border-dark-border-default",
-            "text-gray-900 dark:text-dark-text-primary",
-            "placeholder-gray-400 dark:placeholder-dark-text-muted",
-            "focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-dark-accent-indigo",
+            "bg-background dark:bg-card",
+            "border-border",
+            "text-foreground",
+            "placeholder-muted-foreground",
+            "focus:outline-none focus:ring-2 focus:ring-ring",
             "focus:border-transparent"
           )}
         />
         {query && (
           <button
             onClick={handleClear}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-dark-text-muted dark:hover:text-dark-text-secondary transition-colors"
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
             aria-label="Limpar busca"
           >
             <X size={18} />
@@ -153,30 +153,29 @@ const GlobalSearch: FC<GlobalSearchProps> = ({
           />
 
           {/* Dropdown de resultados */}
-          <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-white dark:bg-dark-bg-elevated rounded-lg shadow-lg border border-gray-200 dark:border-dark-border-default max-h-96 overflow-y-auto">
+          <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-popover rounded-lg shadow-lg border border-border max-h-96 overflow-y-auto">
             {results.map((result, index) => (
               <button
                 key={result.id}
                 onClick={() => handleResultClick(result)}
                 className={cn(
-                  "w-full text-left px-4 py-3 border-b border-gray-100 dark:border-dark-border-subtle last:border-b-0 transition-colors",
-                  "hover:bg-indigo-50 dark:hover:bg-dark-bg-hover",
-                  index === selectedIndex &&
-                    "bg-indigo-50 dark:bg-dark-bg-hover"
+                  "w-full text-left px-4 py-3 border-b border-border last:border-b-0 transition-colors",
+                  "hover:bg-accent",
+                  index === selectedIndex && "bg-accent"
                 )}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 dark:text-dark-text-primary truncate">
+                    <p className="text-sm font-medium text-foreground truncate">
                       {result.title}
                     </p>
                     {result.subtitle && (
-                      <p className="text-xs text-gray-600 dark:text-dark-text-secondary truncate">
+                      <p className="text-xs text-muted-foreground truncate">
                         {result.subtitle}
                       </p>
                     )}
                   </div>
-                  <span className="text-xs text-gray-500 dark:text-dark-text-muted bg-gray-100 dark:bg-dark-bg-secondary px-2 py-1 rounded flex-shrink-0">
+                  <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded flex-shrink-0">
                     {result.moduleLabel}
                   </span>
                 </div>
@@ -193,8 +192,8 @@ const GlobalSearch: FC<GlobalSearchProps> = ({
             className="fixed inset-0 z-40"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-white dark:bg-dark-bg-elevated rounded-lg shadow-lg border border-gray-200 dark:border-dark-border-default p-4">
-            <p className="text-sm text-center text-gray-500 dark:text-dark-text-muted">
+          <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-popover rounded-lg shadow-lg border border-border p-4">
+            <p className="text-sm text-center text-muted-foreground">
               Nenhum resultado encontrado para "{query}"
             </p>
           </div>

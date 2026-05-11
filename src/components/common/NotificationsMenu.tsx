@@ -1,17 +1,16 @@
-import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { BellIcon } from "@/components/ui/animated-icons/bell";
 import { cn } from "@/lib/utils";
-import { Bell } from "lucide-react";
-import React from "react";
+import { motion } from "framer-motion";
+import React, { useEffect, useRef } from "react";
+import type { BellIconHandle } from "@/components/ui/animated-icons/bell";
 
-interface Notification {
+export interface Notification {
   id: string;
   type: "task" | "notice" | "reminder";
   title: string;
@@ -26,9 +25,64 @@ interface NotificationsMenuProps {
   onMarkAllAsRead?: () => void;
 }
 
-/**
- * Componente de menu de notificações com dropdown
- */
+const TYPE_COLORS: Record<Notification["type"], string> = {
+  task: "bg-[color-mix(in_srgb,var(--chart-2)_15%,transparent)] text-[var(--chart-2)]",
+  notice: "bg-primary/20 text-primary",
+  reminder: "bg-[color-mix(in_srgb,var(--chart-4)_15%,transparent)] text-[var(--chart-4)]",
+};
+
+const TYPE_ICONS: Record<Notification["type"], string> = {
+  task: "✓",
+  notice: "📌",
+  reminder: "⏰",
+};
+
+function BellTrigger({ hasUnread }: { hasUnread: boolean }) {
+  const bellRef = useRef<BellIconHandle>(null);
+
+  useEffect(() => {
+    if (!hasUnread) return;
+    const t = setTimeout(() => {
+      bellRef.current?.startAnimation();
+    }, 800);
+    return () => clearTimeout(t);
+  }, [hasUnread]);
+
+  return (
+    <button
+      className="relative flex items-center justify-center size-10 rounded-full transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      aria-label="Notificações"
+    >
+      <BellIcon ref={bellRef} size={20} />
+
+      {hasUnread && (
+        <motion.span
+          className="absolute top-2 right-2 size-2 rounded-full bg-secondary"
+          aria-hidden="true"
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: "spring", stiffness: 500, damping: 20, delay: 0.5 }}
+        />
+      )}
+    </button>
+  );
+}
+
+function formatTimestamp(date: Date): string {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return "Agora";
+  if (diffMins < 60) return `${diffMins}min atrás`;
+  if (diffHours < 24) return `${diffHours}h atrás`;
+  if (diffDays === 1) return "Ontem";
+  if (diffDays < 7) return `${diffDays}d atrás`;
+  return date.toLocaleDateString("pt-BR");
+}
+
 const NotificationsMenu: React.FC<NotificationsMenuProps> = ({
   notifications = [],
   onNotificationClick,
@@ -36,112 +90,78 @@ const NotificationsMenu: React.FC<NotificationsMenuProps> = ({
 }) => {
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  const getNotificationIcon = (type: Notification["type"]) => {
-    switch (type) {
-      case "task":
-        return "✓";
-      case "notice":
-        return "📌";
-      case "reminder":
-        return "⏰";
-      default:
-        return "•";
-    }
-  };
-
-  const formatTimestamp = (date: Date) => {
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 1) return "Agora";
-    if (diffMins < 60) return `${diffMins}min atrás`;
-    if (diffHours < 24) return `${diffHours}h atrás`;
-    if (diffDays === 1) return "Ontem";
-    if (diffDays < 7) return `${diffDays}d atrás`;
-    return date.toLocaleDateString("pt-BR");
-  };
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button
-          className={cn(
-            "relative p-2 rounded-lg transition-all duration-200",
-            "hover:bg-indigo-50 dark:hover:bg-dark-bg-hover",
-            "focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-dark-accent-indigo"
-          )}
-          aria-label="Notificações"
-        >
-          <Bell
-            size={20}
-            className="text-slate-700 dark:text-dark-text-secondary"
-          />
-          {unreadCount > 0 && (
-            <Badge
-              variant="destructive"
-              className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center p-0 text-xs bg-red-500 dark:bg-red-600"
-            >
-              {unreadCount > 9 ? "9+" : unreadCount}
-            </Badge>
-          )}
-        </button>
+        <span>
+          <BellTrigger hasUnread={unreadCount > 0} />
+        </span>
       </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="end"
-        className="w-80 max-h-96 overflow-y-auto bg-white dark:bg-dark-bg-elevated border-gray-200 dark:border-dark-border-default"
-      >
-        <DropdownMenuLabel className="flex items-center justify-between dark:text-dark-text-primary">
-          <span>Notificações</span>
+
+      <DropdownMenuContent align="end" className="w-80 p-0 overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3">
+          <span className="font-semibold text-sm text-foreground">Notificações</span>
           {unreadCount > 0 && onMarkAllAsRead && (
             <button
               onClick={onMarkAllAsRead}
-              className="text-xs text-indigo-600 dark:text-dark-accent-indigo hover:underline font-normal"
+              className="font-semibold uppercase tracking-wide text-primary hover:underline"
+            style={{ fontSize: "var(--text-xs)" }}
             >
-              Marcar todas como lidas
+              Marcar tudo como lido
             </button>
           )}
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator className="dark:bg-dark-border-subtle" />
+        </div>
 
+        <DropdownMenuSeparator className="my-0" />
+
+        {/* Notification list */}
         {notifications.length === 0 ? (
-          <div className="p-4 text-center text-sm text-gray-500 dark:text-dark-text-muted">
-            Nenhuma notificação
+          <div className="py-8 text-center text-sm text-muted-foreground">
+            Não há novas notificações
           </div>
         ) : (
-          notifications.map((notification) => (
-            <DropdownMenuItem
-              key={notification.id}
-              className={cn(
-                "flex flex-col items-start gap-1 p-3 cursor-pointer",
-                "dark:hover:bg-dark-bg-hover dark:focus:bg-dark-bg-hover",
-                !notification.read && "bg-indigo-50 dark:bg-dark-bg-secondary"
-              )}
-              onClick={() => onNotificationClick?.(notification.id)}
-            >
-              <div className="flex items-start gap-2 w-full">
-                <span className="text-lg">
-                  {getNotificationIcon(notification.type)}
-                </span>
+          <div className="max-h-[360px] overflow-y-auto">
+            {notifications.map((notification) => (
+              <button
+                key={notification.id}
+                className={cn(
+                  "w-full flex items-start gap-3 px-4 py-3 text-left transition-colors",
+                  "hover:bg-muted/60 focus-visible:outline-none focus-visible:bg-muted/60",
+                  !notification.read && "bg-accent/40"
+                )}
+                onClick={() => onNotificationClick?.(notification.id)}
+              >
+                {/* Icon circle */}
+                <div
+                  className={cn(
+                    "flex-shrink-0 size-9 rounded-full flex items-center justify-center text-base",
+                    TYPE_COLORS[notification.type]
+                  )}
+                >
+                  {TYPE_ICONS[notification.type]}
+                </div>
+
+                {/* Content */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 dark:text-dark-text-primary">
+                  <p className="font-semibold text-sm text-foreground leading-snug truncate">
                     {notification.title}
                   </p>
-                  <p className="text-xs text-gray-600 dark:text-dark-text-secondary line-clamp-2">
+                  <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
                     {notification.message}
                   </p>
-                  <p className="text-xs text-gray-400 dark:text-dark-text-muted mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     {formatTimestamp(notification.timestamp)}
                   </p>
                 </div>
+
+                {/* Unread dot */}
                 {!notification.read && (
-                  <div className="w-2 h-2 rounded-full bg-indigo-600 dark:bg-dark-accent-indigo flex-shrink-0 mt-1" />
+                  <div className="flex-shrink-0 size-2 rounded-full bg-primary mt-1.5" />
                 )}
-              </div>
-            </DropdownMenuItem>
-          ))
+              </button>
+            ))}
+          </div>
         )}
       </DropdownMenuContent>
     </DropdownMenu>

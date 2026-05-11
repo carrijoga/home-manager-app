@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToastNotifications } from "@/hooks/use-toast-notifications";
 import { cn } from "@/lib/utils";
-import type { User } from "@/types";
+import type { AppUser } from "@/types";
 import {
   LogOut,
   Monitor,
@@ -26,7 +26,7 @@ import {
 import React, { useEffect, useState } from "react";
 
 interface ProfileMenuProps {
-  user: User;
+  user: AppUser;
   currentTheme?: "light" | "dark" | "system";
   onThemeChange?: (theme: "light" | "dark" | "system") => void;
   onProfileClick?: () => void;
@@ -82,15 +82,15 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
       <DropdownMenuTrigger asChild>
         <button
           className={cn(
-            "flex items-center gap-2 p-1 rounded-lg transition-all duration-200",
-            "hover:bg-indigo-50 dark:hover:bg-dark-bg-hover",
-            "focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-dark-accent-indigo"
+            "flex items-center gap-2 p-1 rounded-lg transition-all duration-[length:var(--dur-base)]",
+            "hover:bg-accent",
+            "focus:outline-none focus:ring-2 focus:ring-ring"
           )}
           aria-label="Menu do usuário"
         >
-          <Avatar className="h-8 w-8 border-2 border-indigo-200 dark:border-dark-border-default">
+          <Avatar className="h-8 w-8 border-2 border-primary/30">
             <AvatarImage src={user.avatar} alt={user.name} />
-            <AvatarFallback className="bg-indigo-600 dark:bg-dark-accent-indigo text-white text-xs">
+            <AvatarFallback className="bg-primary text-primary-foreground text-xs">
               {getInitials(user.name)}
             </AvatarFallback>
           </Avatar>
@@ -98,21 +98,21 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
-        className="w-56 bg-white dark:bg-dark-bg-elevated border-gray-200 dark:border-dark-border-default"
+        className="w-56"
       >
-        <DropdownMenuLabel className="dark:text-dark-text-primary">
+        <DropdownMenuLabel>
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">{user.name}</p>
-            <p className="text-xs leading-none text-gray-500 dark:text-dark-text-muted">
+            <p className="text-xs leading-none text-muted-foreground">
               {user.email}
             </p>
           </div>
         </DropdownMenuLabel>
-        <DropdownMenuSeparator className="dark:bg-dark-border-subtle" />
+        <DropdownMenuSeparator />
 
         <DropdownMenuItem
           onClick={onProfileClick}
-          className="cursor-pointer dark:hover:bg-dark-bg-hover dark:focus:bg-dark-bg-hover dark:text-dark-text-secondary"
+          className="cursor-pointer"
         >
           <UserIcon className="mr-2 h-4 w-4" />
           <span>Perfil</span>
@@ -120,7 +120,7 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
 
         <DropdownMenuItem
           onClick={onSettingsClick}
-          className="cursor-pointer dark:hover:bg-dark-bg-hover dark:focus:bg-dark-bg-hover dark:text-dark-text-secondary"
+          className="cursor-pointer"
         >
           <Settings className="mr-2 h-4 w-4" />
           <span>Configurações</span>
@@ -128,11 +128,11 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
 
         <DropdownMenuItem
           onClick={handleToggleSound}
-          className="cursor-pointer dark:hover:bg-dark-bg-hover dark:focus:bg-dark-bg-hover dark:text-dark-text-secondary"
+          className="cursor-pointer"
         >
           {soundEnabled ? (
             <>
-              <Volume2 className="mr-2 h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+              <Volume2 className="mr-2 h-4 w-4 text-primary" />
               <span>Sons Ativos</span>
             </>
           ) : (
@@ -144,7 +144,7 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
         </DropdownMenuItem>
 
         <DropdownMenuSub>
-          <DropdownMenuSubTrigger className="cursor-pointer dark:hover:bg-dark-bg-hover dark:focus:bg-dark-bg-hover dark:text-dark-text-secondary">
+          <DropdownMenuSubTrigger className="cursor-pointer">
             {themeOptions.find((t) => t.value === currentTheme)?.icon &&
               React.createElement(
                 themeOptions.find((t) => t.value === currentTheme)!.icon,
@@ -152,7 +152,7 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
               )}
             <span>Alterar Tema</span>
           </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent className="bg-white dark:bg-dark-bg-elevated border-gray-200 dark:border-dark-border-default">
+          <DropdownMenuSubContent>
             {themeOptions.map((option) => {
               const Icon = option.icon;
               return (
@@ -160,15 +160,14 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
                   key={option.value}
                   onClick={() => onThemeChange?.(option.value)}
                   className={cn(
-                    "cursor-pointer dark:hover:bg-dark-bg-hover dark:focus:bg-dark-bg-hover dark:text-dark-text-secondary",
-                    currentTheme === option.value &&
-                      "bg-indigo-50 dark:bg-dark-bg-secondary"
+                    "cursor-pointer",
+                    currentTheme === option.value && "bg-accent"
                   )}
                 >
                   <Icon className="mr-2 h-4 w-4" />
                   <span>{option.label}</span>
                   {currentTheme === option.value && (
-                    <span className="ml-auto text-indigo-600 dark:text-dark-accent-indigo">
+                    <span className="ml-auto text-primary">
                       ✓
                     </span>
                   )}
@@ -178,11 +177,11 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
           </DropdownMenuSubContent>
         </DropdownMenuSub>
 
-        <DropdownMenuSeparator className="dark:bg-dark-border-subtle" />
+        <DropdownMenuSeparator />
 
         <DropdownMenuItem
           onClick={onLogoutClick}
-          className="cursor-pointer text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 dark:hover:bg-dark-bg-hover dark:focus:bg-dark-bg-hover"
+          className="cursor-pointer text-destructive focus:text-destructive"
         >
           <LogOut className="mr-2 h-4 w-4" />
           <span>Sair</span>

@@ -1,6 +1,12 @@
 
 /**
- * Componente de card reutilizável
+ * Componente de card reutilizável.
+ *
+ * Design System "Domestic Sanctuary":
+ * - Tonal layering: var(--card) sobre var(--background)
+ * - Sem bordas explícitas — profundidade via background shift
+ * - Shadow ambiente: 4% opacity, sem drop shadow padrão
+ * - rounded-3xl (1.5rem) para containers grandes
  */
 const Card = ({
   children,
@@ -8,24 +14,26 @@ const Card = ({
   subtitle = null,
   className = '',
   headerAction = null,
-  variant = 'default'
 }) => {
-  const variantClasses = {
-    default: 'bg-card border border-border',
-    primary: 'bg-card border-l-4 border-primary',
-    success: 'bg-card border-l-4 border-green-500',
-    warning: 'bg-card border-l-4 border-yellow-500',
-    danger: 'bg-card border-l-4 border-red-500',
-    info: 'bg-card border-l-4 border-blue-500'
-  };
-
   return (
-    <div className={`rounded-lg shadow-md p-6 hover-lift transition-all duration-300 ${variantClasses[variant]} ${className}`}>
+    <div
+      className={`rounded-3xl p-[var(--space-md)] transition-all duration-[length:var(--dur-slow)] ${className}`}
+      style={{
+        background: 'var(--card)',
+        boxShadow: '0 1px 0 var(--border), 0 2px 12px color-mix(in srgb, var(--foreground) 6%, transparent)',
+      }}
+    >
       {(title || subtitle || headerAction) && (
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-start mb-[var(--space-md)]">
           <div>
-            {title && <h2 className="text-2xl font-bold text-card-foreground">{title}</h2>}
-            {subtitle && <p className="text-muted-foreground mt-1">{subtitle}</p>}
+            {title && (
+              <h2 className="font-editorial text-[var(--text-xl)] font-bold tracking-tight text-foreground">
+                {title}
+              </h2>
+            )}
+            {subtitle && (
+              <p className="text-muted-foreground mt-1 text-sm">{subtitle}</p>
+            )}
           </div>
           {headerAction && <div>{headerAction}</div>}
         </div>

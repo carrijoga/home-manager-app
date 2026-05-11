@@ -2,7 +2,19 @@ import { useApp } from '@/contexts/AppContext';
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
 import { Trash2 } from 'lucide-react';
 import { memo, useMemo, useState } from 'react';
-import { ExpenseCategories } from '../../models/types';
+// Categorias de despesa (mock-only — categorias reais vêm da API via categoryService)
+const ExpenseCategories = {
+  FIXED: 'Fixo',
+  MAINTENANCE: 'Manutenção',
+  NEW_ITEM: 'Novo item',
+  GENERAL: 'Geral',
+  FOOD: 'Alimentação',
+  TRANSPORT: 'Transporte',
+  HEALTH: 'Saúde',
+  EDUCATION: 'Educação',
+  ENTERTAINMENT: 'Entretenimento',
+  OTHER: 'Outro',
+};
 import Button from '../common/Button';
 import Card from '../common/Card';
 import Input from '../common/Input';
@@ -82,22 +94,22 @@ const Financial = memo(() => {
       <Card title="Financeiro da Casa">
         {/* Cards de Resumo */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-lg p-4">
+          <div className="bg-gradient-to-br from-sage-400 to-sage-500 text-white rounded-xl p-4">
             <p className="text-sm opacity-90">Total de Gastos</p>
-            <p className="text-3xl font-bold">R$ {totalExpenses.toFixed(2)}</p>
+            <p className="text-[var(--text-3xl)] font-bold">R$ {totalExpenses.toFixed(2)}</p>
           </div>
-          <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 text-white rounded-lg p-4">
+          <div className="bg-gradient-to-br from-terracotta-400 to-terracotta-500 text-white rounded-xl p-4">
             <p className="text-sm opacity-90">Média Mensal</p>
-            <p className="text-3xl font-bold">R$ {(totalExpenses / 1).toFixed(2)}</p>
+            <p className="text-[var(--text-3xl)] font-bold">R$ {(totalExpenses / 1).toFixed(2)}</p>
           </div>
-          <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-lg p-4">
+          <div className="bg-gradient-to-br from-honey-400 to-honey-500 text-white rounded-xl p-4">
             <p className="text-sm opacity-90">Categorias</p>
-            <p className="text-3xl font-bold">{Object.keys(totalByCategory).length}</p>
+            <p className="text-[var(--text-3xl)] font-bold">{Object.keys(totalByCategory).length}</p>
           </div>
         </div>
 
         {/* Formulário de Novo Gasto */}
-        <div className="mb-6 space-y-3 p-4 bg-slate-50 dark:bg-dark-bg-secondary rounded-lg border border-slate-200 dark:border-dark-border-default">
+        <div className="mb-6 space-y-3 p-4 bg-linen-100 dark:bg-muted rounded-xl border border-linen-300 dark:border-border">
           <Input
             placeholder="Descrição do gasto..."
             value={newExpense.description}
@@ -118,7 +130,7 @@ const Financial = memo(() => {
             <select
               value={newExpense.category}
               onChange={(e) => setNewExpense({ ...newExpense, category: e.target.value })}
-              className="p-2 border border-slate-300 dark:border-dark-border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-white dark:bg-dark-bg-secondary text-slate-900 dark:text-dark-text-primary"
+              className="p-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-terracotta-500 dark:focus:ring-terracotta-400 bg-background text-foreground"
             >
               <option value="">Categoria...</option>
               {Object.values(ExpenseCategories).map(cat => (
@@ -133,12 +145,12 @@ const Financial = memo(() => {
 
         {/* Gastos por Categoria */}
         <div className="mb-6">
-          <h3 className="font-semibold text-slate-700 dark:text-dark-text-primary mb-3">Gastos por Categoria</h3>
+          <h3 className="font-semibold text-foreground mb-3">Gastos por Categoria</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {Object.entries(totalByCategory).map(([category, total]) => (
-              <div key={category} className="bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded-lg border-l-4 border-emerald-500 dark:border-emerald-400">
-                <p className="text-sm text-slate-600 dark:text-dark-text-secondary">{category}</p>
-                <p className="text-xl font-bold text-slate-800 dark:text-dark-text-primary">R$ {total.toFixed(2)}</p>
+              <div key={category} className="bg-linen-100 dark:bg-muted p-3 rounded-lg border-l-4 border-honey-400 dark:border-honey-500">
+                <p className="text-sm text-muted-foreground">{category}</p>
+                <p className="text-xl font-bold text-foreground">R$ {total.toFixed(2)}</p>
               </div>
             ))}
           </div>
@@ -146,20 +158,20 @@ const Financial = memo(() => {
 
         {/* Histórico de Gastos */}
         <div className="space-y-2">
-          <h3 className="font-semibold text-slate-700 dark:text-dark-text-primary mb-3">Histórico de Gastos</h3>
+          <h3 className="font-semibold text-foreground mb-3">Histórico de Gastos</h3>
           {sortedExpenses.map(expense => (
-            <div key={expense.id} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-dark-bg-secondary rounded-lg border border-slate-200 dark:border-dark-border-default hover:bg-slate-100 dark:hover:bg-dark-bg-tertiary transition-colors duration-200">
+            <div key={expense.id} className="flex items-center justify-between p-4 bg-card rounded-xl border border-border hover:bg-linen-100 dark:hover:bg-muted transition-colors duration-[length:var(--dur-base)]">
               <div className="flex-1">
-                <p className="text-slate-800 dark:text-dark-text-primary font-medium">{expense.description}</p>
-                <p className="text-sm text-slate-600 dark:text-dark-text-secondary">
+                <p className="text-foreground font-medium">{expense.description}</p>
+                <p className="text-sm text-muted-foreground">
                   {expense.category} • {new Date(expense.date).toLocaleDateString('pt-BR')}
                 </p>
               </div>
               <div className="flex items-center space-x-4">
-                <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">R$ {expense.value.toFixed(2)}</span>
+                <span className="text-lg font-bold text-sage-600 dark:text-sage-400">R$ {expense.value.toFixed(2)}</span>
                 <button
                   onClick={() => handleDeleteExpense(expense.id)}
-                  className="text-rose-500 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 transition-colors"
+                  className="text-terracotta-500 hover:text-terracotta-700 dark:text-terracotta-400 transition-colors"
                 >
                   <Trash2 size={18} />
                 </button>

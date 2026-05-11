@@ -31,7 +31,7 @@ export function SavingsCard({ savings, percentage, animationDelay = 0 }) {
       }}
       alertType={!isSaving ? 'warning' : undefined}
       footer={
-        <div className="text-xs text-gray-600 dark:text-dark-text-tertiary">
+        <div className="text-xs text-gray-600 dark:text-muted-foreground">
           {isSaving ? (
             <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
               ✓ Você economizou este mês!
@@ -60,11 +60,11 @@ export function TopCategoryCard({ category, value, animationDelay = 0 }) {
       animationDelay={animationDelay}
       footer={
         <div className="space-y-1 text-xs">
-          <div className="flex justify-between text-gray-600 dark:text-dark-text-tertiary">
+          <div className="flex justify-between text-gray-600 dark:text-muted-foreground">
             <span>Total gasto:</span>
             <span className="font-semibold">{formatCurrency(value)}</span>
           </div>
-          <div className="text-gray-600 dark:text-dark-text-tertiary">
+          <div className="text-gray-600 dark:text-muted-foreground">
             🏆 Categoria com mais despesas
           </div>
         </div>
@@ -89,7 +89,7 @@ export function NextBillCard({ days, bill, animationDelay = 0 }) {
       animationDelay={animationDelay}
       alertType={isUrgent ? 'error' : undefined}
       footer={
-        <div className="text-xs text-gray-600 dark:text-dark-text-tertiary">
+        <div className="text-xs text-gray-600 dark:text-muted-foreground">
           <span className="font-semibold">{bill}</span>
           {isUrgent && (
             <div className="mt-1 text-red-600 dark:text-red-400 flex items-center gap-1">
@@ -119,7 +119,7 @@ export function OverdueTasksCard({ count, animationDelay = 0 }) {
       animationDelay={animationDelay}
       alertType={hasOverdue ? 'error' : undefined}
       footer={
-        <div className="text-xs text-gray-600 dark:text-dark-text-tertiary">
+        <div className="text-xs text-gray-600 dark:text-muted-foreground">
           {hasOverdue ? (
             <span className="text-red-600 dark:text-red-400 font-semibold">
               ⚠ {count} {count === 1 ? 'tarefa atrasada' : 'tarefas atrasadas'}
@@ -147,7 +147,7 @@ export function DailyAverageCard({ average, animationDelay = 0 }) {
       color="#8b5cf6" // violet-500
       animationDelay={animationDelay}
       footer={
-        <div className="text-xs text-gray-600 dark:text-dark-text-tertiary">
+        <div className="text-xs text-gray-600 dark:text-muted-foreground">
           📊 Gasto médio por dia no mês
         </div>
       }

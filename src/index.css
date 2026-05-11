@@ -16,21 +16,16 @@ body,
 }
 
 body {
-  font-family:
-    Roboto,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    "Roboto",
-    "Oxygen",
-    "Ubuntu",
-    "Cantarell",
-    "Fira Sans",
-    "Droid Sans",
-    "Helvetica Neue",
-    sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* scrollbar-gutter: stable; */
+}
+
+/* react-remove-scroll injects `margin-right: 15px !important` via a runtime <style>
+   tag (always last in cascade). Higher specificity beats same-specificity !important. */
+html body[data-scroll-locked] {
+  padding-right: 0 !important;
+  margin-right: 0 !important;
 }
 
 code {
@@ -50,79 +45,173 @@ code {
 
 @layer base {
   :root {
-    /* shadcn/ui theme variables (HSL format) */
-    /* Modern Indigo & Purple theme */
-    --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 239 84% 67%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 271 91% 65%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 220 14% 96%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 220 14% 96%;
-    --accent-foreground: 222 47% 11%;
-    --destructive: 350 89% 60%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 239 84% 67%;
-    --chart-1: 239 84% 67%;
-    --chart-2: 271 91% 65%;
-    --chart-3: 189 94% 43%;
-    --chart-4: 160 84% 39%;
-    --chart-5: 350 89% 60%;
-    --radius: 0.5rem;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* ── Clean Modern + Subtle Warmth palette (oklch) ── */
+    --background:       #F2F1EF;       /* warm off-white */
+    --foreground:       #1A1917;        /* near-black warm */
+    --card:             #FFFFFF;       /* surface-container-low */
+    --card-foreground:  #2D2D2D;
+    --popover:          #F2F1EF;
+    --popover-foreground: #2D2D2D;
+    --primary:          #adc6ff;      /* primary blue */
+    --primary-foreground: #FFFFFF ;      /* white */
+    --secondary:        #D4AF37;         /* secondary gold-dark */
+    --secondary-foreground: #000000;
+    --muted:            #F2F1EF;        /* surface-container-high */
+    --muted-foreground: #2D2D2D;
+    --accent:           #F2F1EF;
+    --accent-foreground: #2D2D2D;
+    --destructive:      #EF4444;
+    --destructive-foreground: #FFFFFF;
+    --border:           #D1D5DB;
+    --input:            #F9FAFB;        /* surface-container-highest */
+    --ring:             #2E5BFF;
+    --chart-1:          oklch(0.42 0.14 265);        /* primary blue */
+    --chart-2:          oklch(0.42 0.14 148);        /* tertiary green */
+    --chart-3:          oklch(0.42 0.12 75);         /* secondary gold */
+    --chart-4:          oklch(0.42 0.19 22);         /* error red */
+    --chart-5:          oklch(0.48 0.012 250);       /* neutral */
+
+    /* ── Border radius tokens ── */
+    --radius:     0.5rem;
+    --radius-sm:  0.25rem;
+    --radius-md:  0.5rem;
+    --radius-lg:  0.75rem;
+    --radius-xl:  1rem;
+    --radius-full: 9999px;
+
+    /* ── Sidebar (clean dark) ── */
+    --sidebar-background:           oklch(0.18 0.008 250);   /* clean dark blue-gray */
+    --sidebar-foreground:           oklch(0.92 0.005 250);
+    --sidebar-primary:              oklch(0.68 0.13 55);     /* amber accent */
+    --sidebar-primary-foreground:   oklch(0.10 0.010 250);
+    --sidebar-accent:               oklch(0.24 0.010 250);
+    --sidebar-accent-foreground:    oklch(0.92 0.005 250);
+    --sidebar-border:               oklch(0.26 0.010 250);
+    --sidebar-ring:                 oklch(0.68 0.13 55);
+
+    /* ── Surface tier tokens (light mode) ── */
+    --surface:                    oklch(1.00 0.000 0);
+    --surface-container-lowest:   oklch(0.99 0.000 0);
+    --surface-container-low:      oklch(1.00 0.000 0);
+    --surface-container:          oklch(0.97 0.003 250);
+    --surface-container-high:     oklch(0.94 0.004 250);
+    --surface-container-highest:  oklch(0.91 0.004 250);
+    --on-surface:                 oklch(0.15 0.010 250);
+    --outline-variant:            oklch(0.91 0.004 250);
+
+    /* ── Color-mix aliases ── */
+    --primary-subtle:       color-mix(in oklch, var(--primary) 12%, var(--background));
+    --primary-subtle-hover: color-mix(in oklch, var(--primary) 20%, var(--background));
+    --secondary-subtle:     color-mix(in oklch, var(--secondary) 15%, var(--background));
+
+    /* ── Fluid type scale ── */
+    --text-xs:   clamp(0.65rem, 0.6rem  + 0.25vw, 0.75rem);
+    --text-sm:   clamp(0.8rem,  0.75rem + 0.25vw, 0.875rem);
+    --text-base: clamp(0.9rem,  0.85rem + 0.25vw, 1rem);
+    --text-lg:   clamp(1rem,    0.95rem + 0.3vw,  1.125rem);
+    --text-xl:   clamp(1.1rem,  1rem    + 0.5vw,  1.25rem);
+    --text-2xl:  clamp(1.25rem, 1.1rem  + 0.75vw, 1.5rem);
+    --text-3xl:  clamp(1.5rem,  1.25rem + 1.25vw, 2rem);
+    --text-4xl:  clamp(1.875rem,1.5rem  + 1.75vw, 2.5rem);
+
+    /* ── Fluid spacing ── */
+    --space-xs:  clamp(0.25rem, 0.2rem  + 0.25vw, 0.375rem);
+    --space-sm:  clamp(0.5rem,  0.4rem  + 0.5vw,  0.75rem);
+    --space-md:  clamp(0.75rem, 0.6rem  + 0.75vw, 1.25rem);
+    --space-lg:  clamp(1rem,    0.8rem  + 1vw,    1.5rem);
+    --space-xl:  clamp(1.5rem,  1.2rem  + 1.5vw,  2.5rem);
+    --space-2xl: clamp(2rem,    1.5rem  + 2.5vw,  4rem);
+
+    /* ── Easing curves ── */
+    --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+    --ease-out-expo:  cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-spring:    cubic-bezier(0.34, 1.20, 0.64, 1); /* subtle overshoot, no bounce */
+
+    /* ── Duration tokens ── */
+    --dur-fast:   150ms;
+    --dur-base:   250ms;
+    --dur-slow:   400ms;
+    --dur-slower: 600ms;
   }
 
   .dark {
-    /* shadcn/ui theme variables (HSL format) */
-    /* Dark mode with slate base */
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
-    --card: 222 47% 15%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 239 84% 67%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 271 91% 65%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 217 33% 17%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 350 89% 60%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 239 84% 67%;
-    --chart-1: 239 84% 67%;
-    --chart-2: 271 91% 65%;
-    --chart-3: 189 94% 43%;
-    --chart-4: 160 84% 39%;
-    --chart-5: 350 89% 60%;
-    /* Use a slightly lighter dark tone for the sidebar so it isn't pure black */
-    --sidebar-background: 222 47% 15%; /* matches --card in dark mode */
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 217 33% 17%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217 33% 17%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* ── Domestic Sanctuary — Obsidian palette ── */
+    --background:       #131313;      /* surface */
+    --foreground:       #e5e2e1;      /* on-surface */
+    --card:             #1c1b1b;      /* surface-container-low */
+    --card-foreground:  #e5e2e1;
+    --popover:          #1c1b1b;
+    --popover-foreground: #e5e2e1;
+    --primary:          #adc6ff;      /* primary blue */
+    --primary-foreground: #0a1a40;   /* dark text on primary */
+    --secondary:        #ffdf9e;      /* secondary gold */
+    --secondary-foreground: #2a1a00;
+    --muted:            #2a2a2a;      /* surface-container-high */
+    --muted-foreground: rgba(229,226,225,0.5);
+    --accent:           #2a2a2a;
+    --accent-foreground: #e5e2e1;
+    --destructive:      #ffb4ab;
+    --destructive-foreground: #3b0a07;
+    --border:           rgba(64,71,82,0.15);  /* outline-variant @ 15% */
+    --input:            #353534;      /* surface-container-highest */
+    --ring:             #adc6ff;
+    --chart-1:          #adc6ff;      /* primary blue */
+    --chart-2:          #78dc77;      /* tertiary green */
+    --chart-3:          #ffdf9e;      /* secondary gold */
+    --chart-4:          #ffb4ab;      /* error red */
+    --chart-5:          #89919d;      /* neutral */
+
+    /* ── Domestic Sanctuary — surface tier tokens ── */
+    --surface:                    #131313;
+    --surface-container-lowest:   #0d0d0d;
+    --surface-container-low:      #1c1b1b;
+    --surface-container:          #222121;
+    --surface-container-high:     #2a2a2a;
+    --surface-container-highest:  #353534;
+    --on-surface:                 #e5e2e1;
+    --outline-variant:            rgba(64,71,82,0.15);
+
+    /* ── Sidebar ── */
+    --sidebar-background:           #0d0d0d;
+    --sidebar-foreground:           #e5e2e1;
+    --sidebar-primary:              #adc6ff;
+    --sidebar-primary-foreground:   #0a1a40;
+    --sidebar-accent:               #1c1b1b;
+    --sidebar-accent-foreground:    #e5e2e1;
+    --sidebar-border:               rgba(64,71,82,0.15);
+    --sidebar-ring:                 #adc6ff;
+
+    --primary-subtle:       color-mix(in srgb, #adc6ff 18%, #131313);
+    --primary-subtle-hover: color-mix(in srgb, #adc6ff 28%, #131313);
+    --secondary-subtle:     color-mix(in srgb, #ffdf9e 12%, #131313);
+
+    --text-xs:   clamp(0.65rem, 0.6rem  + 0.25vw, 0.75rem);
+    --text-sm:   clamp(0.8rem,  0.75rem + 0.25vw, 0.875rem);
+    --text-base: clamp(0.9rem,  0.85rem + 0.25vw, 1rem);
+    --text-lg:   clamp(1rem,    0.95rem + 0.3vw,  1.125rem);
+    --text-xl:   clamp(1.1rem,  1rem    + 0.5vw,  1.25rem);
+    --text-2xl:  clamp(1.25rem, 1.1rem  + 0.75vw, 1.5rem);
+    --text-3xl:  clamp(1.5rem,  1.25rem + 1.25vw, 2rem);
+    --text-4xl:  clamp(1.875rem,1.5rem  + 1.75vw, 2.5rem);
+
+    /* ── Fluid spacing ── */
+    --space-xs:  clamp(0.25rem, 0.2rem  + 0.25vw, 0.375rem);
+    --space-sm:  clamp(0.5rem,  0.4rem  + 0.5vw,  0.75rem);
+    --space-md:  clamp(0.75rem, 0.6rem  + 0.75vw, 1.25rem);
+    --space-lg:  clamp(1rem,    0.8rem  + 1vw,    1.5rem);
+    --space-xl:  clamp(1.5rem,  1.2rem  + 1.5vw,  2.5rem);
+    --space-2xl: clamp(2rem,    1.5rem  + 2.5vw,  4rem);
+
+    /* ── Easing curves ── */
+    --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+    --ease-out-expo:  cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-spring:    cubic-bezier(0.34, 1.20, 0.64, 1); /* subtle overshoot, no bounce */
+
+    /* ── Duration tokens ── */
+    --dur-fast:   150ms;
+    --dur-base:   250ms;
+    --dur-slow:   400ms;
+    --dur-slower: 600ms;
   }
 }
 
@@ -132,5 +221,41 @@ code {
   }
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: var(--text-base);
+  }
+  .font-display {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+  .font-editorial {
+    font-family: 'Manrope', 'Plus Jakarta Sans', sans-serif;
+  }
+  .font-ui {
+    font-family: 'Inter', 'Lato', sans-serif;
+  }
+}
+
+/* ── Glassmorphism utility — floating/overlay elements ── */
+.glass {
+  backdrop-filter: blur(10px);
+  background: color-mix(in srgb, var(--surface-container-high) 40%, transparent);
+}
+
+/* ── Touch devices: PostIt action buttons always visible ── */
+@media (pointer: coarse) {
+  .postit-actions {
+    opacity: 1 !important;
+  }
+}
+
+/* ── Reduced motion — respect OS accessibility preference ── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

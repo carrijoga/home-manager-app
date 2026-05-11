@@ -1,191 +1,213 @@
 /**
- * Definições de tipos para o aplicativo Ninho
- * Este arquivo contém todas as interfaces e tipos de dados usados na aplicação
+ * Tipos internos do app Ninho (frontend-only).
+ * Para tipos derivados da API, use `src/schemas/`.
  */
 
 // ==================== ENUMS ====================
 
-/**
- * Categorias válidas para gastos
- */
-export enum ExpenseCategory {
-  FIXED = 'Fixo',
-  MAINTENANCE = 'Manutenção',
-  NEW_ITEM = 'Novo item',
-  GENERAL = 'Geral',
-  FOOD = 'Alimentação',
-  TRANSPORT = 'Transporte',
-  HEALTH = 'Saúde',
-  EDUCATION = 'Educação',
-  ENTERTAINMENT = 'Entretenimento',
-  OTHER = 'Outro'
-}
-
-/**
- * Categorias válidas para itens de compra
- */
-export enum ShoppingCategory {
-  FOOD = 'Alimentos',
-  CLEANING = 'Limpeza',
-  HYGIENE = 'Higiene',
-  GENERAL = 'Geral',
-  OTHER = 'Outro'
-}
-
-/**
- * Níveis de prioridade
- */
+/** Níveis de prioridade — usados em Task e FutureItem (legado) */
 export enum Priority {
   HIGH = 'alta',
   MEDIUM = 'média',
-  LOW = 'baixa'
+  LOW = 'baixa',
 }
 
-/**
- * IDs dos módulos da aplicação
- */
+/** Prioridade de tarefa — enum numérico conforme API */
+export enum ApiPriority {
+  Urgente = 0,
+  Alta = 1,
+  Media = 2,
+  Baixa = 3,
+}
+
+/** Categoria de tarefa — enum numérico conforme API */
+export enum ApiCategory {
+  Geral = 0,
+  Limpeza = 1,
+  Manutencao = 2,
+  Financas = 3,
+  Outros = 4,
+}
+
+/** IDs dos módulos da aplicação */
 export enum ModuleId {
   DASHBOARD = 'dashboard',
   TASKS = 'tasks',
   SHOPPING = 'shopping',
   FINANCIAL = 'financial',
   FUTURE = 'future',
-  CALENDAR = 'calendar'
+  CALENDAR = 'calendar',
+}
+
+// ShoppingCategory enum removed — categories are now dynamic (from API / mock)
+
+/**
+ * Status de item de compra futura.
+ * Não confundir com PaymentStatus da API.
+ */
+export enum FutureItemStatus {
+  PLANNED = 'planned',
+  PURCHASED = 'purchased',
 }
 
 /**
- * Métodos de pagamento
+ * Métodos de pagamento no formato do app (strings em PT-BR).
+ * Para o enum numérico da API use `ApiPaymentMethod` em `src/schemas/enums`.
  */
-export enum PaymentMethod {
+export enum AppPaymentMethod {
   CASH = 'Dinheiro',
   DEBIT = 'Débito',
   CREDIT = 'Crédito',
   PIX = 'PIX',
   BOLETO = 'Boleto',
-  OTHER = 'Outro'
-}
-
-/**
- * Status de pagamento
- */
-export enum PaymentStatus {
-  PENDING = 'pending',
-  PAID = 'paid'
-}
-
-/**
- * Status de compra futura
- */
-export enum FutureItemStatus {
-  PLANNED = 'planned',
-  PURCHASED = 'purchased'
+  OTHER = 'Outro',
 }
 
 // ==================== INTERFACES ====================
 
-/**
- * Interface para Avisos do quadro
- */
-export interface Notice {
-  id: number | string;
-  text: string;
-  author: string;
-  createdBy?: string;
-  date: string; // ISO format (YYYY-MM-DD)
-  createdAt?: string | Date;
+/** Ninho associado ao usuário (derivado de UserNestResponse da API) */
+export interface AppUserNest {
+  nestId: string;
+  name: string;
+  icon?: string | null;
+  isDefault: boolean;
+  role: number;
 }
 
-/**
- * Interface para Tarefas
- */
-export interface Task {
-  id: string;
+/** Notificação do usuário (derivado de UserNotificationResponse da API) */
+export interface AppNotification {
+  notificationId: string;
   title: string;
-  assignedTo: string;
-  completed: boolean;
-  dueDate: string; // ISO format (YYYY-MM-DD)
-  description?: string;
-  priority?: Priority;
-  category?: string;
-  createdAt?: Date;
+  message: string;
+  type: number; // NotificationType: 0=Info, 1=Warning, 2=Error, 3=Success
+  isRead: boolean;
+  isEnabled: boolean;
 }
 
-/**
- * Interface para Item de Compra
- */
-export interface ShoppingItem {
+/** Representação interna do usuário autenticado */
+export interface AppUser {
   id: string;
   name: string;
-  quantity: string; // ex: "5kg", "3un"
-  checked: boolean;
-  category: string;
-  month: string; // Mês de referência
-  price?: number;
-  monthYear?: string; // 'YYYY-MM'
+  callmeby: string;
+  email: string;
+  avatar?: string;
+  nests?: AppUserNest[];
+  notifications?: AppNotification[];
 }
 
-/**
- * Interface para Lista de Compras Mensal
- */
-export interface ShoppingList {
-  id: string;
-  month: string; // 'YYYY-MM'
-  items: ShoppingItem[];
-  createdAt: Date;
-  archived?: boolean;
-}
-
-/**
- * Interface para Informações de Parcelamento
- */
-export interface Installment {
-  total: number;
-  current: number;
-  valuePerInstallment: number;
-}
-
-/**
- * Interface para Informações de Pagamento
- */
-export interface Payment {
-  method: PaymentMethod;
-  paidBy: string;
-  paidAt: Date;
-}
-
-/**
- * Interface para Despesas/Gastos
- */
-export interface Expense {
-  id: string;
+/** Clima atual apresentado no dashboard */
+export interface AppWeather {
+  city: string;
+  temperature: number;
   description: string;
-  value: number;
-  date: string; // ISO format (YYYY-MM-DD)
-  category: string;
-  responsible?: string;
-  paymentMethod?: PaymentMethod;
-  installments?: Installment;
-  paymentStatus?: PaymentStatus;
-  payment?: Payment;
+  source?: 'gps' | 'ip' | 'manual';
+  conditionCode?: string | null;
+  observedAt?: string | null;
 }
 
-/**
- * Interface para Informações de Compra de Item Futuro
- */
+/** Aviso do quadro (módulo Notices) */
+export interface Notice {
+  noticeId: string;
+  message: string;
+  date: string;
+  isPinned: boolean;
+  priority: ApiPriority;
+  expiresAt: string | null;
+  isActive: boolean;
+  createdBy: string; // UUID do autor
+  createdAt: string;
+  authorName?: string; // nome legível, enriquecido no frontend
+  color?: string; // chave de cor do post-it (yellow|pink|green|orange|blue)
+  reactions?: Array<{ emoji: string; count: number }>;
+}
+
+/** Tarefa (módulo Tasks) */
+export interface Task {
+  taskId: string;
+  title: string;
+  description?: string | null;
+  details?: string | null;
+  assignedTo?: string | null; // UUID do usuário ou null = Geral
+  dueDate?: string | null;
+  priority: ApiPriority;
+  priorityLabel: string;
+  category: ApiCategory;
+  categoryLabel: string;
+  date: string;
+  isCompleted: boolean;
+  completedAt?: string | null;
+  isOverdue: boolean;
+  createdBy: string;
+  createdAt: string;
+}
+
+/** Resposta paginada genérica */
+export interface PaginatedResponse<T> {
+  items: T[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+}
+
+/** Categoria de compra (default do sistema ou personalizada do nest) */
+export interface AppShoppingCategory {
+  shoppingCategoryId: string;
+  nestId: string | null;
+  name: string;
+  description?: string | null;
+  isDefault: boolean;
+}
+
+/** Item dentro de uma lista de compras */
+export interface AppShoppingItem {
+  shoppingItemId: string;
+  shoppingListId: string;
+  name: string;
+  quantity: number;
+  unitType: number;
+  shoppingCategoryId?: string | null;
+  categoryName?: string | null;
+  isPurchased: boolean;
+  price?: number | null;
+  estimatedPrice?: number | null;
+  purchasedAt?: string | null;
+  notes?: string | null;
+}
+
+/** Lista de compras (visão detalhada — inclui itens) */
+export interface AppShoppingList {
+  shoppingListId: string;
+  name: string;
+  monthYear: string; // ISO date-time string
+  notes?: string | null;
+  items: AppShoppingItem[];
+}
+
+/** Resumo de lista de compras (visão de listagem — sem itens) */
+export interface AppShoppingListSummary {
+  shoppingListId: string;
+  name: string;
+  monthYear: string; // ISO date-time string
+  notes?: string | null;
+  totalItems: number;
+  purchasedItems: number;
+  totalEstimated?: number | null;
+  totalSpent?: number | null;
+}
+
+/** Informações de compra de item futuro */
 export interface FuturePurchase {
   expenseId: string;
   actualValue: number;
-  purchasedAt: Date;
+  purchasedAt: string;
 }
 
-/**
- * Interface para Itens de Compras Futuras
- */
+/** Item de compra futura (módulo FutureItems, mock-only por enquanto) */
 export interface FutureItem {
   id: string;
   name: string;
   priority: Priority;
-  estimatedCost: string; // ex: "R$ 2.500"
+  estimatedCost: string; // ex: 'R$ 2.500'
   estimatedValue?: number;
   description?: string;
   category?: string;
@@ -195,92 +217,76 @@ export interface FutureItem {
   purchase?: FuturePurchase;
 }
 
+// ==================== HELPERS ====================
+
 /**
- * Interface para Usuário (formato da API)
+ * Converte UserProfileResponse da API para AppUser interno.
+ * O parâmetro aceita o shape do UserProfileResponse de `src/schemas/user`.
  */
-export interface UserProfile {
-  id: string;
+export function userProfileToAppUser(profile: {
+  userId: string;
   firstName: string;
   lastName: string;
+  callbyName: string;
   email: string;
-  userName: string;
-  profilePicture?: string | null;
-}
-
-/**
- * Interface para Usuário (formato interno do app)
- */
-export interface User {
-  id: string;
-  name: string;
-  callmeby: string;
-  email: string;
-  avatar?: string;
-}
-
-/**
- * Converte UserProfile da API para User do app
- */
-export function userProfileToUser(profile: UserProfile): User {
+  profilePictureUrl?: string | null;
+  nests?: Array<{
+    nestId: string;
+    name: string;
+    icon?: string | null;
+    isDefault: boolean;
+    role: number;
+  }>;
+  profile?: {
+    notifications?: Array<{
+      notificationId: string;
+      title: string;
+      message: string;
+      type: number;
+      isRead: boolean;
+      isEnabled: boolean;
+    }>;
+  } | null;
+}): AppUser {
   return {
-    id: profile.id,
+    id: profile.userId,
     name: `${profile.firstName} ${profile.lastName}`.trim(),
-    callmeby: profile.firstName,
+    callmeby: profile.callbyName,
     email: profile.email,
-    avatar: profile.profilePicture || undefined,
+    avatar: profile.profilePictureUrl ?? undefined,
+    nests: (profile.nests ?? []).map(n => ({
+      nestId: n.nestId,
+      name: n.name,
+      icon: n.icon,
+      isDefault: n.isDefault,
+      role: n.role,
+    })),
+    notifications: (profile.profile?.notifications ?? []).map(n => ({
+      notificationId: n.notificationId,
+      title: n.title,
+      message: n.message,
+      type: n.type,
+      isRead: n.isRead,
+      isEnabled: n.isEnabled,
+    })),
   };
 }
 
-// ==================== TYPE ALIASES ====================
+// ==================== CONSTANTES LEGADAS ====================
 
-/**
- * Tipo para representar uma data em formato ISO
- */
-export type ISODate = string;
-
-/**
- * Tipo para representar valores monetários
- */
-export type Currency = number;
-
-// ==================== CONSTANTES LEGADAS (para compatibilidade) ====================
-
-/**
- * @deprecated Use o enum ExpenseCategory ao invés
- */
-export const ExpenseCategories = {
-  FIXED: ExpenseCategory.FIXED,
-  MAINTENANCE: ExpenseCategory.MAINTENANCE,
-  NEW_ITEM: ExpenseCategory.NEW_ITEM,
-  GENERAL: ExpenseCategory.GENERAL
-} as const;
-
-/**
- * @deprecated Use o enum ShoppingCategory ao invés
- */
-export const ShoppingCategories = {
-  FOOD: ShoppingCategory.FOOD,
-  CLEANING: ShoppingCategory.CLEANING,
-  GENERAL: ShoppingCategory.GENERAL
-} as const;
-
-/**
- * @deprecated Use o enum Priority ao invés
- */
+/** @deprecated Use enum Priority */
 export const PriorityLevels = {
   HIGH: Priority.HIGH,
   MEDIUM: Priority.MEDIUM,
-  LOW: Priority.LOW
+  LOW: Priority.LOW,
 } as const;
 
-/**
- * @deprecated Use o enum ModuleId ao invés
- */
+/** @deprecated Use enum ModuleId */
 export const ModuleIds = {
   DASHBOARD: ModuleId.DASHBOARD,
   TASKS: ModuleId.TASKS,
   SHOPPING: ModuleId.SHOPPING,
   FINANCIAL: ModuleId.FINANCIAL,
   FUTURE: ModuleId.FUTURE,
-  CALENDAR: ModuleId.CALENDAR
+  CALENDAR: ModuleId.CALENDAR,
 } as const;

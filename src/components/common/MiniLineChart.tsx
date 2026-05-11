@@ -26,7 +26,7 @@ const MiniLineChart = ({
   if (!data || data.length === 0) {
     return (
       <div
-        className="flex items-center justify-center text-xs text-gray-400 dark:text-dark-text-tertiary"
+        className="flex items-center justify-center text-xs text-muted-foreground"
         style={{ height }}
       >
         Sem dados

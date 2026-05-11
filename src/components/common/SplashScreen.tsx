@@ -7,7 +7,7 @@ export function SplashScreen() {
     <motion.div
       className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-br from-[#1a1a2e] to-[#16213e]"
       initial={{ opacity: 1 }}
-      exit={{ opacity: reduced ? 0 : 0, transition: { duration: reduced ? 0.01 : 0.5, ease: 'easeInOut' } }}
+      exit={{ opacity: 0, transition: { duration: reduced ? 0.01 : 0.5, ease: 'easeInOut' } }}
     >
       <motion.div
         initial={{ opacity: 0, scale: reduced ? 1 : 0.85 }}

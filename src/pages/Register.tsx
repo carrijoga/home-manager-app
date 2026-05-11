@@ -15,7 +15,6 @@ import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
-// Esquema estendido para incluir confirmPassword (campo apenas de UI, não enviado à API)
 const RegisterFormSchema = RegisterRequestSchema.extend({
   confirmPassword: z.string().min(1, 'Confirme a senha'),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -103,18 +102,18 @@ function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 p-4">
-      <Card className="w-full max-w-2xl p-6 sm:p-10 shadow-2xl backdrop-blur-lg bg-white/90 dark:bg-gray-900/80 border border-white/20">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-2xl p-6 sm:p-10 shadow-2xl bg-card border-border">
         <div className="flex flex-col lg:flex-row gap-10">
           <div className="flex-1 flex flex-col items-center text-center space-y-4">
-            <div className="w-24 h-24 flex items-center justify-center rounded-3xl bg-gradient-to-br from-indigo-200 via-purple-200 to-cyan-200 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 transition-transform hover:scale-105">
+            <div className="w-24 h-24 flex items-center justify-center rounded-3xl bg-muted transition-transform hover:scale-105">
               <Logo size="large" showText={false} />
             </div>
             <div>
-              <p className="text-sm uppercase tracking-[0.35em] text-indigo-500 dark:text-indigo-300 font-semibold">
+              <p className="text-sm uppercase tracking-[0.35em] text-primary font-semibold">
                 Registrar
               </p>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 bg-clip-text text-transparent">
+              <h1 className="text-3xl font-bold text-foreground">
                 Crie sua conta no Ninho
               </h1>
             </div>
@@ -127,37 +126,37 @@ function Register() {
           <form onSubmit={handleSubmit(onSubmit)} className="flex-1 space-y-3" noValidate>
             <div className="grid sm:grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label htmlFor="firstName" className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                <Label htmlFor="firstName" className="text-sm font-medium text-foreground">
                   Nome
                 </Label>
                 <Input
                   id="firstName"
                   placeholder="John"
                   {...register('firstName')}
-                  className="h-10 bg-white text-gray-900 dark:bg-gray-950 transition-all duration-200 focus:ring-2 focus:ring-indigo-500 border-gray-200 dark:border-gray-800"
+                  className="h-10 bg-input text-foreground transition-all duration-200 focus:ring-2 focus:ring-ring border-border"
                 />
                 {errors.firstName && (
-                  <p className="text-xs text-red-600 dark:text-red-400 animate-in fade-in slide-in-from-top-1 duration-200">{errors.firstName.message}</p>
+                  <p className="text-xs text-destructive animate-in fade-in slide-in-from-top-1 duration-200">{errors.firstName.message}</p>
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="lastName" className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                <Label htmlFor="lastName" className="text-sm font-medium text-foreground">
                   Sobrenome
                 </Label>
                 <Input
                   id="lastName"
                   placeholder="Doe"
                   {...register('lastName')}
-                  className="h-10 bg-white text-gray-900 dark:bg-gray-950 transition-all duration-200 focus:ring-2 focus:ring-indigo-500 border-gray-200 dark:border-gray-800"
+                  className="h-10 bg-input text-foreground transition-all duration-200 focus:ring-2 focus:ring-ring border-border"
                 />
                 {errors.lastName && (
-                  <p className="text-xs text-red-600 dark:text-red-400 animate-in fade-in slide-in-from-top-1 duration-200">{errors.lastName.message}</p>
+                  <p className="text-xs text-destructive animate-in fade-in slide-in-from-top-1 duration-200">{errors.lastName.message}</p>
                 )}
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="username" className="text-sm font-medium text-gray-700 dark:text-gray-200">
+              <Label htmlFor="username" className="text-sm font-medium text-foreground">
                 Nome de usuário
               </Label>
               <div className="relative">
@@ -167,19 +166,19 @@ function Register() {
                   {...register('username', {
                     onChange: () => setUsernameManuallyEdited(true),
                   })}
-                  className="h-10 bg-white text-gray-900 dark:bg-gray-950 transition-all duration-200 focus:ring-2 focus:ring-indigo-500 border-gray-200 dark:border-gray-800 pr-8"
+                  className="h-10 bg-input text-foreground transition-all duration-200 focus:ring-2 focus:ring-ring border-border pr-8"
                 />
                 {isUsernameLoading && (
                   <span className="absolute right-2 top-1/2 -translate-y-1/2"><Spinner className="w-4 h-4" /></span>
                 )}
               </div>
               {errors.username && (
-                <p className="text-xs text-red-600 dark:text-red-400 animate-in fade-in slide-in-from-top-1 duration-200">{errors.username.message}</p>
+                <p className="text-xs text-destructive animate-in fade-in slide-in-from-top-1 duration-200">{errors.username.message}</p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium text-gray-700 dark:text-gray-200">
+              <Label htmlFor="email" className="text-sm font-medium text-foreground">
                 Email
               </Label>
               <Input
@@ -188,15 +187,15 @@ function Register() {
                 placeholder="john.doe@example.com"
                 autoComplete="email"
                 {...register('email')}
-                className="h-10 bg-white text-gray-900 dark:bg-gray-950 transition-all duration-200 focus:ring-2 focus:ring-indigo-500 border-gray-200 dark:border-gray-800"
+                className="h-10 bg-input text-foreground transition-all duration-200 focus:ring-2 focus:ring-ring border-border"
               />
               {errors.email && (
-                <p className="text-xs text-red-600 dark:text-red-400 animate-in fade-in slide-in-from-top-1 duration-200">{errors.email.message}</p>
+                <p className="text-xs text-destructive animate-in fade-in slide-in-from-top-1 duration-200">{errors.email.message}</p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium text-gray-700 dark:text-gray-200">
+              <Label htmlFor="password" className="text-sm font-medium text-foreground">
                 Senha
               </Label>
               <div className="relative">
@@ -206,27 +205,27 @@ function Register() {
                   placeholder="Mínimo de 6 caracteres"
                   autoComplete="new-password"
                   {...register('password')}
-                  className="h-11 bg-white text-gray-900 dark:bg-gray-950 transition-all duration-200 focus:ring-2 focus:ring-indigo-500 border-gray-200 dark:border-gray-800 pr-10"
+                  className="h-11 bg-input text-foreground transition-all duration-200 focus:ring-2 focus:ring-ring border-border pr-10"
                 />
                 <button
                   type="button"
                   tabIndex={-1}
                   aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
                   onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400 focus:outline-none"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-primary focus:outline-none"
                 >
                   {showPassword ? <EyeOffIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
                 </button>
               </div>
               {errors.password ? (
-                <p className="text-xs text-red-600 dark:text-red-400 animate-in fade-in slide-in-from-top-1 duration-200">{errors.password.message}</p>
+                <p className="text-xs text-destructive animate-in fade-in slide-in-from-top-1 duration-200">{errors.password.message}</p>
               ) : (
                 <p className="text-xs text-muted-foreground">Use uma senha segura com no mínimo 6 caracteres.</p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700 dark:text-gray-200">
+              <Label htmlFor="confirmPassword" className="text-sm font-medium text-foreground">
                 Confirmar Senha
               </Label>
               <div className="relative">
@@ -236,8 +235,8 @@ function Register() {
                   placeholder="Digite a senha novamente"
                   autoComplete="new-password"
                   {...register('confirmPassword')}
-                  className={`h-10 bg-white text-gray-900 dark:bg-gray-950 transition-all duration-200 focus:ring-2 border-gray-200 dark:border-gray-800 pr-10 ${
-                    errors.confirmPassword ? "border-red-500 focus:ring-red-500" : "focus:ring-indigo-500"
+                  className={`h-10 bg-input text-foreground transition-all duration-200 focus:ring-2 border-border pr-10 ${
+                    errors.confirmPassword ? "border-destructive focus:ring-destructive" : "focus:ring-ring"
                   }`}
                 />
                 <button
@@ -245,20 +244,20 @@ function Register() {
                   tabIndex={-1}
                   aria-label={showConfirmPassword ? "Ocultar senha" : "Mostrar senha"}
                   onClick={() => setShowConfirmPassword((v) => !v)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400 focus:outline-none"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-primary focus:outline-none"
                 >
                   {showConfirmPassword ? <EyeOffIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
                 </button>
               </div>
               {errors.confirmPassword && (
-                <p className="text-xs text-red-600 dark:text-red-400 animate-in fade-in slide-in-from-top-1 duration-200">{errors.confirmPassword.message}</p>
+                <p className="text-xs text-destructive animate-in fade-in slide-in-from-top-1 duration-200">{errors.confirmPassword.message}</p>
               )}
             </div>
 
             <Button
               type="submit"
               disabled={!isValid || isSubmitting}
-              className="w-full h-12 text-base font-semibold bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 hover:from-indigo-700 hover:via-purple-700 hover:to-cyan-700 transition-all duration-200 hover:shadow-lg hover:scale-[1.02]"
+              className="w-full h-12 text-base font-semibold bg-primary text-primary-foreground hover:opacity-90 transition-all duration-200 hover:shadow-lg hover:scale-[1.02]"
             >
               {isSubmitting ? (
                 <div className="flex items-center justify-center gap-2">
@@ -274,7 +273,7 @@ function Register() {
               Já possui cadastro?{" "}
               <Link
                 to="/login"
-                className="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline transition-colors"
+                className="font-semibold text-primary hover:underline transition-colors"
               >
                 Voltar para o login
               </Link>

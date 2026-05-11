@@ -503,6 +503,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Kick off session check on mount so the splash screen resolves on public routes too.
+  useEffect(() => {
+    checkSession();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // ========== SESSION EXPIRY LISTENER ==========
   useEffect(() => {
     const handleSessionExpired = () => {

@@ -1,21 +1,22 @@
-import Logo from "@/components/common/Logo";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { EyeIcon, EyeOffIcon } from "@/components/ui";
-import { Label } from "@/components/ui/label";
-import { Spinner } from "@/components/ui/spinner";
-import { login as loginRequest } from "@/services/authService";
-import { LoginRequestSchema } from "@/schemas/auth";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useApp } from "@/contexts/AppContext";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { useNavigate, Link } from "react-router-dom";
-import { toast } from "sonner";
-import type { LoginRequest } from "@/schemas/auth";
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
-// Constantes de ambiente
+import Logo from '@/components/common/Logo';
+import { EyeIcon, EyeOffIcon } from '@/components/ui';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Spinner } from '@/components/ui/spinner';
+import { useApp } from '@/contexts/AppContext';
+import type { LoginRequest } from '@/schemas/auth';
+import { LoginRequestSchema } from '@/schemas/auth';
+import { login as loginRequest } from '@/services/authService';
+
+const GOOGLE_ENABLED = import.meta.env.VITE_GOOGLE_ENABLED !== 'false';
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 const GOOGLE_REDIRECT_URI = import.meta.env.VITE_GOOGLE_REDIRECT_URI;
 
@@ -49,39 +50,35 @@ function Login() {
 
   const handleGoogleLogin = () => {
     if (!GOOGLE_CLIENT_ID) {
-      toast.error("Google Client ID não configurado. Verifique as variáveis de ambiente.");
+      toast.error('Google Client ID não configurado. Verifique as variáveis de ambiente.');
       return;
     }
 
     setIsGoogleLoading(true);
 
-    const googleAuthUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
-    googleAuthUrl.searchParams.append("client_id", GOOGLE_CLIENT_ID);
-    googleAuthUrl.searchParams.append("redirect_uri", GOOGLE_REDIRECT_URI);
-    googleAuthUrl.searchParams.append("response_type", "code");
-    googleAuthUrl.searchParams.append("scope", "openid email profile");
-    googleAuthUrl.searchParams.append("access_type", "offline");
-    googleAuthUrl.searchParams.append("prompt", "consent");
+    const googleAuthUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+    googleAuthUrl.searchParams.append('client_id', GOOGLE_CLIENT_ID);
+    googleAuthUrl.searchParams.append('redirect_uri', GOOGLE_REDIRECT_URI);
+    googleAuthUrl.searchParams.append('response_type', 'code');
+    googleAuthUrl.searchParams.append('scope', 'openid email profile');
+    googleAuthUrl.searchParams.append('access_type', 'offline');
+    googleAuthUrl.searchParams.append('prompt', 'consent');
 
     window.location.href = googleAuthUrl.toString();
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-purple-50 to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4">
-      <Card className="w-full max-w-md p-8 sm:p-12 shadow-xl backdrop-blur-lg bg-white/90 dark:bg-gray-900/80 border border-white/20">
-        <div className="flex flex-col items-center w-full">
-          <div className="mb-6 w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-100 via-purple-100 to-cyan-100 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 transition-transform hover:scale-105">
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-md border-border bg-card p-8 shadow-xl sm:p-12">
+        <div className="flex w-full flex-col items-center">
+          <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-muted transition-transform hover:scale-105 sm:h-24 sm:w-24">
             <Logo size="large" showText={false} />
           </div>
 
-          <div className="text-center mb-8 space-y-2">
-            <p className="text-sm uppercase tracking-[0.35em] text-indigo-500 dark:text-indigo-300 font-semibold">
-              Entrar
-            </p>
-            <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 bg-clip-text text-transparent">
-              Bem-vindo ao Ninho
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">
+          <div className="mb-8 space-y-2 text-center">
+            <p className="text-sm font-semibold uppercase tracking-[0.35em] text-primary">Entrar</p>
+            <h1 className="text-3xl font-bold text-foreground sm:text-4xl">Bem-vindo ao Ninho</h1>
+            <p className="text-sm text-muted-foreground sm:text-base">
               Use os dados cadastrados para acessar seu painel.
             </p>
           </div>
@@ -91,17 +88,17 @@ function Login() {
             type="button"
             variant="outline"
             onClick={handleGoogleLogin}
-            disabled={isGoogleLoading || isSubmitting}
-            className="w-full h-12 mb-6 text-base font-medium bg-white dark:bg-gray-950 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-700 hover:bg-gray-100 hover:text-gray-500 dark:hover:bg-gray-900 transition-all duration-200 shadow-sm hover:shadow-md"
+            disabled={!GOOGLE_ENABLED || isGoogleLoading || isSubmitting}
+            className="mb-6 h-12 w-full border-border bg-card text-base font-medium text-foreground shadow-sm transition-all duration-200 hover:bg-muted hover:shadow-md disabled:cursor-not-allowed disabled:opacity-40"
           >
             {isGoogleLoading ? (
               <div className="flex items-center justify-center gap-2">
-                <Spinner className="w-4 h-4" />
+                <Spinner className="h-4 w-4" />
                 Redirecionando...
               </div>
             ) : (
               <div className="flex items-center justify-center gap-3">
-                <svg className="w-5 h-5" viewBox="0 0 24 24">
+                <svg className="h-5 w-5" viewBox="0 0 24 24">
                   <path
                     fill="#4285F4"
                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -125,76 +122,84 @@ function Login() {
           </Button>
 
           {/* Divider */}
-          <div className="w-full flex items-center gap-4 mb-6">
-            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 dark:via-gray-600 to-transparent"></div>
-            <span className="text-sm text-gray-500 dark:text-gray-400 font-medium">ou</span>
-            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 dark:via-gray-600 to-transparent"></div>
+          <div className="mb-6 flex w-full items-center gap-4">
+            <div className="h-px flex-1 bg-border"></div>
+            <span className="text-sm font-medium text-muted-foreground">ou</span>
+            <div className="h-px flex-1 bg-border"></div>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="w-full space-y-4" noValidate>
             <div className="space-y-2">
-              <Label htmlFor="usernameOrEmail" className="text-sm font-medium text-gray-700 dark:text-gray-200">Email ou usuário</Label>
+              <Label htmlFor="usernameOrEmail" className="text-sm font-medium text-foreground">
+                Email ou usuário
+              </Label>
               <Input
                 id="usernameOrEmail"
                 type="text"
                 placeholder="ninho@ninho.com"
                 autoComplete="email"
                 {...register('usernameOrEmail')}
-                className="h-10 bg-white text-gray-700 dark:bg-gray-950 transition-all duration-200 focus:ring-2 focus:ring-indigo-500 border-gray-200 dark:border-gray-800"
+                className="h-10 border-border bg-input text-foreground transition-all duration-200 focus:ring-2 focus:ring-ring"
               />
               {errors.usernameOrEmail && (
-                <p className="text-xs text-red-600 dark:text-red-400">{errors.usernameOrEmail.message}</p>
+                <p className="text-xs text-destructive">{errors.usernameOrEmail.message}</p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium text-gray-700 dark:text-gray-200">Senha</Label>
+              <Label htmlFor="password" className="text-sm font-medium text-foreground">
+                Senha
+              </Label>
               <div className="relative">
                 <Input
                   id="password"
-                  type={showPassword ? "text" : "password"}
+                  type={showPassword ? 'text' : 'password'}
                   placeholder="********"
                   autoComplete="current-password"
                   {...register('password')}
-                  className="h-10 bg-white text-gray-700 dark:bg-gray-950 transition-all duration-200 focus:ring-2 focus:ring-indigo-500 border-gray-200 dark:border-gray-800 pr-10"
+                  className="h-10 border-border bg-input pr-10 text-foreground transition-all duration-200 focus:ring-2 focus:ring-ring"
                 />
                 <button
                   type="button"
                   tabIndex={-1}
-                  aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                  aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
                   onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400 focus:outline-none"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-primary focus:outline-none"
                 >
-                  {showPassword ? <EyeOffIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
+                  {showPassword ? (
+                    <EyeOffIcon className="h-5 w-5" />
+                  ) : (
+                    <EyeIcon className="h-5 w-5" />
+                  )}
                 </button>
               </div>
               {errors.password && (
-                <p className="text-xs text-red-600 dark:text-red-400">{errors.password.message}</p>
+                <p className="text-xs text-destructive">{errors.password.message}</p>
               )}
             </div>
 
             <Button
               type="submit"
               disabled={!isValid || isSubmitting || isGoogleLoading}
-              className="w-full h-12 text-base font-semibold bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 hover:from-indigo-700 hover:via-purple-700 hover:to-cyan-700 transition-all duration-200 hover:shadow-lg hover:scale-[1.02]"
+              className="h-12 w-full bg-primary text-base font-semibold text-primary-foreground transition-all duration-200 hover:scale-[1.02] hover:opacity-90 hover:shadow-lg"
             >
               {isSubmitting ? (
                 <div className="flex items-center justify-center gap-2">
-                  <Spinner className="w-4 h-4" />
+                  <Spinner className="h-4 w-4" />
                   Entrando...
                 </div>
               ) : (
-                "Entrar"
+                'Entrar'
               )}
             </Button>
           </form>
 
-          <div className="mt-8 w-full text-center text-sm text-muted-foreground space-y-2">
+          <div className="mt-8 w-full space-y-2 text-center text-sm text-muted-foreground">
             <p>
-              Ainda não tem conta?{" "}
+              Ainda não tem conta?{' '}
               <Link
                 to="/register"
-                className="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline transition-colors"
+                className="font-semibold text-primary transition-colors hover:underline"
               >
                 Crie agora mesmo
               </Link>
@@ -207,4 +212,3 @@ function Login() {
 }
 
 export default Login;
-

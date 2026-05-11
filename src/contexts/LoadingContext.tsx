@@ -1,4 +1,4 @@
-import { type ReactNode, createContext, useContext } from 'react';
+import { type ReactNode, createContext, useContext, useEffect, useRef, useState } from 'react';
 import { useApp } from '@/contexts/AppContext';
 
 interface LoadingContextValue {
@@ -9,7 +9,15 @@ const LoadingContext = createContext<LoadingContextValue | null>(null);
 
 export function LoadingProvider({ children }: { children: ReactNode }) {
   const { sessionChecked } = useApp();
-  const appReady = sessionChecked;
+  const [appReady, setAppReady] = useState(false);
+  const latchedRef = useRef(false);
+
+  useEffect(() => {
+    if (sessionChecked && !latchedRef.current) {
+      latchedRef.current = true;
+      setAppReady(true);
+    }
+  }, [sessionChecked]);
 
   return (
     <LoadingContext.Provider value={{ appReady }}>

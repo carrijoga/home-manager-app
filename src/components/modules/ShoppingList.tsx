@@ -59,7 +59,6 @@ import { useApp } from '@/contexts/AppContext';
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
 import { useDebounce } from '@/hooks/useDebounce';
 import { cn } from '@/lib/utils';
-import { ShoppingListSkeleton } from '@/components/skeletons';
 import { Spinner } from '@/components/ui/spinner';
 import { UNIT_TYPE_LABELS } from '@/schemas/enums';
 import type { AppShoppingItem, AppShoppingList } from '@/types';
@@ -2250,8 +2249,6 @@ const ShoppingList = memo(() => {
             Adicionar item
           </Button>
         </div>
-      ) : isSearchPending ? (
-        <ShoppingListSkeleton items={4} />
       ) : (
         <div className="space-y-6">
           {groupedItemEntries.map(([category, items]) => (

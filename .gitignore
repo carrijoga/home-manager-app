@@ -47,9 +47,7 @@ CLAUDE.md
 .claude/
 .playwright-mcp
 .superpowers
-docs/
-
-.github/
+/docs/superpowers
 .planning
 
 v1.json

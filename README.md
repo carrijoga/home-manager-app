@@ -26,7 +26,7 @@ O Ninho é uma PWA completa, oferecendo:
 - Login com e-mail/senha e Google OAuth
 - Registro de nova conta com geração de nome de usuário
 - Toggle de visibilidade de senha
-- Redirecionamento via `/auth/google/callback` para concluir o fluxo OAuth e validar a autenticação retornada pelo provedor
+- Redirecionamento via `/auth/google/callback`, processado pela página `GoogleCallback`, para concluir o fluxo OAuth e validar a autenticação retornada pelo provedor
 - Rotas protegidas com `RequireAuth`
 
 ### 📊 Dashboard
@@ -195,7 +195,7 @@ Tema claro/escuro gerenciado em `ThemeContext.jsx`. Preferência salva em `local
 
 ## 📚 Documentação
 
-- A documentação versionada do projeto está concentrada neste README e em `docs/api.json`.
+- A documentação versionada do projeto está concentrada neste README e no arquivo `docs/api.json`, que permanece como referência técnica em `docs/`.
 - [docs/api.json](./docs/api.json) — Spec OpenAPI do backend (~70KB, fonte da verdade)
 
 ## 🤝 Contribuindo

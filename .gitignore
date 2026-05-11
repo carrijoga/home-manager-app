@@ -26,7 +26,7 @@ dist-ssr
 *.sw?
 
 # Environment variables
-# Local env files are ignored; create them in your workspace as needed.
+# Local env files are ignored. Create them in your workspace as needed.
 .env
 .env.local
 .env.development.local

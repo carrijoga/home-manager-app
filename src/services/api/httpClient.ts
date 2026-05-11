@@ -48,24 +48,37 @@ async function refreshOnce(): Promise<void> {
 
 interface RequestOptions {
   method?: string;
-  body?: string;
+  body?: BodyInit;
   headers?: Record<string, string>;
   /** Desabilita retry automático em 401 (ex: endpoints de auth) */
   skipRefresh?: boolean;
 }
 
+function buildHeaders(body: BodyInit | undefined, headers: Record<string, string>): Record<string, string> {
+  const baseHeaders: Record<string, string> = {
+    Accept: 'application/json',
+    ...headers,
+  };
+
+  if (typeof body === 'string') {
+    return {
+      'Content-Type': 'application/json',
+      ...baseHeaders,
+    };
+  }
+
+  return baseHeaders;
+}
+
 async function baseRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { method = 'GET', body, headers = {}, skipRefresh = false } = options;
+  const requestHeaders = buildHeaders(body, headers);
 
   const response = await fetch(`${BASE_URL}${path}`, {
     method,
     body,
     credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-      ...headers,
-    },
+    headers: requestHeaders,
     signal: AbortSignal.timeout(TIMEOUT_MS),
   });
 
@@ -82,11 +95,7 @@ async function baseRequest<T>(path: string, options: RequestOptions = {}): Promi
       method,
       body,
       credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        ...headers,
-      },
+      headers: requestHeaders,
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
 
@@ -144,6 +153,15 @@ export const httpClient = {
     return baseRequest<T>(path, {
       method: 'POST',
       body: body !== undefined ? JSON.stringify(body) : undefined,
+      headers: { ...buildNestHeaders(path, options?.nestId), ...options?.headers },
+      skipRefresh: options?.skipRefresh,
+    });
+  },
+
+  postForm<T>(path: string, body: FormData, options?: Pick<RequestOptions, 'skipRefresh' | 'headers'> & { nestId?: string }): Promise<T> {
+    return baseRequest<T>(path, {
+      method: 'POST',
+      body,
       headers: { ...buildNestHeaders(path, options?.nestId), ...options?.headers },
       skipRefresh: options?.skipRefresh,
     });

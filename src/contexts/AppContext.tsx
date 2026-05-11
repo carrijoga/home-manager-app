@@ -78,6 +78,7 @@ interface AppContextValue {
   deleteShoppingItem: (id: string, listId: string, quantity: number, unitType: number, estimatedPrice?: number | null, isPurchased?: boolean, price?: number | null) => Promise<void>;
   markItemAsPurchased: (id: string, listId: string, quantity: number, unitType: number, price: number, purchasedAt: string) => Promise<void>;
   unmarkItemAsPurchased: (id: string, listId: string, quantity: number, unitType: number, price: number) => Promise<void>;
+  uploadShoppingItems: (listId: string, file: File) => Promise<AppShoppingList>;
   createShoppingCategory: (name: string, description?: string) => Promise<AppShoppingCategory>;
   deleteShoppingCategory: (id: string) => Promise<void>;
 
@@ -116,6 +117,39 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // Helper: unit types where the price entered is per-unit (needs × quantity for totals).
   // UN=0, Dúzia=5, Caixa=6, Pacote=7. Weight/volume types (KG=1,G=2,L=3,mL=4) are totals.
   const isPricePerUnit = (unitType: number): boolean => [0, 5, 6, 7].includes(unitType);
+
+  const buildShoppingSummary = (detail: AppShoppingList): AppShoppingListSummary => {
+    const totals = detail.items.reduce(
+      (acc, item) => {
+        const mult = isPricePerUnit(item.unitType) ? item.quantity : 1;
+        acc.totalItems += 1;
+        if (item.isPurchased) acc.purchasedItems += 1;
+        acc.totalEstimated += (item.estimatedPrice ?? 0) * mult;
+        if (item.isPurchased) acc.totalSpent += (item.price ?? 0) * mult;
+        return acc;
+      },
+      { totalItems: 0, purchasedItems: 0, totalEstimated: 0, totalSpent: 0 },
+    );
+
+    return {
+      shoppingListId: detail.shoppingListId,
+      name: detail.name,
+      monthYear: detail.monthYear,
+      notes: detail.notes ?? null,
+      totalItems: totals.totalItems,
+      purchasedItems: totals.purchasedItems,
+      totalEstimated: totals.totalEstimated,
+      totalSpent: totals.totalSpent,
+    };
+  };
+
+  const dedupeShoppingCategories = (cats: AppShoppingCategory[]): AppShoppingCategory[] => {
+    const map = new Map<string, AppShoppingCategory>();
+    cats.forEach((cat) => {
+      if (!map.has(cat.shoppingCategoryId)) map.set(cat.shoppingCategoryId, cat);
+    });
+    return Array.from(map.values());
+  };
 
   // Helper to derive default nestId from an AppUser
   const deriveDefaultNestId = (appUser: AppUser): string | null => {
@@ -364,9 +398,25 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     );
   };
 
+  const uploadShoppingItems = async (listId: string, file: File): Promise<AppShoppingList> => {
+    await shoppingService.uploadShoppingItems(listId, file, activeNestId ?? undefined);
+    const [detail, categories] = await Promise.all([
+      shoppingService.getShoppingListById(listId, activeNestId ?? undefined),
+      shoppingService.getShoppingCategories(activeNestId ?? undefined),
+    ]);
+    setShoppingCategories(dedupeShoppingCategories(categories));
+    const summary = buildShoppingSummary(detail);
+    setShoppingLists(prev => {
+      const hasList = prev.some(l => l.shoppingListId === listId);
+      if (!hasList) return [summary, ...prev];
+      return prev.map(l => l.shoppingListId === listId ? summary : l);
+    });
+    return detail;
+  };
+
   const createShoppingCategory = async (name: string, description?: string): Promise<AppShoppingCategory> => {
     const cat = await shoppingService.createShoppingCategory({ name, description }, activeNestId ?? undefined);
-    setShoppingCategories(prev => [...prev, cat]);
+    setShoppingCategories(prev => dedupeShoppingCategories([...prev, cat]));
     return cat;
   };
 
@@ -494,7 +544,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         if (shoppingListsResult.status === 'fulfilled') setShoppingLists(shoppingListsResult.value);
         else console.error('Erro ao carregar listas de compras:', shoppingListsResult.reason);
 
-        if (shoppingCatsResult.status === 'fulfilled') setShoppingCategories(shoppingCatsResult.value);
+        if (shoppingCatsResult.status === 'fulfilled') setShoppingCategories(dedupeShoppingCategories(shoppingCatsResult.value));
         else console.error('Erro ao carregar categorias de compras:', shoppingCatsResult.reason);
 
         if (expensesResult.status === 'fulfilled') setExpenses(
@@ -563,6 +613,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     deleteShoppingItem,
     markItemAsPurchased,
     unmarkItemAsPurchased,
+    uploadShoppingItems,
     createShoppingCategory,
     deleteShoppingCategory,
     addExpense,

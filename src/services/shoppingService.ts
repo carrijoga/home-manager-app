@@ -290,6 +290,20 @@ export async function addShoppingItem(
   return newItem;
 }
 
+export async function uploadShoppingItems(
+  listId: string,
+  file: File,
+  nestId?: string,
+): Promise<void> {
+  if (DATA_MODE === 'mock') {
+    return new Promise((resolve) => setTimeout(resolve, 100));
+  }
+
+  const formData = new FormData();
+  formData.append('file', file);
+  await httpClient.postForm<void>(ENDPOINTS.shoppingItems.upload(listId), formData, { nestId });
+}
+
 export async function updateShoppingItem(
   id: string,
   data: UpdateShoppingItemRequest,

@@ -5,7 +5,7 @@ export function SplashScreen() {
 
   return (
     <motion.div
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-br from-[#1a1a2e] to-[#16213e]"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-br from-[#131313] to-[#292929]"
       initial={{ opacity: 1 }}
       exit={{ opacity: 0, transition: { duration: reduced ? 0.01 : 0.5, ease: 'easeInOut' } }}
     >
@@ -20,13 +20,13 @@ export function SplashScreen() {
           className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-amber-600"
           style={{ boxShadow: '0 8px 32px rgba(217,119,6,0.45)' }}
         >
-          <span className="text-4xl" role="img" aria-label="Ninho">🏠</span>
+          <span className="text-4xl" role="img" aria-label="Ninho">
+            🏠
+          </span>
         </div>
 
         {/* Wordmark */}
-        <h1 className="text-3xl font-extrabold tracking-widest text-white">
-          Ninho
-        </h1>
+        <h1 className="text-3xl font-extrabold tracking-widest text-white">Ninho</h1>
 
         {/* Tagline */}
         <p className="text-xs font-medium uppercase tracking-[0.2em] text-white/40">

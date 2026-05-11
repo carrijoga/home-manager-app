@@ -80,6 +80,7 @@ export const ENDPOINTS = {
     delete: (id: string) => `/api/shopping-item/${id}`,
     markAsPurchased: (id: string) => `/api/shopping-item/${id}/purchase`,
     unmarkAsPurchased: (id: string) => `/api/shopping-item/${id}/unpurchase`,
+    upload: (listId: string) => `/api/shopping-item/${listId}/upload`,
   },
 
   // Categorias de compra

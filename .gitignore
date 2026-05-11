@@ -26,8 +26,7 @@ dist-ssr
 *.sw?
 
 # Environment variables
-# Note: .env.example, .env.development, .env.staging, and .env.production
-# are versioned as templates/references. Use them to create your local .env
+# Local env files are ignored; create them in your workspace as needed.
 .env
 .env.local
 .env.development.local

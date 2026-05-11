@@ -185,8 +185,6 @@ VITE_ENVIRONMENT=development # development | staging | production
 VITE_API_URL=http://localhost:5026
 ```
 
-Consulte [docs/ENVIRONMENTS.md](./docs/ENVIRONMENTS.md) para guia completo de ambientes.
-
 ## 📘 TypeScript
 
 Migração híbrida em andamento (`allowJs: true`, `checkJs: false`). Services, schemas, types, contexts e pages estão em `.ts`/`.tsx`. Componentes em `src/components/modules/` ainda são `.jsx` — migrar gradualmente ao editar, nunca reescrever por completo.
@@ -197,8 +195,6 @@ Tema claro/escuro gerenciado em `ThemeContext.jsx`. Preferência salva em `local
 
 ## 📚 Documentação
 
-- [docs/ENVIRONMENTS.md](./docs/ENVIRONMENTS.md) — Configuração de ambientes
-- [docs/DEPLOY.md](./docs/DEPLOY.md) — Deploy (Vercel, Netlify, Docker)
 - [docs/api.json](./docs/api.json) — Spec OpenAPI do backend (~70KB, fonte da verdade)
 
 ## 🤝 Contribuindo

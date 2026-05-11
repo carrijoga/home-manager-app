@@ -1,4 +1,4 @@
-import { createContext, useContext } from 'react';
+import { type ReactNode, createContext, useContext } from 'react';
 import { useApp } from '@/contexts/AppContext';
 
 interface LoadingContextValue {
@@ -7,9 +7,9 @@ interface LoadingContextValue {
 
 const LoadingContext = createContext<LoadingContextValue | null>(null);
 
-export function LoadingProvider({ children }: { children: React.ReactNode }) {
-  const { sessionChecked, loading } = useApp();
-  const appReady = sessionChecked && !loading;
+export function LoadingProvider({ children }: { children: ReactNode }) {
+  const { sessionChecked } = useApp();
+  const appReady = sessionChecked;
 
   return (
     <LoadingContext.Provider value={{ appReady }}>

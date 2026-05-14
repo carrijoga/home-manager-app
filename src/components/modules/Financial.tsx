@@ -100,6 +100,7 @@ const Financial = memo(() => {
 
   return (
     <div className="space-y-6">
+      {/* Card.jsx has no TS types — title prop inferred as null from default */}
       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
       <Card title={"Financeiro da Casa" as any}>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">

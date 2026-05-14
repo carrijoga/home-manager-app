@@ -16,16 +16,19 @@ import type {
   UpdateShoppingListRequest,
 } from '@/schemas/shopping';
 import {
+  CreateShoppingItemRequestSchema,
+  MarkAsPurchasedRequestSchema,
   ShoppingCategoryResponseSchema,
   ShoppingListResponseSchema,
   ShoppingListSummaryResponseSchema,
+  UpdateShoppingItemRequestSchema,
 } from '@/schemas/shopping';
 import type { AppShoppingCategory, AppShoppingItem, AppShoppingList, AppShoppingListSummary } from '@/types';
 
 import { mockShoppingCategories, mockShoppingListDetails, mockShoppingLists } from '../mocks/data';
 import { DATA_MODE } from './api/config';
 import { ENDPOINTS } from './api/endpoints';
-import { httpClient } from './api/httpClient';
+import { ApiError, httpClient } from './api/httpClient';
 
 // ── Helper: safeParse ─────────────────────────────────────────────────────────
 
@@ -40,6 +43,19 @@ function safeParse<T>(
       console.warn(`[shoppingService] ${name}: schema inesperado`, result.error?.flatten());
     }
     return raw as T;
+  }
+  return result.data!;
+}
+
+// ── Helper: validateRequest ───────────────────────────────────────────────────
+
+function validateRequest<T>(
+  schema: { safeParse: (v: unknown) => { success: boolean; data?: T; error?: { issues: Array<{ message: string }> } } },
+  data: unknown,
+): T {
+  const result = schema.safeParse(data);
+  if (!result.success) {
+    throw new ApiError(result.error!.issues[0].message, 422);
   }
   return result.data!;
 }
@@ -284,6 +300,7 @@ export async function addShoppingItem(
     return new Promise((resolve) => setTimeout(() => resolve(newItem), 100));
   }
 
+  validateRequest(CreateShoppingItemRequestSchema, data);
   const newId = await httpClient.post<string>(ENDPOINTS.shoppingItems.create, data, { nestId });
   const listDetail = await getShoppingListById(data.shoppingListId, nestId);
   const newItem = listDetail.items.find((i) => i.shoppingItemId === newId);
@@ -324,6 +341,7 @@ export async function updateShoppingItem(
     return new Promise((resolve) => setTimeout(resolve, 100));
   }
 
+  validateRequest(UpdateShoppingItemRequestSchema, data);
   await httpClient.put<void>(ENDPOINTS.shoppingItems.update(id), data, nestId);
 }
 
@@ -364,6 +382,7 @@ export async function markItemAsPurchased(
     return new Promise((resolve) => setTimeout(resolve, 100));
   }
 
+  validateRequest(MarkAsPurchasedRequestSchema, data);
   await httpClient.patch<void>(ENDPOINTS.shoppingItems.markAsPurchased(id), data, nestId);
 }
 

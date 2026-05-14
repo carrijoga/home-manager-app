@@ -1,14 +1,14 @@
 import { z } from 'zod';
 
 import { ApiPaymentMethodSchema, FinancialSourceTypeSchema, ModulesSchema,TransactionTypeSchema } from './enums';
-import { DateSchema, DateTimeSchema, MoneySchema, PaginatedResponseSchema,UuidSchema } from './shared';
+import { DateSchema, DateTimeSchema, MoneyRequestSchema, MoneySchema, PaginatedResponseSchema, UuidSchema } from './shared';
 
 // ── Requests ──────────────────────────────────────────────────────────────────
 
 export const CreateTransactionRequestSchema = z.object({
   type: TransactionTypeSchema,
   description: z.string().min(1, 'Descrição é obrigatória'),
-  amount: MoneySchema,
+  amount: MoneyRequestSchema,
   transactionDate: DateTimeSchema,
   dueDate: DateTimeSchema,
   categoryId: UuidSchema,
@@ -20,9 +20,9 @@ export type CreateTransactionRequest = z.infer<typeof CreateTransactionRequestSc
 
 export const AddPaymentRequestSchema = z.object({
   transactionId: UuidSchema,
-  amount: MoneySchema,
-  discount: MoneySchema.optional(),
-  interest: MoneySchema.optional(),
+  amount: MoneyRequestSchema,
+  discount: MoneyRequestSchema.optional(),
+  interest: MoneyRequestSchema.optional(),
   method: ApiPaymentMethodSchema,
   paymentDate: DateTimeSchema,
   paidByUserId: UuidSchema,

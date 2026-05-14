@@ -1,14 +1,14 @@
 import { z } from 'zod';
 
 import { AccountTypeSchema } from './enums';
-import { MoneySchema,UuidSchema } from './shared';
+import { MoneyRequestSchema, MoneySchema, UuidSchema } from './shared';
 
 // ── Requests ──────────────────────────────────────────────────────────────────
 
 export const CreateBankAccountRequestSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
   type: AccountTypeSchema,
-  balance: MoneySchema,
+  balance: MoneyRequestSchema,
   color: z.string().min(1, 'Cor é obrigatória'),
 });
 export type CreateBankAccountRequest = z.infer<typeof CreateBankAccountRequestSchema>;

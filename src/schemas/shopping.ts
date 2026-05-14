@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { UnitTypeSchema } from './enums';
-import { DateTimeSchema, MoneySchema,UuidSchema } from './shared';
+import { DateTimeSchema, MoneyRequestSchema, MoneySchema, UuidSchema } from './shared';
 
 // ── Requests — ShoppingCategory ───────────────────────────────────────────────
 
@@ -35,7 +35,7 @@ export const CreateShoppingItemRequestSchema = z.object({
   quantity: MoneySchema,
   unitType: UnitTypeSchema,
   shoppingCategoryId: UuidSchema.nullable().optional(),
-  estimatedPrice: MoneySchema.nullable().optional(),
+  estimatedPrice: MoneyRequestSchema.nullable().optional(),
   notes: z.string().nullable().optional(),
 });
 export type CreateShoppingItemRequest = z.infer<typeof CreateShoppingItemRequestSchema>;
@@ -45,13 +45,13 @@ export const UpdateShoppingItemRequestSchema = z.object({
   quantity: MoneySchema,
   unitType: UnitTypeSchema,
   shoppingCategoryId: UuidSchema.nullable().optional(),
-  estimatedPrice: MoneySchema.nullable().optional(),
+  estimatedPrice: MoneyRequestSchema.nullable().optional(),
   notes: z.string().nullable().optional(),
 });
 export type UpdateShoppingItemRequest = z.infer<typeof UpdateShoppingItemRequestSchema>;
 
 export const MarkAsPurchasedRequestSchema = z.object({
-  price: MoneySchema,
+  price: MoneyRequestSchema,
   purchasedAt: DateTimeSchema,
 });
 export type MarkAsPurchasedRequest = z.infer<typeof MarkAsPurchasedRequestSchema>;

@@ -388,13 +388,10 @@ function ItemFormDialog({
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="item-price">Preço estimado (R$)</Label>
-            <Input
+            <MoneyInput
               id="item-price"
-              type="text"
-              inputMode="numeric"
-              placeholder="0,00"
-              value={maskBRL(data.estimatedPrice.replace(/\D/g, ''))}
-              onChange={(e) => setData((d) => ({ ...d, estimatedPrice: parseBRLMask(maskBRL(e.target.value.replace(/\D/g, ''))) }))}
+              value={data.estimatedPrice}
+              onChange={(v) => setData((d) => ({ ...d, estimatedPrice: v }))}
             />
           </div>
           <div className="space-y-1.5">
@@ -473,13 +470,10 @@ function MarkAsPurchasedDialog({ open, onClose, item, onSubmit }: MarkAsPurchase
             <Label htmlFor="purchase-price">
               Preço pago (R$) <span className="text-xs text-muted-foreground">(opcional)</span>
             </Label>
-            <Input
+            <MoneyInput
               id="purchase-price"
-              type="text"
-              inputMode="numeric"
-              placeholder="0,00"
-              value={maskBRL(data.price.replace(/\D/g, ''))}
-              onChange={(e) => setData((d) => ({ ...d, price: parseBRLMask(maskBRL(e.target.value.replace(/\D/g, ''))) }))}
+              value={data.price}
+              onChange={(v) => setData((d) => ({ ...d, price: v }))}
             />
           </div>
           <div className="space-y-1.5">
@@ -801,13 +795,10 @@ function BulkEditDialog({
 
           <div className="space-y-1.5">
             <Label htmlFor="bulk-price">Preço estimado (R$)</Label>
-            <Input
+            <MoneyInput
               id="bulk-price"
-              type="text"
-              inputMode="numeric"
-              placeholder="0,00"
-              value={maskBRL(estimatedPrice.replace(/\D/g, ''))}
-              onChange={(e) => setEstimatedPrice(parseBRLMask(maskBRL(e.target.value.replace(/\D/g, ''))))}
+              value={estimatedPrice}
+              onChange={(v) => setEstimatedPrice(v)}
             />
           </div>
 
@@ -2347,14 +2338,9 @@ const ShoppingList = memo(() => {
                                       <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
                                         Estimado (R$)
                                       </span>
-                                      <Input
-                                        type="text"
-                                        inputMode="numeric"
-                                        placeholder="0,00"
-                                        value={maskBRL(inlineForm.estimated.replace(/\D/g, ''))}
-                                        onChange={(e) =>
-                                          setInlineForm((f) => ({ ...f, estimated: parseBRLMask(maskBRL(e.target.value.replace(/\D/g, ''))) }))
-                                        }
+                                      <MoneyInput
+                                        value={inlineForm.estimated}
+                                        onChange={(v) => setInlineForm((f) => ({ ...f, estimated: v }))}
                                         className="h-9 w-28 rounded-xl bg-background text-sm"
                                       />
                                     </div>
@@ -2364,14 +2350,9 @@ const ShoppingList = memo(() => {
                                       <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
                                         Pago (R$)
                                       </span>
-                                      <Input
-                                        type="text"
-                                        inputMode="numeric"
-                                        placeholder="0,00"
-                                        value={maskBRL(inlineForm.paid.replace(/\D/g, ''))}
-                                        onChange={(e) =>
-                                          setInlineForm((f) => ({ ...f, paid: parseBRLMask(maskBRL(e.target.value.replace(/\D/g, ''))) }))
-                                        }
+                                      <MoneyInput
+                                        value={inlineForm.paid}
+                                        onChange={(v) => setInlineForm((f) => ({ ...f, paid: v }))}
                                         className="h-9 w-28 rounded-xl bg-background text-sm"
                                       />
                                     </div>

@@ -1173,7 +1173,7 @@ const ShoppingList = memo(() => {
         parseFloat(data.quantity) || 1,
         parseInt(data.unitType) || 0,
         data.categoryId || null,
-        data.estimatedPrice ? parseFloat(data.estimatedPrice) : null,
+        data.estimatedPrice ?? null,
         data.notes || null
       );
       setDetailData((prev) => (prev ? { ...prev, items: [...prev.items, newItem] } : prev));
@@ -1190,8 +1190,7 @@ const ShoppingList = memo(() => {
       quantity: String(selectedItem.quantity),
       unitType: String(selectedItem.unitType),
       categoryId: selectedItem.shoppingCategoryId ?? '',
-      estimatedPrice:
-        selectedItem.estimatedPrice != null ? String(selectedItem.estimatedPrice) : '',
+      estimatedPrice: selectedItem.estimatedPrice ?? null,
       notes: selectedItem.notes ?? '',
     };
   }, [selectedItem]);
@@ -1206,7 +1205,7 @@ const ShoppingList = memo(() => {
         parseFloat(data.quantity) || 1,
         parseInt(data.unitType) || 0,
         data.categoryId || null,
-        data.estimatedPrice ? parseFloat(data.estimatedPrice) : null,
+        data.estimatedPrice ?? null,
         data.notes || null
       );
       const catName =
@@ -1224,7 +1223,7 @@ const ShoppingList = memo(() => {
                   unitType: parseInt(data.unitType) || 0,
                   shoppingCategoryId: data.categoryId || null,
                   categoryName: catName,
-                  estimatedPrice: data.estimatedPrice ? parseFloat(data.estimatedPrice) : null,
+                  estimatedPrice: data.estimatedPrice ?? null,
                   notes: data.notes || null,
                 }
               : i
@@ -1272,7 +1271,7 @@ const ShoppingList = memo(() => {
   const handleMarkAsPurchased = useCallback(
     async (data: PurchaseFormData) => {
       if (!selectedItem) return;
-      const price = parseFloat(data.price) || 0;
+      const price = data.price ?? 0;
       const purchasedAt = `${data.purchasedAt}T12:00:00Z`;
       setPendingId(selectedItem.shoppingItemId);
       try {

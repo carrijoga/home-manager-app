@@ -3,7 +3,19 @@ import { memo, useMemo, useState } from 'react';
 
 import { useApp } from '@/contexts/AppContext';
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
-// Categorias de despesa (mock-only — categorias reais vêm da API via categoryService)
+
+import Button from '../common/Button';
+import Card from '../common/Card';
+import MoneyInput from '../common/MoneyInput';
+
+interface Expense {
+  id: string;
+  description: string;
+  value: number;
+  date: string;
+  category: string;
+}
+
 const ExpenseCategories = {
   FIXED: 'Fixo',
   MAINTENANCE: 'Manutenção',
@@ -15,44 +27,41 @@ const ExpenseCategories = {
   EDUCATION: 'Educação',
   ENTERTAINMENT: 'Entretenimento',
   OTHER: 'Outro',
-};
-import Button from '../common/Button';
-import Card from '../common/Card';
-import Input from '../common/Input';
+} as const;
 
-/**
- * Módulo Financeiro
- */
+interface ExpenseFormData {
+  description: string;
+  value: number | null;
+  date: string;
+  category: string;
+}
+
 const Financial = memo(() => {
-  // Obtém estados e ações do contexto global
-  const { expenses, addExpense, deleteExpense } = useApp();
+  const { expenses: rawExpenses, addExpense, deleteExpense } = useApp();
+  const expenses = rawExpenses as Expense[];
   const { showSuccess, showError, showLoading, dismissToast } = useToastNotifications();
 
-  const [newExpense, setNewExpense] = useState({
+  const [newExpense, setNewExpense] = useState<ExpenseFormData>({
     description: '',
-    value: '',
+    value: null,
     date: '',
-    category: ''
+    category: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleAddExpense = async () => {
-    if (newExpense.description.trim() && newExpense.value && !isSubmitting) {
+    if (newExpense.description.trim() && newExpense.value !== null && newExpense.value > 0 && !isSubmitting) {
       setIsSubmitting(true);
-      
-      // Toast persistente para operação longa
       const loadingToast = showLoading('Processando gasto...');
-      
       try {
         await addExpense({
           description: newExpense.description,
-          value: parseFloat(newExpense.value),
+          value: newExpense.value,
           date: newExpense.date || new Date().toISOString().split('T')[0],
-          category: newExpense.category || 'Geral'
+          category: newExpense.category || 'Geral',
         });
-        
         dismissToast(loadingToast);
-        setNewExpense({ description: '', value: '', date: '', category: '' });
+        setNewExpense({ description: '', value: null, date: '', category: '' });
         showSuccess('Gasto adicionado com sucesso!');
       } catch (error) {
         console.error('Erro ao adicionar gasto:', error);
@@ -64,7 +73,7 @@ const Financial = memo(() => {
     }
   };
 
-  const handleDeleteExpense = async (expenseId) => {
+  const handleDeleteExpense = async (expenseId: string) => {
     try {
       await deleteExpense(expenseId);
       showSuccess('Gasto excluído com sucesso!');
@@ -74,9 +83,8 @@ const Financial = memo(() => {
     }
   };
 
-  // Calcula estatísticas com useMemo para otimização
   const totalByCategory = useMemo(() => {
-    return expenses.reduce((acc, exp) => {
+    return expenses.reduce<Record<string, number>>((acc, exp) => {
       acc[exp.category] = (acc[exp.category] || 0) + exp.value;
       return acc;
     }, {});
@@ -87,13 +95,13 @@ const Financial = memo(() => {
   }, [expenses]);
 
   const sortedExpenses = useMemo(() => {
-    return [...expenses].sort((a, b) => new Date(b.date) - new Date(a.date));
+    return [...expenses].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [expenses]);
 
   return (
     <div className="space-y-6">
-      <Card title="Financeiro da Casa">
-        {/* Cards de Resumo */}
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+      <Card title={"Financeiro da Casa" as any}>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="bg-gradient-to-br from-sage-400 to-sage-500 text-white rounded-xl p-4">
             <p className="text-sm opacity-90">Total de Gastos</p>
@@ -109,22 +117,22 @@ const Financial = memo(() => {
           </div>
         </div>
 
-        {/* Formulário de Novo Gasto */}
         <div className="mb-6 space-y-3 p-4 bg-linen-100 dark:bg-muted rounded-xl border border-linen-300 dark:border-border">
-          <Input
+          <input
+            className="w-full p-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring transition-colors duration-300 bg-background text-foreground placeholder-muted-foreground"
             placeholder="Descrição do gasto..."
             value={newExpense.description}
             onChange={(e) => setNewExpense({ ...newExpense, description: e.target.value })}
           />
           <div className="grid grid-cols-3 gap-3">
-            <Input
-              type="number"
-              placeholder="Valor (R$)..."
+            <MoneyInput
               value={newExpense.value}
-              onChange={(e) => setNewExpense({ ...newExpense, value: e.target.value })}
+              onChange={(v) => setNewExpense({ ...newExpense, value: v })}
+              placeholder="Valor (R$)..."
             />
-            <Input
+            <input
               type="date"
+              className="p-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring bg-background text-foreground"
               value={newExpense.date}
               onChange={(e) => setNewExpense({ ...newExpense, date: e.target.value })}
             />
@@ -134,7 +142,7 @@ const Financial = memo(() => {
               className="p-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-terracotta-500 dark:focus:ring-terracotta-400 bg-background text-foreground"
             >
               <option value="">Categoria...</option>
-              {Object.values(ExpenseCategories).map(cat => (
+              {Object.values(ExpenseCategories).map((cat) => (
                 <option key={cat} value={cat}>{cat}</option>
               ))}
             </select>
@@ -144,23 +152,21 @@ const Financial = memo(() => {
           </Button>
         </div>
 
-        {/* Gastos por Categoria */}
         <div className="mb-6">
           <h3 className="font-semibold text-foreground mb-3">Gastos por Categoria</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {Object.entries(totalByCategory).map(([category, total]) => (
               <div key={category} className="bg-linen-100 dark:bg-muted p-3 rounded-lg border-l-4 border-honey-400 dark:border-honey-500">
                 <p className="text-sm text-muted-foreground">{category}</p>
-                <p className="text-xl font-bold text-foreground">R$ {total.toFixed(2)}</p>
+                <p className="text-xl font-bold text-foreground">R$ {(total as number).toFixed(2)}</p>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Histórico de Gastos */}
         <div className="space-y-2">
           <h3 className="font-semibold text-foreground mb-3">Histórico de Gastos</h3>
-          {sortedExpenses.map(expense => (
+          {sortedExpenses.map((expense) => (
             <div key={expense.id} className="flex items-center justify-between p-4 bg-card rounded-xl border border-border hover:bg-linen-100 dark:hover:bg-muted transition-colors duration-[length:var(--dur-base)]">
               <div className="flex-1">
                 <p className="text-foreground font-medium">{expense.description}</p>

@@ -1,6 +1,3 @@
-import { useApp } from '@/contexts/AppContext';
-import { useToastNotifications } from '@/hooks/use-toast-notifications';
-import * as taskService from '@/services/taskService';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertCircle,
@@ -19,6 +16,11 @@ import {
   Trash2,
 } from 'lucide-react';
 import { forwardRef, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+import { useApp } from '@/contexts/AppContext';
+import { useToastNotifications } from '@/hooks/use-toast-notifications';
+import * as taskService from '@/services/taskService';
+
 import Card from '../common/Card';
 import Input from '../common/Input';
 import {

@@ -5,11 +5,12 @@
  * Suporta múltiplos tipos (sucesso, erro, aviso, info) e posições.
  */
 
-import { motion, AnimatePresence } from "framer-motion";
-import { ReactNode, createContext, useContext, useState, useCallback } from "react";
-import { toastVariants, toastFromRightVariants } from "@/lib/animations";
+import { AnimatePresence,motion } from "framer-motion";
+import { AlertCircle, CheckCircle, Info, X,XCircle } from "lucide-react";
+import { createContext, ReactNode, useCallback,useContext, useState } from "react";
+
+import { toastFromRightVariants,toastVariants } from "@/lib/animations";
 import { cn } from "@/lib/utils";
-import { CheckCircle, XCircle, AlertCircle, Info, X } from "lucide-react";
 
 // ============================================================================
 // TIPOS
@@ -64,6 +65,10 @@ export function ToastProvider({
 }: ToastProviderProps) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
+  const removeToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
+  }, []);
+
   const addToast = useCallback(
     (toast: Omit<Toast, "id">) => {
       const id = Math.random().toString(36).substring(2, 9);
@@ -89,12 +94,8 @@ export function ToastProvider({
         }, newToast.duration);
       }
     },
-    [maxToasts]
+    [maxToasts, removeToast]
   );
-
-  const removeToast = useCallback((id: string) => {
-    setToasts((prev) => prev.filter((toast) => toast.id !== id));
-  }, []);
 
   const clearToasts = useCallback(() => {
     setToasts([]);

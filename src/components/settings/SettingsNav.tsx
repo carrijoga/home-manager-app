@@ -1,4 +1,5 @@
 import { Database, Globe, Info, MapPin, Palette } from 'lucide-react';
+
 import { cn } from '@/lib/utils';
 
 export type SectionId = 'geral' | 'aparencia' | 'localizacao-clima' | 'dados-privacidade' | 'sobre';

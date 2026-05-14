@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { loginWithGoogle } from "@/services/authService";
 import { toast } from "sonner";
-import { Spinner } from "@/components/ui/spinner";
-import { Card } from "@/components/ui/card";
+
 import Logo from "@/components/common/Logo";
+import { Card } from "@/components/ui/card";
+import { Spinner } from "@/components/ui/spinner";
+import { loginWithGoogle } from "@/services/authService";
 
 export const GoogleCallback = () => {
     const navigate = useNavigate();

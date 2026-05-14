@@ -1,6 +1,7 @@
-import { useToastNotifications } from "@/hooks/use-toast-notifications";
 import { Volume2, VolumeX } from "lucide-react";
 import { useEffect, useState } from "react";
+
+import { useToastNotifications } from "@/hooks/use-toast-notifications";
 
 /**
  * Toggle para habilitar/desabilitar sons dos toasts

@@ -139,7 +139,7 @@ function Login() {
                 placeholder="ninho@ninho.com"
                 autoComplete="email"
                 {...register('usernameOrEmail')}
-                className="h-10 border-border bg-input text-foreground transition-all duration-200 focus:ring-2 focus:ring-ring"
+                className="focus:ring-shadow-sm h-10 border-border bg-input text-foreground transition-all duration-200 focus:border-terracotta-600 focus:ring-2 focus:ring-terracotta-600"
               />
               {errors.usernameOrEmail && (
                 <p className="text-xs text-destructive">{errors.usernameOrEmail.message}</p>

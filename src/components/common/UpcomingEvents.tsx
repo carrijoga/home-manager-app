@@ -1,6 +1,7 @@
-import { cn } from "@/lib/utils";
 import { Calendar } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+
+import { cn } from "@/lib/utils";
 
 export interface CalendarEvent {
   id: string;

@@ -1,4 +1,22 @@
-import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
+import { Check, Settings2 } from "lucide-react";
+import * as React from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+
+import { NestManagerSheet } from "@/components/modals/NestManagerSheet";
+import { SettingsModal } from "@/components/modals/SettingsModal";
+import { CalendarDaysIcon } from "@/components/ui/animated-icons/calendar-days";
+import { CartIcon } from "@/components/ui/animated-icons/cart";
+import { CheckIcon } from "@/components/ui/animated-icons/check";
+import { ChevronRightIcon, type ChevronRightIconHandle } from "@/components/ui/animated-icons/chevron-right";
+import { ChevronsUpDownIcon } from "@/components/ui/animated-icons/chevrons-up-down";
+import { CircleHelpIcon } from "@/components/ui/animated-icons/circle-help";
+import { DollarSignIcon, type DollarSignIconHandle } from "@/components/ui/animated-icons/dollar-sign";
+import { HomeIcon } from "@/components/ui/animated-icons/home";
+import { LayoutPanelTopIcon } from "@/components/ui/animated-icons/layout-panel-top";
+import { RefreshCWIcon } from "@/components/ui/animated-icons/refresh-cw";
+import { SendIcon } from "@/components/ui/animated-icons/send";
+import { TrendingUpIcon } from "@/components/ui/animated-icons/trending-up";
 import {
   Collapsible,
   CollapsibleContent,
@@ -29,25 +47,8 @@ import {
 } from "@/components/ui/sidebar";
 import { useApp } from "@/contexts/AppContext";
 import { getIconComponent } from "@/lib/nestIcons";
-import { NestManagerSheet } from "@/components/modals/NestManagerSheet";
-import { SettingsModal } from "@/components/modals/SettingsModal";
+import { cn } from "@/lib/utils";
 import type { AppUser } from "@/types";
-import { Check, Settings2 } from "lucide-react";
-import { HomeIcon } from "@/components/ui/animated-icons/home";
-import { CheckIcon } from "@/components/ui/animated-icons/check";
-import { CartIcon } from "@/components/ui/animated-icons/cart";
-import { DollarSignIcon, type DollarSignIconHandle } from "@/components/ui/animated-icons/dollar-sign";
-import { LayoutPanelTopIcon } from "@/components/ui/animated-icons/layout-panel-top";
-import { TrendingUpIcon } from "@/components/ui/animated-icons/trending-up";
-import { RefreshCWIcon } from "@/components/ui/animated-icons/refresh-cw";
-import { CalendarDaysIcon } from "@/components/ui/animated-icons/calendar-days";
-import { CircleHelpIcon } from "@/components/ui/animated-icons/circle-help";
-import { SendIcon } from "@/components/ui/animated-icons/send";
-import { ChevronRightIcon, type ChevronRightIconHandle } from "@/components/ui/animated-icons/chevron-right";
-import { ChevronsUpDownIcon } from "@/components/ui/animated-icons/chevrons-up-down";
-import { motion } from "framer-motion";
-import * as React from "react";
-import { useLocation, useNavigate } from "react-router-dom";
 
 interface AnimatedIconHandle {
   startAnimation: () => void;

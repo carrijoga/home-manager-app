@@ -1,7 +1,8 @@
-import { useApp } from '@/contexts/AppContext';
-import { useToastNotifications } from '@/hooks/use-toast-notifications';
 import { Trash2 } from 'lucide-react';
 import { memo, useMemo, useState } from 'react';
+
+import { useApp } from '@/contexts/AppContext';
+import { useToastNotifications } from '@/hooks/use-toast-notifications';
 // Categorias de despesa (mock-only — categorias reais vêm da API via categoryService)
 const ExpenseCategories = {
   FIXED: 'Fixo',

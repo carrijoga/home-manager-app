@@ -5,7 +5,7 @@
  * incluindo transições, variantes e utilitários.
  */
 
-import { Variants, Transition } from "framer-motion";
+import { Transition,Variants } from "framer-motion";
 
 // ============================================================================
 // TRANSIÇÕES GLOBAIS

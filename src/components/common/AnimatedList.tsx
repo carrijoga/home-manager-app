@@ -5,8 +5,9 @@
  * Os itens filhos aparecem em sequência com delay progressivo.
  */
 
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence,motion } from "framer-motion";
 import { ReactNode } from "react";
+
 import { listContainerVariants, listItemVariants } from "@/lib/animations";
 import { cn } from "@/lib/utils";
 

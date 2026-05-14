@@ -1,3 +1,15 @@
+import {
+  LogOut,
+  Monitor,
+  Moon,
+  Settings,
+  Sun,
+  User as UserIcon,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
+import React, { useEffect, useState } from "react";
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -13,17 +25,6 @@ import {
 import { useToastNotifications } from "@/hooks/use-toast-notifications";
 import { cn } from "@/lib/utils";
 import type { AppUser } from "@/types";
-import {
-  LogOut,
-  Monitor,
-  Moon,
-  Settings,
-  Sun,
-  User as UserIcon,
-  Volume2,
-  VolumeX,
-} from "lucide-react";
-import React, { useEffect, useState } from "react";
 
 interface ProfileMenuProps {
   user: AppUser;

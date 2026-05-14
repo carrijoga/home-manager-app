@@ -1,6 +1,7 @@
+import { AnimatePresence } from 'framer-motion';
 import { lazy, Suspense } from 'react';
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
-import { AnimatePresence } from 'framer-motion';
+
 import { AppSidebar } from './components/app-sidebar';
 import { FadeIn } from './components/common/FadeIn';
 import RequireAuth from './components/common/RequireAuth';
@@ -138,7 +139,7 @@ const App = () => {
  */
 const HomeLayout = () => {
   // Tema (necessário manter o ThemeContext ativo)
-  const { theme } = useTheme();
+  useTheme();
 
   // User do contexto
   const { user } = useApp();

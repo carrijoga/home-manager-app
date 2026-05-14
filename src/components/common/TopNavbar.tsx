@@ -1,16 +1,18 @@
+import { Search } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+import { ProfileModal } from "@/components/modals/ProfileModal";
+import { SettingsModal } from "@/components/modals/SettingsModal";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useApp } from "@/contexts/AppContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { cn } from "@/lib/utils";
 import * as authService from "@/services/authService";
-import { Search } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { SidebarTrigger } from "@/components/ui/sidebar";
-import NotificationsMenu from "./NotificationsMenu";
+
 import type { Notification } from "./NotificationsMenu";
+import NotificationsMenu from "./NotificationsMenu";
 import ProfileMenu from "./ProfileMenu";
-import { ProfileModal } from "@/components/modals/ProfileModal";
-import { SettingsModal } from "@/components/modals/SettingsModal";
 
 interface SearchBarProps {
   className?: string;

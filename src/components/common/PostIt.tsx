@@ -1,3 +1,7 @@
+import { motion, useReducedMotion } from "framer-motion";
+import { Edit2, Pin, PinOff, Save, X } from "lucide-react";
+import { forwardRef, useRef, useState } from "react";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -8,9 +12,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { motion, useReducedMotion } from "framer-motion";
-import { Edit2, Pin, PinOff, Save, X } from "lucide-react";
-import { forwardRef, useRef, useState } from "react";
 
 interface PostItProps {
   noticeId: string;
@@ -339,5 +340,5 @@ const PostIt = forwardRef<HTMLDivElement, PostItProps>(
 PostIt.displayName = "PostIt";
 
 export default PostIt;
-export { POST_IT_PALETTE, COLOR_KEYS };
+export { COLOR_KEYS,POST_IT_PALETTE };
 export type { PostItProps };

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+
 import { Button, Checkbox, Input, Label } from '@/components/ui';
 import { getWeatherPreferences, saveWeatherPreferences } from '@/lib/weatherPreferences';
 

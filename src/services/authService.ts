@@ -1,13 +1,14 @@
-import { LoginRequestSchema, RegisterRequestSchema } from '@/schemas/auth';
-import type { AuthTokenResponse, LoginRequest, RegisterRequest } from '@/schemas/auth';
-import { UserProfileResponseSchema } from '@/schemas/user';
-import type { UserProfileResponse } from '@/schemas/user';
-import { ApiError, httpClient } from './api/httpClient';
-import { ENDPOINTS } from './api/endpoints';
-import { DATA_MODE } from './api/config';
 import { mockNotifications } from '@/mocks/data';
+import type { AuthTokenResponse, LoginRequest, RegisterRequest } from '@/schemas/auth';
+import { LoginRequestSchema, RegisterRequestSchema } from '@/schemas/auth';
+import type { UserProfileResponse } from '@/schemas/user';
+import { UserProfileResponseSchema } from '@/schemas/user';
 
-export type { LoginRequest, RegisterRequest, AuthTokenResponse, UserProfileResponse };
+import { DATA_MODE } from './api/config';
+import { ENDPOINTS } from './api/endpoints';
+import { ApiError, httpClient } from './api/httpClient';
+
+export type { AuthTokenResponse, LoginRequest, RegisterRequest, UserProfileResponse };
 export { ApiError } from './api/httpClient';
 
 // ── Mock user (usado quando DATA_MODE === 'mock') ─────────────────────────────

@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function toAvatarSrc(avatar: any, mime = "image/png"): Promise<string | undefined> {
   if (!avatar) return undefined;
 

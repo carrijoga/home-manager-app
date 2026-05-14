@@ -1,5 +1,6 @@
-import { useTheme } from "@/contexts/ThemeContext";
 import { Line, LineChart, ResponsiveContainer } from "recharts";
+
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface DataPoint {
   value: number;

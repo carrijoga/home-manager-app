@@ -1,8 +1,9 @@
-import { cn } from "@/lib/utils";
 import Autoplay from "embla-carousel-autoplay";
 import useEmblaCarousel from "embla-carousel-react";
 import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+
+import { cn } from "@/lib/utils";
 
 /**
  * Componente de Carrossel para Métricas do Dashboard

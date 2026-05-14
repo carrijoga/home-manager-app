@@ -1,7 +1,9 @@
-import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { LucideIcon, TrendingDown, TrendingUp } from "lucide-react";
 import { ReactNode } from "react";
+
+import { cn } from "@/lib/utils";
+
 import MiniLineChart from "./MiniLineChart";
 
 interface DataPoint {

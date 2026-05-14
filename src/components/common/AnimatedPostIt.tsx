@@ -6,8 +6,9 @@
  */
 
 import { motion } from "framer-motion";
-import { ReactNode, useState, useEffect } from "react";
-import { postItVariants, getRandomRotation } from "@/lib/animations";
+import { ReactNode, useEffect,useState } from "react";
+
+import { getRandomRotation,postItVariants } from "@/lib/animations";
 import { cn } from "@/lib/utils";
 
 interface AnimatedPostItProps {

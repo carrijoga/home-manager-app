@@ -15,6 +15,7 @@ import {
   Heart,
   Home,
   Leaf,
+  type LucideIcon,
   Music,
   Package,
   Settings,
@@ -26,7 +27,6 @@ import {
   TreePine,
   Users,
   Utensils,
-  type LucideIcon,
 } from 'lucide-react';
 
 /** Map from icon name string to Lucide component */

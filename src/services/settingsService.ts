@@ -1,12 +1,13 @@
 import type {
-  UpdateProfileData,
-  UpdateUsernameData,
   ChangePasswordData,
   UpdateNotificationsData,
   UpdatePrivacyData,
+  UpdateProfileData,
+  UpdateUsernameData,
 } from '@/schemas/settingsSchemas';
-import { httpClient } from './api/httpClient';
+
 import { ENDPOINTS } from './api/endpoints';
+import { httpClient } from './api/httpClient';
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const isMock = import.meta.env.VITE_DATA_MODE !== 'api';

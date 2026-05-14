@@ -3,14 +3,15 @@
  * Suporta API real e modo mock (DATA_MODE === 'mock').
  */
 
+import type { CreateNoticeRequest, UpdateNoticeRequest } from '@/schemas/notices';
+import { NoticeHistoryResponseSchema,NoticeResponseSchema } from '@/schemas/notices';
 import type { Notice, PaginatedResponse } from '@/types';
 import { ApiPriority } from '@/types';
-import type { CreateNoticeRequest, UpdateNoticeRequest } from '@/schemas/notices';
-import { NoticeResponseSchema, NoticeHistoryResponseSchema } from '@/schemas/notices';
+
 import { mockNotices } from '../mocks/data';
-import { httpClient } from './api/httpClient';
-import { ENDPOINTS } from './api/endpoints';
 import { DATA_MODE } from './api/config';
+import { ENDPOINTS } from './api/endpoints';
+import { httpClient } from './api/httpClient';
 
 // ── Mappers ───────────────────────────────────────────────────────────────────
 

@@ -91,6 +91,7 @@ export function usePrefersReducedMotion(): boolean {
  * }
  * ```
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useReducedMotionTransition(normalTransition: any) {
   const prefersReducedMotion = usePrefersReducedMotion();
 
@@ -130,8 +131,11 @@ export function useReducedMotionTransition(normalTransition: any) {
  * }
  * ```
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useReducedMotionVariants(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   normalVariants: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   reducedVariants?: any
 ) {
   const prefersReducedMotion = usePrefersReducedMotion();
@@ -143,6 +147,7 @@ export function useReducedMotionVariants(
     }
 
     // Caso contrário, remove transformações mas mantém opacity
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const reduced: any = {};
     for (const key in normalVariants) {
       reduced[key] = {

@@ -1,4 +1,3 @@
-import { formatCurrency } from '@/utils/dashboardMetrics';
 import {
   AlertCircle,
   Calendar,
@@ -8,6 +7,9 @@ import {
   TrendingDown,
   TrendingUp
 } from 'lucide-react';
+
+import { formatCurrency } from '@/utils/dashboardMetrics';
+
 import MetricCard from './MetricCard';
 
 /**

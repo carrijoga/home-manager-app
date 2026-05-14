@@ -4,8 +4,9 @@
  */
 
 import type { FutureItem, Priority } from '@/types';
-import { DATA_MODE } from './api/config';
+
 import { mockFutureItems } from '../mocks/data';
+import { DATA_MODE } from './api/config';
 
 export async function getAllFutureItems(): Promise<FutureItem[]> {
   if (DATA_MODE === 'mock') {

@@ -6,7 +6,7 @@ import ThemeToggle from './ThemeToggle';
  * Componente de cabeçalho da aplicação Ninho
  */
 const Header = ({ useLogo = true }) => {
-  const { theme, isDark, effectiveTheme } = useTheme();
+  const { theme, isDark } = useTheme();
   
   return (
     <header className="bg-white dark:bg-slate-800 shadow-md border-b border-gray-100 dark:border-slate-700 transition-colors duration-300">

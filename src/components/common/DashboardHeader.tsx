@@ -1,5 +1,7 @@
-import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+
+import { cn } from "@/lib/utils";
+
 import WeatherWidget from "./WeatherWidget";
 
 interface DashboardHeaderProps {

@@ -1,6 +1,3 @@
-import { Badge, Button, Separator } from '@/components/ui';
-import { useApp } from '@/contexts/AppContext';
-import { cn } from '@/lib/utils';
 import {
   BellRing,
   CheckCircle2,
@@ -9,11 +6,15 @@ import {
   ShieldAlert,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+
+import { Badge, Button, Separator } from '@/components/ui';
+import { useApp } from '@/contexts/AppContext';
 import {
   getNotificationPreferences,
   NOTIFICATION_PREFERENCES_UPDATED_EVENT,
   saveNotificationPreferences,
 } from '@/lib/notificationPreferences';
+import { cn } from '@/lib/utils';
 
 type NotificationTypeId = 0 | 1 | 2 | 3;
 
@@ -58,7 +59,8 @@ const TYPE_CONFIG: Record<NotificationTypeId, {
 
 export function ProfileNotificationsPanel() {
   const { user } = useApp();
-  const notifications = user?.notifications ?? [];
+  const rawNotifications = user?.notifications;
+  const notifications = useMemo(() => rawNotifications ?? [], [rawNotifications]);
   const [showGuidance, setShowGuidance] = useState(false);
   const [preferences, setPreferences] = useState(() => getNotificationPreferences());
 
@@ -69,29 +71,30 @@ export function ProfileNotificationsPanel() {
     return () => window.removeEventListener(NOTIFICATION_PREFERENCES_UPDATED_EVENT, syncPreferences);
   }, []);
 
-  const typePreferenceKey: Record<NotificationTypeId, NotificationPreferenceKey> = {
-    0: 'info',
-    1: 'warning',
-    2: 'error',
-    3: 'success',
-  };
-
-  const grouped = useMemo(() => [0, 1, 2, 3].map((type) => {
-    const items = notifications.filter((notification) => notification.type === type);
-    const unreadCount = items.filter((notification) => !notification.isRead).length;
-    const enabledCount = items.filter((notification) => notification.isEnabled).length;
-    const key = typePreferenceKey[type as NotificationTypeId];
-
-    return {
-      type: type as NotificationTypeId,
-      key,
-      preferenceEnabled: preferences[key],
-      items,
-      unreadCount,
-      enabledCount,
-      totalCount: items.length,
+  const grouped = useMemo(() => {
+    const typePreferenceKey: Record<NotificationTypeId, NotificationPreferenceKey> = {
+      0: 'info',
+      1: 'warning',
+      2: 'error',
+      3: 'success',
     };
-  }), [notifications, preferences]);
+    return [0, 1, 2, 3].map((type) => {
+      const items = notifications.filter((notification) => notification.type === type);
+      const unreadCount = items.filter((notification) => !notification.isRead).length;
+      const enabledCount = items.filter((notification) => notification.isEnabled).length;
+      const key = typePreferenceKey[type as NotificationTypeId];
+
+      return {
+        type: type as NotificationTypeId,
+        key,
+        preferenceEnabled: preferences[key],
+        items,
+        unreadCount,
+        enabledCount,
+        totalCount: items.length,
+      };
+    });
+  }, [notifications, preferences]);
 
   const totalNotifications = notifications.length;
   const totalUnread = notifications.filter((notification) => !notification.isRead).length;

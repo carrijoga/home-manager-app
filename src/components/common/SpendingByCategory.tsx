@@ -1,7 +1,8 @@
-import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { TrendingUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+
+import { cn } from "@/lib/utils";
 
 export interface SpendingCategory {
   label: string;

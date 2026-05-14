@@ -3,11 +3,15 @@ import { AnimatePresence, motion } from 'framer-motion';
 import {
   ArrowLeft,
   ArrowUpDown,
+  Check,
   CheckCircle2,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
   Flame,
   ListChecks,
+  Minus,
   MoreVertical,
   Pencil,
   Plus,
@@ -53,13 +57,19 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { useApp } from '@/contexts/AppContext';
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
 import { useDebounce } from '@/hooks/useDebounce';
 import { cn } from '@/lib/utils';
-import { Spinner } from '@/components/ui/spinner';
 import { UNIT_TYPE_LABELS } from '@/schemas/enums';
 import type { AppShoppingItem, AppShoppingList } from '@/types';
 
@@ -118,6 +128,20 @@ function quantityLabel(quantity: number, unitType: number): string {
   return `${quantity} ${UNIT_TYPE_LABELS[unitType] ?? 'un'}`;
 }
 
+// Formats a raw string input into BRL display (e.g. "1234" → "12,34")
+function maskBRL(raw: string): string {
+  const digits = raw.replace(/\D/g, '');
+  if (!digits) return '';
+  const num = parseInt(digits, 10) / 100;
+  return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// Parses a BRL-masked string back to a plain decimal string for state storage
+function parseBRLMask(masked: string): string {
+  if (!masked) return '';
+  return masked.replace(/\./g, '').replace(',', '.');
+}
+
 function todayISO(): string {
   return new Date().toISOString().slice(0, 10);
 }
@@ -150,33 +174,6 @@ const emptyPurchaseForm = (est?: number | null): PurchaseFormData => ({
   price: est != null ? String(est) : '',
   purchasedAt: todayISO(),
 });
-
-// ── ProgressBar ──────────────────────────────────────────────────────────────────
-
-function ProgressBar({
-  value,
-  max,
-  className,
-}: {
-  value: number;
-  max: number;
-  className?: string;
-}) {
-  const pct = max === 0 ? 0 : Math.min(100, Math.round((value / max) * 100));
-  return (
-    <div
-      className={cn(
-        'h-1.5 w-full overflow-hidden rounded-full bg-linen-300 dark:bg-muted',
-        className
-      )}
-    >
-      <div
-        className="duration-[length:var(--dur-slow)] h-full rounded-full bg-gradient-to-r from-terracotta-400 to-honey-400 transition-all"
-        style={{ width: `${pct}%` }}
-      />
-    </div>
-  );
-}
 
 // ── ListFormDialog ───────────────────────────────────────────────────────────────
 
@@ -324,12 +321,15 @@ function ItemFormDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-3 pt-2">
+    <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
+      <SheetContent
+        side="bottom"
+        className="rounded-t-2xl border-t border-border bg-card px-6 pb-8 pt-6 dark:bg-[#1e1e1e]"
+      >
+        <SheetHeader className="mb-4 text-left">
+          <SheetTitle>{title}</SheetTitle>
+        </SheetHeader>
+        <form onSubmit={handleSubmit} className="space-y-3">
           <div className="space-y-1.5">
             <Label htmlFor="item-name">Item *</Label>
             <Input
@@ -358,18 +358,11 @@ function ItemFormDialog({
             </div>
             <div className="space-y-1.5">
               <Label>Unidade</Label>
-              <Select
-                value={data.unitType}
-                onValueChange={(v) => setData((d) => ({ ...d, unitType: v }))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
+              <Select value={data.unitType} onValueChange={(v) => setData((d) => ({ ...d, unitType: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {Object.entries(UNIT_TYPE_LABELS).map(([val, lbl]) => (
-                    <SelectItem key={val} value={val}>
-                      {lbl}
-                    </SelectItem>
+                    <SelectItem key={val} value={val}>{lbl}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -379,31 +372,10 @@ function ItemFormDialog({
             <Label>Categoria</Label>
             <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
               <PopoverTrigger asChild>
-                <Button
-                  type="button"
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={categoryOpen}
-                  className="w-full justify-between font-normal"
-                >
-                  <span
-                    className={selectedCategoryName ? 'text-foreground' : 'text-muted-foreground'}
-                  >
+                <Button type="button" variant="outline" role="combobox" className="w-full justify-between font-normal">
+                  <span className={selectedCategoryName ? 'text-foreground' : 'text-muted-foreground'}>
                     {selectedCategoryName ?? 'Sem categoria'}
                   </span>
-                  <svg
-                    className="ml-2 h-4 w-4 shrink-0 opacity-50"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M8 9l4-4 4 4M16 15l-4 4-4-4"
-                    />
-                  </svg>
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
@@ -412,27 +384,11 @@ function ItemFormDialog({
                   <CommandList>
                     <CommandEmpty>Nenhuma categoria encontrada.</CommandEmpty>
                     <CommandGroup>
-                      <CommandItem
-                        value="__none__"
-                        onSelect={() => {
-                          setData((d) => ({ ...d, categoryId: '' }));
-                          setCategoryOpen(false);
-                        }}
-                      >
+                      <CommandItem value="__none__" onSelect={() => { setData((d) => ({ ...d, categoryId: '' })); setCategoryOpen(false); }}>
                         Sem categoria
                       </CommandItem>
                       {sortedCategories.map((c) => (
-                        <CommandItem
-                          key={c.shoppingCategoryId}
-                          value={c.name}
-                          onSelect={() => {
-                            setData((d) => ({
-                              ...d,
-                              categoryId: c.shoppingCategoryId,
-                            }));
-                            setCategoryOpen(false);
-                          }}
-                        >
+                        <CommandItem key={c.shoppingCategoryId} value={c.name} onSelect={() => { setData((d) => ({ ...d, categoryId: c.shoppingCategoryId })); setCategoryOpen(false); }}>
                           {c.name}
                         </CommandItem>
                       ))}
@@ -446,12 +402,11 @@ function ItemFormDialog({
             <Label htmlFor="item-price">Preço estimado (R$)</Label>
             <Input
               id="item-price"
-              type="number"
-              min="0"
-              step="0.01"
+              type="text"
+              inputMode="numeric"
               placeholder="0,00"
-              value={data.estimatedPrice}
-              onChange={(e) => setData((d) => ({ ...d, estimatedPrice: e.target.value }))}
+              value={maskBRL(data.estimatedPrice.replace(/\D/g, ''))}
+              onChange={(e) => setData((d) => ({ ...d, estimatedPrice: parseBRLMask(maskBRL(e.target.value.replace(/\D/g, ''))) }))}
             />
           </div>
           <div className="space-y-1.5">
@@ -464,22 +419,14 @@ function ItemFormDialog({
             />
           </div>
           <div className="flex gap-3 pt-1">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1"
-              onClick={onClose}
-              disabled={saving}
-            >
-              Cancelar
-            </Button>
+            <Button type="button" variant="outline" className="flex-1" onClick={onClose} disabled={saving}>Cancelar</Button>
             <Button type="submit" className="flex-1" disabled={saving || !data.name.trim()}>
               {saving ? 'Salvando...' : 'Salvar'}
             </Button>
           </div>
         </form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }
 
@@ -515,34 +462,36 @@ function MarkAsPurchasedDialog({ open, onClose, item, onSubmit }: MarkAsPurchase
   };
 
   return (
-    <Dialog open={open && !!item} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-sm">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <CheckCircle2 className="text-sage-500" size={20} />
+    <Sheet open={open && !!item} onOpenChange={(v) => !v && onClose()}>
+      <SheetContent
+        side="bottom"
+        className="rounded-t-2xl border-t border-border bg-card px-6 pb-8 pt-6 dark:bg-[#1e1e1e]"
+      >
+        <SheetHeader className="mb-5 text-left">
+          <SheetTitle className="flex items-center gap-2 text-base font-semibold">
+            <CheckCircle2 size={18} style={{ color: '#78dc77' }} />
             Marcar como comprado
-          </DialogTitle>
-        </DialogHeader>
-        {item && (
-          <div className="pb-1 text-sm text-muted-foreground">
-            <span className="font-medium text-foreground">{item.name}</span>
-            {' — '}
-            {quantityLabel(item.quantity, item.unitType)}
-          </div>
-        )}
-        <form onSubmit={handleSubmit} className="space-y-3">
+          </SheetTitle>
+          {item && (
+            <p className="text-xs text-muted-foreground">
+              <span className="font-medium text-foreground">{item.name}</span>
+              {' — '}
+              {quantityLabel(item.quantity, item.unitType)}
+            </p>
+          )}
+        </SheetHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="purchase-price">
               Preço pago (R$) <span className="text-xs text-muted-foreground">(opcional)</span>
             </Label>
             <Input
               id="purchase-price"
-              type="number"
-              min="0"
-              step="0.01"
+              type="text"
+              inputMode="numeric"
               placeholder="0,00"
-              value={data.price}
-              onChange={(e) => setData((d) => ({ ...d, price: e.target.value }))}
+              value={maskBRL(data.price.replace(/\D/g, ''))}
+              onChange={(e) => setData((d) => ({ ...d, price: parseBRLMask(maskBRL(e.target.value.replace(/\D/g, ''))) }))}
             />
           </div>
           <div className="space-y-1.5">
@@ -570,8 +519,8 @@ function MarkAsPurchasedDialog({ open, onClose, item, onSubmit }: MarkAsPurchase
             </Button>
           </div>
         </form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }
 
@@ -784,16 +733,18 @@ function BulkEditDialog({
   const overflow = selectedItems.length - 3;
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Editar itens selecionados ({selectedItems.length})</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-3 pt-2">
-          <p className="border-primary/20 bg-primary/5 rounded-lg border px-3 py-2 text-xs text-muted-foreground">
-            Apenas os campos preenchidos serão alterados. Campos em branco não serão modificados.
+    <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
+      <SheetContent
+        side="bottom"
+        className="rounded-t-2xl border-t border-border bg-card px-6 pb-8 pt-6 dark:bg-[#1e1e1e]"
+      >
+        <SheetHeader className="mb-4 text-left">
+          <SheetTitle>Editar {selectedItems.length} {selectedItems.length === 1 ? 'item' : 'itens'}</SheetTitle>
+          <p className="text-xs text-muted-foreground">
+            Apenas os campos preenchidos serão alterados.
           </p>
-
+        </SheetHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="bulk-qty">Quantidade</Label>
@@ -832,29 +783,11 @@ function BulkEditDialog({
                   type="button"
                   variant="outline"
                   role="combobox"
-                  aria-expanded={categoryOpen}
                   className="w-full justify-between font-normal"
                 >
-                  <span
-                    className={selectedCategoryName ? 'text-foreground' : 'text-muted-foreground'}
-                  >
-                    {categoryId === '__clear__'
-                      ? 'Remover categoria'
-                      : (selectedCategoryName ?? '— sem alteração —')}
+                  <span className={selectedCategoryName ? 'text-foreground' : 'text-muted-foreground'}>
+                    {categoryId === '__clear__' ? 'Remover categoria' : (selectedCategoryName ?? '— sem alteração —')}
                   </span>
-                  <svg
-                    className="ml-2 h-4 w-4 shrink-0 opacity-50"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M8 9l4-4 4 4M16 15l-4 4-4-4"
-                    />
-                  </svg>
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
@@ -863,24 +796,11 @@ function BulkEditDialog({
                   <CommandList>
                     <CommandEmpty>Nenhuma categoria encontrada.</CommandEmpty>
                     <CommandGroup>
-                      <CommandItem
-                        value="__clear__"
-                        onSelect={() => {
-                          setCategoryId('__clear__');
-                          setCategoryOpen(false);
-                        }}
-                      >
+                      <CommandItem value="__clear__" onSelect={() => { setCategoryId('__clear__'); setCategoryOpen(false); }}>
                         Remover categoria
                       </CommandItem>
                       {sortedCategories.map((c) => (
-                        <CommandItem
-                          key={c.shoppingCategoryId}
-                          value={c.name}
-                          onSelect={() => {
-                            setCategoryId(c.shoppingCategoryId);
-                            setCategoryOpen(false);
-                          }}
-                        >
+                        <CommandItem key={c.shoppingCategoryId} value={c.name} onSelect={() => { setCategoryId(c.shoppingCategoryId); setCategoryOpen(false); }}>
                           {c.name}
                         </CommandItem>
                       ))}
@@ -895,141 +815,34 @@ function BulkEditDialog({
             <Label htmlFor="bulk-price">Preço estimado (R$)</Label>
             <Input
               id="bulk-price"
-              type="number"
-              min="0"
-              step="0.01"
+              type="text"
+              inputMode="numeric"
               placeholder="0,00"
-              value={estimatedPrice}
-              onChange={(e) => setEstimatedPrice(e.target.value)}
+              value={maskBRL(estimatedPrice.replace(/\D/g, ''))}
+              onChange={(e) => setEstimatedPrice(parseBRLMask(maskBRL(e.target.value.replace(/\D/g, ''))))}
             />
           </div>
 
-          {/* Affected items */}
-          <div className="bg-muted/30 space-y-1 rounded-lg border border-border px-3 py-2.5">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-              Itens afetados
-            </p>
+          <div className="bg-muted/30 space-y-1 rounded-xl border border-border px-3 py-2.5">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Itens afetados</p>
             {previewNames.map((name) => (
               <p key={name} className="flex items-center gap-1.5 text-xs text-foreground">
-                <span className="text-primary">•</span>
-                {name}
+                <span className="text-primary">•</span>{name}
               </p>
             ))}
-            {overflow > 0 && (
-              <p className="text-xs italic text-muted-foreground">
-                e mais +{overflow} {overflow === 1 ? 'item' : 'itens'}
-              </p>
-            )}
+            {overflow > 0 && <p className="text-xs italic text-muted-foreground">e mais +{overflow} {overflow === 1 ? 'item' : 'itens'}</p>}
           </div>
 
           <div className="flex gap-3 pt-1">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1"
-              onClick={onClose}
-              disabled={saving}
-            >
-              Cancelar
-            </Button>
-            <Button type="submit" className="flex-1" disabled={saving}>
-              {saving ? 'Salvando...' : 'Salvar alterações'}
-            </Button>
+            <Button type="button" variant="outline" className="flex-1" onClick={onClose} disabled={saving}>Cancelar</Button>
+            <Button type="submit" className="flex-1" disabled={saving}>{saving ? 'Salvando...' : 'Salvar alterações'}</Button>
           </div>
         </form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }
-// ── SwipeableItem ────────────────────────────────────────────────────────────────
-
-interface SwipeableItemProps {
-  onEdit: () => void;
-  onDelete: () => void;
-  children: React.ReactNode;
-}
-
-function SwipeableItem({ onEdit, onDelete, children }: SwipeableItemProps) {
-  const REVEAL = 112;
-  const offsetRef = useRef(0);
-  const startXRef = useRef<number | null>(null);
-  const isSettled = useRef(true); // false while finger is down
-  const rowRef = useRef<HTMLDivElement>(null);
-
-  const applyTransform = (px: number, animated: boolean) => {
-    if (!rowRef.current) return;
-    rowRef.current.style.transition = animated
-      ? 'transform 0.35s cubic-bezier(0.22,1,0.36,1)'
-      : 'none';
-    rowRef.current.style.transform = `translateX(${px}px)`;
-    offsetRef.current = px;
-  };
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    startXRef.current = e.touches[0].clientX;
-    isSettled.current = false;
-    applyTransform(offsetRef.current, false);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (startXRef.current === null) return;
-    const dx = e.touches[0].clientX - startXRef.current;
-    const next = Math.max(-REVEAL, Math.min(0, offsetRef.current + dx));
-    // update startX so delta is incremental
-    startXRef.current = e.touches[0].clientX;
-    applyTransform(next, false);
-  };
-
-  const handleTouchEnd = () => {
-    isSettled.current = true;
-    startXRef.current = null;
-    applyTransform(offsetRef.current < -REVEAL / 2 ? -REVEAL : 0, true);
-  };
-
-  const close = () => applyTransform(0, true);
-
-  return (
-    <div className="relative overflow-hidden rounded-lg">
-      {/* Swipe actions — behind the row, mobile only */}
-      <div className="absolute inset-y-0 right-0 flex sm:hidden" style={{ width: REVEAL }}>
-        <button
-          className="bg-primary/15 active:bg-primary/25 flex flex-1 flex-col items-center justify-center gap-0.5 text-primary transition-colors"
-          onClick={() => {
-            close();
-            onEdit();
-          }}
-        >
-          <Pencil size={15} />
-          <span className="text-[10px] font-semibold">Editar</span>
-        </button>
-        <button
-          className="bg-destructive/15 active:bg-destructive/25 flex flex-1 flex-col items-center justify-center gap-0.5 text-destructive transition-colors"
-          onClick={() => {
-            close();
-            onDelete();
-          }}
-        >
-          <Trash2 size={15} />
-          <span className="text-[10px] font-semibold">Excluir</span>
-        </button>
-      </div>
-
-      {/* Row — solid bg so it fully covers the actions beneath when at rest */}
-      <div
-        ref={rowRef}
-        className="relative bg-background"
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        onClick={() => {
-          if (offsetRef.current !== 0) close();
-        }}
-      >
-        {children}
-      </div>
-    </div>
-  );
-}
+// ── SwipeableItem removed — row tap opens drawer on mobile ───────────────────────
 
 // ── Main Component ───────────────────────────────────────────────────────────────
 
@@ -1082,6 +895,17 @@ const ShoppingList = memo(() => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
+
+  // ── Inline edit state (desktop) / mobile drawer ─────────────────────────────
+  const [inlineEditingId, setInlineEditingId] = useState<string | null>(null);
+  const [inlineForm, setInlineForm] = useState<{ qty: string; estimated: string; paid: string }>({
+    qty: '',
+    estimated: '',
+    paid: '',
+  });
+  const [inlineSaving, setInlineSaving] = useState(false);
+  const [showMobileEditSheet, setShowMobileEditSheet] = useState(false);
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
 
   // ── Bulk selection state ────────────────────────────────────────────────────
   const [isBulkMode, setIsBulkMode] = useState(false);
@@ -1180,9 +1004,14 @@ const ShoppingList = memo(() => {
 
   const groupedItems = useMemo(() => {
     if (!detailData) return {};
-    let items = categoryFilter
-      ? detailData.items.filter((i) => i.categoryName === categoryFilter)
-      : detailData.items;
+    let items = detailData.items;
+    if (categoryFilter === '__unpurchased__') {
+      items = items.filter((i) => !i.isPurchased);
+    } else if (categoryFilter === '__purchased__') {
+      items = items.filter((i) => i.isPurchased);
+    } else if (categoryFilter) {
+      items = items.filter((i) => i.categoryName === categoryFilter);
+    }
     if (debouncedSearch.trim()) {
       const q = debouncedSearch.trim().toLowerCase();
       items = items.filter((i) => i.name.toLowerCase().includes(q));
@@ -1590,6 +1419,98 @@ const ShoppingList = memo(() => {
     ]
   );
 
+  // ── Helpers: inline edit ────────────────────────────────────────────────────
+  const openInlineEdit = useCallback((item: AppShoppingItem) => {
+    setInlineEditingId(item.shoppingItemId);
+    setInlineForm({
+      qty: String(item.quantity),
+      estimated: item.estimatedPrice != null ? String(item.estimatedPrice) : '',
+      paid: item.price != null ? String(item.price) : '',
+    });
+  }, []);
+
+  const cancelInlineEdit = useCallback(() => {
+    setInlineEditingId(null);
+    setInlineSaving(false);
+  }, []);
+
+  const saveInlineEdit = useCallback(
+    async (item: AppShoppingItem) => {
+      setInlineSaving(true);
+      try {
+        const newQty = parseFloat(inlineForm.qty) || item.quantity;
+        const newEstimated = inlineForm.estimated !== '' ? parseFloat(inlineForm.estimated) : null;
+        const newPaid = inlineForm.paid !== '' ? parseFloat(inlineForm.paid) : null;
+
+        await updateShoppingItem(
+          item.shoppingItemId,
+          selectedListId!,
+          item.name,
+          newQty,
+          item.unitType,
+          item.shoppingCategoryId ?? null,
+          newEstimated,
+          item.notes ?? null
+        );
+
+        if (newPaid != null && !item.isPurchased) {
+          await markItemAsPurchased(
+            item.shoppingItemId,
+            selectedListId!,
+            newQty,
+            item.unitType,
+            newPaid,
+            `${todayISO()}T12:00:00Z`
+          );
+          setDetailData((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              items: prev.items.map((i) =>
+                i.shoppingItemId === item.shoppingItemId
+                  ? {
+                      ...i,
+                      quantity: newQty,
+                      estimatedPrice: newEstimated,
+                      isPurchased: true,
+                      price: newPaid,
+                    }
+                  : i
+              ),
+            };
+          });
+        } else {
+          setDetailData((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              items: prev.items.map((i) =>
+                i.shoppingItemId === item.shoppingItemId
+                  ? { ...i, quantity: newQty, estimatedPrice: newEstimated }
+                  : i
+              ),
+            };
+          });
+        }
+
+        showSuccess('Item atualizado!');
+        setInlineEditingId(null);
+      } finally {
+        setInlineSaving(false);
+      }
+    },
+    [inlineForm, selectedListId, updateShoppingItem, markItemAsPurchased, showSuccess]
+  );
+
+  const toggleCategoryCollapse = useCallback((category: string) => {
+    setCollapsedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(category)) next.delete(category);
+      else next.add(category);
+      return next;
+    });
+  }, []);
+
   const handleBulkDelete = useCallback(async () => {
     for (const item of selectedItems) {
       await deleteShoppingItem(
@@ -1954,11 +1875,16 @@ const ShoppingList = memo(() => {
   }
 
   // ── Render: detail view ─────────────────────────────────────────────────────
-  const summary = shoppingLists.find((l) => l.shoppingListId === selectedListId);
   const detailPurchasedItems = detailData?.items.filter((i) => i.isPurchased).length ?? 0;
   const detailTotalItems = detailData?.items.length ?? 0;
   const detailPct =
     detailTotalItems === 0 ? 0 : Math.round((detailPurchasedItems / detailTotalItems) * 100);
+  // Calculated live from detailData so they reflect inline edits immediately
+  const totalEstimated =
+    detailData?.items.reduce((s, i) => s + (i.estimatedPrice ?? 0), 0) ?? 0;
+  const totalSpent =
+    detailData?.items.filter((i) => i.isPurchased).reduce((s, i) => s + (i.price ?? 0), 0) ?? 0;
+  const remaining = Math.max(0, totalEstimated - totalSpent);
 
   return (
     <motion.div
@@ -1967,230 +1893,291 @@ const ShoppingList = memo(() => {
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 24 }}
       transition={{ duration: 0.25, ease: [0.25, 1, 0.5, 1] }}
-      className="max-w-full space-y-5"
+      className="max-w-full space-y-5 pb-32"
     >
-      {/* Breadcrumb toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <button
-          onClick={backToLists}
-          className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <ArrowLeft size={16} />
-          <span>Listas</span>
-          <span className="text-muted-foreground/50 mx-0.5">/</span>
-          <span className="max-w-40 truncate font-semibold text-foreground">
-            {detailData?.name ?? '...'}
-          </span>
-        </button>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1.5 text-xs"
-            onClick={() => setShowCategories(true)}
-          >
-            <Tag size={13} />
-            Categorias
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1.5 text-xs"
-            onClick={() => setShowEditList(true)}
-            disabled={!detailData}
-          >
-            <Pencil size={13} />
-            Editar Lista
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="hover:bg-destructive/10 border-transparent px-2 text-destructive hover:text-destructive"
-            onClick={() => setShowDeleteAlert(true)}
-            title="Excluir lista"
-          >
-            <Trash2 size={15} />
-          </Button>
-        </div>
-      </div>
-
-      {/* Stats bar */}
-      {detailData && (
-        <div className="space-y-3 rounded-xl border bg-card p-4">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <h2 className="text-lg font-bold text-foreground">{detailData.name}</h2>
-              <p className="text-sm capitalize text-muted-foreground">
-                {formatMonthYearPT(detailData.monthYear)}
-              </p>
-              {detailData.notes && (
-                <p className="mt-1 text-xs italic text-muted-foreground">{detailData.notes}</p>
-              )}
-            </div>
-            <div className="shrink-0 space-y-0.5 text-right">
-              <p className="text-sm text-muted-foreground">
-                <span className="text-base font-bold text-foreground">{detailPurchasedItems}</span>/
-                {detailTotalItems} itens
-              </p>
-              {(summary?.totalEstimated ?? 0) > 0 && (
-                <p className="text-xs text-muted-foreground">
-                  Est.{' '}
-                  <span className="font-medium text-foreground">
-                    {formatCurrency(summary!.totalEstimated!)}
-                  </span>
-                </p>
-              )}
-              {(summary?.totalSpent ?? 0) > 0 && (
-                <p className="text-xs font-medium text-sage-600 dark:text-sage-400">
-                  {formatCurrency(summary!.totalSpent!)} gastos
-                </p>
-              )}
-            </div>
+      {/* ── Page header ─────────────────────────────────────────────────────── */}
+      <div className="flex flex-col gap-4">
+        {/* Left: title area */}
+        <div className="space-y-1">
+          {/* Module context pill */}
+          <div className="inline-flex items-center gap-2 rounded-full border border-border/40 bg-card px-3 py-1">
+            <div className="h-2 w-2 rounded-full" style={{ background: '#ffcad9' }} />
+            <span
+              className="text-[10px] font-semibold uppercase tracking-widest"
+              style={{ color: '#ffcad9' }}
+            >
+              Lista de Compras
+            </span>
           </div>
-          {detailTotalItems > 0 && (
-            <div className="space-y-1">
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>Progresso</span>
-                <span className="font-medium">{detailPct}%</span>
-              </div>
-              <ProgressBar value={detailPurchasedItems} max={detailTotalItems} className="h-2" />
-            </div>
+
+          {/* Back + list name */}
+          <div className="flex items-center gap-2 pt-1">
+            <button
+              onClick={backToLists}
+              className="rounded-lg p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              title="Voltar para listas"
+            >
+              <ArrowLeft size={18} />
+            </button>
+            <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">
+              {detailData?.name ?? '...'}
+            </h1>
+          </div>
+
+          {/* Date */}
+          {detailData && (
+            <p className="flex items-center gap-1.5 pl-9 text-xs font-medium uppercase tracking-widest text-muted-foreground">
+              <ShoppingCart size={11} />
+              {new Date(detailData.monthYear).toLocaleDateString('pt-BR', {
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric',
+                timeZone: 'UTC',
+              })}
+            </p>
           )}
         </div>
-      )}
 
-      {/* Toolbar — normal or bulk mode */}
+        {/* Right: summary bento cards */}
+        {detailData && (
+          <div className="grid w-full grid-cols-3 gap-2 sm:gap-3">
+            {/* Estimado */}
+            <div className="flex items-center gap-2 rounded-2xl border border-border bg-card px-3 py-3 sm:gap-3 sm:px-4 sm:py-4">
+              <div
+                className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-full sm:flex"
+                style={{ background: 'rgba(216,226,255,0.1)' }}
+              >
+                <Tag size={16} style={{ color: '#adc6ff' }} />
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-[9px] font-medium uppercase tracking-widest text-muted-foreground sm:text-[10px]">
+                  Estimado
+                </p>
+                <p className="text-sm font-semibold text-foreground sm:text-lg">
+                  {totalEstimated > 0 ? formatCurrency(totalEstimated) : '—'}
+                </p>
+              </div>
+            </div>
+
+            {/* Pago até agora */}
+            <div
+              className="relative flex items-center gap-2 overflow-hidden rounded-2xl border-l-2 px-3 py-3 sm:gap-3 sm:px-4 sm:py-4"
+              style={{
+                borderColor: '#78dc77',
+                background: 'rgba(120,220,119,0.05)',
+                borderTopColor: 'transparent',
+                borderRightColor: 'transparent',
+                borderBottomColor: 'transparent',
+              }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-[rgba(120,220,119,0.06)] to-transparent pointer-events-none" />
+              <div
+                className="relative hidden h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-card sm:flex"
+                style={{ background: 'rgba(148,249,144,0.1)' }}
+              >
+                <CheckCircle2 size={16} style={{ color: '#78dc77' }} />
+              </div>
+              <div className="relative min-w-0">
+                <p
+                  className="truncate text-[9px] font-medium uppercase tracking-widest sm:text-[10px]"
+                  style={{ color: '#78dc77' }}
+                >
+                  Pago
+                </p>
+                <p className="text-sm font-semibold sm:text-lg" style={{ color: '#78dc77' }}>
+                  {totalSpent > 0 ? formatCurrency(totalSpent) : '—'}
+                </p>
+              </div>
+            </div>
+
+            {/* Restante */}
+            <div className="flex items-center gap-2 rounded-2xl border border-border bg-card px-3 py-3 sm:gap-3 sm:px-4 sm:py-4">
+              <div
+                className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-full sm:flex"
+                style={{ background: 'rgba(197,184,255,0.1)' }}
+              >
+                <ShoppingCart size={16} style={{ color: '#c5b8ff' }} />
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-[9px] font-medium uppercase tracking-widest text-muted-foreground sm:text-[10px]">
+                  Restante
+                </p>
+                <p className="text-sm font-semibold sm:text-lg" style={{ color: '#c5b8ff' }}>
+                  {totalEstimated > 0 ? formatCurrency(remaining) : '—'}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Sort + action toolbar ─────────────────────────────────────────────── */}
       {isBulkMode ? (
-        <div className="flex items-center gap-3 rounded-xl border border-[rgba(120,160,255,0.2)] bg-[rgba(120,160,255,0.07)] px-1 py-1">
-          <span className="px-2 text-sm font-semibold text-[#7ba0ff]">
-            {selectedItems.length} selecionado
-            {selectedItems.length !== 1 ? 's' : ''}
+        <div className="flex items-center gap-3 rounded-xl border border-[rgba(120,160,255,0.2)] bg-[rgba(120,160,255,0.07)] px-4 py-2.5">
+          <span className="text-sm font-semibold text-[#7ba0ff]">
+            {selectedItems.length} selecionado{selectedItems.length !== 1 ? 's' : ''}
           </span>
-          <Button
-            variant="outline"
-            size="sm"
-            className="ml-auto shrink-0 text-xs"
+          <button
+            className="ml-auto rounded-full border border-border px-4 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             onClick={exitBulkMode}
           >
             Cancelar
-          </Button>
+          </button>
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
-          {/* Row 1: categories + actions */}
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4">
-            <div className="flex min-w-0 flex-1 items-center gap-2 md:gap-3">
+        <div className="flex flex-col gap-2 border-b border-border/50 pb-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3">
+          {/* Sort pills */}
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <ArrowUpDown size={12} className="shrink-0 text-muted-foreground" />
+            <span className="hidden text-xs font-medium uppercase tracking-widest text-muted-foreground sm:inline">
+              Ordenar por
+            </span>
+            {(
+              [
+                { value: 'name', label: 'Nome' },
+                { value: 'count', label: 'Qtd.' },
+                { value: 'purchased', label: 'Pendentes' },
+              ] as const
+            ).map(({ value, label }) => (
               <button
-                className="hidden rounded-lg border border-border p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:flex"
-                onClick={() => scrollCategories('left')}
-                aria-label="Categorias anteriores"
+                key={value}
+                onClick={() => setSortOrder(value)}
+                className={cn(
+                  'rounded-full border px-2.5 py-1 text-[10px] font-medium transition-colors sm:px-4 sm:py-1.5 sm:text-xs',
+                  sortOrder === value
+                    ? 'border-[rgba(216,226,255,0.3)] bg-[rgba(216,226,255,0.2)] text-[#adc6ff]'
+                    : 'border-border/40 bg-transparent text-muted-foreground hover:border-border hover:text-foreground'
+                )}
               >
-                <ChevronLeft size={14} />
+                {label}
               </button>
-              <div
-                ref={categoryScrollRef}
-                className="scrollbar-hide flex w-full snap-x snap-mandatory flex-nowrap gap-2 overflow-x-auto scroll-smooth whitespace-nowrap touch-pan-x"
-                onPointerDown={handleCategoryPointerDown}
-                onPointerMove={handleCategoryPointerMove}
-                onPointerUp={handleCategoryPointerUp}
-                onPointerLeave={handleCategoryPointerUp}
-              >
-                <button
-                  onClick={() => setCategoryFilter(null)}
-                  className={cn(
-                    'shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition-colors',
-                    categoryFilter === null
-                      ? 'border-primary bg-primary text-primary-foreground'
-                      : 'hover:border-primary/40 border-border bg-transparent text-muted-foreground hover:text-foreground'
-                  )}
-                >
-                  Todos
-                </button>
-                {categoriesInDetail.map((cat) => (
-                  <button
-                    key={cat}
-                    onClick={() => setCategoryFilter(cat === categoryFilter ? null : cat)}
-                    className={cn(
-                      'shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition-colors',
-                      categoryFilter === cat
-                        ? 'border-primary bg-primary text-primary-foreground'
-                        : 'hover:border-primary/40 border-border bg-transparent text-muted-foreground hover:text-foreground'
-                    )}
-                    title={cat}
-                  >
-                    {cat}
-                  </button>
-                ))}
-              </div>
-              <button
-                className="hidden rounded-lg border border-border p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:flex"
-                onClick={() => scrollCategories('right')}
-                aria-label="Proximas categorias"
-              >
-                <ChevronRight size={14} />
-              </button>
-            </div>
-            <div className="flex shrink-0 items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="ml-auto shrink-0 gap-1.5 text-xs"
-                onClick={() => uploadInputRef.current?.click()}
-                disabled={!detailData || isUploading}
-                title="Importar itens por arquivo"
-              >
-                <Upload size={14} />
-                {isUploading ? 'Importando...' : 'Importar arquivo'}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="shrink-0 gap-1.5 text-xs"
-                onClick={() => setIsBulkMode(true)}
-                disabled={!detailData}
-              >
-                <ListChecks size={14} />
-                Selecionar
-              </Button>
-              <Button
-                size="sm"
-                className="shrink-0 gap-1.5 text-xs"
-                onClick={() => setShowAddItem(true)}
-                disabled={!detailData}
-              >
-                <Plus size={14} />
-                Adicionar Item
-              </Button>
-            </div>
+            ))}
           </div>
 
-          {/* Row 2: sort control */}
-          <div className="flex items-center justify-end gap-2">
-            <ArrowUpDown size={13} className="text-muted-foreground" />
-            <span className="text-xs text-muted-foreground">Ordenar por</span>
-            <div className="flex gap-1">
-              {(
-                [
-                  { value: 'name', label: 'Nome' },
-                  { value: 'count', label: 'Qtd. itens' },
-                  { value: 'purchased', label: 'Não comprados' },
-                ] as const
-              ).map(({ value, label }) => (
-                <button
-                  key={value}
-                  onClick={() => setSortOrder(value)}
-                  className={cn(
-                    'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
-                    sortOrder === value
-                      ? 'border-primary bg-primary text-primary-foreground'
-                      : 'border-border bg-transparent text-muted-foreground hover:border-primary/40 hover:text-foreground'
-                  )}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+          {/* Action buttons */}
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <button
+              className="flex items-center gap-1 rounded-full border border-[#adc6ff]/50 px-2.5 py-1 text-[10px] font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-50 sm:gap-1.5 sm:px-4 sm:py-1.5 sm:text-xs"
+              onClick={() => uploadInputRef.current?.click()}
+              disabled={!detailData || isUploading}
+            >
+              <Upload size={11} />
+              {isUploading ? 'Importando...' : 'Importar'}
+            </button>
+            <button
+              className="flex items-center gap-1 rounded-full border border-[#adc6ff]/50 px-2.5 py-1 text-[10px] font-semibold text-foreground transition-colors hover:bg-accent disabled:opacity-50 sm:gap-1.5 sm:px-4 sm:py-1.5 sm:text-xs"
+              onClick={() => setIsBulkMode(true)}
+              disabled={!detailData}
+            >
+              <ListChecks size={11} />
+              Selecionar
+            </button>
+            <button
+              className="flex items-center gap-1 rounded-full px-3 py-1 text-[10px] font-semibold transition-colors disabled:opacity-50 sm:gap-1.5 sm:px-5 sm:py-1.5 sm:text-xs"
+              style={{ background: 'rgba(173,198,255,0.26)', border: '1px solid #adc6ff', color: '#e5e2e1' }}
+              onClick={() => setShowAddItem(true)}
+              disabled={!detailData}
+            >
+              <Plus size={11} />
+              Adicionar
+            </button>
           </div>
+        </div>
+      )}
+
+      {/* ── Category filter pills ─────────────────────────────────────────────── */}
+      {!isBulkMode && (
+        <div className="flex items-center gap-2">
+          <button
+            className="hidden rounded-lg border border-border p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:flex"
+            onClick={() => scrollCategories('left')}
+            aria-label="Categorias anteriores"
+          >
+            <ChevronLeft size={14} />
+          </button>
+          <div
+            ref={categoryScrollRef}
+            className="scrollbar-hide flex flex-1 snap-x snap-mandatory flex-nowrap gap-2 overflow-x-auto scroll-smooth whitespace-nowrap touch-pan-x"
+            onPointerDown={handleCategoryPointerDown}
+            onPointerMove={handleCategoryPointerMove}
+            onPointerUp={handleCategoryPointerUp}
+            onPointerLeave={handleCategoryPointerUp}
+          >
+            <button
+              onClick={() => setCategoryFilter(null)}
+              className={cn(
+                'shrink-0 rounded-full border px-4 py-2 text-xs font-medium uppercase tracking-widest transition-colors',
+                categoryFilter === null
+                  ? 'border-[rgba(216,226,255,0.3)] bg-[rgba(216,226,255,0.2)] text-[#adc6ff]'
+                  : 'border-border/40 bg-transparent text-muted-foreground hover:border-border hover:text-foreground'
+              )}
+            >
+              Todos
+            </button>
+            <button
+              onClick={() => setCategoryFilter('__unpurchased__' === categoryFilter ? null : '__unpurchased__')}
+              className={cn(
+                'shrink-0 rounded-full border px-4 py-2 text-xs font-medium uppercase tracking-widest transition-colors',
+                categoryFilter === '__unpurchased__'
+                  ? 'border-[rgba(216,226,255,0.3)] bg-[rgba(216,226,255,0.2)] text-[#adc6ff]'
+                  : 'border-border/40 bg-transparent text-muted-foreground hover:border-border hover:text-foreground'
+              )}
+            >
+              Não Comprados
+            </button>
+            <button
+              onClick={() => setCategoryFilter('__purchased__' === categoryFilter ? null : '__purchased__')}
+              className={cn(
+                'shrink-0 rounded-full border px-4 py-2 text-xs font-medium uppercase tracking-widest transition-colors',
+                categoryFilter === '__purchased__'
+                  ? 'border-[rgba(216,226,255,0.3)] bg-[rgba(216,226,255,0.2)] text-[#adc6ff]'
+                  : 'border-border/40 bg-transparent text-muted-foreground hover:border-border hover:text-foreground'
+              )}
+            >
+              Comprados
+            </button>
+            {categoriesInDetail.length > 0 && (
+              <div className="mx-1 h-6 w-px self-center bg-border/40" />
+            )}
+            {categoriesInDetail.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setCategoryFilter(cat === categoryFilter ? null : cat)}
+                className={cn(
+                  'shrink-0 rounded-full border px-4 py-2 text-xs font-medium uppercase tracking-widest transition-colors',
+                  categoryFilter === cat
+                    ? 'border-[rgba(216,226,255,0.3)] bg-[rgba(216,226,255,0.2)] text-[#adc6ff]'
+                    : 'border-border/40 bg-transparent text-muted-foreground hover:border-border hover:text-foreground'
+                )}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+          <button
+            className="hidden rounded-lg border border-border p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:flex"
+            onClick={() => scrollCategories('right')}
+            aria-label="Próximas categorias"
+          >
+            <ChevronRight size={14} />
+          </button>
+        </div>
+      )}
+
+      {/* Search input */}
+      {!isBulkMode && (
+        <div className="relative flex items-center">
+          <Input
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Buscar itens..."
+            className="rounded-xl pr-8"
+          />
+          {isSearchPending && (
+            <span className="pointer-events-none absolute right-2 flex items-center">
+              <Spinner size="sm" className="text-muted-foreground" />
+            </span>
+          )}
         </div>
       )}
 
@@ -2202,34 +2189,23 @@ const ShoppingList = memo(() => {
         className="hidden"
       />
 
-      {/* Search input */}
-      {!isBulkMode && (
-        <div className="relative flex items-center">
-          <Input
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Buscar itens..."
-            className="pr-8"
-          />
-          {isSearchPending && (
-            <span className="pointer-events-none absolute right-2 flex items-center">
-              <Spinner size="sm" className="text-muted-foreground" />
-            </span>
-          )}
-        </div>
-      )}
-
       {/* Item list */}
       {isLoadingDetail ? (
-        <div className="space-y-3">
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="flex items-center gap-3 rounded-lg border bg-card p-3">
-              <Skeleton className="h-5 w-5 rounded" />
-              <div className="flex-1 space-y-2">
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-3 w-1/3" />
+        <div className="space-y-4">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="overflow-hidden rounded-2xl border border-border bg-card">
+              <div className="flex items-center gap-3 border-b border-border px-6 py-4">
+                <Skeleton className="h-8 w-8 rounded-2xl" />
+                <Skeleton className="h-4 w-32" />
               </div>
-              <Skeleton className="h-7 w-14" />
+              {[...Array(2)].map((_, j) => (
+                <div key={j} className="flex items-center gap-4 border-t border-border/30 px-6 py-4">
+                  <Skeleton className="h-6 w-6 rounded-lg" />
+                  <Skeleton className="h-4 flex-1" />
+                  <Skeleton className="h-4 w-14" />
+                  <Skeleton className="h-4 w-20" />
+                </div>
+              ))}
             </div>
           ))}
         </div>
@@ -2250,24 +2226,27 @@ const ShoppingList = memo(() => {
           </Button>
         </div>
       ) : (
-        <div className="space-y-6">
-          {groupedItemEntries.map(([category, items]) => (
-            <div key={category}>
-              <div className="mb-2 flex items-center gap-2">
-                {isBulkMode &&
-                  (() => {
-                    const unpurchased = items.filter((i) => !i.isPurchased);
-                    if (unpurchased.length === 0) return null;
-                    const allSelected = unpurchased.every((i) =>
-                      selectedItemIds.has(i.shoppingItemId)
-                    );
-                    const someSelected = unpurchased.some((i) =>
-                      selectedItemIds.has(i.shoppingItemId)
-                    );
-                    return (
+        <div className="space-y-4">
+          {groupedItemEntries.map(([category, items]) => {
+            const isCollapsed = collapsedCategories.has(category);
+            const purchasedCount = items.filter((i) => i.isPurchased).length;
+            const unpurchased = items.filter((i) => !i.isPurchased);
+            const allGroupSelected =
+              unpurchased.length > 0 && unpurchased.every((i) => selectedItemIds.has(i.shoppingItemId));
+            const someGroupSelected = unpurchased.some((i) => selectedItemIds.has(i.shoppingItemId));
+
+            return (
+              <div
+                key={category}
+                className="overflow-hidden rounded-2xl border border-border bg-card dark:bg-[#1e1e1e]"
+              >
+                {/* Category header */}
+                <div className="flex items-center justify-between border-b border-border/50 bg-card px-5 py-3.5 dark:bg-[#242424]">
+                  <div className="flex items-center gap-3">
+                    {isBulkMode && unpurchased.length > 0 && (
                       <Checkbox
-                        checked={allSelected}
-                        data-state={someSelected && !allSelected ? 'indeterminate' : undefined}
+                        checked={allGroupSelected}
+                        data-state={someGroupSelected && !allGroupSelected ? 'indeterminate' : undefined}
                         onCheckedChange={(checked) => {
                           setSelectedItemIds((prev) => {
                             const next = new Set(prev);
@@ -2280,185 +2259,422 @@ const ShoppingList = memo(() => {
                         }}
                         className="shrink-0"
                       />
-                    );
-                  })()}
-                <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                  {category}
-                </span>
-                <div className="h-px flex-1 bg-border" />
-                <span className="text-xs text-muted-foreground">
-                  {items.filter((i) => i.isPurchased).length}/{items.length}
-                </span>
-              </div>
-              <div className="space-y-2">
-                <AnimatePresence mode="popLayout">
-                  {items.map((item) => (
-                    <motion.div
-                      key={item.shoppingItemId}
-                      layout
-                      initial={{ opacity: 0, y: -6 }}
-                      animate={{ opacity: item.isPurchased ? 0.55 : 1, y: 0 }}
-                      exit={{ opacity: 0, x: -30, scale: 0.97 }}
-                      transition={{ duration: 0.22, ease: [0.25, 1, 0.5, 1] }}
+                    )}
+                    <div
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-2xl"
+                      style={{ background: 'rgba(173,198,255,0.1)' }}
                     >
-                      {item.isPurchased ? (
-                        /* Purchased row — inert, just badge + undo */
-                        <div
-                          className={cn(
-                            'flex items-center gap-3 rounded-lg border px-3 py-3 transition-colors duration-200',
-                            isBulkMode && selectedItemIds.has(item.shoppingItemId)
-                              ? 'border-[#7ba0ff] bg-[rgba(120,160,255,0.08)]'
-                              : 'bg-muted/30 border-border'
-                          )}
-                        >
-                          {/* Filled checkmark */}
-                          <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-sage-500/80">
-                            <CheckCircle2 size={13} className="text-white" />
-                          </div>
+                      <Tag size={13} style={{ color: '#adc6ff' }} />
+                    </div>
+                    <span className="text-sm font-semibold uppercase tracking-wider text-foreground">
+                      {category}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {purchasedCount}/{items.length}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => toggleCategoryCollapse(category)}
+                    className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                    aria-label={isCollapsed ? 'Expandir categoria' : 'Recolher categoria'}
+                  >
+                    {isCollapsed ? <ChevronDown size={15} /> : <ChevronUp size={15} />}
+                  </button>
+                </div>
 
-                          {/* Info */}
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium text-muted-foreground line-through decoration-honey-500/60">
-                              {item.name}
-                            </p>
-                            <p className="text-muted-foreground/70 text-xs">
-                              {quantityLabel(item.quantity, item.unitType)}
-                              {item.price != null && <> · pago {formatCurrency(item.price)}</>}
-                            </p>
-                          </div>
+                {/* Items */}
+                <AnimatePresence initial={false}>
+                  {!isCollapsed && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.22, ease: [0.25, 1, 0.5, 1] }}
+                      className="overflow-hidden"
+                    >
+                      <AnimatePresence mode="popLayout">
+                        {items.map((item, idx) => {
+                          const isEditing = inlineEditingId === item.shoppingItemId;
 
-                          {/* Badge + undo */}
-                          {!isBulkMode && (
-                            <div className="flex shrink-0 items-center gap-1.5">
-                              <span className="inline-flex items-center gap-1 rounded-full border border-sage-500/30 bg-sage-500/15 px-2 py-0.5 text-[11px] font-semibold text-sage-600 dark:text-sage-400">
-                                Comprado
-                              </span>
-                              <button
-                                className="text-muted-foreground/50 hover:bg-destructive/10 shrink-0 touch-manipulation rounded-lg p-1.5 transition-all duration-150 hover:text-destructive active:scale-90 disabled:pointer-events-none disabled:opacity-50"
-                                onClick={() => handleUnmarkAsPurchased(item)}
-                                title="Desfazer compra"
-                                disabled={pendingId === item.shoppingItemId}
-                              >
-                                {pendingId === item.shoppingItemId ? (
-                                  <Spinner size="sm" />
-                                ) : (
-                                  <RotateCcw size={13} />
-                                )}
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      ) : isBulkMode ? (
-                        <div
-                          className={cn(
-                            'flex items-center gap-3 rounded-lg border px-3 py-3 transition-colors duration-200',
-                            selectedItemIds.has(item.shoppingItemId)
-                              ? 'border-[#7ba0ff] bg-[rgba(120,160,255,0.08)]'
-                              : 'bg-card border-border'
-                          )}
-                        >
-                          {/* Bulk checkbox */}
-                          <Checkbox
-                            checked={selectedItemIds.has(item.shoppingItemId)}
-                            onCheckedChange={() => toggleItemSelection(item.shoppingItemId)}
-                            className="shrink-0"
-                          />
-
-                          {/* Empty circle affordance */}
-                          <div className="border-muted-foreground/55 h-5 w-5 shrink-0 rounded-full border-2 transition-colors duration-150" />
-
-                          {/* Info */}
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium text-foreground">{item.name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {quantityLabel(item.quantity, item.unitType)}
-                              {item.estimatedPrice != null && (
-                                <> · est. {formatCurrency(item.estimatedPrice)}</>
-                              )}
-                            </p>
-                          </div>
-                        </div>
-                      ) : (
-                        /* Swipe wrapper — only active for unpurchased non-bulk items */
-                        <SwipeableItem
-                          onEdit={() => {
-                            setSelectedItem(item);
-                            setShowEditItem(true);
-                          }}
-                          onDelete={() => handleDeleteItem(item)}
-                        >
-                          <div
-                            role="button"
-                            tabIndex={0}
-                            onClick={() => {
-                              setSelectedItem(item);
-                              setShowPurchase(true);
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' || e.key === ' ') {
-                                setSelectedItem(item);
-                                setShowPurchase(true);
-                              }
-                            }}
-                            className="hover:border-primary/30 hover:bg-accent/50 flex cursor-pointer touch-manipulation items-center gap-3 rounded-lg border border-border bg-card px-3 py-3 transition-colors duration-150 active:bg-accent"
-                          >
-                            {/* Empty circle affordance */}
-                            <div className="border-muted-foreground/55 h-5 w-5 shrink-0 rounded-full border-2 transition-colors duration-150" />
-
-                            {/* Info */}
-                            <div className="min-w-0 flex-1">
-                              <p className="text-sm font-medium text-foreground">{item.name}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {quantityLabel(item.quantity, item.unitType)}
-                                {item.estimatedPrice != null && (
-                                  <> · est. {formatCurrency(item.estimatedPrice)}</>
-                                )}
-                              </p>
-                            </div>
-
-                            {/* Desktop-only edit/delete icons */}
-                            <div
-                              className="hidden shrink-0 items-center gap-0.5 sm:flex"
-                              onClick={(e) => e.stopPropagation()}
+                          return (
+                            <motion.div
+                              key={item.shoppingItemId}
+                              layout
+                              initial={{ opacity: 0, y: -4 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, x: -20, scale: 0.98 }}
+                              transition={{ duration: 0.2, ease: [0.25, 1, 0.5, 1] }}
+                              className={cn(idx > 0 && 'border-t border-border/30')}
                             >
-                              <button
-                                className="rounded p-1.5 text-muted-foreground transition-colors hover:text-foreground"
-                                onClick={() => {
-                                  setSelectedItem(item);
-                                  setShowEditItem(true);
-                                }}
-                                title="Editar item"
-                              >
-                                <Pencil size={13} />
-                              </button>
-                              <button
-                                className="rounded p-1.5 text-muted-foreground transition-colors hover:text-destructive disabled:pointer-events-none disabled:opacity-50"
-                                onClick={() => handleDeleteItem(item)}
-                                title="Remover item"
-                                disabled={pendingId === item.shoppingItemId}
-                              >
-                                {pendingId === item.shoppingItemId ? (
-                                  <Spinner size="sm" />
-                                ) : (
-                                  <Trash2 size={13} />
-                                )}
-                              </button>
-                            </div>
-                          </div>
-                        </SwipeableItem>
-                      )}
+                              {/* ── Editing state (desktop inline) ── */}
+                              {isEditing ? (
+                                <div className="relative border-l-2 border-[#adc6ff] bg-[rgba(173,198,255,0.04)] px-5 py-5">
+                                  <div className="absolute inset-0 bg-gradient-to-r from-[rgba(173,198,255,0.04)] to-transparent pointer-events-none" />
+                                  <div className="relative flex flex-wrap items-center gap-4">
+                                    {/* Checkbox checked */}
+                                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-[#adc6ff]">
+                                      <Check size={13} style={{ color: '#0e0e0e' }} strokeWidth={3} />
+                                    </div>
+                                    <span className="min-w-0 flex-1 text-sm font-medium text-foreground">
+                                      {item.name}
+                                    </span>
+
+                                    {/* Qty stepper */}
+                                    <div className="flex flex-col gap-1">
+                                      <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+                                        Quantidade
+                                      </span>
+                                      <div className="flex h-9 items-center gap-0 rounded-xl border border-border bg-background">
+                                        <button
+                                          type="button"
+                                          className="flex h-full w-8 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
+                                          onClick={() =>
+                                            setInlineForm((f) => ({
+                                              ...f,
+                                              qty: String(Math.max(0, parseFloat(f.qty || '1') - 1)),
+                                            }))
+                                          }
+                                        >
+                                          <Minus size={12} />
+                                        </button>
+                                        <span className="w-16 text-center text-sm text-foreground">
+                                          {inlineForm.qty} {UNIT_TYPE_LABELS[item.unitType] ?? 'un'}
+                                        </span>
+                                        <button
+                                          type="button"
+                                          className="flex h-full w-8 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
+                                          onClick={() =>
+                                            setInlineForm((f) => ({
+                                              ...f,
+                                              qty: String(parseFloat(f.qty || '0') + 1),
+                                            }))
+                                          }
+                                        >
+                                          <Plus size={12} />
+                                        </button>
+                                      </div>
+                                    </div>
+
+                                    {/* Estimated price */}
+                                    <div className="flex flex-col gap-1">
+                                      <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+                                        Estimado (R$)
+                                      </span>
+                                      <Input
+                                        type="text"
+                                        inputMode="numeric"
+                                        placeholder="0,00"
+                                        value={maskBRL(inlineForm.estimated.replace(/\D/g, ''))}
+                                        onChange={(e) =>
+                                          setInlineForm((f) => ({ ...f, estimated: parseBRLMask(maskBRL(e.target.value.replace(/\D/g, ''))) }))
+                                        }
+                                        className="h-9 w-28 rounded-xl bg-background text-sm"
+                                      />
+                                    </div>
+
+                                    {/* Paid price */}
+                                    <div className="flex flex-col gap-1">
+                                      <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+                                        Pago (R$)
+                                      </span>
+                                      <Input
+                                        type="text"
+                                        inputMode="numeric"
+                                        placeholder="0,00"
+                                        value={maskBRL(inlineForm.paid.replace(/\D/g, ''))}
+                                        onChange={(e) =>
+                                          setInlineForm((f) => ({ ...f, paid: parseBRLMask(maskBRL(e.target.value.replace(/\D/g, ''))) }))
+                                        }
+                                        className="h-9 w-28 rounded-xl bg-background text-sm"
+                                      />
+                                    </div>
+
+                                    {/* Actions */}
+                                    <div className="ml-auto flex items-center gap-2">
+                                      <button
+                                        type="button"
+                                        onClick={cancelInlineEdit}
+                                        className="px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                                        disabled={inlineSaving}
+                                      >
+                                        Cancelar
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => saveInlineEdit(item)}
+                                        disabled={inlineSaving}
+                                        className="rounded-2xl px-6 py-2 text-sm font-semibold transition-colors disabled:opacity-50"
+                                        style={{ background: '#adc6ff', color: '#0e0e0e' }}
+                                      >
+                                        {inlineSaving ? 'Salvando...' : 'Salvar'}
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              ) : item.isPurchased ? (
+                                /* ── Purchased (checked) state ── */
+                                <div
+                                  className={cn(
+                                    'flex cursor-pointer items-center gap-4 px-5 py-4 transition-colors duration-200 hover:bg-accent/20',
+                                    isBulkMode && selectedItemIds.has(item.shoppingItemId)
+                                      ? 'bg-[rgba(120,160,255,0.06)]'
+                                      : 'opacity-70'
+                                  )}
+                                  onClick={() => {
+                                    if (!isBulkMode) {
+                                      setSelectedItem(item);
+                                      setShowMobileEditSheet(true);
+                                    }
+                                  }}
+                                >
+                                  {isBulkMode ? (
+                                    <Checkbox
+                                      checked={selectedItemIds.has(item.shoppingItemId)}
+                                      onCheckedChange={() => toggleItemSelection(item.shoppingItemId)}
+                                      className="shrink-0"
+                                    />
+                                  ) : (
+                                    <button
+                                      onClick={() => handleUnmarkAsPurchased(item)}
+                                      disabled={pendingId === item.shoppingItemId}
+                                      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-[#78dc77] transition-opacity hover:opacity-80 disabled:opacity-50"
+                                    >
+                                      {pendingId === item.shoppingItemId ? (
+                                        <Spinner size="sm" />
+                                      ) : (
+                                        <Check size={13} style={{ color: '#131313' }} strokeWidth={3} />
+                                      )}
+                                    </button>
+                                  )}
+
+                                  <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground line-through">
+                                    {item.name}
+                                  </span>
+
+                                  <div className="hidden items-center gap-8 pr-2 sm:flex">
+                                    <span className="w-16 text-right text-sm text-muted-foreground">
+                                      {quantityLabel(item.quantity, item.unitType)}
+                                    </span>
+                                    <span className="w-24 text-right text-sm text-muted-foreground line-through">
+                                      {item.estimatedPrice != null
+                                        ? formatCurrency(item.estimatedPrice)
+                                        : '---'}
+                                    </span>
+                                    <span className="w-24 text-right text-sm font-medium text-[#78dc77]">
+                                      {item.price != null ? formatCurrency(item.price) : '---'}
+                                    </span>
+                                  </div>
+
+                                  {/* Mobile: paid value only */}
+                                  <span className="shrink-0 text-xs font-medium text-[#78dc77] sm:hidden">
+                                    {item.price != null ? formatCurrency(item.price) : '---'}
+                                  </span>
+
+                                  {!isBulkMode && (
+                                    <div
+                                      className="flex shrink-0 items-center gap-0.5 opacity-50"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <button
+                                        className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                                        onClick={() => handleUnmarkAsPurchased(item)}
+                                        title="Desfazer compra"
+                                        disabled={pendingId === item.shoppingItemId}
+                                      >
+                                        <RotateCcw size={13} />
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+                              ) : isBulkMode ? (
+                                /* ── Bulk selection state ── */
+                                <div
+                                  className={cn(
+                                    'flex items-center gap-4 px-5 py-4 transition-colors duration-200',
+                                    selectedItemIds.has(item.shoppingItemId)
+                                      ? 'bg-[rgba(120,160,255,0.06)]'
+                                      : ''
+                                  )}
+                                >
+                                  <Checkbox
+                                    checked={selectedItemIds.has(item.shoppingItemId)}
+                                    onCheckedChange={() => toggleItemSelection(item.shoppingItemId)}
+                                    className="shrink-0"
+                                  />
+                                  <div className="h-6 w-6 shrink-0 rounded-lg border border-border/60" />
+                                  <span className="min-w-0 flex-1 text-sm font-medium text-foreground">
+                                    {item.name}
+                                  </span>
+                                  <span className="text-sm text-muted-foreground">
+                                    {quantityLabel(item.quantity, item.unitType)}
+                                  </span>
+                                  {item.estimatedPrice != null && (
+                                    <span className="text-sm text-muted-foreground">
+                                      {formatCurrency(item.estimatedPrice)}
+                                    </span>
+                                  )}
+                                </div>
+                              ) : (
+                                /* ── Normal (unpurchased) state ── */
+                                <div
+                                  className="flex cursor-pointer items-center gap-4 px-5 py-4 transition-colors duration-150 hover:bg-accent/30 active:bg-accent/50"
+                                  onClick={() => {
+                                    setSelectedItem(item);
+                                    setShowMobileEditSheet(true);
+                                  }}
+                                >
+
+                                  <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
+                                    {item.name}
+                                  </span>
+
+                                  {/* Desktop columns: qty | estimated | paid */}
+                                  <div className="hidden items-center gap-8 pr-8 sm:flex">
+                                    <span className="w-16 text-right text-sm text-muted-foreground">
+                                      {quantityLabel(item.quantity, item.unitType)}
+                                    </span>
+                                    <span className="w-24 text-right text-sm text-muted-foreground">
+                                      {item.estimatedPrice != null ? formatCurrency(item.estimatedPrice) : '---'}
+                                    </span>
+                                    <span className="w-24 text-right text-sm text-muted-foreground">---</span>
+                                  </div>
+
+                                  {/* Mobile: compact qty */}
+                                  <span className="shrink-0 text-xs text-muted-foreground sm:hidden">
+                                    {quantityLabel(item.quantity, item.unitType)}
+                                  </span>
+
+                                  {/* Desktop action icons */}
+                                  <div
+                                    className="hidden shrink-0 items-center gap-0.5 opacity-50 transition-opacity hover:opacity-100 sm:flex"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <button
+                                      className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                                      onClick={() => openInlineEdit(item)}
+                                      title="Editar item"
+                                    >
+                                      <Pencil size={13} />
+                                    </button>
+                                    <button
+                                      className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:pointer-events-none disabled:opacity-50"
+                                      onClick={() => handleDeleteItem(item)}
+                                      title="Remover item"
+                                      disabled={pendingId === item.shoppingItemId}
+                                    >
+                                      {pendingId === item.shoppingItemId ? <Spinner size="sm" /> : <Trash2 size={13} />}
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+                            </motion.div>
+                          );
+                        })}
+                      </AnimatePresence>
                     </motion.div>
-                  ))}
+                  )}
                 </AnimatePresence>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
+      )}
+
+      {/* Mobile edit/purchase sheet */}
+      {selectedItem && (
+        <Sheet
+          open={showMobileEditSheet}
+          onOpenChange={(v) => {
+            if (!v) {
+              setShowMobileEditSheet(false);
+              setSelectedItem(null);
+            }
+          }}
+        >
+          <SheetContent
+            side="bottom"
+            className="rounded-t-2xl border-t border-border bg-card px-6 pb-8 pt-6 dark:bg-[#1e1e1e]"
+          >
+            <SheetHeader className="mb-5 text-left">
+              <SheetTitle className="text-base font-semibold text-foreground">
+                {selectedItem.name}
+              </SheetTitle>
+              <p className="text-xs text-muted-foreground">
+                {quantityLabel(selectedItem.quantity, selectedItem.unitType)}
+                {selectedItem.estimatedPrice != null && (
+                  <> · estimado {formatCurrency(selectedItem.estimatedPrice)}</>
+                )}
+              </p>
+            </SheetHeader>
+
+            <div className="space-y-4">
+              {/* Quick mark as purchased */}
+              {!selectedItem.isPurchased && (
+                <button
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-sm font-semibold transition-colors"
+                  style={{ background: '#78dc77', color: '#131313' }}
+                  onClick={() => {
+                    setShowMobileEditSheet(false);
+                    setShowPurchase(true);
+                  }}
+                >
+                  <Check size={16} strokeWidth={3} />
+                  Marcar como comprado
+                </button>
+              )}
+
+              {/* Edit + Delete — only when not purchased */}
+              {!selectedItem.isPurchased && (
+                <>
+                  <button
+                    className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border py-3 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+                    onClick={() => {
+                      setShowMobileEditSheet(false);
+                      setShowEditItem(true);
+                    }}
+                  >
+                    <Pencil size={15} />
+                    Editar item
+                  </button>
+
+                  <button
+                    className="flex w-full items-center justify-center gap-2 rounded-2xl border border-destructive/30 py-3 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
+                    onClick={() => {
+                      handleDeleteItem(selectedItem);
+                      setShowMobileEditSheet(false);
+                      setSelectedItem(null);
+                    }}
+                    disabled={pendingId === selectedItem.shoppingItemId}
+                  >
+                    <Trash2 size={15} />
+                    Remover item
+                  </button>
+                </>
+              )}
+
+              {/* Undo purchase — only when purchased */}
+              {selectedItem.isPurchased && (
+                <button
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent"
+                  onClick={() => {
+                    handleUnmarkAsPurchased(selectedItem);
+                    setShowMobileEditSheet(false);
+                    setSelectedItem(null);
+                  }}
+                  disabled={pendingId === selectedItem.shoppingItemId}
+                >
+                  <RotateCcw size={15} />
+                  Desfazer compra
+                </button>
+              )}
+            </div>
+          </SheetContent>
+        </Sheet>
       )}
 
       {/* Floating bulk action bar */}
       {isBulkMode && selectedItems.length > 0 && (
-        <div className="fixed bottom-6 left-1/2 z-50 w-full max-w-sm -translate-x-1/2 px-4">
+        <div className="fixed bottom-4 left-1/2 z-50 w-full max-w-sm -translate-x-1/2 px-4">
           <div className="flex gap-3 rounded-2xl border border-border bg-card p-3 shadow-xl">
             <Button
               variant="outline"
@@ -2585,6 +2801,57 @@ const ShoppingList = memo(() => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* ── Sticky footer bar ────────────────────────────────────────────────── */}
+      {detailData && !isBulkMode && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-between gap-6 border-t border-border/20 bg-card/90 px-6 py-4 backdrop-blur-md dark:bg-[rgba(28,28,28,0.92)] md:left-[var(--sidebar-width,0px)]">
+          {/* Left: remaining balance */}
+          <div className="flex items-center gap-3">
+            <div
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border/30 bg-background"
+            >
+              <ShoppingCart size={16} className="text-muted-foreground" />
+            </div>
+            <div>
+              <p className="font-display text-xl font-bold text-foreground">
+                {totalEstimated > 0 ? formatCurrency(remaining) : '—'}
+              </p>
+              <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+                Restante para finalizar
+              </p>
+            </div>
+          </div>
+
+          {/* Center: progress bar */}
+          <div className="hidden flex-1 items-center gap-3 md:flex">
+            <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+              Progresso
+            </span>
+            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-[rgba(255,202,217,0.6)] to-[#ffcad9] transition-all duration-500"
+                style={{ width: `${detailPct}%` }}
+              />
+            </div>
+            <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+              {detailPct}%
+            </span>
+          </div>
+
+          {/* Right: finish button */}
+          <button
+            className="flex shrink-0 items-center gap-2 rounded-2xl px-6 py-3 text-sm font-bold uppercase tracking-widest text-[#131313] shadow-lg transition-opacity hover:opacity-90 active:scale-95 disabled:opacity-50"
+            style={{
+              background: 'linear-gradient(90deg, #adc6ff 0%, #8cafff 100%)',
+            }}
+            onClick={() => setShowDeleteAlert(false)}
+            disabled={detailTotalItems === 0}
+          >
+            <Check size={14} strokeWidth={3} />
+            Finalizar Compra
+          </button>
+        </div>
+      )}
     </motion.div>
   );
 });

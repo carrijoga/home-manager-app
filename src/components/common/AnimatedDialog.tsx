@@ -5,9 +5,9 @@
  * Wrapper sobre o Dialog do shadcn/ui com animações customizadas.
  */
 
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence,motion } from "framer-motion";
 import { ReactNode } from "react";
-import { modalVariants } from "@/lib/animations";
+
 import {
   Dialog,
   DialogContent,
@@ -16,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { modalVariants } from "@/lib/animations";
 import { cn } from "@/lib/utils";
 
 interface AnimatedDialogProps {

@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Dialog, DialogContent } from '@/components/ui';
+
 import { ProfileNav, type ProfileSectionId } from '@/components/profile/ProfileNav';
+import { ProfileNotificationsPanel } from '@/components/profile/ProfileNotificationsPanel';
 import { ProfileOverviewPanel } from '@/components/profile/ProfileOverviewPanel';
 import { ContaPanel } from '@/components/settings/panels/ContaPanel';
-import { ProfileNotificationsPanel } from '@/components/profile/ProfileNotificationsPanel';
 import { SegurancaPanel } from '@/components/settings/panels/SegurancaPanel';
+import { Dialog, DialogContent } from '@/components/ui';
 
 interface ProfileModalProps {
   open: boolean;

@@ -1,7 +1,8 @@
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
+
 import {
   Avatar,
   AvatarFallback,
@@ -14,10 +15,10 @@ import {
 } from '@/components/ui';
 import { useApp } from '@/contexts/AppContext';
 import {
-  updateProfileSchema,
-  updateUsernameSchema,
   type UpdateProfileData,
+  updateProfileSchema,
   type UpdateUsernameData,
+  updateUsernameSchema,
 } from '@/schemas/settingsSchemas';
 import * as settingsService from '@/services/settingsService';
 

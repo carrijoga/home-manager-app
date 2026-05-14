@@ -1,6 +1,7 @@
+import { Building2, Mail } from 'lucide-react';
+
 import { Avatar, AvatarFallback, AvatarImage, Badge, Separator } from '@/components/ui';
 import { useApp } from '@/contexts/AppContext';
-import { Building2, Mail } from 'lucide-react';
 
 function getInitials(name: string) {
   return name

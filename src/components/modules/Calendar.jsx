@@ -1,5 +1,5 @@
-import React from 'react';
 import { Calendar as CalendarIcon } from 'lucide-react';
+
 import Card from '../common/Card';
 
 /**

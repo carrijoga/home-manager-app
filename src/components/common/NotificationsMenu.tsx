@@ -1,14 +1,15 @@
+import { motion } from "framer-motion";
+import React, { useEffect, useRef } from "react";
+
+import type { BellIconHandle } from "@/components/ui/animated-icons/bell";
+import { BellIcon } from "@/components/ui/animated-icons/bell";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { BellIcon } from "@/components/ui/animated-icons/bell";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
-import React, { useEffect, useRef } from "react";
-import type { BellIconHandle } from "@/components/ui/animated-icons/bell";
 
 export interface Notification {
   id: string;

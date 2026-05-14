@@ -1,7 +1,8 @@
-import { cn } from '@/lib/utils';
-import { useEffect, useMemo, useState } from 'react';
 import { CloudSun, RefreshCw } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+
 import { Button } from '@/components/ui';
+import { cn } from '@/lib/utils';
 
 interface WeatherWidgetProps {
   temperatureLabel: string;

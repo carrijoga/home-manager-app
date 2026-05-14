@@ -1,9 +1,7 @@
+import { Check, Pencil, Plus, Trash2 } from 'lucide-react';
 import * as React from 'react';
 import { toast } from 'sonner';
-import { useApp } from '@/contexts/AppContext';
-import { getIconComponent } from '@/lib/nestIcons';
-import type { AppUserNest } from '@/types';
-import * as userService from '@/services/userService';
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,7 +19,11 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui';
-import { Check, Pencil, Plus, Trash2 } from 'lucide-react';
+import { useApp } from '@/contexts/AppContext';
+import { getIconComponent } from '@/lib/nestIcons';
+import * as userService from '@/services/userService';
+import type { AppUserNest } from '@/types';
+
 import { CreateNestModal } from './CreateNestModal';
 
 interface NestManagerSheetProps {
@@ -159,7 +161,7 @@ export function NestManagerSheet({ open, onClose }: NestManagerSheetProps) {
             <AlertDialogTitle>Remover ninho</AlertDialogTitle>
             <AlertDialogDescription>
               Tem certeza que deseja remover o ninho{' '}
-              <strong>"{deleteTarget?.name}"</strong>? Esta ação não pode ser desfeita.
+              <strong>&quot;{deleteTarget?.name}&quot;</strong>? Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

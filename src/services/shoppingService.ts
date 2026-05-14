@@ -21,6 +21,7 @@ import {
   ShoppingListSummaryResponseSchema,
 } from '@/schemas/shopping';
 import type { AppShoppingCategory, AppShoppingItem, AppShoppingList, AppShoppingListSummary } from '@/types';
+
 import { mockShoppingCategories, mockShoppingListDetails, mockShoppingLists } from '../mocks/data';
 import { DATA_MODE } from './api/config';
 import { ENDPOINTS } from './api/endpoints';

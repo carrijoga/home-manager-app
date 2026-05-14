@@ -1,7 +1,9 @@
+import { zodResolver } from '@hookform/resolvers/zod';
+import { ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
+
 import {
   Badge,
   Button,
@@ -12,8 +14,7 @@ import {
   Label,
   Separator,
 } from '@/components/ui';
-import { ChevronDown } from 'lucide-react';
-import { changePasswordSchema, type ChangePasswordData } from '@/schemas/settingsSchemas';
+import { type ChangePasswordData,changePasswordSchema } from '@/schemas/settingsSchemas';
 import * as settingsService from '@/services/settingsService';
 
 export function SegurancaPanel() {

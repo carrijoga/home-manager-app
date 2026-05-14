@@ -10,10 +10,11 @@
 
 import { motion } from "framer-motion";
 import { ReactNode } from "react";
+
 import {
-  taskVariants,
-  taskCheckboxVariants,
   strikethroughVariants,
+  taskCheckboxVariants,
+  taskVariants,
   transitions,
 } from "@/lib/animations";
 import { cn } from "@/lib/utils";

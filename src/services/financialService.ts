@@ -16,10 +16,11 @@ import {
   FinancialTransactionListResponseSchema,
   FinancialTransactionResponseSchema,
 } from '@/schemas/financial';
-import { DATA_MODE } from './api/config';
-import { httpClient } from './api/httpClient';
-import { ENDPOINTS } from './api/endpoints';
+
 import { mockExpenses } from '../mocks/data';
+import { DATA_MODE } from './api/config';
+import { ENDPOINTS } from './api/endpoints';
+import { httpClient } from './api/httpClient';
 
 // Tipo do mock — mapeado para FinancialTransactionResponse quando possível
 type MockExpense = (typeof mockExpenses)[number];

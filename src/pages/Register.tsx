@@ -1,19 +1,20 @@
-import Logo from "@/components/common/Logo";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { EyeIcon, EyeOffIcon } from "@/components/ui";
-import { Label } from "@/components/ui/label";
-import { Spinner } from "@/components/ui/spinner";
-import { register as registerRequest } from "@/services/authService";
-import * as authService from "@services/authService";
-import { RegisterRequestSchema } from "@/schemas/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useEffect, useState, useRef } from "react";
+import * as authService from "@services/authService";
+import { useEffect, useRef,useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { z } from "zod";
+
+import Logo from "@/components/common/Logo";
+import { EyeIcon, EyeOffIcon } from "@/components/ui";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
+import { RegisterRequestSchema } from "@/schemas/auth";
+import { register as registerRequest } from "@/services/authService";
 
 const RegisterFormSchema = RegisterRequestSchema.extend({
   confirmPassword: z.string().min(1, 'Confirme a senha'),
@@ -89,6 +90,7 @@ function Register() {
   }, [firstName, lastName, usernameManuallyEdited, setValue]);
 
   const onSubmit = async (data: RegisterForm) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { confirmPassword: _, ...payload } = data;
     try {
       const response = await registerRequest(payload);

@@ -4,8 +4,6 @@
  * Mantido temporariamente para referência.
  */
 
-import { cn } from "@/lib/utils";
-import type { AppUser } from "@/types";
 import {
   Calendar,
   CheckSquare,
@@ -18,8 +16,12 @@ import {
 } from "lucide-react";
 import type { FC } from "react";
 import { useMemo, useState } from "react";
-import * as authService from "@/services/authService";
 import { useNavigate } from "react-router-dom";
+
+import { cn } from "@/lib/utils";
+import * as authService from "@/services/authService";
+import type { AppUser } from "@/types";
+
 import GlobalSearch from "./common/GlobalSearch";
 import NotificationsMenu from "./common/NotificationsMenu";
 import ProfileMenu from "./common/ProfileMenu";
@@ -34,6 +36,7 @@ interface NavigationProps {
 interface Module {
   id: string;
   name: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   icon: any;
   path: string;
 }
@@ -106,6 +109,7 @@ const Navigation: FC<NavigationProps> = ({
     return [];
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleSearchResultClick = (result: any) => {
     // TODO: Navegar para o módulo e item específico
     console.log("Search result clicked:", result);

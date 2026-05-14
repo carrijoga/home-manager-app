@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Utilitários para cálculos de métricas do Dashboard
  */
@@ -62,6 +63,7 @@ export function getPreviousMonth(): string {
  * @param expenses - Array de despesas
  * @returns Objeto com totais por mês { 'YYYY-MM': total }
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function groupExpensesByMonth(expenses: any[]): Record<string, number> {
     const grouped: Record<string, number> = {};
 

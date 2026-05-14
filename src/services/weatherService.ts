@@ -1,6 +1,7 @@
 import { mockWeather } from '@/mocks/data';
-import { WeatherQuerySchema, WeatherResponseSchema, type WeatherQuery } from '@/schemas/weather';
+import { type WeatherQuery,WeatherQuerySchema, WeatherResponseSchema } from '@/schemas/weather';
 import type { AppWeather } from '@/types';
+
 import { DATA_MODE } from './api/config';
 import { ENDPOINTS } from './api/endpoints';
 import { ApiError, httpClient } from './api/httpClient';

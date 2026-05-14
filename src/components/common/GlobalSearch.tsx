@@ -1,8 +1,9 @@
-import { cn } from "@/lib/utils";
-import type { ModuleId } from "@/types";
 import { Search, X } from "lucide-react";
 import type { FC } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+
+import { cn } from "@/lib/utils";
+import type { ModuleId } from "@/types";
 
 interface SearchResult {
   id: string;
@@ -74,32 +75,27 @@ const GlobalSearch: FC<GlobalSearchProps> = ({
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [query]); // Removido onSearch das dependências para evitar loops
-
-  // Navegar pelos resultados com teclado
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "ArrowDown") {
-        e.preventDefault();
-        setSelectedIndex((prev) =>
-          prev < results.length - 1 ? prev + 1 : prev
-        );
-      } else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        setSelectedIndex((prev) => (prev > 0 ? prev - 1 : 0));
-      } else if (e.key === "Enter" && results[selectedIndex]) {
-        e.preventDefault();
-        handleResultClick(results[selectedIndex]);
-      }
-    },
-    [results, selectedIndex]
-  );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query]);
 
   const handleResultClick = (result: SearchResult) => {
     onResultClick?.(result);
     setIsOpen(false);
     setQuery("");
     setResults([]);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSelectedIndex((prev) => (prev < results.length - 1 ? prev + 1 : prev));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSelectedIndex((prev) => (prev > 0 ? prev - 1 : 0));
+    } else if (e.key === "Enter" && results[selectedIndex]) {
+      e.preventDefault();
+      handleResultClick(results[selectedIndex]);
+    }
   };
 
   const handleClear = () => {
@@ -194,7 +190,7 @@ const GlobalSearch: FC<GlobalSearchProps> = ({
           />
           <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-popover rounded-lg shadow-lg border border-border p-4">
             <p className="text-sm text-center text-muted-foreground">
-              Nenhum resultado encontrado para "{query}"
+              Nenhum resultado encontrado para &quot;{query}&quot;
             </p>
           </div>
         </>

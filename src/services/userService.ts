@@ -1,4 +1,3 @@
-import { UserProfileResponseSchema, UserSummaryResponseSchema } from '@/schemas/user';
 import type {
   CreateNestRequest,
   UpdateNestRequest,
@@ -8,8 +7,10 @@ import type {
   UserProfileResponse,
   UserSummaryResponse,
 } from '@/schemas/user';
-import { httpClient } from './api/httpClient';
+import { UserProfileResponseSchema, UserSummaryResponseSchema } from '@/schemas/user';
+
 import { ENDPOINTS } from './api/endpoints';
+import { httpClient } from './api/httpClient';
 
 function safeParse<T>(schema: { safeParse: (v: unknown) => { success: boolean; data?: T; error?: { flatten: () => unknown } } }, raw: unknown, name: string): T {
   const result = schema.safeParse(raw);

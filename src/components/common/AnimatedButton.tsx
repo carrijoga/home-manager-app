@@ -6,9 +6,10 @@
  */
 
 import { motion } from "framer-motion";
-import { ReactNode, forwardRef } from "react";
-import { buttonVariants, iconButtonVariants, transitions } from "@/lib/animations";
+import { forwardRef,ReactNode } from "react";
+
 import { Button, ButtonProps } from "@/components/ui/button";
+import { buttonVariants, iconButtonVariants, transitions } from "@/lib/animations";
 import { cn } from "@/lib/utils";
 
 interface AnimatedButtonProps extends ButtonProps {
@@ -28,7 +29,7 @@ const AnimatedButton = forwardRef<HTMLButtonElement, AnimatedButtonProps>(
       children,
       className = "",
       animationType = "default",
-      enableRipple = false,
+      enableRipple: _enableRipple = false,
       disabled,
       ...props
     },

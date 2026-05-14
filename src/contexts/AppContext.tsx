@@ -1,3 +1,5 @@
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
+
 import * as authService from '@/services/authService';
 import * as financialService from '@/services/financialService';
 import * as futureItemsService from '@/services/futureItemsService';
@@ -5,7 +7,6 @@ import * as noticeService from '@/services/noticeService';
 import * as shoppingService from '@/services/shoppingService';
 import * as taskService from '@/services/taskService';
 import * as userService from '@/services/userService';
-import { userProfileToAppUser } from '@/types';
 import type {
   AppNotification,
   AppShoppingCategory,
@@ -18,7 +19,7 @@ import type {
   Notice,
   Task,
 } from '@/types';
-import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { userProfileToAppUser } from '@/types';
 
 // ---------- Types ----------
 

@@ -1,4 +1,19 @@
+import { motion } from 'framer-motion';
+import {
+  Calendar,
+  CheckCircle2,
+  DollarSign,
+  ShoppingCart,
+} from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+
 import { useApp } from '@/contexts/AppContext';
+import { getWeatherPreferences, WEATHER_PREFERENCES_UPDATED_EVENT } from '@/lib/weatherPreferences';
+import { DATA_MODE } from '@/services/api/config';
+import * as calendarService from '@/services/calendarService';
+import * as goalsService from '@/services/goalsService';
+import * as weatherService from '@/services/weatherService';
+import { ApiPriority } from '@/types';
 import {
   formatCurrency,
   getCurrentMonth,
@@ -6,14 +21,6 @@ import {
   groupExpensesByMonth,
   groupTasksByMonth,
 } from '@/utils/dashboardMetrics';
-import {
-  Calendar,
-  CheckCircle2,
-  DollarSign,
-  ShoppingCart,
-} from 'lucide-react';
-import { motion } from 'framer-motion';
-import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import BulletinBoard from '../common/BulletinBoard';
 import DashboardHeader from '../common/DashboardHeader';
@@ -21,13 +28,7 @@ import FamilyGoalCard from '../common/FamilyGoalCard';
 import ModuleMetricWidget from '../common/ModuleMetricWidget';
 import SpendingByCategory from '../common/SpendingByCategory';
 import UpcomingEvents from '../common/UpcomingEvents';
-import DashboardTasksSection from './DashboardTasksSection';
-import { getWeatherPreferences, WEATHER_PREFERENCES_UPDATED_EVENT } from '@/lib/weatherPreferences';
-import { DATA_MODE } from '@/services/api/config';
-import * as calendarService from '@/services/calendarService';
-import * as goalsService from '@/services/goalsService';
-import * as weatherService from '@/services/weatherService';
-import { ApiPriority } from '@/types';
+
 
 function formatRelativeNoticeTime(dateValue) {
   const createdAt = new Date(dateValue);
@@ -85,11 +86,6 @@ const Dashboard = () => {
     user,
     pinNotice,
     unpinNotice,
-    addTask,
-    updateTask,
-    createQuickTask,
-    completeTask,
-    deleteTask,
   } = useApp();
   const [weatherState, setWeatherState] = useState({
     loading: false,

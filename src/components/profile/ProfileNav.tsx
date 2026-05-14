@@ -1,5 +1,6 @@
-import { cn } from '@/lib/utils';
 import { BellRing, LayoutGrid, Lock, User } from 'lucide-react';
+
+import { cn } from '@/lib/utils';
 
 export type ProfileSectionId = 'perfil' | 'conta' | 'seguranca' | 'notificacoes';
 

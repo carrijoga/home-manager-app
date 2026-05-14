@@ -3,15 +3,16 @@
  * Suporta API real e modo mock (DATA_MODE === 'mock').
  */
 
-import type { Task, PaginatedResponse } from '@/types';
-import type { CreateTaskRequest, CreateQuickTaskRequest, UpdateTaskRequest } from '@/schemas/tasks';
-import { TaskResponseSchema, TaskHistoryResponseSchema } from '@/schemas/tasks';
-import { PRIORITY_LABELS, CATEGORY_LABELS } from '@/schemas/enums';
-import { ApiPriority, ApiCategory } from '@/types';
+import { CATEGORY_LABELS,PRIORITY_LABELS } from '@/schemas/enums';
+import type { CreateQuickTaskRequest, CreateTaskRequest, UpdateTaskRequest } from '@/schemas/tasks';
+import { TaskHistoryResponseSchema,TaskResponseSchema } from '@/schemas/tasks';
+import type { PaginatedResponse,Task } from '@/types';
+import { ApiCategory,ApiPriority } from '@/types';
+
 import { mockTasks } from '../mocks/data';
-import { httpClient } from './api/httpClient';
-import { ENDPOINTS } from './api/endpoints';
 import { DATA_MODE } from './api/config';
+import { ENDPOINTS } from './api/endpoints';
+import { httpClient } from './api/httpClient';
 
 // ── Mappers ───────────────────────────────────────────────────────────────────
 

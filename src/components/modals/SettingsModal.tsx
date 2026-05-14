@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Dialog, DialogContent } from '@/components/ui';
-import { SettingsNav, type SectionId } from '@/components/settings/SettingsNav';
-import { GeralPanel } from '@/components/settings/panels/GeralPanel';
+
 import { AparenciaPanel } from '@/components/settings/panels/AparenciaPanel';
-import { LocalizacaoClimaPanel } from '@/components/settings/panels/LocalizacaoClimaPanel';
 import { DadosPrivacidadePanel } from '@/components/settings/panels/DadosPrivacidadePanel';
+import { GeralPanel } from '@/components/settings/panels/GeralPanel';
+import { LocalizacaoClimaPanel } from '@/components/settings/panels/LocalizacaoClimaPanel';
 import { SobrePanel } from '@/components/settings/panels/SobrePanel';
+import { type SectionId,SettingsNav } from '@/components/settings/SettingsNav';
+import { Dialog, DialogContent } from '@/components/ui';
 
 interface SettingsModalProps {
   open: boolean;

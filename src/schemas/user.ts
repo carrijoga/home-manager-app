@@ -1,6 +1,7 @@
 import { z } from 'zod';
-import { UuidSchema, DateTimeSchema } from './shared';
+
 import { NestRoleSchema, NotificationTypeSchema } from './enums';
+import { DateTimeSchema,UuidSchema } from './shared';
 
 export const UserConfigurationResponseSchema = z.object({
   userConfigurationId: UuidSchema,

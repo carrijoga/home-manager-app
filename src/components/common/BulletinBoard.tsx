@@ -1,8 +1,9 @@
-import { cn } from "@/lib/utils";
-import { ApiPriority } from "@/types";
 import { motion } from "framer-motion";
 import { Pin } from "lucide-react";
 import { ReactNode } from "react";
+
+import { cn } from "@/lib/utils";
+import { ApiPriority } from "@/types";
 
 export interface BulletinNote {
   id: string;

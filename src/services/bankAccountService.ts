@@ -1,11 +1,12 @@
-import { BankAccountResponseSchema } from '@/schemas/bank-account';
 import type {
   BankAccountResponse,
   CreateBankAccountRequest,
   UpdateBankAccountRequest,
 } from '@/schemas/bank-account';
-import { httpClient } from './api/httpClient';
+import { BankAccountResponseSchema } from '@/schemas/bank-account';
+
 import { ENDPOINTS } from './api/endpoints';
+import { httpClient } from './api/httpClient';
 
 function safeParse<T>(
   schema: { safeParse: (v: unknown) => { success: boolean; data?: T; error?: { flatten: () => unknown } } },

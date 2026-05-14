@@ -1,4 +1,5 @@
-import { type ReactNode, createContext, useContext, useEffect, useRef, useState } from 'react';
+import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from 'react';
+
 import { useApp } from '@/contexts/AppContext';
 
 interface LoadingContextValue {

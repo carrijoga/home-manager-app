@@ -1,7 +1,9 @@
 import { useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import { DashboardSkeleton } from '../skeletons';
+
 import { useApp } from '@/contexts/AppContext';
+
+import { DashboardSkeleton } from '../skeletons';
 
 export default function RequireAuth({ children }) {
   const { user, sessionChecked, checkSession } = useApp();
@@ -10,6 +12,7 @@ export default function RequireAuth({ children }) {
     if (!sessionChecked) {
       checkSession();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!sessionChecked) {

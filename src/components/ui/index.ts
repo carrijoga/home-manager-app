@@ -10,46 +10,39 @@ export { EyeIcon, EyeOffIcon } from './eye-icons';
  */
 
 // Form Components
-export { Button, buttonVariants } from './button';
 export type { ButtonProps } from './button';
-
+export { Button, buttonVariants } from './button';
 export { Input } from './input';
-
-export { Textarea } from './textarea';
-
 export { Label } from './label';
-
 export {
   Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectScrollDownButton, SelectScrollUpButton, SelectSeparator, SelectTrigger, SelectValue
 } from './select';
+export { Textarea } from './textarea';
 
 // Layout Components
 export {
   Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle
 } from './card';
-
 export { Separator } from './separator';
 
 // Overlay Components
 export {
-  Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogOverlay, DialogPortal, DialogTitle, DialogTrigger
-} from './dialog';
-
-export {
   AlertDialog, AlertDialogAction,
   AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogOverlay, AlertDialogPortal, AlertDialogTitle, AlertDialogTrigger
 } from './alert-dialog';
+export {
+  Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogOverlay, DialogPortal, DialogTitle, DialogTrigger
+} from './dialog';
 
 // Display Components
-export { Badge, badgeVariants } from './badge';
-export type { BadgeProps } from './badge';
-
 export { Avatar, AvatarFallback, AvatarImage } from './avatar';
+export type { BadgeProps } from './badge';
+export { Badge, badgeVariants } from './badge';
 
 // Date Components
 export { Calendar } from './calendar';
-export { DatePicker } from './date-picker';
 export type { DatePickerProps } from './date-picker';
+export { DatePicker } from './date-picker';
 export { Popover, PopoverContent, PopoverTrigger } from './popover';
 
 // Navigation Components

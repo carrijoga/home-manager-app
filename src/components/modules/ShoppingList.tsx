@@ -72,6 +72,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { cn } from '@/lib/utils';
 import { UNIT_TYPE_LABELS } from '@/schemas/enums';
 import type { AppShoppingItem, AppShoppingList } from '@/types';
+import MoneyInput from '@components/common/MoneyInput';
 
 // ── Types ───────────────────────────────────────────────────────────────────────
 
@@ -88,12 +89,12 @@ interface ItemFormData {
   quantity: string;
   unitType: string;
   categoryId: string;
-  estimatedPrice: string;
+  estimatedPrice: number | null;
   notes: string;
 }
 
 interface PurchaseFormData {
-  price: string;
+  price: number | null;
   purchasedAt: string; // YYYY-MM-DD
 }
 
@@ -128,19 +129,6 @@ function quantityLabel(quantity: number, unitType: number): string {
   return `${quantity} ${UNIT_TYPE_LABELS[unitType] ?? 'un'}`;
 }
 
-// Formats a raw string input into BRL display (e.g. "1234" → "12,34")
-function maskBRL(raw: string): string {
-  const digits = raw.replace(/\D/g, '');
-  if (!digits) return '';
-  const num = parseInt(digits, 10) / 100;
-  return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
-// Parses a BRL-masked string back to a plain decimal string for state storage
-function parseBRLMask(masked: string): string {
-  if (!masked) return '';
-  return masked.replace(/\./g, '').replace(',', '.');
-}
 
 function todayISO(): string {
   return new Date().toISOString().slice(0, 10);
@@ -167,11 +155,11 @@ const emptyItemForm = (): ItemFormData => ({
   quantity: '1',
   unitType: '0',
   categoryId: '',
-  estimatedPrice: '',
+  estimatedPrice: null,
   notes: '',
 });
 const emptyPurchaseForm = (est?: number | null): PurchaseFormData => ({
-  price: est != null ? String(est) : '',
+  price: est ?? null,
   purchasedAt: todayISO(),
 });
 
@@ -683,7 +671,7 @@ function BulkEditDialog({
   const [quantity, setQuantity] = useState('');
   const [unitType, setUnitType] = useState<string>('');
   const [categoryId, setCategoryId] = useState<string>('');
-  const [estimatedPrice, setEstimatedPrice] = useState('');
+  const [estimatedPrice, setEstimatedPrice] = useState<number | null>(null);
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -692,7 +680,7 @@ function BulkEditDialog({
       setQuantity('');
       setUnitType('');
       setCategoryId('');
-      setEstimatedPrice('');
+      setEstimatedPrice(null);
       setCategoryOpen(false);
       setSaving(false);
     }
@@ -715,7 +703,7 @@ function BulkEditDialog({
     if (unitType !== '') patch.unitType = parseInt(unitType);
     if (categoryId === '__clear__') patch.categoryId = null;
     else if (categoryId !== '') patch.categoryId = categoryId;
-    if (estimatedPrice !== '') patch.estimatedPrice = parseFloat(estimatedPrice);
+    if (estimatedPrice !== null) patch.estimatedPrice = estimatedPrice;
     if (Object.keys(patch).length === 0) {
       onClose();
       return;
@@ -898,10 +886,10 @@ const ShoppingList = memo(() => {
 
   // ── Inline edit state (desktop) / mobile drawer ─────────────────────────────
   const [inlineEditingId, setInlineEditingId] = useState<string | null>(null);
-  const [inlineForm, setInlineForm] = useState<{ qty: string; estimated: string; paid: string }>({
+  const [inlineForm, setInlineForm] = useState<{ qty: string; estimated: number | null; paid: number | null }>({
     qty: '',
-    estimated: '',
-    paid: '',
+    estimated: null,
+    paid: null,
   });
   const [inlineSaving, setInlineSaving] = useState(false);
   const [showMobileEditSheet, setShowMobileEditSheet] = useState(false);
@@ -1424,8 +1412,8 @@ const ShoppingList = memo(() => {
     setInlineEditingId(item.shoppingItemId);
     setInlineForm({
       qty: String(item.quantity),
-      estimated: item.estimatedPrice != null ? String(item.estimatedPrice) : '',
-      paid: item.price != null ? String(item.price) : '',
+      estimated: item.estimatedPrice ?? null,
+      paid: item.price ?? null,
     });
   }, []);
 
@@ -1439,8 +1427,8 @@ const ShoppingList = memo(() => {
       setInlineSaving(true);
       try {
         const newQty = parseFloat(inlineForm.qty) || item.quantity;
-        const newEstimated = inlineForm.estimated !== '' ? parseFloat(inlineForm.estimated) : null;
-        const newPaid = inlineForm.paid !== '' ? parseFloat(inlineForm.paid) : null;
+        const newEstimated = inlineForm.estimated;
+        const newPaid = inlineForm.paid;
 
         await updateShoppingItem(
           item.shoppingItemId,

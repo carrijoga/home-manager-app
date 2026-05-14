@@ -6,6 +6,7 @@ import { useToastNotifications } from '@/hooks/use-toast-notifications';
 
 import Button from '../common/Button';
 import Card from '../common/Card';
+import Input from '../common/Input';
 import MoneyInput from '../common/MoneyInput';
 
 interface Expense {
@@ -119,11 +120,10 @@ const Financial = memo(() => {
         </div>
 
         <div className="mb-6 space-y-3 p-4 bg-linen-100 dark:bg-muted rounded-xl border border-linen-300 dark:border-border">
-          <input
-            className="w-full p-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring transition-colors duration-300 bg-background text-foreground placeholder-muted-foreground"
+          <Input
             placeholder="Descrição do gasto..."
             value={newExpense.description}
-            onChange={(e) => setNewExpense({ ...newExpense, description: e.target.value })}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewExpense({ ...newExpense, description: e.target.value })}
           />
           <div className="grid grid-cols-3 gap-3">
             <MoneyInput
@@ -131,11 +131,10 @@ const Financial = memo(() => {
               onChange={(v) => setNewExpense({ ...newExpense, value: v })}
               placeholder="Valor (R$)..."
             />
-            <input
+            <Input
               type="date"
-              className="p-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring bg-background text-foreground"
               value={newExpense.date}
-              onChange={(e) => setNewExpense({ ...newExpense, date: e.target.value })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewExpense({ ...newExpense, date: e.target.value })}
             />
             <select
               value={newExpense.category}

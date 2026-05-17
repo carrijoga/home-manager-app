@@ -4,12 +4,12 @@ import { cn } from '@/lib/utils';
 
 export type SectionId = 'geral' | 'aparencia' | 'localizacao-clima' | 'dados-privacidade' | 'sobre';
 
-export const SECTIONS: { id: SectionId; label: string; icon: React.ElementType }[] = [
-  { id: 'geral', label: 'Geral', icon: Globe },
-  { id: 'aparencia', label: 'Aparência', icon: Palette },
-  { id: 'localizacao-clima', label: 'Localização & Clima', icon: MapPin },
-  { id: 'dados-privacidade', label: 'Dados & Privacidade', icon: Database },
-  { id: 'sobre', label: 'Sobre', icon: Info },
+export const SECTIONS: { id: SectionId; label: string; mobileLabel: string; icon: React.ElementType }[] = [
+  { id: 'geral', label: 'Geral', mobileLabel: 'Geral', icon: Globe },
+  { id: 'aparencia', label: 'Aparência', mobileLabel: 'Aparência', icon: Palette },
+  { id: 'localizacao-clima', label: 'Localização & Clima', mobileLabel: 'Local', icon: MapPin },
+  { id: 'dados-privacidade', label: 'Dados & Privacidade', mobileLabel: 'Dados', icon: Database },
+  { id: 'sobre', label: 'Sobre', mobileLabel: 'Sobre', icon: Info },
 ];
 
 interface SettingsNavProps {
@@ -43,22 +43,22 @@ export function SettingsNav({ active, onSelect }: SettingsNavProps) {
         ))}
       </nav>
 
-      {/* Mobile: horizontal tab strip */}
-      <nav className="flex md:hidden border-b overflow-x-auto shrink-0">
-        {SECTIONS.map(({ id, label, icon: Icon }) => (
+      {/* Mobile: bottom tab bar */}
+      <nav className="flex md:hidden border-t shrink-0 order-last">
+        {SECTIONS.map(({ id, mobileLabel, icon: Icon }) => (
           <button
             key={id}
             type="button"
             onClick={() => onSelect(id)}
             className={cn(
-              'flex flex-col items-center gap-1 px-3 py-2 text-xs whitespace-nowrap transition-colors shrink-0',
+              'flex flex-1 flex-col items-center gap-1 py-2 text-xs transition-colors',
               active === id
-                ? 'border-b-2 border-primary text-primary font-medium'
-                : 'text-muted-foreground hover:text-foreground'
+                ? 'border-t-2 border-primary text-primary font-medium'
+                : 'text-muted-foreground hover:text-foreground border-t-2 border-transparent'
             )}
           >
-            <Icon className="size-4" />
-            {label}
+            <Icon className="size-5" />
+            <span>{mobileLabel}</span>
           </button>
         ))}
       </nav>

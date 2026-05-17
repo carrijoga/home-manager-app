@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
+import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
 
 import { ProfileNav, type ProfileSectionId } from '@/components/profile/ProfileNav';
 import { ProfileNotificationsPanel } from '@/components/profile/ProfileNotificationsPanel';
 import { ProfileOverviewPanel } from '@/components/profile/ProfileOverviewPanel';
 import { ContaPanel } from '@/components/settings/panels/ContaPanel';
 import { SegurancaPanel } from '@/components/settings/panels/SegurancaPanel';
-import { Dialog, DialogContent } from '@/components/ui';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui';
 
 interface ProfileModalProps {
   open: boolean;
@@ -33,6 +34,9 @@ export function ProfileModal({ open, onOpenChange }: ProfileModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl h-[92vh] sm:h-[85vh] flex flex-col md:flex-row p-0 gap-0 overflow-hidden">
+        <VisuallyHidden.Root>
+          <DialogTitle>Perfil</DialogTitle>
+        </VisuallyHidden.Root>
         <ProfileNav active={activeSection} onSelect={setActiveSection} />
         <main className="flex-1 overflow-y-auto p-6">
           <PanelContent section={activeSection} />

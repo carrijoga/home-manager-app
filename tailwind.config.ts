@@ -161,7 +161,17 @@ const config: Config = {
     		},
     	}
     },
-	plugins: [require("tailwindcss-animate"), require("@tailwindcss/container-queries")],
+	plugins: [
+		require("tailwindcss-animate"),
+		require("@tailwindcss/container-queries"),
+		function({ addUtilities }: { addUtilities: (utilities: Record<string, Record<string, string>>) => void }) {
+			addUtilities({
+				'.pb-safe': {
+					'padding-bottom': 'env(safe-area-inset-bottom, 0px)',
+				},
+			});
+		},
+	],
 }
 
 export default config;

@@ -1,4 +1,4 @@
-import { BellRing, LayoutGrid, Lock, User } from 'lucide-react';
+import { BellRing, LayoutGrid, Lock, User, X } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 
@@ -8,21 +8,35 @@ export const PROFILE_SECTIONS: { id: ProfileSectionId; label: string; icon: Reac
   { id: 'perfil', label: 'Perfil', icon: LayoutGrid },
   { id: 'conta', label: 'Conta', icon: User },
   { id: 'seguranca', label: 'Segurança', icon: Lock },
-  { id: 'notificacoes', label: 'Notificações', icon: BellRing },
+  { id: 'notificacoes', label: 'Alertas', icon: BellRing },
 ];
 
 interface ProfileNavProps {
   active: ProfileSectionId;
   onSelect: (id: ProfileSectionId) => void;
+  onClose?: () => void;
 }
 
-export function ProfileNav({ active, onSelect }: ProfileNavProps) {
+export function ProfileNav({ active, onSelect, onClose }: ProfileNavProps) {
   return (
     <>
+      {/* Desktop: vertical sidebar */}
       <nav className="hidden md:flex flex-col w-52 shrink-0 border-r p-3 gap-0.5">
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 py-2">
-          Perfil
-        </p>
+        <div className="flex items-center justify-between px-3 py-2">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            Perfil
+          </p>
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex items-center justify-center w-6 h-6 rounded-full bg-muted text-muted-foreground hover:bg-muted/80 transition-colors"
+            >
+              <X className="size-3.5" />
+              <span className="sr-only">Fechar</span>
+            </button>
+          )}
+        </div>
         {PROFILE_SECTIONS.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
@@ -41,21 +55,22 @@ export function ProfileNav({ active, onSelect }: ProfileNavProps) {
         ))}
       </nav>
 
-      <nav className="flex md:hidden border-b overflow-x-auto shrink-0">
+      {/* Mobile: bottom tab bar */}
+      <nav className="flex md:hidden border-t shrink-0 order-last">
         {PROFILE_SECTIONS.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             type="button"
             onClick={() => onSelect(id)}
             className={cn(
-              'flex flex-col items-center gap-1 px-3 py-2 text-xs whitespace-nowrap transition-colors shrink-0',
+              'flex flex-1 flex-col items-center gap-1 py-2 text-xs transition-colors',
               active === id
-                ? 'border-b-2 border-primary text-primary font-medium'
-                : 'text-muted-foreground hover:text-foreground'
+                ? 'border-t-2 border-primary text-primary font-medium'
+                : 'text-muted-foreground hover:text-foreground border-t-2 border-transparent'
             )}
           >
-            <Icon className="size-4" />
-            {label}
+            <Icon className="size-5" />
+            <span>{label}</span>
           </button>
         ))}
       </nav>

@@ -56,7 +56,7 @@ export function ProfileNav({ active, onSelect, onClose }: ProfileNavProps) {
       </nav>
 
       {/* Mobile: bottom tab bar */}
-      <nav className="flex md:hidden border-t shrink-0 order-last">
+      <nav className="flex md:hidden border-t shrink-0 order-last pb-safe">
         {PROFILE_SECTIONS.map(({ id, label, icon: Icon }) => (
           <button
             key={id}

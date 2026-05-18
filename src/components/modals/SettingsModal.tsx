@@ -1,6 +1,6 @@
-import { useState } from 'react';
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
 import { X } from 'lucide-react';
+import { useState } from 'react';
 
 import { AparenciaPanel } from '@/components/settings/panels/AparenciaPanel';
 import { DadosPrivacidadePanel } from '@/components/settings/panels/DadosPrivacidadePanel';
@@ -30,7 +30,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="
+      <DialogContent hideBuiltinClose className="
         flex flex-col p-0 gap-0 overflow-hidden
         inset-0 translate-x-0 translate-y-0 rounded-none h-dvh w-full max-w-full
         md:inset-auto md:left-[50%] md:top-[50%] md:translate-x-[-50%] md:translate-y-[-50%]
@@ -54,7 +54,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
         </div>
 
         <SettingsNav active={activeSection} onSelect={setActiveSection} />
-        <main className="flex-1 overflow-y-auto p-6 pb-safe">
+        <main className="flex-1 overflow-y-auto p-6">
           <PanelContent section={activeSection} />
         </main>
       </DialogContent>

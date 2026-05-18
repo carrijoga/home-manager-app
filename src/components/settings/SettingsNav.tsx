@@ -44,7 +44,7 @@ export function SettingsNav({ active, onSelect }: SettingsNavProps) {
       </nav>
 
       {/* Mobile: bottom tab bar */}
-      <nav className="flex md:hidden border-t shrink-0 order-last">
+      <nav className="flex md:hidden border-t shrink-0 order-last pb-safe">
         {SECTIONS.map(({ id, mobileLabel, icon: Icon }) => (
           <button
             key={id}

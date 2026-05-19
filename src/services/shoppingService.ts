@@ -72,7 +72,7 @@ function mapCategory(r: ShoppingCategoryResponse): AppShoppingCategory {
   };
 }
 
-function mapItem(r: ShoppingItemResponse): AppShoppingItem {
+export function mapItem(r: ShoppingItemResponse): AppShoppingItem {
   return {
     shoppingItemId: r.shoppingItemId,
     shoppingListId: r.shoppingListId,

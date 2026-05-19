@@ -9,6 +9,7 @@ import type { ViewMode } from '../types';
 
 interface UseShoppingRealtimeArgs {
   connectionRef: React.MutableRefObject<signalR.HubConnection | null>;
+  isConnected: boolean;
   viewMode: ViewMode;
   selectedListId: string | null;
   setDetailData: React.Dispatch<React.SetStateAction<AppShoppingList | null>>;
@@ -19,6 +20,7 @@ interface UseShoppingRealtimeArgs {
 
 export function useShoppingRealtime({
   connectionRef,
+  isConnected,
   viewMode,
   selectedListId,
   setDetailData,
@@ -29,7 +31,7 @@ export function useShoppingRealtime({
   // Join/leave list group when navigating into/out of detail view
   useEffect(() => {
     const connection = connectionRef.current;
-    if (!connection || connection.state !== 'Connected') return;
+    if (!connection || !isConnected) return;
     if (viewMode === 'detail' && selectedListId) {
       connection.invoke('JoinList', selectedListId).catch((err) => {
         if (import.meta.env.DEV) console.warn('[useShoppingRealtime] JoinList failed:', err);
@@ -38,12 +40,12 @@ export function useShoppingRealtime({
         connectionRef.current?.invoke('LeaveList', selectedListId).catch(() => {});
       };
     }
-  }, [connectionRef, viewMode, selectedListId]);
+  }, [isConnected, viewMode, selectedListId]);
 
   // Nest-level events (always active while connected)
   useEffect(() => {
     const connection = connectionRef.current;
-    if (!connection) return;
+    if (!connection || !isConnected) return;
 
     const onListDeleted = (payload: { listId: string }) => {
       setShoppingLists((prev) => prev.filter((l) => l.shoppingListId !== payload.listId));
@@ -56,6 +58,13 @@ export function useShoppingRealtime({
       try {
         const updated = await getShoppingListById(payload.listId, nestId);
         setDetailData((prev) => (prev?.shoppingListId === payload.listId ? updated : prev));
+        setShoppingLists((prev) =>
+          prev.map((l) =>
+            l.shoppingListId === payload.listId
+              ? { ...l, name: updated.name, notes: updated.notes }
+              : l,
+          ),
+        );
       } catch {
         // list may have been deleted — ignore
       }
@@ -78,12 +87,12 @@ export function useShoppingRealtime({
       connection.off('ReceiveListUpdated', onListUpdated);
       connection.off('ReceiveListStatusChanged', onListStatusChanged);
     };
-  }, [connectionRef, selectedListId, nestId, backToLists, setDetailData, setShoppingLists]);
+  }, [isConnected, selectedListId, nestId, backToLists, setDetailData, setShoppingLists]);
 
   // List-level events (item mutations)
   useEffect(() => {
     const connection = connectionRef.current;
-    if (!connection) return;
+    if (!connection || !isConnected) return;
 
     const onItemCreated = (raw: unknown) => {
       const item = mapItem(raw as Parameters<typeof mapItem>[0]);
@@ -145,5 +154,5 @@ export function useShoppingRealtime({
       connection.off('ReceiveItemDeleted', onItemDeleted);
       connection.off('ReceiveItemPurchaseChanged', onItemPurchaseChanged);
     };
-  }, [connectionRef, setDetailData]);
+  }, [isConnected, setDetailData]);
 }

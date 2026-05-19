@@ -14,7 +14,7 @@ import { ShoppingDetailView } from './ShoppingDetailView';
 import { ShoppingListsView } from './ShoppingListsView';
 
 const Shopping = memo(function Shopping() {
-  const { shoppingLists, activeNestId } = useApp();
+  const { activeNestId } = useApp();
 
   const nav = useShoppingNavigation();
   const actions = useShoppingActions(nav.selectedListId, nav.setDetailData);
@@ -24,10 +24,11 @@ const Shopping = memo(function Shopping() {
       ? ENDPOINTS.shoppingHub(activeNestId)
       : null;
 
-  const connectionRef = useSignalR(hubUrl);
+  const { connectionRef, isConnected } = useSignalR(hubUrl);
 
   useShoppingRealtime({
     connectionRef,
+    isConnected,
     viewMode: nav.viewMode,
     selectedListId: nav.selectedListId,
     setDetailData: nav.setDetailData,
@@ -37,7 +38,7 @@ const Shopping = memo(function Shopping() {
   });
 
   const isFinished = nav.selectedListId
-    ? (shoppingLists.find((l) => l.shoppingListId === nav.selectedListId)?.isFinished ?? false)
+    ? (nav.shoppingLists.find((l) => l.shoppingListId === nav.selectedListId)?.isFinished ?? false)
     : false;
 
   const editListInitialData = useMemo(() => {

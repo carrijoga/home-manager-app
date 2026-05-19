@@ -28,7 +28,6 @@ interface CategorySectionProps {
   onOpenInlineEdit: (item: AppShoppingItem) => void;
   onCancelInlineEdit: () => void;
   onSaveInlineEdit: (item: AppShoppingItem) => void;
-  onEdit: (item: AppShoppingItem) => void;
   onDelete: (item: AppShoppingItem) => void;
 }
 

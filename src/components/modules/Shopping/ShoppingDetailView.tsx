@@ -319,10 +319,6 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
               onOpenInlineEdit={onOpenInlineEdit}
               onCancelInlineEdit={onCancelInlineEdit}
               onSaveInlineEdit={onSaveInlineEdit}
-              onEdit={(item) => {
-                setSelectedItem(item);
-                setShowEditItem(true);
-              }}
               onDelete={onDeleteItem}
             />
           ))}

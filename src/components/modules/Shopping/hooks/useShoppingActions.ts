@@ -394,13 +394,13 @@ export function useShoppingActions(
         );
       }
       const catMap = new Map(shoppingCategories.map((c) => [c.shoppingCategoryId, c.name]));
-      const selectedItemIds = new Set(selectedItems.map((i) => i.shoppingItemId));
+      const patchedIds = new Set(selectedItems.map((i) => i.shoppingItemId));
       setDetailData((prev) => {
         if (!prev) return prev;
         return {
           ...prev,
           items: prev.items.map((i) => {
-            if (!selectedItemIds.has(i.shoppingItemId)) return i;
+            if (!patchedIds.has(i.shoppingItemId)) return i;
             const newCategoryId =
               'categoryId' in patch ? (patch.categoryId ?? null) : (i.shoppingCategoryId ?? null);
             return {

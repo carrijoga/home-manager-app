@@ -1,9 +1,11 @@
 // src/components/modules/Shopping/hooks/useShoppingNavigation.ts
+import { useCallback, useMemo, useRef, useState } from 'react';
+
 import { useApp } from '@/contexts/AppContext';
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
 import { useDebounce } from '@/hooks/useDebounce';
 import type { AppShoppingList } from '@/types';
-import { useCallback, useMemo, useRef, useState } from 'react';
+
 import { addMonths, currentMonthValue } from '../helpers';
 import type { ViewMode } from '../types';
 

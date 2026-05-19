@@ -101,5 +101,6 @@ export const ShoppingListSummaryResponseSchema = z.object({
   purchasedItems: z.union([z.number(), z.string()]).transform(Number),
   totalEstimated: MoneySchema.nullable().optional(),
   totalSpent: MoneySchema.nullable().optional(),
+  isFinished: z.boolean().optional(),
 });
 export type ShoppingListSummaryResponse = z.infer<typeof ShoppingListSummaryResponseSchema>;

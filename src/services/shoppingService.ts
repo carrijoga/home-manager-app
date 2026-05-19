@@ -109,6 +109,7 @@ function mapListSummary(r: ShoppingListSummaryResponse): AppShoppingListSummary 
     purchasedItems: Number(r.purchasedItems),
     totalEstimated: r.totalEstimated != null ? Number(r.totalEstimated) : null,
     totalSpent: r.totalSpent != null ? Number(r.totalSpent) : null,
+    isFinished: r.isFinished ?? false,
   };
 }
 
@@ -271,6 +272,22 @@ export async function deleteShoppingList(id: string, nestId?: string): Promise<v
   await httpClient.del<void>(ENDPOINTS.shoppingLists.delete(id), nestId);
 }
 
+export async function finishShoppingList(id: string, nestId?: string): Promise<void> {
+  if (DATA_MODE === 'mock') {
+    return new Promise((resolve) => setTimeout(resolve, 100));
+  }
+
+  await httpClient.patch<void>(ENDPOINTS.shoppingLists.finish(id), undefined, nestId);
+}
+
+export async function unfinishShoppingList(id: string, nestId?: string): Promise<void> {
+  if (DATA_MODE === 'mock') {
+    return new Promise((resolve) => setTimeout(resolve, 100));
+  }
+
+  await httpClient.patch<void>(ENDPOINTS.shoppingLists.unfinish(id), undefined, nestId);
+}
+
 // ── ShoppingItem ──────────────────────────────────────────────────────────────
 
 export async function addShoppingItem(
@@ -386,22 +403,19 @@ export async function markItemAsPurchased(
   await httpClient.patch<void>(ENDPOINTS.shoppingItems.markAsPurchased(id), data, nestId);
 }
 
-export async function unmarkItemAsPurchased(id: string, nestId?: string): Promise<void> {
+export async function unmarkItemAsPurchased(listId: string, itemId: string, nestId?: string): Promise<void> {
   if (DATA_MODE === 'mock') {
-    for (const listId of Object.keys(_mockDetails)) {
-      const idx = _mockDetails[listId].items.findIndex((i) => i.shoppingItemId === id);
-      if (idx !== -1) {
-        _mockDetails[listId].items = _mockDetails[listId].items.map((item, n) =>
-          n === idx ? { ...item, isPurchased: false, price: null, purchasedAt: null } : item,
-        );
-        _recomputeSummary(listId);
-        break;
-      }
+    const idx = _mockDetails[listId]?.items.findIndex((i) => i.shoppingItemId === itemId) ?? -1;
+    if (idx !== -1) {
+      _mockDetails[listId].items = _mockDetails[listId].items.map((item, n) =>
+        n === idx ? { ...item, isPurchased: false, price: null, purchasedAt: null } : item,
+      );
+      _recomputeSummary(listId);
     }
     return new Promise((resolve) => setTimeout(resolve, 100));
   }
 
-  await httpClient.patch<void>(ENDPOINTS.shoppingItems.unmarkAsPurchased(id), undefined, nestId);
+  await httpClient.patch<void>(ENDPOINTS.shoppingItems.unmarkAsPurchased(listId, itemId), undefined, nestId);
 }
 
 // ── Private helper ────────────────────────────────────────────────────────────

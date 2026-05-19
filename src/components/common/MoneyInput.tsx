@@ -1,4 +1,4 @@
-import { NumericFormat, type NumberFormatValues } from 'react-number-format';
+import { type NumberFormatValues,NumericFormat } from 'react-number-format';
 
 import Input from './Input';
 

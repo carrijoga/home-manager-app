@@ -96,6 +96,17 @@ export const UNIT_TYPE_LABELS: Record<number, string> = {
   7: 'pct',
 };
 
+export const UNIT_TYPE_FULL_LABELS: Record<number, string> = {
+  0: 'Unidade — un',
+  1: 'Quilogramas — kg',
+  2: 'Gramas — g',
+  3: 'Litros — L',
+  4: 'Mililitros — mL',
+  5: 'Dúzia — dz',
+  6: 'Caixa — cx',
+  7: 'Pacote — pct',
+};
+
 // Prioridade de tarefa: 0 = Urgente, 1 = Alta, 2 = Media, 3 = Baixa
 export const ApiPrioritySchema = z.number().int();
 export type ApiPriorityType = z.infer<typeof ApiPrioritySchema>;

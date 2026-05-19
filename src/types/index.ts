@@ -193,6 +193,7 @@ export interface AppShoppingListSummary {
   purchasedItems: number;
   totalEstimated?: number | null;
   totalSpent?: number | null;
+  isFinished?: boolean;
 }
 
 /** Informações de compra de item futuro */

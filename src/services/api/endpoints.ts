@@ -71,6 +71,8 @@ export const ENDPOINTS = {
     getById: (id: string) => `/api/shopping-list/${id}`,
     update: (id: string) => `/api/shopping-list/${id}`,
     delete: (id: string) => `/api/shopping-list/${id}`,
+    finish: (id: string) => `/api/shopping-list/${id}/finish`,
+    unfinish: (id: string) => `/api/shopping-list/${id}/unfinished`,
   },
 
   // Itens de compra
@@ -79,7 +81,7 @@ export const ENDPOINTS = {
     update: (id: string) => `/api/shopping-item/${id}`,
     delete: (id: string) => `/api/shopping-item/${id}`,
     markAsPurchased: (id: string) => `/api/shopping-item/${id}/purchase`,
-    unmarkAsPurchased: (id: string) => `/api/shopping-item/${id}/unpurchase`,
+    unmarkAsPurchased: (listId: string, itemId: string) => `/api/shopping-item/${listId}/unpurchase/${itemId}`,
     upload: (listId: string) => `/api/shopping-item/${listId}/upload`,
   },
 

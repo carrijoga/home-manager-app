@@ -73,6 +73,8 @@ interface AppContextValue {
   createShoppingList: (name: string, monthYear: string, notes?: string) => Promise<void>;
   updateShoppingList: (id: string, name: string, monthYear: string, notes?: string) => Promise<void>;
   deleteShoppingList: (id: string) => Promise<void>;
+  finishShoppingList: (id: string) => Promise<void>;
+  unfinishShoppingList: (id: string) => Promise<void>;
   loadShoppingListDetail: (id: string) => Promise<AppShoppingList>;
   addShoppingItem: (listId: string, name: string, quantity: number, unitType: number, categoryId?: string | null, estimatedPrice?: number | null, notes?: string | null) => Promise<AppShoppingItem>;
   updateShoppingItem: (id: string, listId: string, name: string, quantity: number, unitType: number, categoryId?: string | null, estimatedPrice?: number | null, notes?: string | null) => Promise<void>;
@@ -313,6 +315,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setShoppingLists(prev => prev.filter(l => l.shoppingListId !== id));
   };
 
+  const finishShoppingList = async (id: string) => {
+    await shoppingService.finishShoppingList(id, activeNestId ?? undefined);
+    setShoppingLists(prev => prev.map(l => l.shoppingListId === id ? { ...l, isFinished: true } : l));
+  };
+
+  const unfinishShoppingList = async (id: string) => {
+    await shoppingService.unfinishShoppingList(id, activeNestId ?? undefined);
+    setShoppingLists(prev => prev.map(l => l.shoppingListId === id ? { ...l, isFinished: false } : l));
+  };
+
   const loadShoppingListDetail = async (id: string): Promise<AppShoppingList> => {
     return shoppingService.getShoppingListById(id, activeNestId ?? undefined);
   };
@@ -384,7 +396,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const unmarkItemAsPurchased = async (id: string, listId: string, quantity: number, unitType: number, price: number) => {
-    await shoppingService.unmarkItemAsPurchased(id, activeNestId ?? undefined);
+    await shoppingService.unmarkItemAsPurchased(listId, id, activeNestId ?? undefined);
     const spentContrib = price * (isPricePerUnit(unitType) ? quantity : 1);
     setShoppingLists(prev =>
       prev.map(l =>
@@ -555,7 +567,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         else console.error('Erro ao carregar categorias de compras:', shoppingCatsResult.reason);
 
         if (expensesResult.status === 'fulfilled') setExpenses(
-          expensesResult.value.items.map((t: Record<string, unknown>) => ({
+          (expensesResult.value.items ?? expensesResult.value ?? []).map((t: Record<string, unknown>) => ({
             id: (t.financialTransactionId as string) || (t.id as string) || '',
             description: (t.description as string) || '',
             value: Number(t.value ?? 0),
@@ -614,6 +626,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     createShoppingList,
     updateShoppingList,
     deleteShoppingList,
+    finishShoppingList,
+    unfinishShoppingList,
     loadShoppingListDetail,
     addShoppingItem,
     updateShoppingItem,

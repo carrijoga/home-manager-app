@@ -207,16 +207,15 @@ const Dashboard = () => {
   }, []);
 
   // ── Metrics ────────────────────────────────────────────────────────────────
-  const MONTHLY_BUDGET_LIMIT = 6500;
-
   const expenseMetrics = useMemo(() => {
     const cur = getCurrentMonth();
     const prev = getPreviousMonth();
     const byMonth = groupExpensesByMonth(expenses);
     const current = byMonth[cur] || 0;
     const previous = byMonth[prev] || 0;
-    const remaining = Math.max(0, MONTHLY_BUDGET_LIMIT - current);
-    return { current, previous, remaining };
+    const delta = current - previous;
+    const deltaPercent = previous > 0 ? Math.abs(delta / previous) : 0;
+    return { current, previous, delta, deltaPercent };
   }, [expenses]);
 
   const taskMetrics = useMemo(() => {
@@ -351,16 +350,18 @@ const Dashboard = () => {
             icon={<DollarSign size={20} strokeWidth={1.5} />}
             iconColor='var(--primary)'
             category="Finanças"
-            label="Restante do mês"
-            value={formatCurrency(expenseMetrics.remaining)}
+            label="Gasto este mês"
+            value={formatCurrency(expenseMetrics.current)}
             footer={[
-              { label: 'Limite', value: formatCurrency(MONTHLY_BUDGET_LIMIT) },
-              { label: 'Gasto', value: formatCurrency(expenseMetrics.current), valueColor: 'var(--destructive)' },
-            ]}
-            progress={Math.min(1, expenseMetrics.current / MONTHLY_BUDGET_LIMIT)}
-            progressColor={expenseMetrics.current / MONTHLY_BUDGET_LIMIT > 0.8 ? 'var(--destructive)' : 'var(--chart-2)'}
-            progressLabel={expenseMetrics.current / MONTHLY_BUDGET_LIMIT > 0.8 ? 'Acima do planejado' : 'Dentro do planejado'}
-            progressLabelColor={expenseMetrics.current / MONTHLY_BUDGET_LIMIT > 0.8 ? 'var(--destructive)' : 'var(--chart-2)'}
+              { label: 'Mês anterior', value: formatCurrency(expenseMetrics.previous) },
+              expenseMetrics.previous > 0
+                ? {
+                    label: 'Variação',
+                    value: `${expenseMetrics.delta >= 0 ? '+' : ''}${(expenseMetrics.deltaPercent * 100).toFixed(0)}%`,
+                    valueColor: expenseMetrics.delta > 0 ? 'var(--destructive)' : 'var(--chart-2)',
+                  }
+                : undefined,
+            ].filter(Boolean)}
           />
         </motion.div>
 

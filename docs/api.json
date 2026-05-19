@@ -1362,7 +1362,7 @@
         }
       }
     },
-    "/api/shopping-item/{id}/unpurchase": {
+    "/api/shopping-item/{ShoppingListId}/unpurchase/{ShoppingItemId}": {
       "patch": {
         "tags": [
           "ShoppingItem"
@@ -1370,7 +1370,16 @@
         "summary": "Unmarks a shopping item as purchased, resetting price and purchase date",
         "parameters": [
           {
-            "name": "id",
+            "name": "ShoppingListId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "ShoppingItemId",
             "in": "path",
             "required": true,
             "schema": {
@@ -1703,6 +1712,54 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/shopping-list/{shoppingListId}/finish": {
+      "patch": {
+        "tags": [
+          "ShoppingList"
+        ],
+        "summary": "Marks a shopping list as finished",
+        "parameters": [
+          {
+            "name": "shoppingListId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/shopping-list/{shoppingListId}/unfinished": {
+      "patch": {
+        "tags": [
+          "ShoppingList"
+        ],
+        "summary": "Marks a shopping list as unfinished",
+        "parameters": [
+          {
+            "name": "shoppingListId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
           }
         }
       }

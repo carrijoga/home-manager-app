@@ -2,18 +2,39 @@ import { AnimatePresence } from 'framer-motion';
 import { memo, useMemo } from 'react';
 
 import { useApp } from '@/contexts/AppContext';
+import { useSignalR } from '@/hooks/useSignalR';
+import { DATA_MODE } from '@/services/api/config';
+import { ENDPOINTS } from '@/services/api/endpoints';
 
 import { fromISOMonthYear } from './helpers';
 import { useShoppingActions } from './hooks/useShoppingActions';
 import { useShoppingNavigation } from './hooks/useShoppingNavigation';
+import { useShoppingRealtime } from './hooks/useShoppingRealtime';
 import { ShoppingDetailView } from './ShoppingDetailView';
 import { ShoppingListsView } from './ShoppingListsView';
 
 const Shopping = memo(function Shopping() {
-  const { shoppingLists } = useApp();
+  const { shoppingLists, activeNestId } = useApp();
 
   const nav = useShoppingNavigation();
   const actions = useShoppingActions(nav.selectedListId, nav.setDetailData);
+
+  const hubUrl =
+    DATA_MODE !== 'mock' && activeNestId
+      ? ENDPOINTS.shoppingHub(activeNestId)
+      : null;
+
+  const connectionRef = useSignalR(hubUrl);
+
+  useShoppingRealtime({
+    connectionRef,
+    viewMode: nav.viewMode,
+    selectedListId: nav.selectedListId,
+    setDetailData: nav.setDetailData,
+    setShoppingLists: nav.setShoppingLists,
+    backToLists: nav.backToLists,
+    nestId: activeNestId ?? undefined,
+  });
 
   const isFinished = nav.selectedListId
     ? (shoppingLists.find((l) => l.shoppingListId === nav.selectedListId)?.isFinished ?? false)
@@ -57,6 +78,7 @@ const Shopping = memo(function Shopping() {
           onCreateList={actions.handleCreateList}
           onEditListFromGrid={actions.handleEditListFromGrid}
           onDeleteListFromGrid={actions.handleDeleteListFromGrid}
+          onUnfinishList={actions.handleUnfinishList}
         />
       ) : (
         <ShoppingDetailView

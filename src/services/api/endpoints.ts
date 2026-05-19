@@ -92,6 +92,10 @@ export const ENDPOINTS = {
     delete: (id: string) => `/api/shopping-category/${id}`,
   },
 
+  // Hub SignalR — Listas de compras
+  shoppingHub: (nestId: string) =>
+    `${(import.meta.env.VITE_API_URL || 'http://localhost:5026').replace(/\/$/, '')}/hubs/shopping-list?nestId=${nestId}`,
+
   // Avisos (Notices)
   notices: {
     list: '/api/notices',

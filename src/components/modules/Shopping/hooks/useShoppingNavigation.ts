@@ -1,5 +1,5 @@
 // src/components/modules/Shopping/hooks/useShoppingNavigation.ts
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useApp } from '@/contexts/AppContext';
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
@@ -10,7 +10,8 @@ import { addMonths, currentMonthValue } from '../helpers';
 import type { ViewMode } from '../types';
 
 export function useShoppingNavigation() {
-  const { shoppingLists, shoppingCategories, loadShoppingListDetail } = useApp();
+  const { shoppingLists: remoteShoppingLists, shoppingCategories, loadShoppingListDetail } = useApp();
+  const [shoppingLists, setShoppingLists] = useState(remoteShoppingLists);
   const { showError } = useToastNotifications();
 
   const [viewMode, setViewMode] = useState<ViewMode>('lists');
@@ -26,6 +27,10 @@ export function useShoppingNavigation() {
   const debouncedSearch = useDebounce(searchTerm, 300);
   const isSearchPending = searchTerm !== debouncedSearch;
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    setShoppingLists(remoteShoppingLists);
+  }, [remoteShoppingLists]);
 
   const categoryScrollRef = useRef<HTMLDivElement | null>(null);
   const categoryDragRef = useRef({ startX: 0, scrollLeft: 0, isDragging: false });
@@ -177,7 +182,7 @@ export function useShoppingNavigation() {
     filterMonth, monthNavDir, categoryFilter, setCategoryFilter,
     sortOrder, setSortOrder, searchTerm, setSearchTerm,
     debouncedSearch, isSearchPending, collapsedCategories,
-    shoppingLists, uniqueCategories,
+    shoppingLists, setShoppingLists, uniqueCategories,
     // refs
     categoryScrollRef,
     // computed

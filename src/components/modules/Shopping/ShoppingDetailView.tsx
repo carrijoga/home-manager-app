@@ -33,7 +33,6 @@ interface ShoppingDetailViewProps {
   detailData: AppShoppingList | null;
   isLoadingDetail: boolean;
   isFinished: boolean;
-  selectedListId: string | null;
   editListInitialData: ListFormData | undefined;
   uniqueCategories: Array<{ shoppingCategoryId: string; name: string; isDefault: boolean }>;
   categoriesInDetail: string[];
@@ -210,21 +209,10 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
       {/* ── Page header ─────────────────────────────────────────────────────── */}
       <DetailHeader
         detailData={detailData}
-        isFinished={isFinished}
-        isLoadingDetail={isLoadingDetail}
-        isBulkMode={isBulkMode}
-        isUploading={isUploading}
         totalEstimated={totalEstimated}
         totalSpent={totalSpent}
         remaining={remaining}
         onBack={onBack}
-        onShowEditList={() => setShowEditList(true)}
-        onShowDeleteAlert={() => setShowDeleteAlert(true)}
-        onFinishList={onFinishList}
-        onUnfinishList={onUnfinishList}
-        onShowCategories={() => setShowCategories(true)}
-        onUploadClick={() => uploadInputRef.current?.click()}
-        onEnterBulkMode={() => setIsBulkMode(true)}
       />
 
       {/* ── Sort + action toolbar / filter bar ───────────────────────────────── */}

@@ -54,7 +54,6 @@ export function CategorySection(props: CategorySectionProps) {
     onOpenInlineEdit,
     onCancelInlineEdit,
     onSaveInlineEdit,
-    onEdit,
     onDelete,
   } = props;
 
@@ -156,7 +155,6 @@ export function CategorySection(props: CategorySectionProps) {
                       onOpenInlineEdit={onOpenInlineEdit}
                       onCancelInlineEdit={onCancelInlineEdit}
                       onSaveInlineEdit={onSaveInlineEdit}
-                      onEdit={onEdit}
                       onDelete={onDelete}
                     />
                   </motion.div>

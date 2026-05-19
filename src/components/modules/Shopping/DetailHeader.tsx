@@ -10,21 +10,10 @@ import type { AppShoppingList } from '@/types';
 
 interface DetailHeaderProps {
   detailData: AppShoppingList | null;
-  isFinished: boolean;
-  isLoadingDetail: boolean;
-  isBulkMode: boolean;
-  isUploading: boolean;
   totalEstimated: number;
   totalSpent: number;
   remaining: number;
   onBack: () => void;
-  onShowEditList: () => void;
-  onShowDeleteAlert: () => void;
-  onFinishList: () => void;
-  onUnfinishList: () => void;
-  onShowCategories: () => void;
-  onUploadClick: () => void;
-  onEnterBulkMode: () => void;
 }
 
 export function DetailHeader(props: DetailHeaderProps) {

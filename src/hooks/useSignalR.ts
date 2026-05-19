@@ -1,7 +1,8 @@
+import type React from 'react';
 import * as signalR from '@microsoft/signalr';
 import { useEffect, useRef } from 'react';
 
-export function useSignalR(url: string | null): signalR.HubConnection | null {
+export function useSignalR(url: string | null): React.MutableRefObject<signalR.HubConnection | null> {
   const connectionRef = useRef<signalR.HubConnection | null>(null);
 
   useEffect(() => {
@@ -26,10 +27,10 @@ export function useSignalR(url: string | null): signalR.HubConnection | null {
     });
 
     return () => {
-      connection.stop();
+      connection.stop().catch(() => {});
       connectionRef.current = null;
     };
   }, [url]);
 
-  return connectionRef.current;
+  return connectionRef;
 }

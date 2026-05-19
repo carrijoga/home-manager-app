@@ -1,2 +1,1 @@
-// Replaced by ShoppingList.tsx - this file is kept for compatibility during migration
-export { default } from './ShoppingList.tsx';
+export { default } from './Shopping/index.tsx';

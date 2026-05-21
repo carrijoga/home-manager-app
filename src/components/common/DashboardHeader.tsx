@@ -14,6 +14,7 @@ interface DashboardHeaderProps {
   isWeatherLoading?: boolean;
   isWeatherError?: boolean;
   onRefreshWeather?: () => void;
+  onWeatherEnable?: () => void;
   className?: string;
 }
 
@@ -35,6 +36,7 @@ export function DashboardHeader({
   isWeatherLoading = false,
   isWeatherError = false,
   onRefreshWeather,
+  onWeatherEnable,
   className,
 }: DashboardHeaderProps) {
   return (
@@ -66,13 +68,14 @@ export function DashboardHeader({
         )}
       </div>
 
-      {showWeather && (
+      {showWeather ? (
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.45, ease: [0.25, 1, 0.5, 1], delay: 0.2 }}
         >
           <WeatherWidget
+            mode="display"
             city={weatherCity}
             description={weatherDescription}
             temperatureLabel={weatherTemperatureLabel}
@@ -81,7 +84,18 @@ export function DashboardHeader({
             onRefresh={onRefreshWeather}
           />
         </motion.div>
-      )}
+      ) : onWeatherEnable ? (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.45, ease: [0.25, 1, 0.5, 1], delay: 0.2 }}
+        >
+          <WeatherWidget
+            mode="onboarding"
+            onEnable={onWeatherEnable}
+          />
+        </motion.div>
+      ) : null}
     </div>
   );
 }

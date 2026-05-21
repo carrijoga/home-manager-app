@@ -8,7 +8,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useApp } from '@/contexts/AppContext';
-import { getWeatherPreferences, WEATHER_PREFERENCES_UPDATED_EVENT } from '@/lib/weatherPreferences';
+import { getWeatherPreferences, saveWeatherPreferences, WEATHER_PREFERENCES_UPDATED_EVENT } from '@/lib/weatherPreferences';
 import { DATA_MODE } from '@/services/api/config';
 import * as calendarService from '@/services/calendarService';
 import * as goalsService from '@/services/goalsService';
@@ -161,6 +161,31 @@ const Dashboard = () => {
       setWeatherState(prev => ({ ...prev, loading: false, error: true }));
     }
   }, []);
+
+  const handleEnableWeather = useCallback(() => {
+    if (!('geolocation' in navigator)) {
+      toast.error('Seu navegador não suporta geolocalização.');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      position => {
+        saveWeatherPreferences({
+          consentGiven: true,
+          method: 'gps',
+          coords: {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          },
+        });
+        loadWeather();
+      },
+      () => {
+        toast.error('Não foi possível obter sua localização.');
+      },
+      { enableHighAccuracy: false, timeout: 10_000 }
+    );
+  }, [loadWeather]);
 
   useEffect(() => {
     loadWeather();
@@ -336,6 +361,7 @@ const Dashboard = () => {
         isWeatherLoading={weatherState.loading}
         isWeatherError={weatherState.error}
         onRefreshWeather={loadWeather}
+        onWeatherEnable={handleEnableWeather}
       />
 
       {/* ── Row 1: Module Metric Widgets ── */}

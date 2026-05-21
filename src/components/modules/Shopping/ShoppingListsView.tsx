@@ -1,6 +1,6 @@
 import { formatCurrency } from '@utils/formatters';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Flame, MoreVertical, Pencil, Plus, ShoppingCart, Sparkles, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Flame, MoreVertical, Pencil, Plus, RotateCcw, ShoppingCart, Sparkles, Trash2 } from 'lucide-react';
 
 import {
   AlertDialog,
@@ -39,6 +39,7 @@ interface ShoppingListsViewProps {
   onCreateList: (data: ListFormData) => Promise<void>;
   onEditListFromGrid: (data: ListFormData) => Promise<void>;
   onDeleteListFromGrid: () => Promise<void>;
+  onUnfinishList: (id: string) => Promise<void>;
 }
 
 export function ShoppingListsView(props: ShoppingListsViewProps) {
@@ -62,6 +63,7 @@ export function ShoppingListsView(props: ShoppingListsViewProps) {
     onCreateList,
     onEditListFromGrid,
     onDeleteListFromGrid,
+    onUnfinishList,
   } = props;
 
   const cardIcons = [ShoppingCart, Flame, Sparkles] as const;
@@ -206,7 +208,7 @@ export function ShoppingListsView(props: ShoppingListsViewProps) {
           variants={{ visible: { transition: { staggerChildren: 0.07 } } }}
         >
           {filteredLists.map((list, idx) => {
-            const isComplete = list.totalItems > 0 && list.purchasedItems === list.totalItems;
+            const isComplete = list.isFinished;
             const Icon = cardIcons[idx % 3];
             const iconBg = cardIconBgs[idx % 3];
             return (
@@ -245,28 +247,44 @@ export function ShoppingListsView(props: ShoppingListsViewProps) {
                         <MoreVertical size={16} />
                       </button>
                       <div className="absolute right-0 top-full z-20 mt-1 hidden w-36 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-lg focus-within:flex peer-focus:flex">
-                        <button
-                          className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-accent"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditingListId(list.shoppingListId);
-                            setShowEditList(true);
-                          }}
-                        >
-                          <Pencil size={13} />
-                          Editar
-                        </button>
-                        <button
-                          className="hover:bg-destructive/10 flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-destructive transition-colors"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditingListId(list.shoppingListId);
-                            setShowDeleteAlert(true);
-                          }}
-                        >
-                          <Trash2 size={13} />
-                          Excluir
-                        </button>
+                        {isComplete ? (
+                          <button
+                            className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-accent"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onUnfinishList(list.shoppingListId);
+                              onOpenList(list.shoppingListId);
+                            }}
+                          >
+                            <RotateCcw size={13} />
+                            Reabrir
+                          </button>
+                        ) : (
+                          <>
+                            <button
+                              className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-accent"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingListId(list.shoppingListId);
+                                setShowEditList(true);
+                              }}
+                            >
+                              <Pencil size={13} />
+                              Editar
+                            </button>
+                            <button
+                              className="hover:bg-destructive/10 flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-destructive transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingListId(list.shoppingListId);
+                                setShowDeleteAlert(true);
+                              }}
+                            >
+                              <Trash2 size={13} />
+                              Excluir
+                            </button>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>

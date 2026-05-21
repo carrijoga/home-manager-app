@@ -27,12 +27,14 @@ No test suite — manual testing only.
 All data access MUST go through `src/services/`. Never import from `src/mocks/data.ts` directly in components.
 
 Each service implements **dual-mode**:
+
 - **Mock mode** (`VITE_DATA_MODE=mock`): Returns mock data from `src/mocks/data.js` with 100ms delay
 - **API mode** (`VITE_DATA_MODE=api`): Makes HTTP requests via `src/services/api/config.js`
 
 ### HTTP Client
 
 Currently `src/services/api/config.js` handles API requests. The planned migration target is `src/services/api/httpClient.ts` with:
+
 - Cookie-based auth (`credentials: 'include'`)
 - Automatic token refresh on 401 (single retry via `/api/auth/refresh`)
 - 10-second timeout on all requests
@@ -76,6 +78,7 @@ The codebase is in hybrid mode (`allowJs: true`, `checkJs: false`). Services, sc
 ## Path Aliases
 
 Defined in `vite.config.ts` and `tsconfig.json`:
+
 - `@/*` → `src/*`
 - `@components/*` → `src/components/*`
 - `@services/*` → `src/services/*`
@@ -86,6 +89,7 @@ Defined in `vite.config.ts` and `tsconfig.json`:
 ## Environment Variables
 
 See `.env.example`. Key vars:
+
 - `VITE_DATA_MODE` — `mock` or `api`
 - `VITE_ENVIRONMENT` — `development`, `staging`, or `production`
 - `VITE_API_URL` — API base URL (default: `http://localhost:5026`)
@@ -101,6 +105,7 @@ See `.env.example`. Key vars:
 Each major directory has its own `CLAUDE.md` with local conventions:
 
 **Feature & Architecture:**
+
 - [`src/components/CLAUDE.md`](src/components/CLAUDE.md) — Component architecture, naming, animation patterns
 - [`src/services/CLAUDE.md`](src/services/CLAUDE.md) — Service dual-mode pattern, HTTP client, endpoints
 - [`src/schemas/CLAUDE.md`](src/schemas/CLAUDE.md) — Zod schema conventions, API contract rules
@@ -108,13 +113,16 @@ Each major directory has its own `CLAUDE.md` with local conventions:
 - [`src/pages/CLAUDE.md`](src/pages/CLAUDE.md) — Auth pages, routing, page-level conventions
 
 **Data & Types:**
+
 - [`src/types/CLAUDE.md`](src/types/CLAUDE.md) — Frontend domain types, enums, transformation functions
 - [`src/mocks/CLAUDE.md`](src/mocks/CLAUDE.md) — Mock data for development, dual-mode pattern
 
 **Utilities & Hooks:**
+
 - [`src/lib/CLAUDE.md`](src/lib/CLAUDE.md) — Shared utilities (animations, avatarUtils, preferences)
 - [`src/hooks/CLAUDE.md`](src/hooks/CLAUDE.md) — Custom React hooks (toast, debounce, prefersReducedMotion)
 - [`src/utils/CLAUDE.md`](src/utils/CLAUDE.md) — Domain-specific utilities (metrics, formatters)
 
 **Documentation:**
+
 - [`docs/CLAUDE.md`](docs/CLAUDE.md) — API reference, design docs, deployment guides

@@ -7,6 +7,7 @@
 ### Enums
 
 **Business domain enums:**
+
 - `Priority` — task priority (`alta`, `média`, `baixa`)
 - `ApiPriority` — numeric API priority levels (0-3)
 - `ApiCategory` — task category enum (Geral, Limpeza, etc.)
@@ -22,19 +23,19 @@ App-specific interfaces that extend or transform API schemas:
 
 ```ts
 export type AppUser = {
-  id: string
-  name: string
-  email: string
+  id: string;
+  name: string;
+  email: string;
   // ... more fields from the User schema
-}
+};
 
 export type Task = {
-  id: string
-  title: string
-  priority: Priority
-  dueDate?: Date
+  id: string;
+  title: string;
+  priority: Priority;
+  dueDate?: Date;
   // ... richer than the raw API Task schema
-}
+};
 ```
 
 ### Transformation Functions
@@ -47,7 +48,7 @@ export function userProfileToAppUser(profile: UserSchema): AppUser {
     id: profile.id,
     name: profile.fullName,
     // ... map and transform fields
-  }
+  };
 }
 ```
 
@@ -55,12 +56,13 @@ Use these inside **services** after `Schema.safeParse()` succeeds, so **componen
 
 ## Schema vs. Type Distinction
 
-| Layer | File | What | Who Uses | When |
-|-------|------|------|----------|------|
-| 1 (API contract) | `src/schemas/` | Raw API shape as Zod | Services | After fetch, before transform |
-| 2 (App domain) | `src/types/` | Enriched frontend types | Components, state | In components, in context state |
+| Layer            | File           | What                    | Who Uses          | When                            |
+| ---------------- | -------------- | ----------------------- | ----------------- | ------------------------------- |
+| 1 (API contract) | `src/schemas/` | Raw API shape as Zod    | Services          | After fetch, before transform   |
+| 2 (App domain)   | `src/types/`   | Enriched frontend types | Components, state | In components, in context state |
 
 **Flow:**
+
 ```
 API response → Schema.safeParse() → transform via userProfileToAppUser() → AppUser → component
 ```

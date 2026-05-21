@@ -21,13 +21,13 @@ export const mockData = {
 Every service file branches on `VITE_DATA_MODE`:
 
 ```ts
-import { isMockMode } from '@services/api/config'
-import { mockData } from '@/mocks/data'
+import { isMockMode } from '@services/api/config';
+import { mockData } from '@/mocks/data';
 
 export async function getTasks() {
   if (isMockMode) {
-    await delay(100) // Simulate network latency
-    return mockData.tasks
+    await delay(100); // Simulate network latency
+    return mockData.tasks;
   }
   // ... API call
 }

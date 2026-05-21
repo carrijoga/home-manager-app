@@ -6,6 +6,7 @@ import {
   ShoppingCart,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 import { useApp } from '@/contexts/AppContext';
 import { getWeatherPreferences, saveWeatherPreferences, WEATHER_PREFERENCES_UPDATED_EVENT } from '@/lib/weatherPreferences';

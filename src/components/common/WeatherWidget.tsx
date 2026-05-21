@@ -5,25 +5,32 @@ import { Button } from '@/components/ui';
 import { cn } from '@/lib/utils';
 
 interface WeatherWidgetProps {
-  temperatureLabel: string;
-  description: string;
-  city: string;
+  mode?: 'display' | 'onboarding';
+  // display mode props
+  temperatureLabel?: string;
+  description?: string;
+  city?: string;
   isLoading?: boolean;
   isError?: boolean;
   onRefresh?: () => void;
+  // onboarding mode props
+  onEnable?: () => void;
   className?: string;
 }
 
 export default function WeatherWidget({
-  temperatureLabel,
-  description,
-  city,
+  mode = 'display',
+  temperatureLabel = '--',
+  description = '',
+  city = '',
   isLoading = false,
   isError = false,
   onRefresh,
+  onEnable,
   className,
 }: WeatherWidgetProps) {
   const [now, setNow] = useState(() => new Date());
+  const [requesting, setRequesting] = useState(false);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 30_000);
@@ -34,6 +41,55 @@ export default function WeatherWidget({
     () => now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
     [now]
   );
+
+  const handleEnable = () => {
+    if (!onEnable) return;
+    setRequesting(true);
+    onEnable();
+  };
+
+  if (mode === 'onboarding') {
+    return (
+      <div
+        className={cn(
+          'glass flex flex-col gap-3 p-4 rounded-3xl w-full sm:w-auto min-w-0 sm:min-w-[280px]',
+          className
+        )}
+      >
+        <div className="flex items-center gap-3">
+          <CloudSun className="text-foreground shrink-0" size={28} strokeWidth={1.25} aria-hidden="true" />
+          <div className="flex flex-col gap-0.5">
+            <span className="font-ui font-semibold text-foreground text-sm leading-none">
+              Ative o clima
+            </span>
+            <span
+              className="font-ui text-muted-foreground"
+              style={{ fontSize: 'var(--text-xs)' }}
+            >
+              Veja a temperatura aqui
+            </span>
+          </div>
+        </div>
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          className="w-full"
+          onClick={handleEnable}
+          disabled={requesting}
+        >
+          {requesting ? (
+            <>
+              <RefreshCw className="size-3.5 mr-1.5 animate-spin" aria-hidden="true" />
+              Aguardando...
+            </>
+          ) : (
+            'Usar minha localização'
+          )}
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div

@@ -96,6 +96,7 @@ const Dashboard = () => {
     temperatureLabel: '--',
     visible: false,
   });
+  const [weatherOnboardingKey, setWeatherOnboardingKey] = useState(0);
   const [familyGoals, setFamilyGoals] = useState([]);
   const [calendarEvents, setCalendarEvents] = useState([]);
 
@@ -183,6 +184,7 @@ const Dashboard = () => {
       },
       () => {
         toast.error('Não foi possível obter sua localização.');
+        setWeatherOnboardingKey(k => k + 1);
       },
       { enableHighAccuracy: false, timeout: 10_000 }
     );
@@ -363,6 +365,7 @@ const Dashboard = () => {
         isWeatherError={weatherState.error}
         onRefreshWeather={loadWeather}
         onWeatherEnable={handleEnableWeather}
+        weatherOnboardingKey={weatherOnboardingKey}
       />
 
       {/* ── Row 1: Module Metric Widgets ── */}

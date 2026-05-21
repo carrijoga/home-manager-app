@@ -15,6 +15,7 @@ interface DashboardHeaderProps {
   isWeatherError?: boolean;
   onRefreshWeather?: () => void;
   onWeatherEnable?: () => void;
+  weatherOnboardingKey?: number;
   className?: string;
 }
 
@@ -37,6 +38,7 @@ export function DashboardHeader({
   isWeatherError = false,
   onRefreshWeather,
   onWeatherEnable,
+  weatherOnboardingKey,
   className,
 }: DashboardHeaderProps) {
   return (
@@ -86,6 +88,7 @@ export function DashboardHeader({
         </motion.div>
       ) : onWeatherEnable ? (
         <motion.div
+          key={weatherOnboardingKey}
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.45, ease: [0.25, 1, 0.5, 1], delay: 0.2 }}

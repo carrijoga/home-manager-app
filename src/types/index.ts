@@ -29,6 +29,19 @@ export enum ApiCategory {
   Outros = 4,
 }
 
+/** Status de tarefa no board (client-side — o backend usa isCompleted) */
+export enum TaskStatus {
+  AFazer = 0,
+  EmAndamento = 1,
+  Concluido = 2,
+}
+
+export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
+  [TaskStatus.AFazer]: 'A Fazer',
+  [TaskStatus.EmAndamento]: 'Em Andamento',
+  [TaskStatus.Concluido]: 'Concluído',
+};
+
 /** IDs dos módulos da aplicação */
 export enum ModuleId {
   DASHBOARD = 'dashboard',
@@ -134,6 +147,8 @@ export interface Task {
   category: ApiCategory;
   categoryLabel: string;
   date: string;
+  /** Status no board Kanban — derivado de isCompleted na ausência de campo da API */
+  status?: TaskStatus;
   isCompleted: boolean;
   completedAt?: string | null;
   isOverdue: boolean;

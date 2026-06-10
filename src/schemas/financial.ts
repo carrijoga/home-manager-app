@@ -126,3 +126,37 @@ export type FinancialTransactionResponse = z.infer<typeof FinancialTransactionRe
 
 export const FinancialTransactionListResponseSchema = PaginatedResponseSchema(FinancialTransactionResponseSchema);
 export type FinancialTransactionListResponse = z.infer<typeof FinancialTransactionListResponseSchema>;
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+
+export const FinancialTransactionMonthSummarySchema = z.object({
+  totalIncome: MoneySchema,
+  totalExpenses: MoneySchema,
+  balance: MoneySchema,
+});
+export type FinancialTransactionMonthSummary = z.infer<typeof FinancialTransactionMonthSummarySchema>;
+
+export const FinancialTransactionUpcomingBillResponseSchema = z.object({
+  financialTransactionId: UuidSchema,
+  description: z.string(),
+  value: MoneySchema,
+  dueDate: DateTimeSchema,
+  isOverdue: z.boolean(),
+});
+export type FinancialTransactionUpcomingBillResponse = z.infer<typeof FinancialTransactionUpcomingBillResponseSchema>;
+
+export const FinancialTransactionCategoryExpenseResponseSchema = z.object({
+  categoryId: UuidSchema,
+  categoryName: z.string(),
+  totalAmount: MoneySchema,
+});
+export type FinancialTransactionCategoryExpenseResponse = z.infer<typeof FinancialTransactionCategoryExpenseResponseSchema>;
+
+export const FinancialTransactionDashboardResponseSchema = z.object({
+  currentMonth: FinancialTransactionMonthSummarySchema,
+  previousMonth: FinancialTransactionMonthSummarySchema,
+  balanceVariationPercent: MoneySchema,
+  upcomingBills: z.array(FinancialTransactionUpcomingBillResponseSchema),
+  expensesByCategory: z.array(FinancialTransactionCategoryExpenseResponseSchema),
+});
+export type FinancialTransactionDashboardResponse = z.infer<typeof FinancialTransactionDashboardResponseSchema>;

@@ -49,6 +49,7 @@ export const ENDPOINTS = {
     getById: '/api/financial-transactions/get-by-id',
     addPayment: '/api/financial-transactions/add-payment',
     removePayment: '/api/financial-transactions/remove-payment',
+    dashboard: '/api/financial-transactions/dashboard',
     // PLANEJADO — ainda não existem em docs/api.json; o backend vai adicioná-los.
     // Decisão registrada em docs/superpowers/specs/2026-06-10-financial-screen-redesign-design.md
     update: '/api/financial-transactions/update',

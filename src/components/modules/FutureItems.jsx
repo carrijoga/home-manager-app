@@ -1,8 +1,8 @@
 import { Trash2 } from 'lucide-react';
-import { memo, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 
-import { useApp } from '@/contexts/AppContext';
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
+import * as futureItemsService from '@/services/futureItemsService';
 import { PriorityLevels } from '@/types';
 
 import Button from '../common/Button';
@@ -13,9 +13,27 @@ import Input from '../common/Input';
  * Módulo de Itens Futuros
  */
 const FutureItems = memo(() => {
-  // Obtém estados e ações do contexto global
-  const { futureItems, addFutureItem, deleteFutureItem } = useApp();
   const { showSuccess, showError } = useToastNotifications();
+
+  const [futureItems, setFutureItems] = useState([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    futureItemsService.getAllFutureItems()
+      .then(data => { if (isMounted) setFutureItems(data); })
+      .catch(() => {});
+    return () => { isMounted = false; };
+  }, []);
+
+  const addFutureItem = async (item) => {
+    const newItem = await futureItemsService.addFutureItem(item);
+    setFutureItems(prev => [...prev, newItem]);
+  };
+
+  const deleteFutureItem = async (id) => {
+    await futureItemsService.deleteFutureItem(id);
+    setFutureItems(prev => prev.filter(i => i.id !== id));
+  };
 
   const [newItem, setNewItem] = useState({
     name: '',

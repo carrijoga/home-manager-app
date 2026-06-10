@@ -38,6 +38,26 @@ export const RemovePaymentRequestSchema = z.object({
 });
 export type RemovePaymentRequest = z.infer<typeof RemovePaymentRequestSchema>;
 
+export const UpdateTransactionRequestSchema = z.object({
+  financialTransactionId: UuidSchema,
+  type: TransactionTypeSchema,
+  description: z.string().min(1, 'Descrição é obrigatória'),
+  amount: MoneyRequestSchema,
+  transactionDate: DateTimeSchema,
+  dueDate: DateTimeSchema,
+  categoryId: UuidSchema,
+  responsibleUserId: UuidSchema,
+  sourceType: FinancialSourceTypeSchema,
+  sourceId: UuidSchema.optional(),
+  observation: z.string().nullable().optional(),
+});
+export type UpdateTransactionRequest = z.infer<typeof UpdateTransactionRequestSchema>;
+
+export const DeleteTransactionRequestSchema = z.object({
+  financialTransactionId: UuidSchema,
+});
+export type DeleteTransactionRequest = z.infer<typeof DeleteTransactionRequestSchema>;
+
 export const FinancialTransactionFilterSchema = z.object({
   page: z.number().int().optional(),
   pageSize: z.number().int().optional(),

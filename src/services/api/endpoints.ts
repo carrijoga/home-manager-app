@@ -21,7 +21,7 @@ export const ENDPOINTS = {
   users: {
     me: '/api/users/me',
     meProfile: '/api/users/me/profile',
-    meWeather: '/api/users/me/weather',
+    meWeather: '/api/dashboard/weather',
     meConfiguration: '/api/users/me/configuration',
     meNotifications: '/api/users/me/notification',
     meNests: '/api/users/me/nests',
@@ -32,7 +32,14 @@ export const ENDPOINTS = {
   nests: {
     create: '/api/nests/create',
     update: '/api/nests/update',
+    leave: '/api/nests/leave',
     delete: (nestId: string) => `/api/nests/${nestId}`,
+    invites: '/api/nests/invites',
+    invite: (email: string) => `/api/nests/invite/${encodeURIComponent(email)}`,
+    resendInvite: (inviteId: string) => `/api/nests/resend-invite/${inviteId}`,
+    acceptInvite: (tokenHash: string) => `/api/nests/accept-invite/${encodeURIComponent(tokenHash)}`,
+    removeMember: (userId: string) => `/api/nests/remove-member/${userId}`,
+    members: (nestId: string) => `/api/nests/members/${nestId}`,
   },
 
   // Transações financeiras
@@ -42,6 +49,10 @@ export const ENDPOINTS = {
     getById: '/api/financial-transactions/get-by-id',
     addPayment: '/api/financial-transactions/add-payment',
     removePayment: '/api/financial-transactions/remove-payment',
+    // PLANEJADO — ainda não existem em docs/api.json; o backend vai adicioná-los.
+    // Decisão registrada em docs/superpowers/specs/2026-06-10-financial-screen-redesign-design.md
+    update: '/api/financial-transactions/update',
+    delete: '/api/financial-transactions/delete',
   },
 
   // Categorias
@@ -81,7 +92,8 @@ export const ENDPOINTS = {
     update: (id: string) => `/api/shopping-item/${id}`,
     delete: (id: string) => `/api/shopping-item/${id}`,
     markAsPurchased: (id: string) => `/api/shopping-item/${id}/purchase`,
-    unmarkAsPurchased: (listId: string, itemId: string) => `/api/shopping-item/${listId}/unpurchase/${itemId}`,
+    unmarkAsPurchased: (listId: string, itemId: string) =>
+      `/api/shopping-item/${listId}/unpurchase/${itemId}`,
     upload: (listId: string) => `/api/shopping-item/${listId}/upload`,
   },
 
@@ -105,6 +117,8 @@ export const ENDPOINTS = {
     delete: (id: string) => `/api/notices/${id}`,
     pin: (id: string) => `/api/notices/${id}/pin`,
     unpin: (id: string) => `/api/notices/${id}/unpin`,
+    reaction: (id: string) => `/api/notices/${id}/reaction`,
+    unreaction: (id: string) => `/api/notices/${id}/unreaction`,
   },
 
   // Tarefas (Tasks)
@@ -120,16 +134,16 @@ export const ENDPOINTS = {
     uncomplete: (id: string) => `/api/tasks/${id}/uncomplete`,
   },
 
-  // Configurações do usuário (mock-only por ora)
+  // Configurações do usuário
   settings: {
     profile: '/api/users/me/profile',
-    username: '/api/users/me/username',
-    notifications: '/api/users/me/notifications',
-    changePassword: '/api/users/me/change-password',
-    logoutOthers: '/api/auth/logout-others',
-    avatar: '/api/users/me/avatar',
-    privacy: '/api/users/me/privacy',
-    data: '/api/users/me/data',
+    configuration: '/api/users/me/configuration',
+  },
+
+  // Dashboard
+  dashboard: {
+    summary: '/api/dashboard',
+    weather: '/api/dashboard/weather',
   },
 
   // Health

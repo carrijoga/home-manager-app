@@ -4,7 +4,7 @@ import { Plus } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 import { PaymentModal } from '@/components/modals/PaymentModal';
-import { TransactionFormModal } from '@/components/modals/TransactionFormModal';
+import { TransactionSheet } from '@/components/modals/TransactionSheet';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -301,7 +301,7 @@ const Financial = () => {
       </button>
 
       {/* Modais */}
-      <TransactionFormModal
+      <TransactionSheet
         open={formOpen}
         onClose={() => { setFormOpen(false); setEditingTx(null); }}
         transaction={editingTx}

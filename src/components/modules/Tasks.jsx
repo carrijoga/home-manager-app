@@ -487,8 +487,64 @@ TaskFormDialog.displayName = 'TaskFormDialog';
 // ── Página principal ──────────────────────────────────────────────────────────
 
 function Tasks() {
-  const { tasks, addTask, updateTask, createQuickTask, completeTask, uncompleteTask, restoreTask, deleteTask } = useApp();
+  const { activeNestId } = useApp();
   const { showSuccess, showError } = useToastNotifications();
+
+  const [tasks, setTasks] = useState([]);
+  const [tasksLoading, setTasksLoading] = useState(true);
+
+  useEffect(() => {
+    if (!activeNestId) return;
+    let isMounted = true;
+    setTasksLoading(true);
+    taskService.getActiveTasks(activeNestId)
+      .then(data => { if (isMounted) setTasks(data); })
+      .catch(() => {})
+      .finally(() => { if (isMounted) setTasksLoading(false); });
+    return () => { isMounted = false; };
+  }, [activeNestId]);
+
+  const addTask = async (payload) => {
+    const newTask = await taskService.createTask(payload, activeNestId ?? undefined);
+    setTasks(prev => [newTask, ...prev]);
+  };
+
+  const updateTask = async (taskId, payload) => {
+    await taskService.updateTask(taskId, payload, activeNestId ?? undefined);
+    setTasks(prev => prev.map(t =>
+      t.taskId === taskId
+        ? { ...t, ...payload, date: payload.date ?? t.date, priorityLabel: t.priorityLabel, categoryLabel: t.categoryLabel }
+        : t
+    ));
+  };
+
+  const createQuickTask = async (title) => {
+    const newTask = await taskService.createQuickTask(title, activeNestId ?? undefined);
+    setTasks(prev => [newTask, ...prev]);
+  };
+
+  const restoreTask = (task) => {
+    setTasks(prev => {
+      const exists = prev.find(t => t.taskId === task.taskId);
+      if (exists) return prev;
+      return [task, ...prev];
+    });
+  };
+
+  const completeTask = async (taskId) => {
+    const updatedTask = await taskService.completeTask(taskId, activeNestId ?? undefined);
+    setTasks(prev => prev.map(t => t.taskId === taskId ? updatedTask : t));
+  };
+
+  const uncompleteTask = async (taskId) => {
+    const updatedTask = await taskService.uncompleteTask(taskId, activeNestId ?? undefined);
+    setTasks(prev => prev.map(t => t.taskId === taskId ? updatedTask : t));
+  };
+
+  const deleteTask = async (taskId) => {
+    await taskService.deleteTask(taskId, activeNestId ?? undefined);
+    setTasks(prev => prev.filter(t => t.taskId !== taskId));
+  };
 
   const [quickInput, setQuickInput] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);

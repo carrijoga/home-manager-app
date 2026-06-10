@@ -130,8 +130,8 @@ export function PaymentModal({ open, onClose, transaction, currentUserId, onSubm
           </div>
 
           <Collapsible>
-            <CollapsibleTrigger className="flex items-center gap-1 font-ui text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors">
-              <ChevronDown size={14} strokeWidth={1.5} /> Mais detalhes (desconto, juros, observação)
+            <CollapsibleTrigger className="group flex items-center gap-1 font-ui text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors">
+              <ChevronDown size={14} strokeWidth={1.5} className="transition-transform group-data-[state=open]:rotate-180" /> Mais detalhes (desconto, juros, observação)
             </CollapsibleTrigger>
             <CollapsibleContent className="pt-3 space-y-3">
               <div className="grid grid-cols-2 gap-3">

@@ -90,8 +90,15 @@ export function TransactionFormModal({
   }, [open, transaction, currentUserId]);
 
   const visibleCategories = categories.filter(c => c.type === type);
+  // members.length impede submit antes da lista carregar (modo API) — evita
+  // enviar responsibleUserId não confirmado pelo Nest.
   const isValid =
-    description.trim().length > 0 && amount !== null && amount > 0 && Boolean(categoryId) && Boolean(responsibleUserId);
+    description.trim().length > 0 &&
+    amount !== null &&
+    amount > 0 &&
+    Boolean(categoryId) &&
+    Boolean(responsibleUserId) &&
+    members.length > 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -132,7 +139,18 @@ export function TransactionFormModal({
 
         <form onSubmit={e => { void handleSubmit(e).catch(() => {}); }} className="space-y-4">
           {/* Tipo */}
-          <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Tipo de transação">
+          <div
+            className="grid grid-cols-2 gap-2"
+            role="radiogroup"
+            aria-label="Tipo de transação"
+            onKeyDown={e => {
+              if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+                e.preventDefault();
+                setType(t => (t === TransactionType.Expense ? TransactionType.Income : TransactionType.Expense));
+                setCategoryId('');
+              }
+            }}
+          >
             {[
               { v: TransactionType.Expense, label: 'Despesa' },
               { v: TransactionType.Income, label: 'Receita' },

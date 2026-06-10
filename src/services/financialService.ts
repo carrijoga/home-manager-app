@@ -8,6 +8,7 @@ import type {
   AddPaymentRequest,
   CreateTransactionRequest,
   DeleteTransactionRequest,
+  FinancialTransactionDashboardResponse,
   FinancialTransactionFilter,
   FinancialTransactionListResponse,
   FinancialTransactionResponse,
@@ -15,6 +16,7 @@ import type {
   UpdateTransactionRequest,
 } from '@/schemas/financial';
 import {
+  FinancialTransactionDashboardResponseSchema,
   FinancialTransactionListResponseSchema,
   FinancialTransactionResponseSchema,
 } from '@/schemas/financial';
@@ -131,6 +133,87 @@ export async function getTransactionById(id: string, nestId?: string): Promise<F
 
   const raw = await httpClient.get<unknown>(`${ENDPOINTS.financial.getById}?id=${id}`, nestId);
   return safeParse(FinancialTransactionResponseSchema, raw, 'getTransactionById');
+}
+
+export async function getFinancialDashboard(
+  month: number,
+  year: number,
+  nestId?: string,
+): Promise<FinancialTransactionDashboardResponse> {
+  if (DATA_MODE === 'mock') {
+    const inMonth = mockStore.filter(t => {
+      const d = new Date(String(t.transactionDate));
+      return d.getMonth() + 1 === month && d.getFullYear() === year;
+    });
+    const prevMonthNum = month === 1 ? 12 : month - 1;
+    const prevYear = month === 1 ? year - 1 : year;
+    const inPrev = mockStore.filter(t => {
+      const d = new Date(String(t.transactionDate));
+      return d.getMonth() + 1 === prevMonthNum && d.getFullYear() === prevYear;
+    });
+
+    // transactionType: 0 = Expense, 1 = Income
+    const sumIncome = (list: FinancialTransactionResponse[]) =>
+      list.filter(t => t.transactionType === 1).reduce((s, t) => s + Number(t.value), 0);
+    const sumExpenses = (list: FinancialTransactionResponse[]) =>
+      list.filter(t => t.transactionType === 0).reduce((s, t) => s + Number(t.value), 0);
+
+    const curIncome = sumIncome(inMonth);
+    const curExpenses = sumExpenses(inMonth);
+    const prevExpenses = sumExpenses(inPrev);
+
+    const today = new Date().toISOString().slice(0, 10);
+    const limit = new Date();
+    limit.setDate(limit.getDate() + 7);
+    const limitIso = limit.toISOString().slice(0, 10);
+
+    const upcomingBills = inMonth
+      .filter(
+        t =>
+          t.transactionType === 0 &&
+          !t.isPaid &&
+          String(t.dueDate).slice(0, 10) <= limitIso,
+      )
+      .sort((a, b) => String(a.dueDate).localeCompare(String(b.dueDate)))
+      .map(t => ({
+        financialTransactionId: t.financialTransactionId,
+        description: t.description,
+        value: Number(t.value),
+        dueDate: t.dueDate,
+        isOverdue: String(t.dueDate).slice(0, 10) < today,
+      }));
+
+    const categoryTotals: Record<string, { categoryId: string; totalAmount: number }> = {};
+    inMonth
+      .filter(t => t.transactionType === 0)
+      .forEach(t => {
+        const key = t.categoryName || 'Outros';
+        if (!categoryTotals[key]) categoryTotals[key] = { categoryId: t.categoryId, totalAmount: 0 };
+        categoryTotals[key].totalAmount += Number(t.value);
+      });
+    const expensesByCategory = Object.entries(categoryTotals)
+      .sort(([, a], [, b]) => b.totalAmount - a.totalAmount)
+      .map(([categoryName, { categoryId, totalAmount }]) => ({ categoryId, categoryName, totalAmount }));
+
+    const balanceVariationPercent =
+      prevExpenses > 0 ? Math.round(((curExpenses - prevExpenses) / prevExpenses) * 100) : 0;
+
+    return delay({
+      currentMonth: { totalIncome: curIncome, totalExpenses: curExpenses, balance: curIncome - curExpenses },
+      previousMonth: {
+        totalIncome: sumIncome(inPrev),
+        totalExpenses: prevExpenses,
+        balance: sumIncome(inPrev) - prevExpenses,
+      },
+      balanceVariationPercent,
+      upcomingBills,
+      expensesByCategory,
+    });
+  }
+
+  const path = `${ENDPOINTS.financial.dashboard}?month=${month}&year=${year}`;
+  const raw = await httpClient.get<unknown>(path, nestId);
+  return safeParse(FinancialTransactionDashboardResponseSchema, raw, 'getFinancialDashboard');
 }
 
 // ── Mutations ─────────────────────────────────────────────────────────────────

@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState } from 
 import * as authService from '@/services/authService';
 import * as financialService from '@/services/financialService';
 import * as futureItemsService from '@/services/futureItemsService';
+import * as nestService from '@/services/nestService';
 import * as noticeService from '@/services/noticeService';
 import * as shoppingService from '@/services/shoppingService';
 import * as taskService from '@/services/taskService';
@@ -43,7 +44,13 @@ interface AppContextValue {
   loadUserProfile: () => Promise<AppUser>;
   clearUser: () => void;
   setActiveNestId: (id: string | null) => void;
-  refreshNests: () => Promise<void>;
+  refreshNests: () => Promise<AppUserNest[]>;
+
+  // Nest actions
+  createNest: (payload: import('@/schemas/nest').CreateNestRequest) => Promise<void>;
+  updateNest: (nestId: string, payload: Omit<import('@/schemas/nest').UpdateNestRequest, 'nestId'>) => Promise<void>;
+  deleteNest: (nestId: string) => Promise<void>;
+  leaveNest: (nestId: string) => Promise<void>;
 
   // Notification actions (local-optimistic; TODO: wire to API/WebSocket)
   markAsRead: (notificationId: string) => void;
@@ -202,14 +209,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const newNotice = await noticeService.createNotice({
       message,
       date: new Date().toISOString(),
-      color,
       expiresAt: expiresAt ?? undefined,
     }, activeNestId ?? undefined);
-    setNotices(prev => [newNotice, ...prev]);
+    setNotices(prev => [{ ...newNotice, color }, ...prev]);
   };
 
   const updateNotice = async (noticeId: string, message: string, color?: string) => {
-    await noticeService.updateNotice(noticeId, { message, color }, activeNestId ?? undefined);
+    await noticeService.updateNotice(noticeId, { message }, activeNestId ?? undefined);
     setNotices(prev => prev.map(n =>
       n.noticeId === noticeId ? { ...n, message, color } : n
     ));
@@ -485,7 +491,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     hasLoaded.current = false;
   };
 
-  const refreshNests = async (): Promise<void> => {
+  const refreshNests = async (): Promise<AppUserNest[]> => {
     try {
       const nests: AppUserNest[] = (await userService.getNests()).map(n => ({
         nestId: n.nestId,
@@ -495,8 +501,37 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         role: n.role as number,
       }));
       setUser(prev => prev ? { ...prev, nests } : prev);
+      return nests;
     } catch (error) {
       console.error('Erro ao atualizar ninhos:', error);
+      return [];
+    }
+  };
+
+  const createNest = async (payload: import('@/schemas/nest').CreateNestRequest): Promise<void> => {
+    await nestService.createNest(payload);
+    await refreshNests();
+  };
+
+  const updateNest = async (nestId: string, payload: Omit<import('@/schemas/nest').UpdateNestRequest, 'nestId'>): Promise<void> => {
+    await nestService.updateNest(nestId, payload);
+    await refreshNests();
+  };
+
+  const deleteNest = async (nestId: string): Promise<void> => {
+    await nestService.deleteNest(nestId);
+    if (activeNestId === nestId) {
+      setActiveNestId(null);
+    }
+    await refreshNests();
+  };
+
+  const leaveNest = async (nestId: string): Promise<void> => {
+    await nestService.leaveNest(nestId);
+    const updatedNests = await refreshNests();
+    if (activeNestId === nestId) {
+      const defaultNest = updatedNests.find(n => n.isDefault) ?? updatedNests[0];
+      setActiveNestId(defaultNest?.nestId ?? null);
     }
   };
 
@@ -505,6 +540,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (sessionCheckRef.current) return;
     sessionCheckRef.current = true;
     try {
+      const hasSession = await authService.checkSession();
+      if (!hasSession) {
+        setUser(null);
+        return;
+      }
       const profileData = await authService.getUserProfile();
       const appUser = userProfileToAppUser(profileData);
       setUser(appUser);
@@ -605,6 +645,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     clearUser,
     setActiveNestId,
     refreshNests,
+    createNest,
+    updateNest,
+    deleteNest,
+    leaveNest,
     notifications,
     markAsRead,
     markAllAsRead,

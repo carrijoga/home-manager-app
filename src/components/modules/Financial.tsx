@@ -24,7 +24,9 @@ import { TransactionType } from '@/schemas/enums';
 import type {
   AddPaymentRequest,
   CreateTransactionRequest,
+  FinancialTransactionDashboardResponse,
   FinancialTransactionResponse,
+  FinancialTransactionUpcomingBillResponse,
   UpdateTransactionRequest,
 } from '@/schemas/financial';
 import * as categoryService from '@/services/categoryService';
@@ -74,7 +76,7 @@ const Financial = () => {
   // ── Dados do servidor ──────────────────────────────────────────────────────
   const [loading, setLoading] = useState(true);
   const [monthTransactions, setMonthTransactions] = useState<FinancialTransactionResponse[]>([]);
-  const [previousExpense, setPreviousExpense] = useState(0);
+  const [dashboardData, setDashboardData] = useState<FinancialTransactionDashboardResponse | null>(null);
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -84,24 +86,18 @@ const Financial = () => {
   const [payingTx, setPayingTx] = useState<FinancialTransactionResponse | null>(null);
   const [deletingTx, setDeletingTx] = useState<FinancialTransactionResponse | null>(null);
 
-  // Uma única requisição por mês — traz o mês atual e o anterior para o resumo.
-  // Todos os derivados (lista filtrada, contas-a-vencer, totais) saem daqui.
+  // Busca dashboard e lista de transações em paralelo.
   useEffect(() => {
     let active = true;
     setLoading(true);
-    const prevMonth = new Date(month.getFullYear(), month.getMonth() - 1, 1);
     Promise.all([
+      financialService.getFinancialDashboard(month.getMonth() + 1, month.getFullYear(), nestId),
       financialService.listTransactions({ ...getMonthRange(month), pageSize: 1000 }, nestId),
-      financialService.listTransactions({ ...getMonthRange(prevMonth), pageSize: 1000 }, nestId),
     ])
-      .then(([current, previous]) => {
+      .then(([dashboard, list]) => {
         if (!active) return;
-        setMonthTransactions(current.items ?? []);
-        setPreviousExpense(
-          (previous.items ?? [])
-            .filter(t => t.transactionType === TransactionType.Expense)
-            .reduce((sum, t) => sum + Number(t.value), 0),
-        );
+        setDashboardData(dashboard);
+        setMonthTransactions(list.items ?? []);
       })
       .catch(() => {
         if (active) showError('Erro ao carregar transações.');
@@ -127,45 +123,6 @@ const Financial = () => {
   }, [nestId]);
 
   // ── Derivados client-side ──────────────────────────────────────────────────
-  const monthIncome = useMemo(
-    () => monthTransactions
-      .filter(t => t.transactionType === TransactionType.Income)
-      .reduce((sum, t) => sum + Number(t.value), 0),
-    [monthTransactions],
-  );
-
-  const monthExpense = useMemo(
-    () => monthTransactions
-      .filter(t => t.transactionType === TransactionType.Expense)
-      .reduce((sum, t) => sum + Number(t.value), 0),
-    [monthTransactions],
-  );
-
-  const upcomingBills = useMemo(() => {
-    const today = new Date().toISOString().slice(0, 10);
-    const limit = new Date();
-    limit.setDate(limit.getDate() + 14);
-    const limitIso = limit.toISOString().slice(0, 10);
-    return monthTransactions
-      .filter(t =>
-        t.transactionType === TransactionType.Expense &&
-        !t.isPaid &&
-        String(t.dueDate).slice(0, 10) <= limitIso,
-      )
-      .concat(
-        // Inclui vencidas do mês anterior que ainda estão em monthTransactions
-        // (já estão lá se o vencimento caiu dentro do range do mês selecionado)
-        monthTransactions.filter(t =>
-          t.transactionType === TransactionType.Expense &&
-          !t.isPaid &&
-          String(t.dueDate).slice(0, 10) < today,
-        ),
-      )
-      // Deduplica e ordena por vencimento
-      .filter((t, i, arr) => arr.findIndex(x => x.financialTransactionId === t.financialTransactionId) === i)
-      .sort((a, b) => String(a.dueDate).localeCompare(String(b.dueDate)));
-  }, [monthTransactions]);
-
   const filteredTransactions = useMemo(() => {
     let result = monthTransactions;
     if (filters.type === 'expense') result = result.filter(t => t.transactionType === TransactionType.Expense);
@@ -242,6 +199,11 @@ const Financial = () => {
     }
   };
 
+  const handlePayBill = (bill: FinancialTransactionUpcomingBillResponse) => {
+    const tx = monthTransactions.find(t => t.financialTransactionId === bill.financialTransactionId);
+    if (tx) setPayingTx(tx);
+  };
+
   const openCreate = () => { setEditingTx(null); setFormOpen(true); };
   const openEdit = (t: FinancialTransactionResponse) => { setEditingTx(t); setFormOpen(true); };
 
@@ -259,9 +221,14 @@ const Financial = () => {
             Saldo do mês{' '}
             <b
               className="text-base"
-              style={{ color: monthIncome - monthExpense >= 0 ? 'var(--chart-2)' : 'var(--destructive)' }}
+              style={{
+                color:
+                  Number(dashboardData?.currentMonth.balance ?? 0) >= 0
+                    ? 'var(--chart-2)'
+                    : 'var(--destructive)',
+              }}
             >
-              {formatCurrency(monthIncome - monthExpense)}
+              {formatCurrency(Number(dashboardData?.currentMonth.balance ?? 0))}
             </b>
           </span>
           <button
@@ -283,13 +250,19 @@ const Financial = () => {
         {/* Coluna lateral — primeiro no mobile */}
         <div className="flex flex-col gap-3 md:gap-6 order-1 lg:order-2 lg:col-span-1">
           <motion.div variants={cardSlide}>
-            <FinancialSummaryCard income={monthIncome} expense={monthExpense} previousExpense={previousExpense} />
+            <FinancialSummaryCard
+              currentMonth={dashboardData?.currentMonth ?? { totalIncome: 0, totalExpenses: 0, balance: 0 }}
+              previousMonth={dashboardData?.previousMonth ?? { totalIncome: 0, totalExpenses: 0, balance: 0 }}
+            />
           </motion.div>
           <motion.div variants={cardSlide}>
-            <UpcomingBillsCard bills={upcomingBills} onPay={setPayingTx} />
+            <UpcomingBillsCard
+              bills={dashboardData?.upcomingBills ?? []}
+              onPay={handlePayBill}
+            />
           </motion.div>
           <motion.div variants={cardSlide} className="hidden lg:block">
-            <CategoryBreakdownCard transactions={monthTransactions} />
+            <CategoryBreakdownCard expensesByCategory={dashboardData?.expensesByCategory ?? []} />
           </motion.div>
         </div>
 
@@ -313,7 +286,7 @@ const Financial = () => {
 
         {/* Categorias — abaixo da lista no mobile */}
         <motion.div variants={cardSlide} className="order-3 lg:hidden">
-          <CategoryBreakdownCard transactions={monthTransactions} />
+          <CategoryBreakdownCard expensesByCategory={dashboardData?.expensesByCategory ?? []} />
         </motion.div>
       </motion.div>
 

@@ -528,7 +528,9 @@ export const mockExpenses: MockExpense[] = monthlyExpenseSeeds
 
 // ── Transações financeiras (FinancialTransactionResponse — modo mock) ─────────────
 
-export const mockFinancialCategories: CategoryResponse[] = [
+// IDs de mock não são UUIDs reais (convenção do arquivo: 'nest-mock-0001' etc.);
+// os branches mock dos services não passam por safeParse.
+export const mockFinancialCategories = [
   { categoryId: 'fincat-0000-0000-0000-000000000001', nestId: 'nest-mock-0001', name: 'Moradia', type: 0 },
   { categoryId: 'fincat-0000-0000-0000-000000000002', nestId: 'nest-mock-0001', name: 'Contas fixas', type: 0 },
   { categoryId: 'fincat-0000-0000-0000-000000000003', nestId: 'nest-mock-0001', name: 'Mercado', type: 0 },
@@ -537,11 +539,12 @@ export const mockFinancialCategories: CategoryResponse[] = [
   { categoryId: 'fincat-0000-0000-0000-000000000006', nestId: 'nest-mock-0001', name: 'Manutenção', type: 0 },
   { categoryId: 'fincat-0000-0000-0000-000000000007', nestId: 'nest-mock-0001', name: 'Pet', type: 0 },
   { categoryId: 'fincat-0000-0000-0000-000000000008', nestId: 'nest-mock-0001', name: 'Renda', type: 1 },
-];
+] satisfies CategoryResponse[];
 
 const FIN_NEST_ID = 'nest-mock-0001';
 const FIN_JOAO = { id: 'user-mock-0001', name: 'João (Você)' };
 
+// Contador module-level: determinístico por avaliação do módulo (reinicia em HMR).
 let finSeq = 0;
 
 function makeFinPayment(
@@ -585,6 +588,7 @@ function makeFinTx(seed: FinTxSeed): FinancialTransactionResponse {
   const dateIso = getDateInMonth(seed.monthsAgo, seed.day);
   const dueIso = getDateInMonth(seed.monthsAgo, seed.dueDay ?? seed.day);
   const category = mockFinancialCategories.find(c => c.categoryId === seed.categoryId)!;
+  // Quitação total é datada no vencimento; pagamento parcial na data da transação.
   const payments =
     seed.paid === true
       ? [makeFinPayment(id, seed.value, dueIso)]
@@ -652,7 +656,7 @@ export const mockTransactions: FinancialTransactionResponse[] = ([
   { type: 0, description: 'Compras do mês', value: 886, monthsAgo: 2, day: 18, categoryId: CAT.mercado, paid: true },
   { type: 0, description: 'Material escolar', value: 242, monthsAgo: 2, day: 10, categoryId: CAT.familia, paid: true },
   { type: 0, description: 'Petshop', value: 118, monthsAgo: 2, day: 14, categoryId: CAT.pet, paid: true },
-] as FinTxSeed[]).map(makeFinTx);
+] satisfies FinTxSeed[]).map(makeFinTx);
 
 // ── Metas da família (dashboard) ─────────────────────────────────────────────
 

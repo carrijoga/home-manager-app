@@ -1,7 +1,7 @@
 import type { Variants } from 'framer-motion';
 import { motion } from 'framer-motion';
 import { Plus } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { PaymentModal } from '@/components/modals/PaymentModal';
 import { TransactionFormModal } from '@/components/modals/TransactionFormModal';
@@ -53,6 +53,11 @@ const firstOfCurrentMonth = () => {
   return new Date(now.getFullYear(), now.getMonth(), 1);
 };
 
+const cardSlide: Variants = {
+  hidden: { opacity: 0, y: 24, scale: 0.97 },
+  show: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.45, ease: [0.25, 1, 0.5, 1] } },
+};
+
 /**
  * Financial — Hub de transações da casa (Domestic Sanctuary design).
  * Lista protagonista + coluna lateral (resumo, contas a vencer, categorias).
@@ -82,6 +87,8 @@ const Financial = () => {
   const [members, setMembers] = useState<NestMember[]>([]);
   /** Incrementado após cada mutação para recarregar todas as queries. */
   const [refreshKey, setRefreshKey] = useState(0);
+  /** Versão da lista — descarta "Carregar mais" que resolva após troca de filtro. */
+  const listVersionRef = useRef(0);
 
   // ── Modais ─────────────────────────────────────────────────────────────────
   const [formOpen, setFormOpen] = useState(false);
@@ -103,6 +110,7 @@ const Financial = () => {
   // Lista paginada (sempre volta à página 1 quando filtro muda)
   useEffect(() => {
     let active = true;
+    listVersionRef.current += 1;
     setLoadingList(true);
     setPage(1);
     financialService
@@ -209,9 +217,12 @@ const Financial = () => {
 
   const handleLoadMore = useCallback(async () => {
     setLoadingMore(true);
+    const version = listVersionRef.current;
     try {
       const next = page + 1;
       const res = await financialService.listTransactions({ ...listFilter, page: next }, nestId);
+      // Filtro mudou enquanto carregava — descarta para não misturar resultados
+      if (version !== listVersionRef.current) return;
       setTransactions(prev => [...prev, ...res.items]);
       setPage(next);
     } catch {
@@ -290,11 +301,6 @@ const Financial = () => {
   const openEdit = (t: FinancialTransactionResponse) => {
     setEditingTx(t);
     setFormOpen(true);
-  };
-
-  const cardSlide: Variants = {
-    hidden: { opacity: 0, y: 24, scale: 0.97 },
-    show: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.45, ease: [0.25, 1, 0.5, 1] } },
   };
 
   const hasActiveFilters =

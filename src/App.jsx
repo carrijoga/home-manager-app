@@ -7,7 +7,7 @@ import { FadeIn } from './components/common/FadeIn';
 import RequireAuth from './components/common/RequireAuth';
 import { SplashScreen } from './components/common/SplashScreen';
 import { TopNavbar } from './components/common/TopNavbar';
-import { DashboardSkeleton, ExpenseListSkeleton, FinancialSkeleton, ShoppingListSkeleton, TaskListSkeleton } from './components/skeletons';
+import { DashboardSkeleton, FinancialSkeleton, ShoppingListSkeleton, TaskListSkeleton } from './components/skeletons';
 import { SidebarInset, SidebarProvider } from './components/ui/sidebar';
 import { Toaster } from './components/ui/sonner';
 import { AppProvider, useApp } from './contexts/AppContext';
@@ -19,7 +19,6 @@ const DashboardModule = lazy(() => import('./components/modules/Dashboard'));
 const TasksModule = lazy(() => import('./components/modules/Tasks'));
 const ShoppingListModule = lazy(() => import('./components/modules/ShoppingList'));
 const FinancialModule = lazy(() => import('./components/modules/Financial'));
-const FutureItemsModule = lazy(() => import('./components/modules/FutureItems'));
 const CalendarModule = lazy(() => import('./components/modules/Calendar'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
@@ -43,9 +42,29 @@ const Financial = () => {
   return <FinancialModule />;
 };
 
-const FutureItems = () => {
-  return <FutureItemsModule />;
-};
+const FinancialGoals = () => (
+  <div className="p-6">
+    <h1 className="text-2xl font-semibold">Metas</h1>
+  </div>
+);
+
+const FinancialRecurrences = () => (
+  <div className="p-6">
+    <h1 className="text-2xl font-semibold">Recorrências</h1>
+  </div>
+);
+
+const FinancialAccount = () => (
+  <div className="p-6">
+    <h1 className="text-2xl font-semibold">Conta</h1>
+  </div>
+);
+
+const FinancialCard = () => (
+  <div className="p-6">
+    <h1 className="text-2xl font-semibold">Cartão</h1>
+  </div>
+);
 
 const Calendar = () => {
   return <CalendarModule />;
@@ -122,10 +141,17 @@ const App = () => {
                   <FadeIn><Financial /></FadeIn>
                 </Suspense>
               } />
-              <Route path="future" element={
-                <Suspense fallback={<ExpenseListSkeleton />}>
-                  <FadeIn><FutureItems /></FadeIn>
-                </Suspense>
+              <Route path="financial/goals" element={
+                <FadeIn><FinancialGoals /></FadeIn>
+              } />
+              <Route path="financial/recurrences" element={
+                <FadeIn><FinancialRecurrences /></FadeIn>
+              } />
+              <Route path="financial/account" element={
+                <FadeIn><FinancialAccount /></FadeIn>
+              } />
+              <Route path="financial/card" element={
+                <FadeIn><FinancialCard /></FadeIn>
               } />
               <Route path="calendar" element={
                 <Suspense fallback={<DashboardSkeleton />}>

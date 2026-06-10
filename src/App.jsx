@@ -7,7 +7,7 @@ import { FadeIn } from './components/common/FadeIn';
 import RequireAuth from './components/common/RequireAuth';
 import { SplashScreen } from './components/common/SplashScreen';
 import { TopNavbar } from './components/common/TopNavbar';
-import { DashboardSkeleton, ExpenseListSkeleton, ShoppingListSkeleton, TaskListSkeleton } from './components/skeletons';
+import { DashboardSkeleton, ExpenseListSkeleton, FinancialSkeleton, ShoppingListSkeleton, TaskListSkeleton } from './components/skeletons';
 import { SidebarInset, SidebarProvider } from './components/ui/sidebar';
 import { Toaster } from './components/ui/sonner';
 import { AppProvider, useApp } from './contexts/AppContext';
@@ -24,6 +24,7 @@ const CalendarModule = lazy(() => import('./components/modules/Calendar'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const GoogleCallback = lazy(() => import('./pages/GoogleCallback'));
+const InviteAccept = lazy(() => import('./pages/InviteAccept'));
 
 // Componentes wrapper que conectam o context aos módulos
 const Dashboard = () => {
@@ -89,6 +90,15 @@ const App = () => {
               </Suspense>
             } />
 
+            {/* Rota privada sem layout — aceite de convite */}
+            <Route path="/invite" element={
+              <RequireAuth>
+                <Suspense fallback={<DashboardSkeleton />}>
+                  <InviteAccept />
+                </Suspense>
+              </RequireAuth>
+            } />
+
             {/* Rotas privadas com layout compartilhado */}
             <Route path="/" element={<RequireAuth><HomeLayout /></RequireAuth>}>
               <Route index element={<Navigate to="/dashboard" replace />} />
@@ -108,7 +118,7 @@ const App = () => {
                 </Suspense>
               } />
               <Route path="financial" element={
-                <Suspense fallback={<ExpenseListSkeleton />}>
+                <Suspense fallback={<FinancialSkeleton />}>
                   <FadeIn><Financial /></FadeIn>
                 </Suspense>
               } />

@@ -1,196 +1,437 @@
-import { Trash2 } from 'lucide-react';
-import { memo, useMemo, useState } from 'react';
+import type { Variants } from 'framer-motion';
+import { motion } from 'framer-motion';
+import { Plus } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { PaymentModal } from '@/components/modals/PaymentModal';
+import { TransactionFormModal } from '@/components/modals/TransactionFormModal';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui';
 import { useApp } from '@/contexts/AppContext';
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
+import { useDebounce } from '@/hooks/useDebounce';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import type { CategoryResponse } from '@/schemas/category';
+import { TransactionType } from '@/schemas/enums';
+import type {
+  AddPaymentRequest,
+  CreateTransactionRequest,
+  FinancialTransactionFilter,
+  FinancialTransactionResponse,
+  UpdateTransactionRequest,
+} from '@/schemas/financial';
+import type { NestMember } from '@/schemas/nest';
+import * as categoryService from '@/services/categoryService';
+import * as financialService from '@/services/financialService';
+import * as nestService from '@/services/nestService';
+import { formatCurrency } from '@/utils/dashboardMetrics';
+import { getMonthRange, toIsoDate } from '@/utils/financialUtils';
 
-import Button from '../common/Button';
-import Card from '../common/Card';
-import Input from '../common/Input';
-import MoneyInput from '../common/MoneyInput';
+import { CategoryBreakdownCard } from './financial/CategoryBreakdownCard';
+import { FinancialSummaryCard } from './financial/FinancialSummaryCard';
+import { MonthNavigator } from './financial/MonthNavigator';
+import {
+  DEFAULT_FILTERS,
+  TransactionFilters,
+  type TransactionFiltersState,
+} from './financial/TransactionFilters';
+import { TransactionList } from './financial/TransactionList';
+import { UpcomingBillsCard } from './financial/UpcomingBillsCard';
 
-interface Expense {
-  id: string;
-  description: string;
-  value: number;
-  date: string;
-  category: string;
-}
+const PAGE_SIZE = 20;
 
-const ExpenseCategories = {
-  FIXED: 'Fixo',
-  MAINTENANCE: 'Manutenção',
-  NEW_ITEM: 'Novo item',
-  GENERAL: 'Geral',
-  FOOD: 'Alimentação',
-  TRANSPORT: 'Transporte',
-  HEALTH: 'Saúde',
-  EDUCATION: 'Educação',
-  ENTERTAINMENT: 'Entretenimento',
-  OTHER: 'Outro',
-} as const;
+const firstOfCurrentMonth = () => {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), 1);
+};
 
-interface ExpenseFormData {
-  description: string;
-  value: number | null;
-  date: string;
-  category: string;
-}
+/**
+ * Financial — Hub de transações da casa (Domestic Sanctuary design).
+ * Lista protagonista + coluna lateral (resumo, contas a vencer, categorias).
+ */
+const Financial = () => {
+  const { user, activeNestId } = useApp();
+  const { showSuccess, showError } = useToastNotifications();
+  const prefersReducedMotion = usePrefersReducedMotion();
+  const nestId = activeNestId ?? undefined;
+  const currentUserId = user?.id ?? '';
 
-const Financial = memo(() => {
-  const { expenses: rawExpenses, addExpense, deleteExpense } = useApp();
-  const expenses = rawExpenses as Expense[];
-  const { showSuccess, showError, showLoading, dismissToast } = useToastNotifications();
+  // ── Período e filtros ──────────────────────────────────────────────────────
+  const [month, setMonth] = useState<Date>(firstOfCurrentMonth);
+  const [filters, setFilters] = useState<TransactionFiltersState>(DEFAULT_FILTERS);
+  const debouncedSearch = useDebounce(filters.search, 300);
 
-  const [newExpense, setNewExpense] = useState<ExpenseFormData>({
-    description: '',
-    value: null,
-    date: '',
-    category: '',
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // ── Dados ──────────────────────────────────────────────────────────────────
+  const [transactions, setTransactions] = useState<FinancialTransactionResponse[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [page, setPage] = useState(1);
+  const [loadingList, setLoadingList] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [monthTransactions, setMonthTransactions] = useState<FinancialTransactionResponse[]>([]);
+  const [previousExpense, setPreviousExpense] = useState(0);
+  const [upcomingBills, setUpcomingBills] = useState<FinancialTransactionResponse[]>([]);
+  const [categories, setCategories] = useState<CategoryResponse[]>([]);
+  const [members, setMembers] = useState<NestMember[]>([]);
+  /** Incrementado após cada mutação para recarregar todas as queries. */
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  const handleAddExpense = async () => {
-    if (newExpense.description.trim() && newExpense.value !== null && newExpense.value > 0 && !isSubmitting) {
-      setIsSubmitting(true);
-      const loadingToast = showLoading('Processando gasto...');
-      try {
-        await addExpense({
-          description: newExpense.description,
-          value: newExpense.value,
-          date: newExpense.date || new Date().toISOString().split('T')[0],
-          category: newExpense.category || 'Geral',
-        });
-        dismissToast(loadingToast);
-        setNewExpense({ description: '', value: null, date: '', category: '' });
-        showSuccess('Gasto adicionado com sucesso!');
-      } catch (error) {
-        console.error('Erro ao adicionar gasto:', error);
-        dismissToast(loadingToast);
-        showError('Erro ao adicionar gasto. Tente novamente.');
-      } finally {
-        setIsSubmitting(false);
-      }
+  // ── Modais ─────────────────────────────────────────────────────────────────
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingTx, setEditingTx] = useState<FinancialTransactionResponse | null>(null);
+  const [payingTx, setPayingTx] = useState<FinancialTransactionResponse | null>(null);
+  const [deletingTx, setDeletingTx] = useState<FinancialTransactionResponse | null>(null);
+
+  const listFilter = useMemo<FinancialTransactionFilter>(() => {
+    const base: FinancialTransactionFilter = { ...getMonthRange(month), pageSize: PAGE_SIZE };
+    if (filters.type === 'expense') base.types = [TransactionType.Expense];
+    if (filters.type === 'income') base.types = [TransactionType.Income];
+    if (filters.status === 'unpaid') base.isPaid = false;
+    if (filters.status === 'overdue') base.isOverdue = true;
+    if (debouncedSearch.trim()) base.description = debouncedSearch.trim();
+    if (filters.categoryId) base.categoryIds = [filters.categoryId];
+    return base;
+  }, [month, filters.type, filters.status, filters.categoryId, debouncedSearch]);
+
+  // Lista paginada (sempre volta à página 1 quando filtro muda)
+  useEffect(() => {
+    let active = true;
+    setLoadingList(true);
+    setPage(1);
+    financialService
+      .listTransactions({ ...listFilter, page: 1 }, nestId)
+      .then(res => {
+        if (!active) return;
+        setTransactions(res.items);
+        setTotalCount(res.totalCount);
+      })
+      .catch(() => {
+        if (active) showError('Erro ao carregar transações.');
+      })
+      .finally(() => {
+        if (active) setLoadingList(false);
+      });
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [listFilter, nestId, refreshKey]);
+
+  // Resumo do mês + mês anterior (sem filtros de UI)
+  useEffect(() => {
+    let active = true;
+    const prevMonth = new Date(month.getFullYear(), month.getMonth() - 1, 1);
+    Promise.all([
+      financialService.listTransactions({ ...getMonthRange(month), pageSize: 1000 }, nestId),
+      financialService.listTransactions({ ...getMonthRange(prevMonth), pageSize: 1000 }, nestId),
+    ])
+      .then(([current, previous]) => {
+        if (!active) return;
+        setMonthTransactions(current.items);
+        setPreviousExpense(
+          previous.items
+            .filter(t => t.transactionType === TransactionType.Expense)
+            .reduce((sum, t) => sum + Number(t.value), 0),
+        );
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [month, nestId, refreshKey]);
+
+  // Contas a vencer: não pagas com vencimento até hoje+14 (inclui vencidas de outros meses)
+  useEffect(() => {
+    let active = true;
+    const limit = new Date();
+    limit.setDate(limit.getDate() + 14);
+    financialService
+      .listTransactions(
+        { isPaid: false, types: [TransactionType.Expense], maxDueDate: toIsoDate(limit), pageSize: 50 },
+        nestId,
+      )
+      .then(res => {
+        if (!active) return;
+        setUpcomingBills([...res.items].sort((a, b) => String(a.dueDate).localeCompare(String(b.dueDate))));
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [nestId, refreshKey]);
+
+  // Categorias + membros (uma vez por nest)
+  useEffect(() => {
+    let active = true;
+    categoryService
+      .listCategories({ pageSize: 100 }, nestId)
+      .then(res => {
+        if (active) setCategories(res.items);
+      })
+      .catch(() => {});
+    if (activeNestId) {
+      nestService
+        .getNestMembers(activeNestId)
+        .then(m => {
+          if (active) setMembers(m);
+        })
+        .catch(() => {});
     }
-  };
+    return () => {
+      active = false;
+    };
+  }, [activeNestId, nestId]);
 
-  const handleDeleteExpense = async (expenseId: string) => {
+  // ── Derivados ──────────────────────────────────────────────────────────────
+  const monthIncome = useMemo(
+    () =>
+      monthTransactions
+        .filter(t => t.transactionType === TransactionType.Income)
+        .reduce((sum, t) => sum + Number(t.value), 0),
+    [monthTransactions],
+  );
+  const monthExpense = useMemo(
+    () =>
+      monthTransactions
+        .filter(t => t.transactionType === TransactionType.Expense)
+        .reduce((sum, t) => sum + Number(t.value), 0),
+    [monthTransactions],
+  );
+
+  const hasMore = transactions.length < totalCount;
+
+  const handleLoadMore = useCallback(async () => {
+    setLoadingMore(true);
     try {
-      await deleteExpense(expenseId);
-      showSuccess('Gasto excluído com sucesso!');
+      const next = page + 1;
+      const res = await financialService.listTransactions({ ...listFilter, page: next }, nestId);
+      setTransactions(prev => [...prev, ...res.items]);
+      setPage(next);
+    } catch {
+      showError('Erro ao carregar mais transações.');
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [page, listFilter, nestId, showError]);
+
+  const refresh = () => setRefreshKey(k => k + 1);
+
+  // ── Mutações ───────────────────────────────────────────────────────────────
+  const handleCreate = async (payload: CreateTransactionRequest) => {
+    try {
+      await financialService.createTransaction(payload, nestId);
+      showSuccess('Transação criada com sucesso!');
+      refresh();
     } catch (error) {
-      console.error('Erro ao excluir gasto:', error);
-      showError('Erro ao excluir gasto. Tente novamente.');
+      showError('Erro ao criar transação. Tente novamente.');
+      throw error;
     }
   };
 
-  const totalByCategory = useMemo(() => {
-    return expenses.reduce<Record<string, number>>((acc, exp) => {
-      acc[exp.category] = (acc[exp.category] || 0) + exp.value;
-      return acc;
-    }, {});
-  }, [expenses]);
+  const handleUpdate = async (payload: UpdateTransactionRequest) => {
+    try {
+      await financialService.updateTransaction(payload, nestId);
+      showSuccess('Transação atualizada!');
+      refresh();
+    } catch (error) {
+      showError('Erro ao atualizar. O backend pode ainda não suportar edição.');
+      throw error;
+    }
+  };
 
-  const totalExpenses = useMemo(() => {
-    return expenses.reduce((sum, exp) => sum + exp.value, 0);
-  }, [expenses]);
+  const handlePaymentSubmit = async (payload: AddPaymentRequest) => {
+    try {
+      await financialService.addPayment(payload, nestId);
+      showSuccess('Pagamento registrado!');
+      refresh();
+    } catch (error) {
+      showError('Erro ao registrar pagamento. Tente novamente.');
+      throw error;
+    }
+  };
 
-  const sortedExpenses = useMemo(() => {
-    return [...expenses].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [expenses]);
+  const handleRemovePayment = async (t: FinancialTransactionResponse, paymentId: string) => {
+    try {
+      await financialService.removePayment(
+        { financialTransactionId: t.financialTransactionId, paymentId, removedByUserId: currentUserId },
+        nestId,
+      );
+      showSuccess('Pagamento estornado.');
+      refresh();
+    } catch {
+      showError('Erro ao estornar pagamento.');
+    }
+  };
 
+  const handleDeleteConfirm = async () => {
+    if (!deletingTx) return;
+    try {
+      await financialService.deleteTransaction({ financialTransactionId: deletingTx.financialTransactionId }, nestId);
+      showSuccess('Transação excluída.');
+      refresh();
+    } catch {
+      showError('Erro ao excluir. O backend pode ainda não suportar exclusão.');
+    } finally {
+      setDeletingTx(null);
+    }
+  };
+
+  const openCreate = () => {
+    setEditingTx(null);
+    setFormOpen(true);
+  };
+  const openEdit = (t: FinancialTransactionResponse) => {
+    setEditingTx(t);
+    setFormOpen(true);
+  };
+
+  const cardSlide: Variants = {
+    hidden: { opacity: 0, y: 24, scale: 0.97 },
+    show: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.45, ease: [0.25, 1, 0.5, 1] } },
+  };
+
+  const hasActiveFilters =
+    Boolean(debouncedSearch) || filters.type !== 'all' || filters.status !== 'all' || Boolean(filters.categoryId);
+
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-6">
-      {/* Card.jsx has no TS types — title prop inferred as null from default */}
-      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      <Card title={"Financeiro da Casa" as any}>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="bg-gradient-to-br from-sage-400 to-sage-500 text-white rounded-xl p-4">
-            <p className="text-sm opacity-90">Total de Gastos</p>
-            <p className="text-[var(--text-3xl)] font-bold">R$ {totalExpenses.toFixed(2)}</p>
-          </div>
-          <div className="bg-gradient-to-br from-terracotta-400 to-terracotta-500 text-white rounded-xl p-4">
-            <p className="text-sm opacity-90">Média Mensal</p>
-            <p className="text-[var(--text-3xl)] font-bold">R$ {(totalExpenses / 1).toFixed(2)}</p>
-          </div>
-          <div className="bg-gradient-to-br from-honey-400 to-honey-500 text-white rounded-xl p-4">
-            <p className="text-sm opacity-90">Categorias</p>
-            <p className="text-[var(--text-3xl)] font-bold">{Object.keys(totalByCategory).length}</p>
-          </div>
-        </div>
-
-        <div className="mb-6 space-y-3 p-4 bg-linen-100 dark:bg-muted rounded-xl border border-linen-300 dark:border-border">
-          <Input
-            placeholder="Descrição do gasto..."
-            value={newExpense.description}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewExpense({ ...newExpense, description: e.target.value })}
-          />
-          <div className="grid grid-cols-3 gap-3">
-            <MoneyInput
-              value={newExpense.value}
-              onChange={(v) => setNewExpense({ ...newExpense, value: v })}
-              placeholder="Valor (R$)..."
-            />
-            <Input
-              type="date"
-              value={newExpense.date}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewExpense({ ...newExpense, date: e.target.value })}
-            />
-            <select
-              value={newExpense.category}
-              onChange={(e) => setNewExpense({ ...newExpense, category: e.target.value })}
-              className="p-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-terracotta-500 dark:focus:ring-terracotta-400 bg-background text-foreground"
+    <div className="flex flex-col gap-6 max-w-full overflow-x-hidden">
+      {/* Header: período + saldo + nova transação */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <MonthNavigator month={month} onChange={setMonth} />
+        <div className="flex items-center gap-4">
+          <span className="font-ui text-sm text-muted-foreground hidden sm:inline">
+            Saldo do mês{' '}
+            <b
+              className="text-base"
+              style={{ color: monthIncome - monthExpense >= 0 ? 'var(--chart-2)' : 'var(--destructive)' }}
             >
-              <option value="">Categoria...</option>
-              {Object.values(ExpenseCategories).map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
-          </div>
-          <Button variant="success" fullWidth onClick={handleAddExpense} loading={isSubmitting} disabled={isSubmitting}>
-            Adicionar Gasto
-          </Button>
+              {formatCurrency(monthIncome - monthExpense)}
+            </b>
+          </span>
+          <button
+            type="button"
+            onClick={openCreate}
+            className="hidden sm:inline-flex items-center gap-2 font-ui text-sm font-semibold bg-primary text-primary-foreground rounded-full px-4 py-2 hover:brightness-105 active:scale-[0.98] transition-all duration-[length:var(--dur-base)]"
+          >
+            <Plus size={16} strokeWidth={2} /> Nova transação
+          </button>
+        </div>
+      </div>
+
+      <motion.div
+        className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-6 items-start"
+        variants={{ hidden: {}, show: { transition: { staggerChildren: 0.1 } } }}
+        initial={prefersReducedMotion ? false : 'hidden'}
+        animate="show"
+      >
+        {/* Coluna lateral — primeiro no mobile (Resumo → Contas a vencer) */}
+        <div className="flex flex-col gap-3 md:gap-6 order-1 lg:order-2 lg:col-span-1">
+          <motion.div variants={cardSlide}>
+            <FinancialSummaryCard income={monthIncome} expense={monthExpense} previousExpense={previousExpense} />
+          </motion.div>
+          <motion.div variants={cardSlide}>
+            <UpcomingBillsCard bills={upcomingBills} onPay={setPayingTx} />
+          </motion.div>
+          <motion.div variants={cardSlide} className="hidden lg:block">
+            <CategoryBreakdownCard transactions={monthTransactions} />
+          </motion.div>
         </div>
 
-        <div className="mb-6">
-          <h3 className="font-semibold text-foreground mb-3">Gastos por Categoria</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {Object.entries(totalByCategory).map(([category, total]) => (
-              <div key={category} className="bg-linen-100 dark:bg-muted p-3 rounded-lg border-l-4 border-honey-400 dark:border-honey-500">
-                <p className="text-sm text-muted-foreground">{category}</p>
-                <p className="text-xl font-bold text-foreground">R$ {(total as number).toFixed(2)}</p>
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* Coluna principal — lista */}
+        <motion.div variants={cardSlide} className="flex flex-col gap-3 order-2 lg:order-1 lg:col-span-2">
+          <TransactionFilters value={filters} onChange={setFilters} categories={categories} />
+          <TransactionList
+            transactions={transactions}
+            loading={loadingList}
+            hasMore={hasMore}
+            loadingMore={loadingMore}
+            onLoadMore={() => {
+              void handleLoadMore();
+            }}
+            emptyTitle={hasActiveFilters ? 'Nenhuma transação encontrada' : 'Nenhuma transação neste mês'}
+            emptyDescription="Registre a primeira transação pelo botão Nova transação."
+            onPay={setPayingTx}
+            onEdit={openEdit}
+            onDelete={setDeletingTx}
+            onRemovePayment={(t, paymentId) => {
+              void handleRemovePayment(t, paymentId);
+            }}
+          />
+        </motion.div>
 
-        <div className="space-y-2">
-          <h3 className="font-semibold text-foreground mb-3">Histórico de Gastos</h3>
-          {sortedExpenses.map((expense) => (
-            <div key={expense.id} className="flex items-center justify-between p-4 bg-card rounded-xl border border-border hover:bg-linen-100 dark:hover:bg-muted transition-colors duration-[length:var(--dur-base)]">
-              <div className="flex-1">
-                <p className="text-foreground font-medium">{expense.description}</p>
-                <p className="text-sm text-muted-foreground">
-                  {expense.category} • {new Date(expense.date).toLocaleDateString('pt-BR')}
-                </p>
-              </div>
-              <div className="flex items-center space-x-4">
-                <span className="text-lg font-bold text-sage-600 dark:text-sage-400">R$ {expense.value.toFixed(2)}</span>
-                <button
-                  onClick={() => handleDeleteExpense(expense.id)}
-                  className="text-terracotta-500 hover:text-terracotta-700 dark:text-terracotta-400 transition-colors"
-                >
-                  <Trash2 size={18} />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
+        {/* Categorias — abaixo da lista no mobile */}
+        <motion.div variants={cardSlide} className="order-3 lg:hidden">
+          <CategoryBreakdownCard transactions={monthTransactions} />
+        </motion.div>
+      </motion.div>
+
+      {/* FAB mobile */}
+      <button
+        type="button"
+        aria-label="Nova transação"
+        onClick={openCreate}
+        className="sm:hidden fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg active:scale-95 transition-transform"
+      >
+        <Plus size={24} strokeWidth={2} />
+      </button>
+
+      {/* Modais */}
+      <TransactionFormModal
+        open={formOpen}
+        onClose={() => {
+          setFormOpen(false);
+          setEditingTx(null);
+        }}
+        transaction={editingTx}
+        categories={categories}
+        members={members}
+        currentUserId={currentUserId}
+        onCreate={handleCreate}
+        onUpdate={handleUpdate}
+      />
+      <PaymentModal
+        open={payingTx !== null}
+        onClose={() => setPayingTx(null)}
+        transaction={payingTx}
+        currentUserId={currentUserId}
+        onSubmit={handlePaymentSubmit}
+      />
+      <AlertDialog
+        open={deletingTx !== null}
+        onOpenChange={o => {
+          if (!o) setDeletingTx(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir transação?</AlertDialogTitle>
+            <AlertDialogDescription>
+              &quot;{deletingTx?.description}&quot; será removida permanentemente. Essa ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                void handleDeleteConfirm();
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
-});
-
-Financial.displayName = 'Financial';
+};
 
 export default Financial;

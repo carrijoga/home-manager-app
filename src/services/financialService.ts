@@ -56,11 +56,16 @@ function getPaidSum(t: FinancialTransactionResponse): number {
   return t.payments.reduce((sum, p) => sum + Number(p.amount ?? 0), 0);
 }
 
+/** Data local em YYYY-MM-DD — evita off-by-one perto da meia-noite em UTC-3. */
+function localToday(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 function recomputeStatus(t: FinancialTransactionResponse): FinancialTransactionResponse {
   const isPaid = getPaidSum(t) >= Number(t.value);
   const due = String(t.dueDate).slice(0, 10);
-  const today = new Date().toISOString().slice(0, 10);
-  return { ...t, isPaid, isOverdue: !isPaid && due < today };
+  return { ...t, isPaid, isOverdue: !isPaid && due < localToday() };
 }
 
 function applyMockFilter(
@@ -68,6 +73,14 @@ function applyMockFilter(
   filter?: FinancialTransactionFilter,
 ): FinancialTransactionResponse[] {
   if (!filter) return items;
+  if (
+    import.meta.env.DEV &&
+    (filter.ids?.length || filter.minValue != null || filter.maxValue != null ||
+      filter.responsibleUserIds?.length || filter.origins?.length ||
+      filter.sourceTypes?.length || filter.sourceIds?.length)
+  ) {
+    console.warn('[financialService] applyMockFilter: ids/min-maxValue/responsibleUserIds/origins/sourceTypes/sourceIds não implementados em modo mock');
+  }
   return items.filter(t => {
     if (filter.types?.length && !filter.types.includes(t.transactionType)) return false;
     if (filter.description && !t.description.toLowerCase().includes(filter.description.toLowerCase())) return false;
@@ -112,7 +125,8 @@ export async function getTransactionById(id: string, nestId?: string): Promise<F
   if (DATA_MODE === 'mock') {
     const found = mockStore.find(t => t.financialTransactionId === id);
     if (!found) throw new Error(`Transação ${id} não encontrada`);
-    return delay(found);
+    // Cópia: nunca devolver referência viva do store
+    return delay({ ...found, payments: [...found.payments] });
   }
 
   const raw = await httpClient.get<unknown>(`${ENDPOINTS.financial.getById}?id=${id}`, nestId);
@@ -175,6 +189,8 @@ export async function updateTransaction(
       categoryId: payload.categoryId,
       categoryName: category?.name ?? mockStore[idx].categoryName,
       responsibleUserId: payload.responsibleUserId,
+      sourceType: payload.sourceType,
+      sourceId: payload.sourceId ?? mockStore[idx].sourceId,
       observation: payload.observation ?? mockStore[idx].observation,
     });
     mockStore = mockStore.map((t, i) => (i === idx ? updated : t));

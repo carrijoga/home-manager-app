@@ -12,6 +12,7 @@ import type {
 } from '@/schemas/financial';
 import type { NestMember } from '@/schemas/nest';
 import * as nestService from '@/services/nestService';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
 import { AmountHero } from './transaction-sheet/AmountHero';
@@ -40,6 +41,7 @@ export function TransactionSheet({
   open, onClose, transaction, categories, nestId, currentUserId, onCreate, onUpdate,
 }: TransactionSheetProps) {
   const isEdit = transaction !== null;
+  const isMobile = useIsMobile();
   const reduced = usePrefersReducedMotion();
 
   const [type, setType] = useState<number>(TransactionType.Expense);
@@ -157,11 +159,14 @@ export function TransactionSheet({
   return (
     <Sheet open={open} onOpenChange={o => { if (!o) onClose(); }}>
       <SheetContent
-        side="bottom"
-        className="rounded-t-2xl px-4 pb-6 pt-3 max-h-[92dvh] overflow-y-auto focus:outline-none"
+        side={isMobile ? 'bottom' : 'right'}
+        className={isMobile
+          ? 'rounded-t-2xl px-4 pb-6 pt-3 max-h-[92dvh] overflow-y-auto focus:outline-none'
+          : 'w-[420px] px-6 pb-6 pt-4 overflow-y-auto focus:outline-none'
+        }
       >
-        {/* Handle */}
-        <div className="w-9 h-1 rounded-full bg-border mx-auto mb-4" aria-hidden />
+        {/* Handle — só no mobile */}
+        {isMobile && <div className="w-9 h-1 rounded-full bg-border mx-auto mb-4" aria-hidden />}
 
         <form onSubmit={e => { void handleSubmit(e).catch(() => {}); }} className="space-y-4">
           <TypeToggle value={type} onChange={handleTypeChange} />

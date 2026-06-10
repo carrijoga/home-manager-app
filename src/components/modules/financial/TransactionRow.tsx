@@ -14,6 +14,11 @@ import type { FinancialTransactionResponse } from '@/schemas/financial';
 import { formatCurrency } from '@/utils/dashboardMetrics';
 import { getDueLabel, getPaidAmount, getTransactionStatus, type TransactionStatus } from '@/utils/financialUtils';
 
+/** Formata só a parte de data em horário local — evita off-by-one com sufixo Z/offset. */
+function formatLocalDate(iso: string): string {
+  return new Date(`${iso.slice(0, 10)}T00:00:00`).toLocaleDateString('pt-BR');
+}
+
 interface TransactionRowProps {
   transaction: FinancialTransactionResponse;
   onPay: (t: FinancialTransactionResponse) => void;
@@ -56,8 +61,14 @@ export function TransactionRow({ transaction: t, onPay, onEdit, onDelete, onRemo
       <div
         role="button"
         tabIndex={0}
+        aria-expanded={expanded}
         onClick={() => setExpanded(e => !e)}
-        onKeyDown={e => e.key === 'Enter' && setExpanded(v => !v)}
+        onKeyDown={e => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setExpanded(v => !v);
+          }
+        }}
         className="flex items-center gap-3 p-3.5 cursor-pointer hover:bg-muted/50 transition-colors duration-[length:var(--dur-base)] outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <div
@@ -131,8 +142,8 @@ export function TransactionRow({ transaction: t, onPay, onEdit, onDelete, onRemo
           >
             <div className="px-4 pb-4 pt-1 flex flex-col gap-2 font-ui text-xs text-muted-foreground">
               <div className="flex flex-wrap gap-x-6 gap-y-1">
-                <span>Data: {new Date(String(t.transactionDate)).toLocaleDateString('pt-BR')}</span>
-                <span>Vencimento: {new Date(String(t.dueDate)).toLocaleDateString('pt-BR')}</span>
+                <span>Data: {formatLocalDate(String(t.transactionDate))}</span>
+                <span>Vencimento: {formatLocalDate(String(t.dueDate))}</span>
                 {t.originName && <span>Origem: {t.originName}</span>}
               </div>
               {t.observation && <p>Obs.: {t.observation}</p>}
@@ -142,7 +153,7 @@ export function TransactionRow({ transaction: t, onPay, onEdit, onDelete, onRemo
                   {t.payments.map(p => (
                     <div key={p.financialTransactionPaymentId} className="flex items-center justify-between gap-2">
                       <span>
-                        {new Date(String(p.paymentDate)).toLocaleDateString('pt-BR')} · {p.methodName ?? 'Outro'} · {p.paidByUserFullName}
+                        {formatLocalDate(String(p.paymentDate))} · {p.methodName ?? 'Outro'} · {p.paidByUserFullName}
                       </span>
                       <span className="flex items-center gap-2">
                         <b className="text-foreground">{formatCurrency(Number(p.amount))}</b>

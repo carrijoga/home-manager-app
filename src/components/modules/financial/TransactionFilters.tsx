@@ -46,7 +46,10 @@ function Pill({ active, label, onClick }: { active: boolean; label: string; onCl
   );
 }
 
-/** Pills de tipo/status + busca + categoria. "Todas" zera tipo e status. */
+/**
+ * Pills de tipo/status + busca + categoria.
+ * "Todas" zera apenas tipo e status — busca e categoria são preservadas de propósito.
+ */
 export function TransactionFilters({ value, onChange, categories }: TransactionFiltersProps) {
   const isAll = value.type === 'all' && value.status === 'all';
 

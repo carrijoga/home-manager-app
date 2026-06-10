@@ -1,16 +1,20 @@
 // src/components/modules/Shopping/hooks/useShoppingNavigation.ts
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { useApp } from '@/contexts/AppContext';
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
 import { useDebounce } from '@/hooks/useDebounce';
-import type { AppShoppingList } from '@/types';
+import type { AppShoppingCategory, AppShoppingList, AppShoppingListSummary } from '@/types';
 
 import { addMonths, currentMonthValue } from '../helpers';
 import type { ViewMode } from '../types';
 
-export function useShoppingNavigation() {
-  const { shoppingLists: remoteShoppingLists, shoppingCategories, loadShoppingListDetail } = useApp();
+interface ShoppingNavigationDeps {
+  remoteShoppingLists: AppShoppingListSummary[];
+  shoppingCategories: AppShoppingCategory[];
+  loadShoppingListDetail: (id: string) => Promise<AppShoppingList>;
+}
+
+export function useShoppingNavigation({ remoteShoppingLists, shoppingCategories, loadShoppingListDetail }: ShoppingNavigationDeps) {
   const [shoppingLists, setShoppingLists] = useState(remoteShoppingLists);
   const { showError } = useToastNotifications();
 

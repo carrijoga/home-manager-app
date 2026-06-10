@@ -1,15 +1,33 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 
-import { useApp } from '@/contexts/AppContext';
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
-import type { AppShoppingItem, AppShoppingList } from '@/types';
+import type { AppShoppingCategory, AppShoppingItem, AppShoppingList, AppShoppingListSummary } from '@/types';
 
-import { fromISOMonthYear, todayISO,toISOMonthYear } from '../helpers';
+import { fromISOMonthYear, todayISO, toISOMonthYear } from '../helpers';
 import type { BulkEditPatch, ItemFormData, ListFormData, PurchaseFormData } from '../types';
+
+interface ShoppingActionsDeps {
+  shoppingLists: AppShoppingListSummary[];
+  shoppingCategories: AppShoppingCategory[];
+  createShoppingList: (name: string, monthYear: string, notes?: string) => Promise<void>;
+  updateShoppingList: (id: string, name: string, monthYear: string, notes?: string) => Promise<void>;
+  deleteShoppingList: (id: string) => Promise<void>;
+  finishShoppingList: (id: string) => Promise<void>;
+  unfinishShoppingList: (id: string) => Promise<void>;
+  addShoppingItem: (listId: string, name: string, quantity: number, unitType: number, categoryId?: string | null, estimatedPrice?: number | null, notes?: string | null) => Promise<AppShoppingItem>;
+  updateShoppingItem: (id: string, listId: string, name: string, quantity: number, unitType: number, categoryId?: string | null, estimatedPrice?: number | null, notes?: string | null) => Promise<void>;
+  deleteShoppingItem: (id: string, listId: string, quantity: number, unitType: number, estimatedPrice?: number | null, isPurchased?: boolean, price?: number | null) => Promise<void>;
+  markItemAsPurchased: (id: string, listId: string, quantity: number, unitType: number, price: number, purchasedAt: string) => Promise<void>;
+  unmarkItemAsPurchased: (id: string, listId: string, quantity: number, unitType: number, price: number) => Promise<void>;
+  uploadShoppingItems: (listId: string, file: File) => Promise<AppShoppingList>;
+  createShoppingCategory: (name: string, description?: string) => Promise<AppShoppingCategory>;
+  deleteShoppingCategory: (id: string) => Promise<void>;
+}
 
 export function useShoppingActions(
   selectedListId: string | null,
-  setDetailData: React.Dispatch<React.SetStateAction<AppShoppingList | null>>
+  setDetailData: React.Dispatch<React.SetStateAction<AppShoppingList | null>>,
+  deps: ShoppingActionsDeps,
 ) {
   const {
     shoppingLists, shoppingCategories,
@@ -18,7 +36,7 @@ export function useShoppingActions(
     addShoppingItem, updateShoppingItem, deleteShoppingItem,
     markItemAsPurchased, unmarkItemAsPurchased,
     uploadShoppingItems, createShoppingCategory, deleteShoppingCategory,
-  } = useApp();
+  } = deps;
   const { showSuccess, showError } = useToastNotifications();
 
   // ── Dialog state ──────────────────────────────────────────────────────────

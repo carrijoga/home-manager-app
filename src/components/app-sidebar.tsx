@@ -13,10 +13,11 @@ import { ChevronsUpDownIcon } from "@/components/ui/animated-icons/chevrons-up-d
 import { CircleHelpIcon } from "@/components/ui/animated-icons/circle-help";
 import { DollarSignIcon, type DollarSignIconHandle } from "@/components/ui/animated-icons/dollar-sign";
 import { HomeIcon } from "@/components/ui/animated-icons/home";
-import { LayoutPanelTopIcon } from "@/components/ui/animated-icons/layout-panel-top";
+import { CreditCardIcon } from "@/components/ui/animated-icons/credit-card";
 import { RefreshCWIcon } from "@/components/ui/animated-icons/refresh-cw";
 import { SendIcon } from "@/components/ui/animated-icons/send";
 import { TrendingUpIcon } from "@/components/ui/animated-icons/trending-up";
+import { UserIcon } from "@/components/ui/animated-icons/user";
 import {
   Collapsible,
   CollapsibleContent,
@@ -74,10 +75,11 @@ interface FinancasSubItem {
 }
 
 const FINANCAS_SUB_ITEMS: FinancasSubItem[] = [
-  { id: "financial-dashboard", name: "Dashboard", icon: LayoutPanelTopIcon, path: "/financial" },
   { id: "financial-lancamentos", name: "Lançamentos", icon: DollarSignIcon, path: "/financial" },
-  { id: "financial-metas", name: "Metas", icon: TrendingUpIcon, path: "/financial" },
-  { id: "financial-recorrencias", name: "Recorrências", icon: RefreshCWIcon, path: "/financial" },
+  { id: "financial-metas", name: "Metas", icon: TrendingUpIcon, path: "/financial/goals" },
+  { id: "financial-recorrencias", name: "Recorrências", icon: RefreshCWIcon, path: "/financial/recurrences" },
+  { id: "financial-conta", name: "Conta", icon: UserIcon, path: "/financial/account" },
+  { id: "financial-cartao", name: "Cartão", icon: CreditCardIcon, path: "/financial/card" },
 ];
 
 const TOP_MODULES: Module[] = [
@@ -97,11 +99,13 @@ function FinancasGroup({
   financasOpen,
   setFinancasOpen,
   handleNavClick,
+  currentPath,
 }: {
   isFinancasActive: boolean;
   financasOpen: boolean;
   setFinancasOpen: (open: boolean) => void;
   handleNavClick: (path: string) => void;
+  currentPath: string;
 }) {
   const dollarRef = React.useRef<DollarSignIconHandle>(null);
   const chevronRef = React.useRef<ChevronRightIconHandle>(null);
@@ -136,11 +140,11 @@ function FinancasGroup({
       </CollapsibleTrigger>
       <CollapsibleContent>
         <SidebarMenuSub>
-          {FINANCAS_SUB_ITEMS.map((item, index) => (
+          {FINANCAS_SUB_ITEMS.map((item) => (
             <FinancasSubItemRow
               key={item.id}
               item={item}
-              isActive={isFinancasActive && index === 0}
+              isActive={currentPath === item.path}
               handleNavClick={handleNavClick}
             />
           ))}
@@ -215,7 +219,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
   const [settingsOpen, setSettingsOpen] = React.useState(false);
   const { isMobile, setOpenMobile, state: sidebarState } = useSidebar();
 
-  const isFinancasActive = location.pathname === "/financial";
+  const isFinancasActive = location.pathname.startsWith("/financial");
   const [financasOpen, setFinancasOpen] = React.useState(isFinancasActive);
 
   // Sync Finanças open state with route
@@ -321,6 +325,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
                   financasOpen={financasOpen}
                   setFinancasOpen={setFinancasOpen}
                   handleNavClick={handleNavClick}
+                  currentPath={location.pathname}
                 />
               </SidebarMenuItem>
 

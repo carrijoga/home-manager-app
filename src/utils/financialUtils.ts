@@ -39,7 +39,8 @@ export function getMonthLabel(month: Date): string {
 
 /** "Hoje · 10 jun" / "Ontem · 9 jun" / "seg · 8 jun". */
 export function getDayGroupLabel(isoDateTime: string): string {
-  const date = new Date(isoDateTime);
+  // Interpreta só a parte de data, em horário local — consistente com a chave de agrupamento
+  const date = new Date(`${isoDateTime.slice(0, 10)}T00:00:00`);
   const today = new Date();
   const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
   const dayDiff = Math.round((startOfDay(today) - startOfDay(date)) / 86_400_000);
@@ -75,7 +76,8 @@ export function groupTransactionsByDay(items: FinancialTransactionResponse[]): D
 
 /** "venceu há 3 dias" / "vence hoje" / "vence em 5 dias". */
 export function getDueLabel(isoDateTime: string): string {
-  const due = new Date(isoDateTime);
+  // Interpreta só a parte de data, em horário local — consistente com a chave de agrupamento
+  const due = new Date(`${isoDateTime.slice(0, 10)}T00:00:00`);
   const today = new Date();
   const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
   const diff = Math.round((startOfDay(due) - startOfDay(today)) / 86_400_000);

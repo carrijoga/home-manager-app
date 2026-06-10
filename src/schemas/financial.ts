@@ -49,6 +49,8 @@ export const UpdateTransactionRequestSchema = z.object({
   responsibleUserId: UuidSchema,
   sourceType: FinancialSourceTypeSchema,
   sourceId: UuidSchema.optional(),
+  // Intencional: 'observation' só existe no update (form de edição). O contrato
+  // de create em docs/api.json não possui este campo.
   observation: z.string().nullable().optional(),
 });
 export type UpdateTransactionRequest = z.infer<typeof UpdateTransactionRequestSchema>;

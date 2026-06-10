@@ -6,6 +6,11 @@
 
 import type { AppNotification, AppShoppingCategory, AppShoppingItem, AppShoppingList, AppShoppingListSummary, FutureItem, Notice, Task } from '@/types';
 import { ApiCategory, ApiPriority, FutureItemStatus, Priority } from '@/types';
+import type { CategoryResponse } from '@/schemas/category';
+import type {
+  FinancialTransactionPaymentResponse,
+  FinancialTransactionResponse,
+} from '@/schemas/financial';
 
 const MOCK_USER_ID = 'user-mock-0001';
 
@@ -520,6 +525,134 @@ export const mockExpenses: MockExpense[] = monthlyExpenseSeeds
     ...expense,
     id: String(index + 1),
   }));
+
+// ── Transações financeiras (FinancialTransactionResponse — modo mock) ─────────────
+
+export const mockFinancialCategories: CategoryResponse[] = [
+  { categoryId: 'fincat-0000-0000-0000-000000000001', nestId: 'nest-mock-0001', name: 'Moradia', type: 0 },
+  { categoryId: 'fincat-0000-0000-0000-000000000002', nestId: 'nest-mock-0001', name: 'Contas fixas', type: 0 },
+  { categoryId: 'fincat-0000-0000-0000-000000000003', nestId: 'nest-mock-0001', name: 'Mercado', type: 0 },
+  { categoryId: 'fincat-0000-0000-0000-000000000004', nestId: 'nest-mock-0001', name: 'Saúde', type: 0 },
+  { categoryId: 'fincat-0000-0000-0000-000000000005', nestId: 'nest-mock-0001', name: 'Família', type: 0 },
+  { categoryId: 'fincat-0000-0000-0000-000000000006', nestId: 'nest-mock-0001', name: 'Manutenção', type: 0 },
+  { categoryId: 'fincat-0000-0000-0000-000000000007', nestId: 'nest-mock-0001', name: 'Pet', type: 0 },
+  { categoryId: 'fincat-0000-0000-0000-000000000008', nestId: 'nest-mock-0001', name: 'Renda', type: 1 },
+];
+
+const FIN_NEST_ID = 'nest-mock-0001';
+const FIN_JOAO = { id: 'user-mock-0001', name: 'João (Você)' };
+
+let finSeq = 0;
+
+function makeFinPayment(
+  transactionId: string,
+  amount: number,
+  dateIso: string,
+): FinancialTransactionPaymentResponse {
+  finSeq += 1;
+  return {
+    financialTransactionPaymentId: `finpay-${String(finSeq).padStart(4, '0')}`,
+    financialTransactionId: transactionId,
+    nestId: FIN_NEST_ID,
+    amount,
+    discount: 0,
+    interest: 0,
+    method: 3,
+    methodName: 'PIX',
+    paymentDate: `${dateIso}T12:00:00.000Z`,
+    paidByUserId: FIN_JOAO.id,
+    paidByUserFullName: FIN_JOAO.name,
+    observation: null,
+  };
+}
+
+interface FinTxSeed {
+  type: 0 | 1;
+  description: string;
+  value: number;
+  monthsAgo: number;
+  day: number;
+  /** Dia do vencimento (default: mesmo dia da transação) */
+  dueDay?: number;
+  categoryId: string;
+  /** true = quitada; número = valor pago parcial */
+  paid?: boolean | number;
+}
+
+function makeFinTx(seed: FinTxSeed): FinancialTransactionResponse {
+  finSeq += 1;
+  const id = `fintx-${String(finSeq).padStart(4, '0')}`;
+  const dateIso = getDateInMonth(seed.monthsAgo, seed.day);
+  const dueIso = getDateInMonth(seed.monthsAgo, seed.dueDay ?? seed.day);
+  const category = mockFinancialCategories.find(c => c.categoryId === seed.categoryId)!;
+  const payments =
+    seed.paid === true
+      ? [makeFinPayment(id, seed.value, dueIso)]
+      : typeof seed.paid === 'number'
+        ? [makeFinPayment(id, seed.paid, dateIso)]
+        : [];
+  const isPaid = seed.paid === true;
+  return {
+    financialTransactionId: id,
+    nestId: FIN_NEST_ID,
+    transactionType: seed.type,
+    description: seed.description,
+    value: seed.value,
+    transactionDate: `${dateIso}T12:00:00.000Z`,
+    dueDate: `${dueIso}T12:00:00.000Z`,
+    responsibleUserId: FIN_JOAO.id,
+    responsibleUserName: FIN_JOAO.name,
+    categoryId: category.categoryId,
+    categoryName: category.name,
+    origin: 0,
+    originName: 'Financeiro',
+    observation: null,
+    sourceType: 0,
+    sourceId: id,
+    sourceName: null,
+    payments,
+    isPaid,
+    isOverdue: !isPaid && dueIso < toIsoDate(now),
+  };
+}
+
+const CAT = {
+  moradia: 'fincat-0000-0000-0000-000000000001',
+  contas: 'fincat-0000-0000-0000-000000000002',
+  mercado: 'fincat-0000-0000-0000-000000000003',
+  saude: 'fincat-0000-0000-0000-000000000004',
+  familia: 'fincat-0000-0000-0000-000000000005',
+  manutencao: 'fincat-0000-0000-0000-000000000006',
+  pet: 'fincat-0000-0000-0000-000000000007',
+  renda: 'fincat-0000-0000-0000-000000000008',
+};
+
+export const mockTransactions: FinancialTransactionResponse[] = ([
+  // ── Mês atual: mistura de estados para exercitar todos os badges ────────────
+  { type: 1, description: 'Salário', value: 8500, monthsAgo: 0, day: 1, categoryId: CAT.renda, paid: true },
+  { type: 0, description: 'Aluguel', value: 1850, monthsAgo: 0, day: 5, dueDay: 15, categoryId: CAT.moradia },
+  { type: 0, description: 'Conta de luz', value: 312, monthsAgo: 0, day: 2, dueDay: 5, categoryId: CAT.contas },
+  { type: 0, description: 'Conta de água', value: 90, monthsAgo: 0, day: 12, categoryId: CAT.contas, paid: true },
+  { type: 0, description: 'Internet', value: 129, monthsAgo: 0, day: 3, dueDay: 20, categoryId: CAT.contas },
+  { type: 0, description: 'Compras do mês', value: 740, monthsAgo: 0, day: 8, categoryId: CAT.mercado, paid: 370 },
+  // ── Mês anterior: tudo quitado ───────────────────────────────────────────────
+  { type: 1, description: 'Salário', value: 8500, monthsAgo: 1, day: 1, categoryId: CAT.renda, paid: true },
+  { type: 0, description: 'Aluguel', value: 1850, monthsAgo: 1, day: 5, categoryId: CAT.moradia, paid: true },
+  { type: 0, description: 'Conta de luz', value: 301, monthsAgo: 1, day: 10, categoryId: CAT.contas, paid: true },
+  { type: 0, description: 'Conta de água', value: 88, monthsAgo: 1, day: 12, categoryId: CAT.contas, paid: true },
+  { type: 0, description: 'Internet', value: 129, monthsAgo: 1, day: 15, categoryId: CAT.contas, paid: true },
+  { type: 0, description: 'Compras do mês', value: 972, monthsAgo: 1, day: 18, categoryId: CAT.mercado, paid: true },
+  { type: 0, description: 'Conserto da torneira', value: 160, monthsAgo: 1, day: 21, categoryId: CAT.manutencao, paid: true },
+  // ── Dois meses atrás ─────────────────────────────────────────────────────────
+  { type: 1, description: 'Salário', value: 8500, monthsAgo: 2, day: 1, categoryId: CAT.renda, paid: true },
+  { type: 0, description: 'Aluguel', value: 1800, monthsAgo: 2, day: 5, categoryId: CAT.moradia, paid: true },
+  { type: 0, description: 'Conta de luz', value: 264, monthsAgo: 2, day: 10, categoryId: CAT.contas, paid: true },
+  { type: 0, description: 'Conta de água', value: 82, monthsAgo: 2, day: 12, categoryId: CAT.contas, paid: true },
+  { type: 0, description: 'Internet', value: 119, monthsAgo: 2, day: 15, categoryId: CAT.contas, paid: true },
+  { type: 0, description: 'Compras do mês', value: 886, monthsAgo: 2, day: 18, categoryId: CAT.mercado, paid: true },
+  { type: 0, description: 'Material escolar', value: 242, monthsAgo: 2, day: 10, categoryId: CAT.familia, paid: true },
+  { type: 0, description: 'Petshop', value: 118, monthsAgo: 2, day: 14, categoryId: CAT.pet, paid: true },
+] as FinTxSeed[]).map(makeFinTx);
 
 // ── Metas da família (dashboard) ─────────────────────────────────────────────
 

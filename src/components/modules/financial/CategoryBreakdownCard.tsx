@@ -1,42 +1,27 @@
 import { motion } from 'framer-motion';
 import { TrendingUp } from 'lucide-react';
-import { useMemo } from 'react';
 
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
-import { TransactionType } from '@/schemas/enums';
-import type { FinancialTransactionResponse } from '@/schemas/financial';
+import type { FinancialTransactionCategoryExpenseResponse } from '@/schemas/financial';
 import { formatCurrency } from '@/utils/dashboardMetrics';
 
 interface CategoryBreakdownCardProps {
-  /** Transações do mês selecionado (todas — o card filtra despesas). */
-  transactions: FinancialTransactionResponse[];
+  expensesByCategory: FinancialTransactionCategoryExpenseResponse[];
 }
 
 const COLORS = ['var(--primary)', 'var(--secondary)', 'var(--chart-2)', 'var(--chart-5)', 'var(--chart-4)'];
 
-/** Despesas do mês agrupadas por categoria, em barras (estilo SpendingByCategory). */
-export function CategoryBreakdownCard({ transactions }: CategoryBreakdownCardProps) {
+/** Despesas do mês agrupadas por categoria, em barras (dados do dashboard). */
+export function CategoryBreakdownCard({ expensesByCategory }: CategoryBreakdownCardProps) {
   const prefersReducedMotion = usePrefersReducedMotion();
 
-  const rows = useMemo(() => {
-    const totals: Record<string, number> = {};
-    transactions
-      .filter(t => t.transactionType === TransactionType.Expense)
-      .forEach(t => {
-        const key = t.categoryName || 'Outros';
-        totals[key] = (totals[key] ?? 0) + Number(t.value);
-      });
-    const max = Math.max(...Object.values(totals), 1);
-    return Object.entries(totals)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, 5)
-      .map(([label, amount], i) => ({
-        label,
-        amount,
-        ratio: amount / max,
-        color: COLORS[i % COLORS.length],
-      }));
-  }, [transactions]);
+  const max = Math.max(...expensesByCategory.map(r => Number(r.totalAmount)), 1);
+  const rows = expensesByCategory.slice(0, 5).map((r, i) => ({
+    label: r.categoryName,
+    amount: Number(r.totalAmount),
+    ratio: Number(r.totalAmount) / max,
+    color: COLORS[i % COLORS.length],
+  }));
 
   return (
     <div className="flex flex-col gap-4 p-6 rounded-3xl bg-card border border-border">

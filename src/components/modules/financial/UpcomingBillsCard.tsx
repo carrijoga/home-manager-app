@@ -1,15 +1,15 @@
 import { AlarmClock, CheckCircle2 } from 'lucide-react';
 
-import type { FinancialTransactionResponse } from '@/schemas/financial';
+import type { FinancialTransactionUpcomingBillResponse } from '@/schemas/financial';
 import { formatCurrency } from '@/utils/dashboardMetrics';
 import { getDueLabel } from '@/utils/financialUtils';
 
 interface UpcomingBillsCardProps {
-  bills: FinancialTransactionResponse[];
-  onPay: (transaction: FinancialTransactionResponse) => void;
+  bills: FinancialTransactionUpcomingBillResponse[];
+  onPay: (bill: FinancialTransactionUpcomingBillResponse) => void;
 }
 
-/** Contas não pagas: vencidas (qualquer mês) + vencendo nos próximos 14 dias. */
+/** Contas não pagas: vencidas + vencendo em breve (dados do dashboard). */
 export function UpcomingBillsCard({ bills, onPay }: UpcomingBillsCardProps) {
   return (
     <div

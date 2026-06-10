@@ -5,8 +5,16 @@ import { DateTimeSchema,UuidSchema } from './shared';
 
 export const UserConfigurationResponseSchema = z.object({
   userConfigurationId: UuidSchema,
-  receivePushNotifications: z.boolean(),
-  isDarkModeEnabled: z.boolean(),
+  theme: z.number().int(),
+  language: z.number().int(),
+  city: z.string().nullable().optional(),
+  allowLocationByIp: z.boolean(),
+  allowLocationByGps: z.boolean(),
+  notifyInformative: z.boolean(),
+  notifyWarning: z.boolean(),
+  notifyError: z.boolean(),
+  notifySuccess: z.boolean(),
+  shareDataForAnalytics: z.boolean(),
   profileId: UuidSchema,
 });
 export type UserConfigurationResponse = z.infer<typeof UserConfigurationResponseSchema>;
@@ -72,26 +80,5 @@ export const UpdateProfileRequestSchema = z.object({
 });
 export type UpdateProfileRequest = z.infer<typeof UpdateProfileRequestSchema>;
 
-export const CreateNestRequestSchema = z.object({
-  name: z.string().min(1, 'Nome do ninho é obrigatório'),
-  description: z.string().optional().default(''),
-  icon: z.string().nullable().optional(),
-});
-export type CreateNestRequest = z.infer<typeof CreateNestRequestSchema>;
-
-export const UpdateNestMembersSchema = z.object({
-  userId: UuidSchema,
-  role: z.string(),
-});
-export type UpdateNestMembers = z.infer<typeof UpdateNestMembersSchema>;
-
-export const UpdateNestRequestSchema = z.object({
-  userId: UuidSchema.optional(),
-  nestId: UuidSchema,
-  name: z.string().min(1, 'Nome do ninho é obrigatório'),
-  description: z.string().optional(),
-  icon: z.string().nullable().optional(),
-  isDefault: z.boolean().optional(),
-  members: z.array(UpdateNestMembersSchema).optional(),
-});
-export type UpdateNestRequest = z.infer<typeof UpdateNestRequestSchema>;
+// Nest schemas moved to src/schemas/nest.ts
+export type { CreateNestRequest, UpdateNestRequest, UpdateNestMembers } from './nest';

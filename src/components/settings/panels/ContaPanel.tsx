@@ -79,7 +79,12 @@ export function ContaPanel() {
 
   const onProfileSubmit = async (data: UpdateProfileData) => {
     try {
-      await settingsService.updateProfile(data);
+      const [firstName, ...rest] = data.name.trim().split(' ');
+      await settingsService.updateProfile({
+        firstName: firstName ?? data.name,
+        lastName: rest.join(' ') || (firstName ?? ''),
+        callbyName: data.callmeby ?? data.name,
+      });
       await loadUserProfile();
       toast.success('Perfil atualizado!');
     } catch {

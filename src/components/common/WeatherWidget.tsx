@@ -1,6 +1,8 @@
-import { CloudSun, RefreshCw } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { CloudSun } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
+import type { RefreshCWIconHandle } from '@/components/ui/animated-icons/refresh-cw';
+import { RefreshCWIcon } from '@/components/ui/animated-icons/refresh-cw';
 import { Button } from '@/components/ui';
 import { cn } from '@/lib/utils';
 
@@ -31,6 +33,7 @@ export default function WeatherWidget({
 }: WeatherWidgetProps) {
   const [now, setNow] = useState(() => new Date());
   const [requesting, setRequesting] = useState(false);
+  const refreshIconRef = useRef<RefreshCWIconHandle>(null);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 30_000);
@@ -80,7 +83,7 @@ export default function WeatherWidget({
         >
           {requesting ? (
             <>
-              <RefreshCw className="size-3.5 mr-1.5 animate-spin" aria-hidden="true" />
+              <RefreshCWIcon size={14} className="mr-1.5 animate-spin" aria-hidden="true" />
               Aguardando...
             </>
           ) : (
@@ -128,8 +131,14 @@ export default function WeatherWidget({
             className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
             onClick={onRefresh}
             disabled={isLoading}
+            onMouseEnter={() => !isLoading && refreshIconRef.current?.startAnimation()}
+            onMouseLeave={() => refreshIconRef.current?.stopAnimation()}
           >
-            <RefreshCw className={`size-3.5 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
+            <RefreshCWIcon
+              ref={refreshIconRef}
+              size={14}
+              className={isLoading ? 'animate-spin' : ''}
+            />
             Atualizar
           </Button>
         )}

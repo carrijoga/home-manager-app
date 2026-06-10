@@ -53,6 +53,8 @@ function BellTrigger({ hasUnread }: { hasUnread: boolean }) {
     <button
       className="relative flex items-center justify-center size-10 rounded-full transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       aria-label="Notificações"
+      onMouseEnter={() => bellRef.current?.startAnimation()}
+      onMouseLeave={() => bellRef.current?.stopAnimation()}
     >
       <BellIcon ref={bellRef} size={20} />
 

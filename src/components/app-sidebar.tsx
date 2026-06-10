@@ -3,7 +3,7 @@ import { Check, Settings2 } from "lucide-react";
 import * as React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-import { NestManagerSheet } from "@/components/modals/NestManagerSheet";
+import { NestManagerModal } from "@/components/modals/NestManagerModal";
 import { SettingsModal } from "@/components/modals/SettingsModal";
 import { CalendarDaysIcon } from "@/components/ui/animated-icons/calendar-days";
 import { CartIcon } from "@/components/ui/animated-icons/cart";
@@ -275,7 +275,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
 
   return (
     <Sidebar collapsible="icon">
-      <NestManagerSheet open={manageNestsOpen} onClose={() => setManageNestsOpen(false)} />
+      <NestManagerModal open={manageNestsOpen} onClose={() => setManageNestsOpen(false)} />
       <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
 
       {/* Header — App Branding */}

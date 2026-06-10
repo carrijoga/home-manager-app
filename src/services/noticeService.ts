@@ -33,9 +33,17 @@ function apiToNotice(raw: unknown): Notice {
   if (parsed.success) {
     const r = raw as Record<string, unknown>;
     return {
-      ...parsed.data as Notice,
+      noticeId: parsed.data.noticeId,
+      message: parsed.data.message,
+      date: parsed.data.date,
+      isPinned: parsed.data.isPinned,
+      priority: ApiPriority.Baixa,
+      expiresAt: parsed.data.expiresAt,
+      isActive: parsed.data.isActive,
+      createdBy: parsed.data.createdBy,
+      createdAt: parsed.data.createdAt,
       color: (r.color as string) ?? undefined,
-      reactions: normalizeReactions(r.reactions),
+      reactions: normalizeReactions(parsed.data.reactions),
     };
   }
   // fallback permissivo
@@ -88,7 +96,6 @@ export async function createNotice(payload: CreateNoticeRequest, nestId?: string
       createdBy: 'user-mock-0001',
       createdAt: now,
       authorName: 'Você',
-      color: payload.color,
     };
     _mockState.unshift(notice);
     return new Promise(resolve => setTimeout(() => resolve(notice), 100));
@@ -162,6 +169,34 @@ export async function getNoticeHistory(page = 1, pageSize = 20, nestId?: string)
     return { ...parsed.data, items: parsed.data.items.map(apiToNotice) };
   }
   return { items: [], totalCount: 0, page, pageSize };
+}
+
+export async function reactToNotice(id: string, reaction: string, nestId?: string): Promise<void> {
+  if (DATA_MODE === 'mock') {
+    const notice = _mockState.find(n => n.noticeId === id);
+    if (notice) {
+      const reactions = notice.reactions ?? [];
+      const existing = reactions.find(r => r.emoji === reaction);
+      if (existing) existing.count += 1;
+      else reactions.push({ emoji: reaction, count: 1 });
+      notice.reactions = reactions;
+    }
+    return new Promise(resolve => setTimeout(resolve, 100));
+  }
+  await httpClient.patch<void>(ENDPOINTS.notices.reaction(id), { reaction }, nestId);
+}
+
+export async function unreactToNotice(id: string, reactionId: string, nestId?: string): Promise<void> {
+  if (DATA_MODE === 'mock') {
+    const notice = _mockState.find(n => n.noticeId === id);
+    if (notice?.reactions) {
+      notice.reactions = notice.reactions
+        .map(r => ({ ...r, count: r.count - 1 }))
+        .filter(r => r.count > 0);
+    }
+    return new Promise(resolve => setTimeout(resolve, 100));
+  }
+  await httpClient.patch<void>(ENDPOINTS.notices.unreaction(id), { reactionId }, nestId);
 }
 
 // Compat alias mantido para o AppContext legado

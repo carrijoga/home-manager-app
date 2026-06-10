@@ -3,7 +3,7 @@
 import type { Variants } from "framer-motion";
 import { motion, useAnimation } from "framer-motion";
 import type { HTMLAttributes } from "react";
-import { forwardRef, useCallback, useImperativeHandle, useRef } from "react";
+import { forwardRef, useCallback, useImperativeHandle } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -32,34 +32,24 @@ const CART_VARIANTS: Variants = {
 const CartIcon = forwardRef<CartIconHandle, CartIconProps>(
   ({ onMouseEnter, onMouseLeave, className, size = 28, ...props }, ref) => {
     const controls = useAnimation();
-    const isControlledRef = useRef(false);
 
-    useImperativeHandle(ref, () => {
-      isControlledRef.current = true;
-      return {
-        startAnimation: () => controls.start("animate"),
-        stopAnimation: () => controls.start("normal"),
-      };
-    });
+    useImperativeHandle(ref, () => ({
+      startAnimation: () => controls.start("animate"),
+      stopAnimation: () => controls.start("normal"),
+    }));
 
     const handleMouseEnter = useCallback(
       (e: React.MouseEvent<HTMLDivElement>) => {
-        if (isControlledRef.current) {
-          onMouseEnter?.(e);
-        } else {
-          controls.start("animate");
-        }
+        controls.start("animate");
+        onMouseEnter?.(e);
       },
       [controls, onMouseEnter]
     );
 
     const handleMouseLeave = useCallback(
       (e: React.MouseEvent<HTMLDivElement>) => {
-        if (isControlledRef.current) {
-          onMouseLeave?.(e);
-        } else {
-          controls.start("normal");
-        }
+        controls.start("normal");
+        onMouseLeave?.(e);
       },
       [controls, onMouseLeave]
     );

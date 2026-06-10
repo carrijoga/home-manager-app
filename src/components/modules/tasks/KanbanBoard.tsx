@@ -1,4 +1,4 @@
-import {
+﻿import {
   DndContext,
   DragOverlay,
   PointerSensor,
@@ -87,7 +87,6 @@ export function KanbanBoard({
     if (currentStatus !== targetStatus) {
       await onMoveTask(activeId, targetStatus);
     } else if (activeId !== overId) {
-      const colTasks = tasksByStatus[targetStatus] as Task[];
       const oldIndex = tasks.findIndex(t => t.taskId === activeId);
       const newIndex = tasks.findIndex(t => t.taskId === overId);
       if (oldIndex !== -1 && newIndex !== -1) {

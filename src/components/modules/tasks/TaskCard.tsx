@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { AlertCircle, CalendarDays, CheckCircle2, Edit2, MoreHorizontal, RotateCcw, Trash2 } from 'lucide-react';
 import { forwardRef, memo } from 'react';
 

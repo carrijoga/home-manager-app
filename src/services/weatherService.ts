@@ -8,16 +8,14 @@ import { ApiError, httpClient } from './api/httpClient';
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-function toQueryString(query: WeatherQuery): string {
-  const params = new URLSearchParams();
-
-  if (query.city) params.set('city', query.city.trim());
-  if (typeof query.latitude === 'number') params.set('latitude', String(query.latitude));
-  if (typeof query.longitude === 'number') params.set('longitude', String(query.longitude));
-  if (query.source) params.set('source', query.source);
-
-  const serialized = params.toString();
-  return serialized ? `?${serialized}` : '';
+function toRequestBody(query: WeatherQuery): Record<string, unknown> {
+  const body: Record<string, unknown> = {};
+  if (query.city) body.city = query.city.trim();
+  if (query.state) body.state = query.state;
+  if (typeof query.latitude === 'number') body.latitude = query.latitude;
+  if (typeof query.longitude === 'number') body.longitude = query.longitude;
+  if (query.source) body.source = query.source;
+  return body;
 }
 
 function coerceWeather(raw: unknown): AppWeather {
@@ -60,10 +58,8 @@ export async function getMyWeather(query?: WeatherQuery): Promise<AppWeather> {
     };
   }
 
-  const path = `${ENDPOINTS.users.meWeather}${toQueryString(validQuery)}`;
-
   try {
-    const raw = await httpClient.get<unknown>(path);
+    const raw = await httpClient.post<unknown>(ENDPOINTS.dashboard.weather, toRequestBody(validQuery));
     return coerceWeather(raw);
   } catch (error) {
     if (error instanceof ApiError) throw error;

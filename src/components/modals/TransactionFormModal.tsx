@@ -25,6 +25,7 @@ import type {
   UpdateTransactionRequest,
 } from '@/schemas/financial';
 import type { NestMember } from '@/schemas/nest';
+import * as nestService from '@/services/nestService';
 
 interface TransactionFormModalProps {
   open: boolean;
@@ -32,7 +33,7 @@ interface TransactionFormModalProps {
   /** null = criação; preenchida = edição. */
   transaction: FinancialTransactionResponse | null;
   categories: CategoryResponse[];
-  members: NestMember[];
+  nestId: string | undefined;
   /** id do usuário logado — default do responsável. */
   currentUserId: string;
   onCreate: (payload: CreateTransactionRequest) => Promise<void>;
@@ -48,7 +49,7 @@ export function TransactionFormModal({
   onClose,
   transaction,
   categories,
-  members,
+  nestId,
   currentUserId,
   onCreate,
   onUpdate,
@@ -64,6 +65,19 @@ export function TransactionFormModal({
   const [responsibleUserId, setResponsibleUserId] = useState(currentUserId);
   const [observation, setObservation] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [members, setMembers] = useState<NestMember[]>([]);
+
+  // Busca membros quando o nestId muda — resultado fica em cache no estado local
+  useEffect(() => {
+    if (!nestId) return;
+    let active = true;
+    nestService
+      .getNestMembers(nestId)
+      .then(m => { if (active) setMembers(m); })
+      .catch(() => {});
+    return () => { active = false; };
+  }, [nestId]);
 
   // Pré-preenche ao abrir (criação reseta; edição carrega a transação)
   useEffect(() => {

@@ -16,6 +16,7 @@ export type WeatherResponse = z.infer<typeof WeatherResponseSchema>;
 
 export const WeatherQuerySchema = z.object({
   city: z.string().min(1).optional(),
+  state: z.string().optional(),
   latitude: z.number().finite().optional(),
   longitude: z.number().finite().optional(),
   source: WeatherSourceSchema.optional(),

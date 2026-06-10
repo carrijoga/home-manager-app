@@ -1,7 +1,7 @@
 import type { Variants } from 'framer-motion';
 import { motion } from 'framer-motion';
 import { Plus } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { PaymentModal } from '@/components/modals/PaymentModal';
 import { TransactionFormModal } from '@/components/modals/TransactionFormModal';
@@ -24,16 +24,13 @@ import { TransactionType } from '@/schemas/enums';
 import type {
   AddPaymentRequest,
   CreateTransactionRequest,
-  FinancialTransactionFilter,
   FinancialTransactionResponse,
   UpdateTransactionRequest,
 } from '@/schemas/financial';
-import type { NestMember } from '@/schemas/nest';
 import * as categoryService from '@/services/categoryService';
 import * as financialService from '@/services/financialService';
-import * as nestService from '@/services/nestService';
 import { formatCurrency } from '@/utils/dashboardMetrics';
-import { getMonthRange, toIsoDate } from '@/utils/financialUtils';
+import { getMonthRange } from '@/utils/financialUtils';
 
 import { CategoryBreakdownCard } from './financial/CategoryBreakdownCard';
 import { FinancialSummaryCard } from './financial/FinancialSummaryCard';
@@ -45,8 +42,6 @@ import {
 } from './financial/TransactionFilters';
 import { TransactionList } from './financial/TransactionList';
 import { UpcomingBillsCard } from './financial/UpcomingBillsCard';
-
-const PAGE_SIZE = 20;
 
 const firstOfCurrentMonth = () => {
   const now = new Date();
@@ -60,7 +55,9 @@ const cardSlide: Variants = {
 
 /**
  * Financial — Hub de transações da casa (Domestic Sanctuary design).
- * Lista protagonista + coluna lateral (resumo, contas a vencer, categorias).
+ *
+ * Uma única requisição por mês busca todas as transações. Lista filtrada,
+ * resumo e contas-a-vencer são derivados client-side — sem requests extras.
  */
 const Financial = () => {
   const { user, activeNestId } = useApp();
@@ -74,21 +71,12 @@ const Financial = () => {
   const [filters, setFilters] = useState<TransactionFiltersState>(DEFAULT_FILTERS);
   const debouncedSearch = useDebounce(filters.search, 300);
 
-  // ── Dados ──────────────────────────────────────────────────────────────────
-  const [transactions, setTransactions] = useState<FinancialTransactionResponse[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
-  const [page, setPage] = useState(1);
-  const [loadingList, setLoadingList] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
+  // ── Dados do servidor ──────────────────────────────────────────────────────
+  const [loading, setLoading] = useState(true);
   const [monthTransactions, setMonthTransactions] = useState<FinancialTransactionResponse[]>([]);
   const [previousExpense, setPreviousExpense] = useState(0);
-  const [upcomingBills, setUpcomingBills] = useState<FinancialTransactionResponse[]>([]);
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
-  const [members, setMembers] = useState<NestMember[]>([]);
-  /** Incrementado após cada mutação para recarregar todas as queries. */
   const [refreshKey, setRefreshKey] = useState(0);
-  /** Versão da lista — descarta "Carregar mais" que resolva após troca de filtro. */
-  const listVersionRef = useRef(0);
 
   // ── Modais ─────────────────────────────────────────────────────────────────
   const [formOpen, setFormOpen] = useState(false);
@@ -96,45 +84,11 @@ const Financial = () => {
   const [payingTx, setPayingTx] = useState<FinancialTransactionResponse | null>(null);
   const [deletingTx, setDeletingTx] = useState<FinancialTransactionResponse | null>(null);
 
-  const listFilter = useMemo<FinancialTransactionFilter>(() => {
-    const base: FinancialTransactionFilter = { ...getMonthRange(month), pageSize: PAGE_SIZE };
-    if (filters.type === 'expense') base.types = [TransactionType.Expense];
-    if (filters.type === 'income') base.types = [TransactionType.Income];
-    if (filters.status === 'unpaid') base.isPaid = false;
-    if (filters.status === 'overdue') base.isOverdue = true;
-    if (debouncedSearch.trim()) base.description = debouncedSearch.trim();
-    if (filters.categoryId) base.categoryIds = [filters.categoryId];
-    return base;
-  }, [month, filters.type, filters.status, filters.categoryId, debouncedSearch]);
-
-  // Lista paginada (sempre volta à página 1 quando filtro muda)
+  // Uma única requisição por mês — traz o mês atual e o anterior para o resumo.
+  // Todos os derivados (lista filtrada, contas-a-vencer, totais) saem daqui.
   useEffect(() => {
     let active = true;
-    listVersionRef.current += 1;
-    setLoadingList(true);
-    setPage(1);
-    financialService
-      .listTransactions({ ...listFilter, page: 1 }, nestId)
-      .then(res => {
-        if (!active) return;
-        setTransactions(res.items);
-        setTotalCount(res.totalCount);
-      })
-      .catch(() => {
-        if (active) showError('Erro ao carregar transações.');
-      })
-      .finally(() => {
-        if (active) setLoadingList(false);
-      });
-    return () => {
-      active = false;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [listFilter, nestId, refreshKey]);
-
-  // Resumo do mês + mês anterior (sem filtros de UI)
-  useEffect(() => {
-    let active = true;
+    setLoading(true);
     const prevMonth = new Date(month.getFullYear(), month.getMonth() - 1, 1);
     Promise.all([
       financialService.listTransactions({ ...getMonthRange(month), pageSize: 1000 }, nestId),
@@ -142,99 +96,93 @@ const Financial = () => {
     ])
       .then(([current, previous]) => {
         if (!active) return;
-        setMonthTransactions(current.items);
+        setMonthTransactions(current.items ?? []);
         setPreviousExpense(
-          previous.items
+          (previous.items ?? [])
             .filter(t => t.transactionType === TransactionType.Expense)
             .reduce((sum, t) => sum + Number(t.value), 0),
         );
       })
-      .catch(() => {});
+      .catch(() => {
+        if (active) showError('Erro ao carregar transações.');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
     return () => {
       active = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [month, nestId, refreshKey]);
 
-  // Contas a vencer: não pagas com vencimento até hoje+14 (inclui vencidas de outros meses)
-  useEffect(() => {
-    let active = true;
-    const limit = new Date();
-    limit.setDate(limit.getDate() + 14);
-    financialService
-      .listTransactions(
-        { isPaid: false, types: [TransactionType.Expense], maxDueDate: toIsoDate(limit), pageSize: 50 },
-        nestId,
-      )
-      .then(res => {
-        if (!active) return;
-        setUpcomingBills([...res.items].sort((a, b) => String(a.dueDate).localeCompare(String(b.dueDate))));
-      })
-      .catch(() => {});
-    return () => {
-      active = false;
-    };
-  }, [nestId, refreshKey]);
-
-  // Categorias + membros (uma vez por nest)
+  // Categorias — uma vez por nest, sem refresh em mutações
   useEffect(() => {
     let active = true;
     categoryService
       .listCategories({ pageSize: 100 }, nestId)
-      .then(res => {
-        if (active) setCategories(res.items);
-      })
+      .then(res => { if (active) setCategories(res.items ?? []); })
       .catch(() => {});
-    if (activeNestId) {
-      nestService
-        .getNestMembers(activeNestId)
-        .then(m => {
-          if (active) setMembers(m);
-        })
-        .catch(() => {});
-    }
-    return () => {
-      active = false;
-    };
-  }, [activeNestId, nestId]);
+    return () => { active = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nestId]);
 
-  // ── Derivados ──────────────────────────────────────────────────────────────
+  // ── Derivados client-side ──────────────────────────────────────────────────
   const monthIncome = useMemo(
-    () =>
-      monthTransactions
-        .filter(t => t.transactionType === TransactionType.Income)
-        .reduce((sum, t) => sum + Number(t.value), 0),
+    () => monthTransactions
+      .filter(t => t.transactionType === TransactionType.Income)
+      .reduce((sum, t) => sum + Number(t.value), 0),
     [monthTransactions],
   );
+
   const monthExpense = useMemo(
-    () =>
-      monthTransactions
-        .filter(t => t.transactionType === TransactionType.Expense)
-        .reduce((sum, t) => sum + Number(t.value), 0),
+    () => monthTransactions
+      .filter(t => t.transactionType === TransactionType.Expense)
+      .reduce((sum, t) => sum + Number(t.value), 0),
     [monthTransactions],
   );
 
-  const hasMore = transactions.length < totalCount;
+  const upcomingBills = useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    const limit = new Date();
+    limit.setDate(limit.getDate() + 14);
+    const limitIso = limit.toISOString().slice(0, 10);
+    return monthTransactions
+      .filter(t =>
+        t.transactionType === TransactionType.Expense &&
+        !t.isPaid &&
+        String(t.dueDate).slice(0, 10) <= limitIso,
+      )
+      .concat(
+        // Inclui vencidas do mês anterior que ainda estão em monthTransactions
+        // (já estão lá se o vencimento caiu dentro do range do mês selecionado)
+        monthTransactions.filter(t =>
+          t.transactionType === TransactionType.Expense &&
+          !t.isPaid &&
+          String(t.dueDate).slice(0, 10) < today,
+        ),
+      )
+      // Deduplica e ordena por vencimento
+      .filter((t, i, arr) => arr.findIndex(x => x.financialTransactionId === t.financialTransactionId) === i)
+      .sort((a, b) => String(a.dueDate).localeCompare(String(b.dueDate)));
+  }, [monthTransactions]);
 
-  const handleLoadMore = useCallback(async () => {
-    setLoadingMore(true);
-    const version = listVersionRef.current;
-    try {
-      const next = page + 1;
-      const res = await financialService.listTransactions({ ...listFilter, page: next }, nestId);
-      // Filtro mudou enquanto carregava — descarta para não misturar resultados
-      if (version !== listVersionRef.current) return;
-      setTransactions(prev => [...prev, ...res.items]);
-      setPage(next);
-    } catch {
-      showError('Erro ao carregar mais transações.');
-    } finally {
-      setLoadingMore(false);
+  const filteredTransactions = useMemo(() => {
+    let result = monthTransactions;
+    if (filters.type === 'expense') result = result.filter(t => t.transactionType === TransactionType.Expense);
+    if (filters.type === 'income') result = result.filter(t => t.transactionType === TransactionType.Income);
+    if (filters.status === 'unpaid') result = result.filter(t => !t.isPaid);
+    if (filters.status === 'overdue') result = result.filter(t => t.isOverdue);
+    if (filters.categoryId) result = result.filter(t => t.categoryId === filters.categoryId);
+    if (debouncedSearch.trim()) {
+      const q = debouncedSearch.trim().toLowerCase();
+      result = result.filter(t => t.description.toLowerCase().includes(q));
     }
-  }, [page, listFilter, nestId, showError]);
-
-  const refresh = () => setRefreshKey(k => k + 1);
+    return result;
+  }, [monthTransactions, filters.type, filters.status, filters.categoryId, debouncedSearch]);
 
   // ── Mutações ───────────────────────────────────────────────────────────────
+  const refresh = () => setRefreshKey(k => k + 1);
+
   const handleCreate = async (payload: CreateTransactionRequest) => {
     try {
       await financialService.createTransaction(payload, nestId);
@@ -294,14 +242,8 @@ const Financial = () => {
     }
   };
 
-  const openCreate = () => {
-    setEditingTx(null);
-    setFormOpen(true);
-  };
-  const openEdit = (t: FinancialTransactionResponse) => {
-    setEditingTx(t);
-    setFormOpen(true);
-  };
+  const openCreate = () => { setEditingTx(null); setFormOpen(true); };
+  const openEdit = (t: FinancialTransactionResponse) => { setEditingTx(t); setFormOpen(true); };
 
   const hasActiveFilters =
     Boolean(debouncedSearch) || filters.type !== 'all' || filters.status !== 'all' || Boolean(filters.categoryId);
@@ -338,7 +280,7 @@ const Financial = () => {
         initial={prefersReducedMotion ? false : 'hidden'}
         animate="show"
       >
-        {/* Coluna lateral — primeiro no mobile (Resumo → Contas a vencer) */}
+        {/* Coluna lateral — primeiro no mobile */}
         <div className="flex flex-col gap-3 md:gap-6 order-1 lg:order-2 lg:col-span-1">
           <motion.div variants={cardSlide}>
             <FinancialSummaryCard income={monthIncome} expense={monthExpense} previousExpense={previousExpense} />
@@ -355,21 +297,17 @@ const Financial = () => {
         <motion.div variants={cardSlide} className="flex flex-col gap-3 order-2 lg:order-1 lg:col-span-2">
           <TransactionFilters value={filters} onChange={setFilters} categories={categories} />
           <TransactionList
-            transactions={transactions}
-            loading={loadingList}
-            hasMore={hasMore}
-            loadingMore={loadingMore}
-            onLoadMore={() => {
-              void handleLoadMore();
-            }}
+            transactions={filteredTransactions}
+            loading={loading}
+            hasMore={false}
+            loadingMore={false}
+            onLoadMore={() => {}}
             emptyTitle={hasActiveFilters ? 'Nenhuma transação encontrada' : 'Nenhuma transação neste mês'}
             emptyDescription="Registre a primeira transação pelo botão Nova transação."
             onPay={setPayingTx}
             onEdit={openEdit}
             onDelete={setDeletingTx}
-            onRemovePayment={(t, paymentId) => {
-              void handleRemovePayment(t, paymentId);
-            }}
+            onRemovePayment={(t, paymentId) => { void handleRemovePayment(t, paymentId); }}
           />
         </motion.div>
 
@@ -392,13 +330,10 @@ const Financial = () => {
       {/* Modais */}
       <TransactionFormModal
         open={formOpen}
-        onClose={() => {
-          setFormOpen(false);
-          setEditingTx(null);
-        }}
+        onClose={() => { setFormOpen(false); setEditingTx(null); }}
         transaction={editingTx}
         categories={categories}
-        members={members}
+        nestId={nestId}
         currentUserId={currentUserId}
         onCreate={handleCreate}
         onUpdate={handleUpdate}
@@ -412,9 +347,7 @@ const Financial = () => {
       />
       <AlertDialog
         open={deletingTx !== null}
-        onOpenChange={o => {
-          if (!o) setDeletingTx(null);
-        }}
+        onOpenChange={o => { if (!o) setDeletingTx(null); }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -426,9 +359,7 @@ const Financial = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => {
-                void handleDeleteConfirm();
-              }}
+              onClick={() => { void handleDeleteConfirm(); }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Excluir

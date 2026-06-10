@@ -34,13 +34,24 @@ export const AccountType = {
   Investment: 2,
 } as const;
 
-// Papel no Nest: 0 = Dono, 1 = Admin, 2 = Membro
+// Papel no Nest: 1 = Owner, 2 = Admin, 3 = Member
 export const NestRoleSchema = z.number().int();
 export type NestRole = z.infer<typeof NestRoleSchema>;
 export const NestRole = {
-  Owner: 0,
-  Admin: 1,
-  Member: 2,
+  Owner: 1,
+  Admin: 2,
+  Member: 3,
+} as const;
+
+// Status de convite de Nest: 1 = Pending, 2 = Accepted, 3 = Cancelled, 4 = Expired, 5 = Rejected
+export const InviteStatusSchema = z.number().int();
+export type InviteStatus = z.infer<typeof InviteStatusSchema>;
+export const InviteStatus = {
+  Pending: 1,
+  Accepted: 2,
+  Cancelled: 3,
+  Expired: 4,
+  Rejected: 5,
 } as const;
 
 // Tipo de notificação: 0 = Info, 1 = Warning, 2 = Error, 3 = Success

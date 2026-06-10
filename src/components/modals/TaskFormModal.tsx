@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import Input from '@/components/common/Input';
 import {
   DatePicker,
   Dialog,
@@ -113,12 +112,14 @@ export function TaskFormModal({ open, onClose, initialTask, onSubmit }: TaskForm
             <label className="text-sm font-medium text-foreground mb-1 block">
               Título <span className="text-destructive">*</span>
             </label>
-            <Input
+            <input
+              type="text"
               placeholder="Nome da tarefa..."
               value={form.title}
-              onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-              onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm(f => ({ ...f, title: e.target.value }))}
+              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => { if (e.key === 'Enter') handleSubmit(); }}
               maxLength={200}
+              className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-colors"
             />
           </div>
 

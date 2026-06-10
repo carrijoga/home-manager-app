@@ -7,22 +7,24 @@
 import type {
   AddPaymentRequest,
   CreateTransactionRequest,
+  DeleteTransactionRequest,
   FinancialTransactionFilter,
   FinancialTransactionListResponse,
   FinancialTransactionResponse,
   RemovePaymentRequest,
+  UpdateTransactionRequest,
 } from '@/schemas/financial';
 import {
   FinancialTransactionListResponseSchema,
   FinancialTransactionResponseSchema,
 } from '@/schemas/financial';
 
-import { mockExpenses } from '../mocks/data';
+import { mockExpenses, mockFinancialCategories, mockTransactions } from '../mocks/data';
 import { DATA_MODE } from './api/config';
 import { ENDPOINTS } from './api/endpoints';
 import { httpClient } from './api/httpClient';
 
-// Tipo do mock — mapeado para FinancialTransactionResponse quando possível
+// Tipo do mock — mantido para os stubs legados addExpense/deleteExpense
 type MockExpense = (typeof mockExpenses)[number];
 
 function safeParse<T>(
@@ -40,6 +42,48 @@ function safeParse<T>(
   return result.data!;
 }
 
+// ── Mock store (mutável para simular mutações em modo mock) ──────────────────
+
+let mockStore: FinancialTransactionResponse[] = mockTransactions.map(t => ({
+  ...t,
+  payments: [...t.payments],
+}));
+
+const delay = <T,>(value: T, ms = 100): Promise<T> =>
+  new Promise(resolve => setTimeout(() => resolve(value), ms));
+
+function getPaidSum(t: FinancialTransactionResponse): number {
+  return t.payments.reduce((sum, p) => sum + Number(p.amount ?? 0), 0);
+}
+
+function recomputeStatus(t: FinancialTransactionResponse): FinancialTransactionResponse {
+  const isPaid = getPaidSum(t) >= Number(t.value);
+  const due = String(t.dueDate).slice(0, 10);
+  const today = new Date().toISOString().slice(0, 10);
+  return { ...t, isPaid, isOverdue: !isPaid && due < today };
+}
+
+function applyMockFilter(
+  items: FinancialTransactionResponse[],
+  filter?: FinancialTransactionFilter,
+): FinancialTransactionResponse[] {
+  if (!filter) return items;
+  return items.filter(t => {
+    if (filter.types?.length && !filter.types.includes(t.transactionType)) return false;
+    if (filter.description && !t.description.toLowerCase().includes(filter.description.toLowerCase())) return false;
+    if (filter.categoryIds?.length && !filter.categoryIds.includes(t.categoryId)) return false;
+    if (filter.isPaid != null && t.isPaid !== filter.isPaid) return false;
+    if (filter.isOverdue != null && t.isOverdue !== filter.isOverdue) return false;
+    const txDate = String(t.transactionDate).slice(0, 10);
+    if (filter.minTransactionDate && txDate < filter.minTransactionDate) return false;
+    if (filter.maxTransactionDate && txDate > filter.maxTransactionDate) return false;
+    const due = String(t.dueDate).slice(0, 10);
+    if (filter.minDueDate && due < filter.minDueDate) return false;
+    if (filter.maxDueDate && due > filter.maxDueDate) return false;
+    return true;
+  });
+}
+
 // ── Queries ───────────────────────────────────────────────────────────────────
 
 export async function listTransactions(
@@ -47,18 +91,17 @@ export async function listTransactions(
   nestId?: string,
 ): Promise<FinancialTransactionListResponse> {
   if (DATA_MODE === 'mock') {
-    return new Promise((resolve) =>
-      setTimeout(
-        () =>
-          resolve({
-            items: mockExpenses as unknown as FinancialTransactionResponse[],
-            page: 1,
-            pageSize: mockExpenses.length,
-            totalCount: mockExpenses.length,
-          }),
-        100,
-      ),
+    const filtered = applyMockFilter(mockStore, filter).sort((a, b) =>
+      String(b.transactionDate).localeCompare(String(a.transactionDate)),
     );
+    const page = filter?.page ?? 1;
+    const pageSize = filter?.pageSize ?? filtered.length;
+    return delay({
+      items: filtered.slice((page - 1) * pageSize, page * pageSize),
+      page,
+      pageSize,
+      totalCount: filtered.length,
+    });
   }
 
   const raw = await httpClient.post<unknown>(ENDPOINTS.financial.list, filter ?? {}, { nestId });
@@ -67,13 +110,9 @@ export async function listTransactions(
 
 export async function getTransactionById(id: string, nestId?: string): Promise<FinancialTransactionResponse> {
   if (DATA_MODE === 'mock') {
-    const found = mockExpenses.find((e) => String(e.id) === id);
-    return new Promise((resolve, reject) =>
-      setTimeout(() => {
-        if (found) resolve(found as unknown as FinancialTransactionResponse);
-        else reject(new Error(`Transação ${id} não encontrada`));
-      }, 100),
-    );
+    const found = mockStore.find(t => t.financialTransactionId === id);
+    if (!found) throw new Error(`Transação ${id} não encontrada`);
+    return delay(found);
   }
 
   const raw = await httpClient.get<unknown>(`${ENDPOINTS.financial.getById}?id=${id}`, nestId);
@@ -87,27 +126,98 @@ export async function createTransaction(
   nestId?: string,
 ): Promise<FinancialTransactionResponse> {
   if (DATA_MODE === 'mock') {
-    const mock: MockExpense = {
-      id: crypto.randomUUID(),
+    const category = mockFinancialCategories.find(c => c.categoryId === payload.categoryId);
+    const created = recomputeStatus({
+      financialTransactionId: crypto.randomUUID(),
+      nestId: nestId ?? 'nest-mock-0001',
+      transactionType: payload.type,
       description: payload.description,
-      value: payload.amount as unknown as number,
-      date: payload.transactionDate,
-      category: 'Geral',
-    };
-    return new Promise((resolve) =>
-      setTimeout(() => resolve(mock as unknown as FinancialTransactionResponse), 100),
-    );
+      value: Number(payload.amount),
+      transactionDate: payload.transactionDate,
+      dueDate: payload.dueDate,
+      responsibleUserId: payload.responsibleUserId,
+      responsibleUserName: 'João (Você)',
+      categoryId: payload.categoryId,
+      categoryName: category?.name ?? 'Geral',
+      origin: 0,
+      originName: 'Financeiro',
+      observation: null,
+      sourceType: payload.sourceType,
+      sourceId: payload.sourceId ?? crypto.randomUUID(),
+      sourceName: null,
+      payments: [],
+      isPaid: false,
+      isOverdue: false,
+    });
+    mockStore = [created, ...mockStore];
+    return delay(created);
   }
 
   const raw = await httpClient.post<unknown>(ENDPOINTS.financial.create, payload, { nestId });
   return safeParse(FinancialTransactionResponseSchema, raw, 'createTransaction');
 }
 
+export async function updateTransaction(
+  payload: UpdateTransactionRequest,
+  nestId?: string,
+): Promise<FinancialTransactionResponse> {
+  if (DATA_MODE === 'mock') {
+    const idx = mockStore.findIndex(t => t.financialTransactionId === payload.financialTransactionId);
+    if (idx === -1) throw new Error('Transação não encontrada');
+    const category = mockFinancialCategories.find(c => c.categoryId === payload.categoryId);
+    const updated = recomputeStatus({
+      ...mockStore[idx],
+      transactionType: payload.type,
+      description: payload.description,
+      value: Number(payload.amount),
+      transactionDate: payload.transactionDate,
+      dueDate: payload.dueDate,
+      categoryId: payload.categoryId,
+      categoryName: category?.name ?? mockStore[idx].categoryName,
+      responsibleUserId: payload.responsibleUserId,
+      observation: payload.observation ?? mockStore[idx].observation,
+    });
+    mockStore = mockStore.map((t, i) => (i === idx ? updated : t));
+    return delay(updated);
+  }
+
+  // Endpoint planejado — backend ainda vai expor (ver endpoints.ts)
+  const raw = await httpClient.post<unknown>(ENDPOINTS.financial.update, payload, { nestId });
+  return safeParse(FinancialTransactionResponseSchema, raw, 'updateTransaction');
+}
+
+export async function deleteTransaction(payload: DeleteTransactionRequest, nestId?: string): Promise<void> {
+  if (DATA_MODE === 'mock') {
+    mockStore = mockStore.filter(t => t.financialTransactionId !== payload.financialTransactionId);
+    return delay(undefined);
+  }
+
+  // Endpoint planejado — backend ainda vai expor (ver endpoints.ts)
+  await httpClient.post<unknown>(ENDPOINTS.financial.delete, payload, { nestId });
+}
+
 export async function addPayment(payload: AddPaymentRequest, nestId?: string): Promise<FinancialTransactionResponse> {
   if (DATA_MODE === 'mock') {
-    return new Promise((resolve) =>
-      setTimeout(() => resolve({ financialTransactionId: payload.transactionId } as unknown as FinancialTransactionResponse), 100),
-    );
+    const idx = mockStore.findIndex(t => t.financialTransactionId === payload.transactionId);
+    if (idx === -1) throw new Error('Transação não encontrada');
+    const tx = mockStore[idx];
+    const payment = {
+      financialTransactionPaymentId: crypto.randomUUID(),
+      financialTransactionId: tx.financialTransactionId,
+      nestId: tx.nestId,
+      amount: Number(payload.amount),
+      discount: Number(payload.discount ?? 0),
+      interest: Number(payload.interest ?? 0),
+      method: payload.method,
+      methodName: null,
+      paymentDate: payload.paymentDate,
+      paidByUserId: payload.paidByUserId,
+      paidByUserFullName: 'João (Você)',
+      observation: payload.observation ?? null,
+    };
+    const updated = recomputeStatus({ ...tx, payments: [...tx.payments, payment] });
+    mockStore = mockStore.map((t, i) => (i === idx ? updated : t));
+    return delay(updated);
   }
 
   const raw = await httpClient.post<unknown>(ENDPOINTS.financial.addPayment, payload, { nestId });
@@ -116,9 +226,15 @@ export async function addPayment(payload: AddPaymentRequest, nestId?: string): P
 
 export async function removePayment(payload: RemovePaymentRequest, nestId?: string): Promise<FinancialTransactionResponse> {
   if (DATA_MODE === 'mock') {
-    return new Promise((resolve) =>
-      setTimeout(() => resolve({ financialTransactionId: payload.financialTransactionId } as unknown as FinancialTransactionResponse), 100),
-    );
+    const idx = mockStore.findIndex(t => t.financialTransactionId === payload.financialTransactionId);
+    if (idx === -1) throw new Error('Transação não encontrada');
+    const tx = mockStore[idx];
+    const updated = recomputeStatus({
+      ...tx,
+      payments: tx.payments.filter(p => p.financialTransactionPaymentId !== payload.paymentId),
+    });
+    mockStore = mockStore.map((t, i) => (i === idx ? updated : t));
+    return delay(updated);
   }
 
   const raw = await httpClient.post<unknown>(ENDPOINTS.financial.removePayment, payload, { nestId });
@@ -147,8 +263,11 @@ export function calculateExpenseStats(expenses: { value: number; category?: stri
 
 // ── Alias legado (para compatibilidade com componentes existentes) ─────────────
 
-/** @deprecated Use `listTransactions` */
+/** @deprecated Use `listTransactions` — mantido para o AppContext/Dashboard (shape antigo). */
 export async function getAllExpenses() {
+  if (DATA_MODE === 'mock') {
+    return delay(mockExpenses);
+  }
   const result = await listTransactions();
   return result.items;
 }

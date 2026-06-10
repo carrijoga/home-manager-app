@@ -6,6 +6,8 @@ import type {
 } from '@/schemas/category';
 import { CategoryListResponseSchema,CategoryResponseSchema } from '@/schemas/category';
 
+import { mockFinancialCategories } from '../mocks/data';
+import { DATA_MODE } from './api/config';
 import { ENDPOINTS } from './api/endpoints';
 import { httpClient } from './api/httpClient';
 
@@ -26,6 +28,14 @@ function safeParse<T>(
 
 /** Lista categorias com filtro e paginação */
 export async function listCategories(filter?: CategoryFilter, nestId?: string): Promise<CategoryListResponse> {
+  if (DATA_MODE === 'mock') {
+    const items = filter?.types?.length
+      ? mockFinancialCategories.filter(c => filter.types!.includes(c.type))
+      : mockFinancialCategories;
+    return new Promise(resolve =>
+      setTimeout(() => resolve({ items, page: 1, pageSize: items.length, totalCount: items.length }), 100),
+    );
+  }
   const raw = await httpClient.post<unknown>(ENDPOINTS.categories.list, filter ?? {}, { nestId });
   return safeParse(CategoryListResponseSchema, raw, 'listCategories');
 }

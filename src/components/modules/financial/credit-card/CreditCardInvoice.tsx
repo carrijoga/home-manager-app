@@ -1,7 +1,5 @@
 import type { CreditCardInvoice } from '@/schemas/credit-card';
-
-const brl = (n: number) =>
-  n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+import { formatCurrency } from '@/utils/dashboardMetrics';
 
 const formatMonth = (month: string) => {
   const [y, m] = month.split('-').map(Number);
@@ -45,13 +43,13 @@ export function CreditCardInvoiceSection({ invoice, loading }: CreditCardInvoice
                   <span>{item.description}</span>
                   <span className="text-xs text-muted-foreground">· {item.categoryName}</span>
                 </span>
-                <span className="font-medium text-foreground">{brl(Number(item.amount))}</span>
+                <span className="font-medium text-foreground">{formatCurrency(Number(item.amount))}</span>
               </li>
             ))}
           </ul>
           <div className="flex items-center justify-between pt-3 mt-1 border-t border-border">
             <span className="text-sm font-semibold text-foreground">Total</span>
-            <span className="text-base font-bold text-foreground">{brl(Number(invoice.total))}</span>
+            <span className="text-base font-bold text-foreground">{formatCurrency(Number(invoice.total))}</span>
           </div>
         </>
       )}

@@ -8,11 +8,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import type { CreditCardResponse } from '@/schemas/credit-card';
+import { formatCurrency } from '@/utils/dashboardMetrics';
 
 import { CARD_TEXT_COLOR,cardGradient } from './gradient';
-
-const brl = (n: number) =>
-  n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
 interface CreditCardTileProps {
   card: CreditCardResponse;
@@ -71,12 +69,12 @@ export function CreditCardTile({
 
       <div>
         <div className="text-[11px] opacity-85">Disponível</div>
-        <div className="text-lg font-bold drop-shadow-sm">{brl(available)}</div>
+        <div className="text-lg font-bold drop-shadow-sm">{formatCurrency(available)}</div>
         <div className="mt-2 h-1.5 rounded-full bg-white/25 overflow-hidden">
           <div className="h-full rounded-full bg-white/80" style={{ width: `${usedPct}%` }} />
         </div>
         <div className="text-[10px] opacity-80 mt-1">
-          {brl(used)} de {brl(limit)}{inactive ? ' · Inativo' : ''}
+          {formatCurrency(used)} de {formatCurrency(limit)}{inactive ? ' · Inativo' : ''}
         </div>
       </div>
     </div>

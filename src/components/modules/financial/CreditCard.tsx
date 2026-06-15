@@ -1,5 +1,5 @@
 import { CreditCard as CreditCardIcon } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import EmptyState from '@/components/common/EmptyState';
 import { CreditCardSheet } from '@/components/modals/CreditCardSheet';
@@ -35,6 +35,12 @@ export function CreditCard() {
 
   const nestId = activeNestId ?? undefined;
 
+  // showError vem de useToastNotifications, que retorna funções novas a cada
+  // render. Guardamos a referência atual num ref para que loadCards dependa
+  // apenas de nestId — senão o efeito entraria em loop infinito (flicker).
+  const showErrorRef = useRef(showError);
+  showErrorRef.current = showError;
+
   const loadCards = useCallback(async () => {
     setLoading(true);
     try {
@@ -45,11 +51,11 @@ export function CreditCard() {
         return list.find((c) => c.isActive)?.creditCardId ?? list[0]?.creditCardId ?? null;
       });
     } catch {
-      showError('Não foi possível carregar os cartões.');
+      showErrorRef.current('Não foi possível carregar os cartões.');
     } finally {
       setLoading(false);
     }
-  }, [nestId, showError]);
+  }, [nestId]);
 
   useEffect(() => { void loadCards(); }, [loadCards]);
 

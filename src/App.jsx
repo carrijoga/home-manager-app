@@ -7,7 +7,7 @@ import { FadeIn } from './components/common/FadeIn';
 import RequireAuth from './components/common/RequireAuth';
 import { SplashScreen } from './components/common/SplashScreen';
 import { TopNavbar } from './components/common/TopNavbar';
-import { DashboardSkeleton, FinancialSkeleton, ShoppingListSkeleton, TaskListSkeleton } from './components/skeletons';
+import { CreditCardSkeleton, DashboardSkeleton, FinancialSkeleton, ShoppingListSkeleton, TaskListSkeleton } from './components/skeletons';
 import { SidebarInset, SidebarProvider } from './components/ui/sidebar';
 import { Toaster } from './components/ui/sonner';
 import { AppProvider, useApp } from './contexts/AppContext';
@@ -20,6 +20,7 @@ const TasksModule = lazy(() => import('./components/modules/Tasks'));
 const ShoppingListModule = lazy(() => import('./components/modules/ShoppingList'));
 const FinancialModule = lazy(() => import('./components/modules/Financial'));
 const CalendarModule = lazy(() => import('./components/modules/Calendar'));
+const CreditCardModule = lazy(() => import('./components/modules/financial/CreditCard'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const GoogleCallback = lazy(() => import('./pages/GoogleCallback'));
@@ -57,12 +58,6 @@ const FinancialRecurrences = () => (
 const FinancialAccount = () => (
   <div className="p-6">
     <h1 className="text-2xl font-semibold">Conta</h1>
-  </div>
-);
-
-const FinancialCard = () => (
-  <div className="p-6">
-    <h1 className="text-2xl font-semibold">Cartão</h1>
   </div>
 );
 
@@ -151,7 +146,9 @@ const App = () => {
                 <FadeIn><FinancialAccount /></FadeIn>
               } />
               <Route path="financial/card" element={
-                <FadeIn><FinancialCard /></FadeIn>
+                <Suspense fallback={<CreditCardSkeleton />}>
+                  <FadeIn><CreditCardModule /></FadeIn>
+                </Suspense>
               } />
               <Route path="calendar" element={
                 <Suspense fallback={<DashboardSkeleton />}>

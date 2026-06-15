@@ -70,6 +70,17 @@ export const ENDPOINTS = {
     update: (id: string) => `/api/bank-account/${id}`,
   },
 
+  // Cartões de crédito
+  creditCards: {
+    create: '/api/credit-cards/create',
+    list: '/api/credit-cards/list',
+    getById: (id: string) => `/api/credit-cards/get-by-id?id=${id}`,
+    update: (id: string) => `/api/credit-cards/update/${id}`,
+    inactivate: (id: string) => `/api/credit-cards/inactivate/${id}`,
+    activate: (id: string) => `/api/credit-cards/activate/${id}`,
+    // Fatura/lançamentos: SEM contrato de API (mock-only), igual future-items.
+  },
+
   // Segurança
   security: {
     requestPasswordRecovery: '/api/recovery-password/request',

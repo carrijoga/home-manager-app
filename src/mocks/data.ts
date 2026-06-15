@@ -11,6 +11,7 @@ import type {
   FinancialTransactionPaymentResponse,
   FinancialTransactionResponse,
 } from '@/schemas/financial';
+import type { CreditCardResponse, CreditCardInvoice } from '@/schemas/credit-card';
 
 const MOCK_USER_ID = 'user-mock-0001';
 
@@ -689,6 +690,73 @@ export const mockGoals = [
   progress: number;
   remainingLabel: string;
 }>;
+
+// ── Cartões de crédito ───────────────────────────────────────────────────────
+
+export const mockCreditCards: CreditCardResponse[] = [
+  {
+    creditCardId: 'card-mock-0001',
+    name: 'Nubank',
+    creditLimit: 5000,
+    dueDay: 10,
+    closingDay: 3,
+    previousBalance: 0,
+    color: '#820ad1',
+    isActive: true,
+    bankAccountId: null,
+  },
+  {
+    creditCardId: 'card-mock-0002',
+    name: 'Inter',
+    creditLimit: 2000,
+    dueDay: 15,
+    closingDay: 8,
+    previousBalance: 120,
+    color: '#ff7a00',
+    isActive: true,
+    bankAccountId: null,
+  },
+  {
+    creditCardId: 'card-mock-0003',
+    name: 'Itaú (antigo)',
+    creditLimit: 3000,
+    dueDay: 5,
+    closingDay: 28,
+    previousBalance: 0,
+    color: '#ec7000',
+    isActive: false,
+    bankAccountId: null,
+  },
+];
+
+// Mock-only: fatura sem back-end. Chave = creditCardId.
+export const mockCreditCardInvoices: Record<string, CreditCardInvoice> = {
+  'card-mock-0001': {
+    creditCardId: 'card-mock-0001',
+    month: '2026-06',
+    total: 537.3,
+    items: [
+      { id: 'inv-1', description: 'Mercado Extra', amount: 312.4, date: '2026-06-04', categoryName: 'Mercado', icon: '🛒' },
+      { id: 'inv-2', description: 'Posto Shell', amount: 180.0, date: '2026-06-07', categoryName: 'Transporte', icon: '⛽' },
+      { id: 'inv-3', description: 'Netflix', amount: 44.9, date: '2026-06-10', categoryName: 'Lazer', icon: '🎬' },
+    ],
+  },
+  'card-mock-0002': {
+    creditCardId: 'card-mock-0002',
+    month: '2026-06',
+    total: 89.9,
+    items: [
+      { id: 'inv-4', description: 'Spotify', amount: 21.9, date: '2026-06-02', categoryName: 'Lazer', icon: '🎧' },
+      { id: 'inv-5', description: 'Farmácia', amount: 68.0, date: '2026-06-09', categoryName: 'Saúde', icon: '💊' },
+    ],
+  },
+  'card-mock-0003': {
+    creditCardId: 'card-mock-0003',
+    month: '2026-06',
+    total: 0,
+    items: [],
+  },
+};
 
 // ── Eventos da agenda (dashboard) ───────────────────────────────────────────
 

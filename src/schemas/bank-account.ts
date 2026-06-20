@@ -9,6 +9,7 @@ export const CreateBankAccountRequestSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
   type: AccountTypeSchema,
   balance: MoneyRequestSchema,
+  initialBalance: MoneyRequestSchema,
   color: z.string().min(1, 'Cor é obrigatória'),
 });
 export type CreateBankAccountRequest = z.infer<typeof CreateBankAccountRequestSchema>;
@@ -30,3 +31,9 @@ export const BankAccountResponseSchema = z.object({
   color: z.string(),
 });
 export type BankAccountResponse = z.infer<typeof BankAccountResponseSchema>;
+
+export const CanDeleteBankAccountResponseSchema = z.object({
+  canDelete: z.boolean(),
+  linkedTransactionsCount: z.number().int(),
+});
+export type CanDeleteBankAccountResponse = z.infer<typeof CanDeleteBankAccountResponseSchema>;

@@ -25,13 +25,13 @@ export const ApiPaymentMethod = {
   Other: 5,
 } as const;
 
-// Tipo de conta bancária: 0 = Corrente, 1 = Poupança, 2 = Investimento
+// Tipo de conta bancária: 0 = Corrente, 1 = Poupança, 2 = Dinheiro
 export const AccountTypeSchema = z.number().int();
 export type AccountType = z.infer<typeof AccountTypeSchema>;
 export const AccountType = {
   Checking: 0,
   Savings: 1,
-  Investment: 2,
+  Cash: 2,
 } as const;
 
 // Papel no Nest: 1 = Owner, 2 = Admin, 3 = Member

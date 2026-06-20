@@ -7,7 +7,7 @@ import { FadeIn } from './components/common/FadeIn';
 import RequireAuth from './components/common/RequireAuth';
 import { SplashScreen } from './components/common/SplashScreen';
 import { TopNavbar } from './components/common/TopNavbar';
-import { CreditCardSkeleton, DashboardSkeleton, FinancialSkeleton, ShoppingListSkeleton, TaskListSkeleton } from './components/skeletons';
+import { AccountSkeleton, CreditCardSkeleton, DashboardSkeleton, FinancialSkeleton, ShoppingListSkeleton, TaskListSkeleton } from './components/skeletons';
 import { SidebarInset, SidebarProvider } from './components/ui/sidebar';
 import { Toaster } from './components/ui/sonner';
 import { AppProvider, useApp } from './contexts/AppContext';
@@ -21,6 +21,7 @@ const ShoppingListModule = lazy(() => import('./components/modules/ShoppingList'
 const FinancialModule = lazy(() => import('./components/modules/Financial'));
 const CalendarModule = lazy(() => import('./components/modules/Calendar'));
 const CreditCardModule = lazy(() => import('./components/modules/financial/CreditCard'));
+const FinancialAccountModule = lazy(() => import('./components/modules/financial/FinancialAccount'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const GoogleCallback = lazy(() => import('./pages/GoogleCallback'));
@@ -52,12 +53,6 @@ const FinancialGoals = () => (
 const FinancialRecurrences = () => (
   <div className="p-6">
     <h1 className="text-2xl font-semibold">Recorrências</h1>
-  </div>
-);
-
-const FinancialAccount = () => (
-  <div className="p-6">
-    <h1 className="text-2xl font-semibold">Conta</h1>
   </div>
 );
 
@@ -143,7 +138,9 @@ const App = () => {
                 <FadeIn><FinancialRecurrences /></FadeIn>
               } />
               <Route path="financial/account" element={
-                <FadeIn><FinancialAccount /></FadeIn>
+                <Suspense fallback={<AccountSkeleton />}>
+                  <FadeIn><FinancialAccountModule /></FadeIn>
+                </Suspense>
               } />
               <Route path="financial/card" element={
                 <Suspense fallback={<CreditCardSkeleton />}>

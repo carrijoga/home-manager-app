@@ -4,15 +4,15 @@
  * Cada array usa `satisfies` para garantir conformidade com os tipos em build.
  */
 
-import type { AppNotification, AppShoppingCategory, AppShoppingItem, AppShoppingList, AppShoppingListSummary, FutureItem, Notice, Task } from '@/types';
-import { ApiCategory, ApiPriority, FutureItemStatus, Priority } from '@/types';
+import type { BankAccountResponse } from '@/schemas/bank-account';
 import type { CategoryResponse } from '@/schemas/category';
+import type { CreditCardInvoice, CreditCardResponse } from '@/schemas/credit-card';
 import type {
   FinancialTransactionPaymentResponse,
   FinancialTransactionResponse,
 } from '@/schemas/financial';
-import type { CreditCardResponse, CreditCardInvoice } from '@/schemas/credit-card';
-import type { BankAccountResponse } from '@/schemas/bank-account';
+import type { AppNotification, AppShoppingCategory, AppShoppingItem, AppShoppingList, AppShoppingListSummary, FutureItem, Notice, Task } from '@/types';
+import { ApiCategory, ApiPriority, FutureItemStatus, Priority } from '@/types';
 
 const MOCK_USER_ID = 'user-mock-0001';
 

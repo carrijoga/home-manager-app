@@ -12,6 +12,7 @@ import type {
   FinancialTransactionResponse,
 } from '@/schemas/financial';
 import type { CreditCardResponse, CreditCardInvoice } from '@/schemas/credit-card';
+import type { BankAccountResponse } from '@/schemas/bank-account';
 
 const MOCK_USER_ID = 'user-mock-0001';
 
@@ -728,6 +729,19 @@ export const mockCreditCards: CreditCardResponse[] = [
     bankAccountId: null,
   },
 ];
+
+export const mockBankAccounts: BankAccountResponse[] = [
+  { bankAccountId: '11111111-1111-1111-1111-111111111111', name: 'Conta Corrente', type: 0, balance: 3250.75, color: '#3b82f6' },
+  { bankAccountId: '22222222-2222-2222-2222-222222222222', name: 'Poupança', type: 1, balance: 12800, color: '#10b981' },
+  { bankAccountId: '33333333-3333-3333-3333-333333333333', name: 'Carteira', type: 2, balance: 180.5, color: '#f59e0b' },
+];
+
+// Quantidade de transações vinculadas por conta (mock do can-delete).
+export const mockBankAccountLinkedCounts: Record<string, number> = {
+  '11111111-1111-1111-1111-111111111111': 4,
+  '22222222-2222-2222-2222-222222222222': 0,
+  '33333333-3333-3333-3333-333333333333': 0,
+};
 
 // Mock-only: fatura sem back-end. Chave = creditCardId.
 export const mockCreditCardInvoices: Record<string, CreditCardInvoice> = {

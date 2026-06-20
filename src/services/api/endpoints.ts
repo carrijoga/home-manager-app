@@ -65,9 +65,13 @@ export const ENDPOINTS = {
 
   // Contas bancárias
   bankAccounts: {
+    list: '/api/bank-account',
     create: '/api/bank-account',
     getById: (id: string) => `/api/bank-account/${id}`,
     update: (id: string) => `/api/bank-account/${id}`,
+    delete: (id: string, confirmDeletion: boolean) =>
+      `/api/bank-account/${id}?confirmDeletion=${confirmDeletion}`,
+    canDelete: (id: string) => `/api/bank-account/${id}/can-delete`,
   },
 
   // Cartões de crédito

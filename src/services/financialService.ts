@@ -66,8 +66,8 @@ function localToday(): string {
 
 function recomputeStatus(t: FinancialTransactionResponse): FinancialTransactionResponse {
   const isPaid = getPaidSum(t) >= Number(t.value);
-  const due = String(t.dueDate).slice(0, 10);
-  return { ...t, isPaid, isOverdue: !isPaid && due < localToday() };
+  const due = t.dueDate ? String(t.dueDate).slice(0, 10) : null;
+  return { ...t, isPaid, isOverdue: !isPaid && due !== null && due < localToday() };
 }
 
 function applyMockFilter(
@@ -92,9 +92,9 @@ function applyMockFilter(
     const txDate = String(t.transactionDate).slice(0, 10);
     if (filter.minTransactionDate && txDate < filter.minTransactionDate) return false;
     if (filter.maxTransactionDate && txDate > filter.maxTransactionDate) return false;
-    const due = String(t.dueDate).slice(0, 10);
-    if (filter.minDueDate && due < filter.minDueDate) return false;
-    if (filter.maxDueDate && due > filter.maxDueDate) return false;
+    const due = t.dueDate ? String(t.dueDate).slice(0, 10) : null;
+    if (filter.minDueDate && (!due || due < filter.minDueDate)) return false;
+    if (filter.maxDueDate && (!due || due > filter.maxDueDate)) return false;
     return true;
   });
 }
@@ -172,6 +172,7 @@ export async function getFinancialDashboard(
         t =>
           t.transactionType === 0 &&
           !t.isPaid &&
+          t.dueDate !== null &&
           String(t.dueDate).slice(0, 10) <= limitIso,
       )
       .sort((a, b) => String(a.dueDate).localeCompare(String(b.dueDate)))
@@ -180,7 +181,7 @@ export async function getFinancialDashboard(
         description: t.description,
         value: Number(t.value),
         dueDate: t.dueDate,
-        isOverdue: String(t.dueDate).slice(0, 10) < today,
+        isOverdue: t.dueDate !== null && String(t.dueDate).slice(0, 10) < today,
       }));
 
     const categoryTotals: Record<string, { categoryId: string; totalAmount: number }> = {};
@@ -231,13 +232,14 @@ export async function createTransaction(
       description: payload.description,
       value: Number(payload.amount),
       transactionDate: payload.transactionDate,
-      dueDate: payload.dueDate,
+      dueDate: payload.dueDate ?? null,
       responsibleUserId: payload.responsibleUserId,
       responsibleUserName: 'João (Você)',
       categoryId: payload.categoryId,
       categoryName: category?.name ?? 'Geral',
       origin: 0,
       originName: 'Financeiro',
+      incomeOrigin: payload.incomeOrigin ?? null,
       observation: null,
       sourceType: payload.sourceType,
       sourceId: payload.sourceId ?? crypto.randomUUID(),
@@ -268,12 +270,13 @@ export async function updateTransaction(
       description: payload.description,
       value: Number(payload.amount),
       transactionDate: payload.transactionDate,
-      dueDate: payload.dueDate,
+      dueDate: payload.dueDate ?? null,
       categoryId: payload.categoryId,
       categoryName: category?.name ?? mockStore[idx].categoryName,
       responsibleUserId: payload.responsibleUserId,
       sourceType: payload.sourceType,
       sourceId: payload.sourceId ?? mockStore[idx].sourceId,
+      incomeOrigin: payload.incomeOrigin ?? mockStore[idx].incomeOrigin,
       observation: payload.observation ?? mockStore[idx].observation,
     });
     mockStore = mockStore.map((t, i) => (i === idx ? updated : t));

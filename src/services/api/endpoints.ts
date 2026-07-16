@@ -49,9 +49,11 @@ export const ENDPOINTS = {
     getById: '/api/financial-transactions/get-by-id',
     addPayment: '/api/financial-transactions/add-payment',
     removePayment: '/api/financial-transactions/remove-payment',
+    // NÃO EXPOSTO no back-end ainda: GetDashboardFinancialCommand existe no handler
+    // mas não tem rota no DashboardController. Em modo API isto vai retornar 404.
     dashboard: '/api/financial-transactions/dashboard',
-    // PLANEJADO — ainda não existem em docs/api.json; o backend vai adicioná-los.
-    // Decisão registrada em docs/superpowers/specs/2026-06-10-financial-screen-redesign-design.md
+    // NÃO EXISTE no back-end: não há UpdateTransactionCommand nem DeleteTransactionCommand.
+    // Mantidos apenas para o modo mock (ver financialService.ts) — não usar em modo API.
     update: '/api/financial-transactions/update',
     delete: '/api/financial-transactions/delete',
   },

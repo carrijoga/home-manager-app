@@ -256,6 +256,7 @@ export async function createTransaction(
   return safeParse(FinancialTransactionResponseSchema, raw, 'createTransaction');
 }
 
+// Sem endpoint real no back-end (ver docs/superpowers/plans/2026-07-15-financial-backend-sync.md) — só funciona em modo mock.
 export async function updateTransaction(
   payload: UpdateTransactionRequest,
   nestId?: string,
@@ -288,6 +289,7 @@ export async function updateTransaction(
   return safeParse(FinancialTransactionResponseSchema, raw, 'updateTransaction');
 }
 
+// Sem endpoint real no back-end (ver docs/superpowers/plans/2026-07-15-financial-backend-sync.md) — só funciona em modo mock.
 export async function deleteTransaction(payload: DeleteTransactionRequest, nestId?: string): Promise<void> {
   if (DATA_MODE === 'mock') {
     mockStore = mockStore.filter(t => t.financialTransactionId !== payload.financialTransactionId);

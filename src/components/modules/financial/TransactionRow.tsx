@@ -115,7 +115,7 @@ export function TransactionRow({
           <p className="font-ui truncate text-sm font-semibold text-foreground">{t.description}</p>
           <p className="font-ui truncate text-xs text-muted-foreground">
             {t.categoryName} · {t.responsibleUserName}
-            {!t.isPaid && ` · ${getDueLabel(String(t.dueDate))}`}
+            {!t.isPaid && t.dueDate && ` · ${getDueLabel(String(t.dueDate))}`}
           </p>
         </div>
 
@@ -164,7 +164,7 @@ export function TransactionRow({
             <div className="font-ui flex flex-col gap-2 px-4 pb-4 pt-1 text-xs text-muted-foreground">
               <div className="flex flex-wrap gap-x-6 gap-y-1">
                 <span>Data: {formatLocalDate(String(t.transactionDate))}</span>
-                <span>Vencimento: {formatLocalDate(String(t.dueDate))}</span>
+                {t.dueDate && <span>Vencimento: {formatLocalDate(String(t.dueDate))}</span>}
                 {t.originName && <span>Origem: {t.originName}</span>}
               </div>
               {t.observation && <p>Obs.: {t.observation}</p>}

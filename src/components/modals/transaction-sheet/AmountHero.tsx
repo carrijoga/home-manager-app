@@ -1,9 +1,10 @@
 // src/components/modals/transaction-sheet/AmountHero.tsx
 import { motion } from 'framer-motion';
-import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
-import { TransactionType } from '@/schemas/enums';
+
 import MoneyInput from '@/components/common/MoneyInput';
 import { Input, Label } from '@/components/ui';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { TransactionType } from '@/schemas/enums';
 
 interface AmountHeroProps {
   type: number;

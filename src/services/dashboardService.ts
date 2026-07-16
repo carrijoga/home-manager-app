@@ -1,7 +1,7 @@
-import { DashboardResponseSchema } from '@/schemas/dashboard';
 import type { DashboardResponse } from '@/schemas/dashboard';
+import { DashboardResponseSchema } from '@/schemas/dashboard';
 
-import { mockNotices, mockTasks, mockShoppingLists, mockExpenses } from '../mocks/data';
+import { mockExpenses,mockNotices, mockShoppingLists, mockTasks } from '../mocks/data';
 import { DATA_MODE } from './api/config';
 import { ENDPOINTS } from './api/endpoints';
 import { ApiError, httpClient } from './api/httpClient';

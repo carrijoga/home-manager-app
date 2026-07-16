@@ -37,10 +37,10 @@ export function useShoppingRealtime({
         if (import.meta.env.DEV) console.warn('[useShoppingRealtime] JoinList failed:', err);
       });
       return () => {
-        connectionRef.current?.invoke('LeaveList', selectedListId).catch(() => {});
+        connection.invoke('LeaveList', selectedListId).catch(() => {});
       };
     }
-  }, [isConnected, viewMode, selectedListId]);
+  }, [connectionRef, isConnected, viewMode, selectedListId]);
 
   // Nest-level events (always active while connected)
   useEffect(() => {
@@ -87,7 +87,15 @@ export function useShoppingRealtime({
       connection.off('ReceiveListUpdated', onListUpdated);
       connection.off('ReceiveListStatusChanged', onListStatusChanged);
     };
-  }, [isConnected, selectedListId, nestId, backToLists, setDetailData, setShoppingLists]);
+  }, [
+    connectionRef,
+    isConnected,
+    selectedListId,
+    nestId,
+    backToLists,
+    setDetailData,
+    setShoppingLists,
+  ]);
 
   // List-level events (item mutations)
   useEffect(() => {
@@ -154,5 +162,5 @@ export function useShoppingRealtime({
       connection.off('ReceiveItemDeleted', onItemDeleted);
       connection.off('ReceiveItemPurchaseChanged', onItemPurchaseChanged);
     };
-  }, [isConnected, setDetailData]);
+  }, [connectionRef, isConnected, setDetailData]);
 }

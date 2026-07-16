@@ -23,10 +23,10 @@ import {
 
 import BulletinBoard from '../common/BulletinBoard';
 import DashboardHeader from '../common/DashboardHeader';
-import { CreateNoteModal } from '../modals/CreateNoteModal';
 import FamilyGoalCard from '../common/FamilyGoalCard';
 import ModuleMetricWidget from '../common/ModuleMetricWidget';
 import UpcomingEvents from '../common/UpcomingEvents';
+import { CreateNoteModal } from '../modals/CreateNoteModal';
 
 
 function formatRelativeNoticeTime(dateValue) {

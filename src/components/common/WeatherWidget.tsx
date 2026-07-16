@@ -1,9 +1,9 @@
 import { CloudSun } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { Button } from '@/components/ui';
 import type { RefreshCWIconHandle } from '@/components/ui/animated-icons/refresh-cw';
 import { RefreshCWIcon } from '@/components/ui/animated-icons/refresh-cw';
-import { Button } from '@/components/ui';
 import { cn } from '@/lib/utils';
 
 interface WeatherWidgetProps {

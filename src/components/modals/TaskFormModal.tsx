@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
+import { CATEGORIES, PRIORITIES } from '@/components/modules/tasks/constants';
 import {
   DatePicker,
   Dialog,
@@ -13,7 +14,6 @@ import {
   SelectValue,
   Textarea,
 } from '@/components/ui';
-import { CATEGORIES, PRIORITIES } from '@/components/modules/tasks/constants';
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
 import type { Task } from '@/types';
 import { TaskStatus } from '@/types';

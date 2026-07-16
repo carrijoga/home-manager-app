@@ -1,6 +1,7 @@
 // src/components/modals/transaction-sheet/MoreDetails.tsx
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
+
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
 interface MoreDetailsProps {

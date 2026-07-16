@@ -1,12 +1,12 @@
-﻿import {
+﻿import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
+import {
+  closestCorners,
   DndContext,
   DragOverlay,
   PointerSensor,
-  closestCorners,
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
-import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
 import { KanbanSquare, List, Plus, Search } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';

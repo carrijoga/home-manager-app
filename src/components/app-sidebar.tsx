@@ -11,9 +11,9 @@ import { CheckIcon } from "@/components/ui/animated-icons/check";
 import { ChevronRightIcon, type ChevronRightIconHandle } from "@/components/ui/animated-icons/chevron-right";
 import { ChevronsUpDownIcon } from "@/components/ui/animated-icons/chevrons-up-down";
 import { CircleHelpIcon } from "@/components/ui/animated-icons/circle-help";
+import { CreditCardIcon } from "@/components/ui/animated-icons/credit-card";
 import { DollarSignIcon, type DollarSignIconHandle } from "@/components/ui/animated-icons/dollar-sign";
 import { HomeIcon } from "@/components/ui/animated-icons/home";
-import { CreditCardIcon } from "@/components/ui/animated-icons/credit-card";
 import { RefreshCWIcon } from "@/components/ui/animated-icons/refresh-cw";
 import { SendIcon } from "@/components/ui/animated-icons/send";
 import { TrendingUpIcon } from "@/components/ui/animated-icons/trending-up";
@@ -114,15 +114,15 @@ function FinancasGroup({
     <Collapsible open={financasOpen} onOpenChange={setFinancasOpen}>
       <CollapsibleTrigger asChild>
         <SidebarMenuButton
-          isActive={isFinancasActive}
+          isActive={false}
           tooltip="Finanças"
           onClick={() => handleNavClick("/financial")}
           onMouseEnter={() => { dollarRef.current?.startAnimation(); chevronRef.current?.startAnimation(); }}
           onMouseLeave={() => { dollarRef.current?.stopAnimation(); chevronRef.current?.stopAnimation(); }}
           className={cn(
-            "relative rounded-[24px] px-4 py-3 text-base transition-colors !gap-3",
+            "relative rounded-[24px] px-4 py-3 text-base transition-colors !gap-3 cursor-pointer",
             isFinancasActive
-              ? "!bg-transparent !text-primary font-semibold"
+              ? "!bg-primary/8 !text-primary font-semibold hover:!bg-primary/12"
               : "font-normal text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
           )}
           style={{ zIndex: 1 }}
@@ -173,6 +173,10 @@ function FinancasSubItemRow({
         onMouseEnter={() => iconRef.current?.startAnimation()}
         onMouseLeave={() => iconRef.current?.stopAnimation()}
         isActive={isActive}
+        className={cn(
+          "cursor-pointer",
+          isActive && "!bg-primary/15 !text-primary font-semibold"
+        )}
       >
         <SubIcon ref={iconRef} size={14} />
         <span>{item.name}</span>
@@ -312,14 +316,6 @@ export function AppSidebar({ user }: AppSidebarProps) {
 
               {/* Finanças — collapsible group */}
               <SidebarMenuItem className="relative">
-                {isFinancasActive && (
-                  <motion.div
-                    layoutId="sidebar-active-pill"
-                    className="absolute inset-0 rounded-[24px] bg-sidebar-accent"
-                    transition={{ type: "spring", stiffness: 380, damping: 38 }}
-                    style={{ zIndex: 0 }}
-                  />
-                )}
                 <FinancasGroup
                   isFinancasActive={isFinancasActive}
                   financasOpen={financasOpen}

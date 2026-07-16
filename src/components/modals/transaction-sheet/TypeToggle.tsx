@@ -1,5 +1,6 @@
 // src/components/modals/transaction-sheet/TypeToggle.tsx
 import { motion } from 'framer-motion';
+
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { TransactionType } from '@/schemas/enums';
 

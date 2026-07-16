@@ -721,7 +721,7 @@ function LeaveNestDialog({
               ) : (
                 <>
                   <p>
-                    Você está prestes a sair de <strong>"{nest.name}"</strong>.
+                    Você está prestes a sair de <strong>&ldquo;{nest.name}&rdquo;</strong>.
                     {isOwner && ' Como Owner, esta ação é irreversível.'}
                   </p>
                   {needsConfirmText && (
@@ -807,7 +807,7 @@ function DeleteNestDialog({
                 <>
                   <p>
                     Esta ação é <strong>permanente</strong> e não pode ser desfeita. Todos os dados
-                    de <strong>"{nest.name}"</strong> serão perdidos.
+                    de <strong>&ldquo;{nest.name}&rdquo;</strong> serão perdidos.
                   </p>
                   <div className="space-y-1">
                     <p className="text-sm">

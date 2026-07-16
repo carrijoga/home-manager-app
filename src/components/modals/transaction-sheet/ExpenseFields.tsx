@@ -1,8 +1,9 @@
 // src/components/modals/transaction-sheet/ExpenseFields.tsx
 import { Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea } from '@/components/ui';
-import { ApiPaymentMethod } from '@/schemas/enums';
 import type { CategoryResponse } from '@/schemas/category';
+import { ApiPaymentMethod } from '@/schemas/enums';
 import type { NestMember } from '@/schemas/nest';
+
 import { MoreDetails } from './MoreDetails';
 
 interface ExpenseFieldsProps {

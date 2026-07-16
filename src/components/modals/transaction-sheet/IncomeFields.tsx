@@ -2,6 +2,7 @@
 import { Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea } from '@/components/ui';
 import type { CategoryResponse } from '@/schemas/category';
 import type { NestMember } from '@/schemas/nest';
+
 import { MoreDetails } from './MoreDetails';
 
 interface IncomeFieldsProps {

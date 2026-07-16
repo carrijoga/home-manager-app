@@ -81,4 +81,4 @@ export const UpdateProfileRequestSchema = z.object({
 export type UpdateProfileRequest = z.infer<typeof UpdateProfileRequestSchema>;
 
 // Nest schemas moved to src/schemas/nest.ts
-export type { CreateNestRequest, UpdateNestRequest, UpdateNestMembers } from './nest';
+export type { CreateNestRequest, UpdateNestMembers,UpdateNestRequest } from './nest';

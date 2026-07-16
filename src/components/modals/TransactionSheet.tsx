@@ -3,13 +3,13 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 
 import { Button, Sheet, SheetContent } from '@/components/ui';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import type { CategoryResponse } from '@/schemas/category';
 import { FinancialSourceType, TransactionType } from '@/schemas/enums';
 import type { CreateTransactionRequest } from '@/schemas/financial';
 import type { NestMember } from '@/schemas/nest';
 import * as nestService from '@/services/nestService';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
 import { AmountHero } from './transaction-sheet/AmountHero';
 import { ExpenseFields } from './transaction-sheet/ExpenseFields';

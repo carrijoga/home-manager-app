@@ -175,7 +175,7 @@ export async function getFinancialDashboard(
           t.dueDate !== null &&
           String(t.dueDate).slice(0, 10) <= limitIso,
       )
-      .sort((a, b) => String(a.dueDate).localeCompare(String(b.dueDate)))
+      .sort((a, b) => String(a.dueDate ?? '').localeCompare(String(b.dueDate ?? '')))
       .map(t => ({
         financialTransactionId: t.financialTransactionId,
         description: t.description,

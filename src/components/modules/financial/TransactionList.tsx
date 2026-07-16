@@ -17,7 +17,6 @@ interface TransactionListProps {
   emptyTitle: string;
   emptyDescription?: string;
   onPay: (t: FinancialTransactionResponse) => void;
-  onEdit: (t: FinancialTransactionResponse) => void;
   onDelete: (t: FinancialTransactionResponse) => void;
   onRemovePayment: (t: FinancialTransactionResponse, paymentId: string) => void;
 }
@@ -32,7 +31,6 @@ export function TransactionList({
   emptyTitle,
   emptyDescription,
   onPay,
-  onEdit,
   onDelete,
   onRemovePayment,
 }: TransactionListProps) {
@@ -73,7 +71,6 @@ export function TransactionList({
               <TransactionRow
                 transaction={t}
                 onPay={onPay}
-                onEdit={onEdit}
                 onDelete={onDelete}
                 onRemovePayment={onRemovePayment}
               />

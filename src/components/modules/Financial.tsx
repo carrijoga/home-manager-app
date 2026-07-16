@@ -27,7 +27,6 @@ import type {
   FinancialTransactionDashboardResponse,
   FinancialTransactionResponse,
   FinancialTransactionUpcomingBillResponse,
-  UpdateTransactionRequest,
 } from '@/schemas/financial';
 import * as categoryService from '@/services/categoryService';
 import * as financialService from '@/services/financialService';
@@ -82,7 +81,6 @@ const Financial = () => {
 
   // ── Modais ─────────────────────────────────────────────────────────────────
   const [formOpen, setFormOpen] = useState(false);
-  const [editingTx, setEditingTx] = useState<FinancialTransactionResponse | null>(null);
   const [payingTx, setPayingTx] = useState<FinancialTransactionResponse | null>(null);
   const [deletingTx, setDeletingTx] = useState<FinancialTransactionResponse | null>(null);
 
@@ -151,17 +149,6 @@ const Financial = () => {
     }
   };
 
-  const handleUpdate = async (payload: UpdateTransactionRequest) => {
-    try {
-      await financialService.updateTransaction(payload, nestId);
-      showSuccess('Transação atualizada!');
-      refresh();
-    } catch (error) {
-      showError('Erro ao atualizar. O backend pode ainda não suportar edição.');
-      throw error;
-    }
-  };
-
   const handlePaymentSubmit = async (payload: AddPaymentRequest) => {
     try {
       await financialService.addPayment(payload, nestId);
@@ -204,8 +191,7 @@ const Financial = () => {
     if (tx) setPayingTx(tx);
   };
 
-  const openCreate = () => { setEditingTx(null); setFormOpen(true); };
-  const openEdit = (t: FinancialTransactionResponse) => { setEditingTx(t); setFormOpen(true); };
+  const openCreate = () => { setFormOpen(true); };
 
   const hasActiveFilters =
     Boolean(debouncedSearch) || filters.type !== 'all' || filters.status !== 'all' || Boolean(filters.categoryId);
@@ -278,7 +264,6 @@ const Financial = () => {
             emptyTitle={hasActiveFilters ? 'Nenhuma transação encontrada' : 'Nenhuma transação neste mês'}
             emptyDescription="Registre a primeira transação pelo botão Nova transação."
             onPay={setPayingTx}
-            onEdit={openEdit}
             onDelete={setDeletingTx}
             onRemovePayment={(t, paymentId) => { void handleRemovePayment(t, paymentId); }}
           />
@@ -303,13 +288,11 @@ const Financial = () => {
       {/* Modais */}
       <TransactionSheet
         open={formOpen}
-        onClose={() => { setFormOpen(false); setEditingTx(null); }}
-        transaction={editingTx}
+        onClose={() => { setFormOpen(false); }}
         categories={categories}
         nestId={nestId}
         currentUserId={currentUserId}
         onCreate={handleCreate}
-        onUpdate={handleUpdate}
       />
       <PaymentModal
         open={payingTx !== null}

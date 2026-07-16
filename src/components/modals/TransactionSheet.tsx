@@ -5,11 +5,7 @@ import { useEffect, useState } from 'react';
 import { Button, Sheet, SheetContent } from '@/components/ui';
 import type { CategoryResponse } from '@/schemas/category';
 import { FinancialSourceType, TransactionType } from '@/schemas/enums';
-import type {
-  CreateTransactionRequest,
-  FinancialTransactionResponse,
-  UpdateTransactionRequest,
-} from '@/schemas/financial';
+import type { CreateTransactionRequest } from '@/schemas/financial';
 import type { NestMember } from '@/schemas/nest';
 import * as nestService from '@/services/nestService';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -23,12 +19,10 @@ import { TypeToggle } from './transaction-sheet/TypeToggle';
 export interface TransactionSheetProps {
   open: boolean;
   onClose: () => void;
-  transaction: FinancialTransactionResponse | null;
   categories: CategoryResponse[];
   nestId: string | undefined;
   currentUserId: string;
   onCreate: (payload: CreateTransactionRequest) => Promise<void>;
-  onUpdate: (payload: UpdateTransactionRequest) => Promise<void>;
 }
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
@@ -38,9 +32,8 @@ const EXPENSE_COLOR = '#e07070';
 const INCOME_COLOR = '#6ab085';
 
 export function TransactionSheet({
-  open, onClose, transaction, categories, nestId, currentUserId, onCreate, onUpdate,
+  open, onClose, categories, nestId, currentUserId, onCreate,
 }: TransactionSheetProps) {
-  const isEdit = transaction !== null;
   const isMobile = useIsMobile();
   const reduced = usePrefersReducedMotion();
 
@@ -73,32 +66,18 @@ export function TransactionSheet({
 
   useEffect(() => {
     if (!open) return;
-    if (transaction) {
-      setType(transaction.transactionType);
-      setDescription(transaction.description);
-      setAmount(Number(transaction.value));
-      setTransactionDate(String(transaction.transactionDate).slice(0, 10));
-      setCategoryId(transaction.categoryId);
-      setResponsibleUserId(transaction.responsibleUserId);
-      setObservation(transaction.observation ?? '');
-      setDueDate(transaction.dueDate ? String(transaction.dueDate).slice(0, 10) : todayIso());
-      setPaymentMethod(null);
-      setIncomeSource(transaction.incomeOrigin ?? '');
-      setIsDetailsOpen(true);
-    } else {
-      setType(TransactionType.Expense);
-      setDescription('');
-      setAmount(null);
-      setTransactionDate(todayIso());
-      setCategoryId('');
-      setResponsibleUserId(currentUserId);
-      setObservation('');
-      setDueDate(todayIso());
-      setPaymentMethod(null);
-      setIncomeSource('');
-      setIsDetailsOpen(false);
-    }
-  }, [open, transaction, currentUserId]);
+    setType(TransactionType.Expense);
+    setDescription('');
+    setAmount(null);
+    setTransactionDate(todayIso());
+    setCategoryId('');
+    setResponsibleUserId(currentUserId);
+    setObservation('');
+    setDueDate(todayIso());
+    setPaymentMethod(null);
+    setIncomeSource('');
+    setIsDetailsOpen(false);
+  }, [open, currentUserId]);
 
   const handleTypeChange = (newType: number) => {
     setType(newType);
@@ -124,7 +103,7 @@ export function TransactionSheet({
     setIsSubmitting(true);
     try {
       const isExpenseType = type === TransactionType.Expense;
-      const base = {
+      await onCreate({
         type,
         description: description.trim(),
         amount: amount as number,
@@ -134,16 +113,7 @@ export function TransactionSheet({
         categoryId,
         responsibleUserId,
         sourceType: FinancialSourceType.Manual,
-      };
-      if (isEdit && transaction) {
-        await onUpdate({
-          ...base,
-          financialTransactionId: transaction.financialTransactionId,
-          observation: observation.trim() || null,
-        });
-      } else {
-        await onCreate(base);
-      }
+      });
       onClose();
     } finally {
       setIsSubmitting(false);
@@ -154,9 +124,7 @@ export function TransactionSheet({
   const submitColor = isExpense ? EXPENSE_COLOR : INCOME_COLOR;
   const submitLabel = isSubmitting
     ? 'Salvando…'
-    : isEdit
-      ? 'Salvar alterações'
-      : isExpense ? 'Registrar despesa' : 'Registrar receita';
+    : isExpense ? 'Registrar despesa' : 'Registrar receita';
 
   return (
     <Sheet open={open} onOpenChange={o => { if (!o) onClose(); }}>
@@ -207,7 +175,7 @@ export function TransactionSheet({
                   onDetailsToggle={() => setIsDetailsOpen(v => !v)}
                   categories={visibleCategories}
                   members={members}
-                  isEdit={isEdit}
+                  isEdit={false}
                 />
               </motion.div>
             ) : (
@@ -233,7 +201,7 @@ export function TransactionSheet({
                   onDetailsToggle={() => setIsDetailsOpen(v => !v)}
                   categories={visibleCategories}
                   members={members}
-                  isEdit={isEdit}
+                  isEdit={false}
                 />
               </motion.div>
             )}

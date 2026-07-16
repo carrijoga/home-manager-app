@@ -81,9 +81,9 @@ export function TransactionSheet({
       setCategoryId(transaction.categoryId);
       setResponsibleUserId(transaction.responsibleUserId);
       setObservation(transaction.observation ?? '');
-      setDueDate(String(transaction.dueDate).slice(0, 10));
+      setDueDate(transaction.dueDate ? String(transaction.dueDate).slice(0, 10) : todayIso());
       setPaymentMethod(null);
-      setIncomeSource('');
+      setIncomeSource(transaction.incomeOrigin ?? '');
       setIsDetailsOpen(true);
     } else {
       setType(TransactionType.Expense);
@@ -123,12 +123,14 @@ export function TransactionSheet({
     if (!isValid || isSubmitting) return;
     setIsSubmitting(true);
     try {
+      const isExpenseType = type === TransactionType.Expense;
       const base = {
         type,
         description: description.trim(),
         amount: amount as number,
         transactionDate: toApiDateTime(transactionDate),
-        dueDate: toApiDateTime(dueDate),
+        dueDate: isExpenseType ? toApiDateTime(dueDate) : null,
+        incomeOrigin: isExpenseType ? null : (incomeSource.trim() || null),
         categoryId,
         responsibleUserId,
         sourceType: FinancialSourceType.Manual,

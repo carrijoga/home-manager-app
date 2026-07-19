@@ -23,6 +23,7 @@ export interface TransactionSheetProps {
   nestId: string | undefined;
   currentUserId: string;
   onCreate: (payload: CreateTransactionRequest) => Promise<void>;
+  onCreateCategory: (payload: { name: string; type: number }) => Promise<CategoryResponse>;
 }
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
@@ -32,7 +33,7 @@ const EXPENSE_COLOR = '#e07070';
 const INCOME_COLOR = '#6ab085';
 
 export function TransactionSheet({
-  open, onClose, categories, nestId, currentUserId, onCreate,
+  open, onClose, categories, nestId, currentUserId, onCreate, onCreateCategory,
 }: TransactionSheetProps) {
   const isMobile = useIsMobile();
   const reduced = usePrefersReducedMotion();
@@ -161,6 +162,7 @@ export function TransactionSheet({
                 <ExpenseFields
                   categoryId={categoryId}
                   onCategoryChange={setCategoryId}
+                  onCreateCategory={onCreateCategory}
                   transactionDate={transactionDate}
                   onDateChange={setTransactionDate}
                   responsibleUserId={responsibleUserId}
@@ -189,6 +191,7 @@ export function TransactionSheet({
                 <IncomeFields
                   categoryId={categoryId}
                   onCategoryChange={setCategoryId}
+                  onCreateCategory={onCreateCategory}
                   transactionDate={transactionDate}
                   onDateChange={setTransactionDate}
                   responsibleUserId={responsibleUserId}

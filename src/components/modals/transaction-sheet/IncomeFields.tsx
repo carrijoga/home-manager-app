@@ -1,6 +1,8 @@
 // src/components/modals/transaction-sheet/IncomeFields.tsx
 import { Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea } from '@/components/ui';
+import { CategoryCombobox } from '@/components/common/CategoryCombobox';
 import type { CategoryResponse } from '@/schemas/category';
+import { TransactionType } from '@/schemas/enums';
 import type { NestMember } from '@/schemas/nest';
 
 import { MoreDetails } from './MoreDetails';
@@ -8,6 +10,7 @@ import { MoreDetails } from './MoreDetails';
 interface IncomeFieldsProps {
   categoryId: string;
   onCategoryChange: (v: string) => void;
+  onCreateCategory: (payload: { name: string; type: number }) => Promise<CategoryResponse>;
   transactionDate: string;
   onDateChange: (v: string) => void;
   responsibleUserId: string;
@@ -24,7 +27,7 @@ interface IncomeFieldsProps {
 }
 
 export function IncomeFields({
-  categoryId, onCategoryChange,
+  categoryId, onCategoryChange, onCreateCategory,
   transactionDate, onDateChange,
   responsibleUserId, onResponsibleChange,
   incomeSource, onIncomeSourceChange,
@@ -41,16 +44,13 @@ export function IncomeFields({
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="tx-category-income" className="text-xs text-muted-foreground uppercase tracking-wide">Categoria</Label>
-          <Select value={categoryId} onValueChange={onCategoryChange}>
-            <SelectTrigger id="tx-category-income" className="bg-muted/30 border-border/40">
-              <SelectValue placeholder="Selecionar…" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map(c => (
-                <SelectItem key={c.categoryId} value={c.categoryId}>{c.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <CategoryCombobox
+            categories={categories}
+            value={categoryId}
+            onChange={onCategoryChange}
+            defaultType={TransactionType.Income}
+            onCreateCategory={onCreateCategory}
+          />
         </div>
       </div>
 

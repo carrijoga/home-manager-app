@@ -11,6 +11,10 @@ import { DATA_MODE } from './api/config';
 import { ENDPOINTS } from './api/endpoints';
 import { httpClient } from './api/httpClient';
 
+// Cópia mutável — simula persistência entre chamadas no modo mock, sem alterar
+// o array exportado original (reinicia em full reload/HMR, igual a `finSeq` em mocks/data.ts).
+let mockCategoriesStore: CategoryResponse[] = [...mockFinancialCategories];
+
 function safeParse<T>(
   schema: { safeParse: (v: unknown) => { success: boolean; data?: T; error?: { flatten: () => unknown } } },
   raw: unknown,
@@ -30,8 +34,8 @@ function safeParse<T>(
 export async function listCategories(filter?: CategoryFilter, nestId?: string): Promise<CategoryListResponse> {
   if (DATA_MODE === 'mock') {
     const items = filter?.types?.length
-      ? mockFinancialCategories.filter(c => filter.types!.includes(c.type))
-      : mockFinancialCategories;
+      ? mockCategoriesStore.filter(c => filter.types!.includes(c.type))
+      : mockCategoriesStore;
     return new Promise(resolve =>
       setTimeout(() => resolve({ items, page: 1, pageSize: items.length, totalCount: items.length }), 100),
     );
@@ -42,6 +46,17 @@ export async function listCategories(filter?: CategoryFilter, nestId?: string): 
 
 /** Cria uma nova categoria */
 export async function createCategory(payload: CreateCategoryRequest, nestId?: string): Promise<CategoryResponse> {
+  if (DATA_MODE === 'mock') {
+    const created: CategoryResponse = {
+      categoryId: `fincat-mock-${Date.now()}`,
+      nestId: nestId ?? 'nest-mock-0001',
+      name: payload.name,
+      description: payload.description ?? undefined,
+      type: payload.type,
+    };
+    mockCategoriesStore = [...mockCategoriesStore, created];
+    return new Promise(resolve => setTimeout(() => resolve(created), 100));
+  }
   const raw = await httpClient.post<unknown>(ENDPOINTS.categories.create, payload, { nestId });
   return safeParse(CategoryResponseSchema, raw, 'createCategory');
 }

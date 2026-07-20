@@ -120,6 +120,12 @@ const Financial = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nestId]);
 
+  const handleCreateCategory = async (payload: { name: string; type: number }) => {
+    const created = await categoryService.createCategory({ name: payload.name, type: payload.type }, nestId);
+    setCategories(prev => [...prev, created]);
+    return created;
+  };
+
   // ── Derivados client-side ──────────────────────────────────────────────────
   const filteredTransactions = useMemo(() => {
     let result = monthTransactions;
@@ -293,6 +299,7 @@ const Financial = () => {
         nestId={nestId}
         currentUserId={currentUserId}
         onCreate={handleCreate}
+        onCreateCategory={handleCreateCategory}
       />
       <PaymentModal
         open={payingTx !== null}

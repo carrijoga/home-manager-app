@@ -1,4 +1,4 @@
-export function CreditCardSkeleton() {
+export function PaymentCardSkeleton() {
   return (
     <div className="p-6">
       <div className="h-8 w-40 rounded-md bg-muted animate-pulse mb-6" />

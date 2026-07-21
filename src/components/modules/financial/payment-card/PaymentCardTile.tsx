@@ -7,13 +7,14 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
-import type { CreditCardResponse } from '@/schemas/credit-card';
+import { CARD_TYPE_LABELS, CardType } from '@/schemas/enums';
+import type { PaymentCardResponse } from '@/schemas/payment-card';
 import { formatCurrency } from '@/utils/dashboardMetrics';
 
-import { CARD_TEXT_COLOR,cardGradient } from './gradient';
+import { CARD_TEXT_COLOR, cardGradient } from './gradient';
 
-interface CreditCardTileProps {
-  card: CreditCardResponse;
+interface PaymentCardTileProps {
+  card: PaymentCardResponse;
   used: number;
   selected: boolean;
   onSelect: () => void;
@@ -21,10 +22,11 @@ interface CreditCardTileProps {
   onToggleActive: () => void;
 }
 
-export function CreditCardTile({
+export function PaymentCardTile({
   card, used, selected, onSelect, onEdit, onToggleActive,
-}: CreditCardTileProps) {
-  const limit = Number(card.creditLimit);
+}: PaymentCardTileProps) {
+  const isCredit = card.type === CardType.Credit;
+  const limit = Number(card.creditLimit ?? 0);
   const available = Math.max(0, limit - used);
   const usedPct = limit > 0 ? Math.min(100, (used / limit) * 100) : 0;
   const inactive = !card.isActive;
@@ -41,10 +43,15 @@ export function CreditCardTile({
         selected ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : 'ring-0',
         inactive && 'opacity-50 grayscale',
       )}
-      style={{ background: cardGradient(card.color), color: CARD_TEXT_COLOR }}
+      style={{ background: cardGradient(card.color ?? ''), color: CARD_TEXT_COLOR }}
     >
       <div className="flex items-start justify-between">
-        <span className="text-sm font-semibold drop-shadow-sm">{card.name}</span>
+        <div className="flex flex-col">
+          <span className="text-sm font-semibold drop-shadow-sm">{card.name}</span>
+          <span className="text-[10px] uppercase tracking-wide opacity-80">
+            {CARD_TYPE_LABELS[card.type]}
+          </span>
+        </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
@@ -67,16 +74,20 @@ export function CreditCardTile({
         </DropdownMenu>
       </div>
 
-      <div>
-        <div className="text-[11px] opacity-85">Disponível</div>
-        <div className="text-lg font-bold drop-shadow-sm">{formatCurrency(available)}</div>
-        <div className="mt-2 h-1.5 rounded-full bg-white/25 overflow-hidden">
-          <div className="h-full rounded-full bg-white/80" style={{ width: `${usedPct}%` }} />
+      {isCredit ? (
+        <div>
+          <div className="text-[11px] opacity-85">Disponível</div>
+          <div className="text-lg font-bold drop-shadow-sm">{formatCurrency(available)}</div>
+          <div className="mt-2 h-1.5 rounded-full bg-white/25 overflow-hidden">
+            <div className="h-full rounded-full bg-white/80" style={{ width: `${usedPct}%` }} />
+          </div>
+          <div className="text-[10px] opacity-80 mt-1">
+            {formatCurrency(used)} de {formatCurrency(limit)}{inactive ? ' · Inativo' : ''}
+          </div>
         </div>
-        <div className="text-[10px] opacity-80 mt-1">
-          {formatCurrency(used)} de {formatCurrency(limit)}{inactive ? ' · Inativo' : ''}
-        </div>
-      </div>
+      ) : (
+        <div className="text-[10px] opacity-80">{inactive ? 'Inativo' : 'Ativo'}</div>
+      )}
     </div>
   );
 }

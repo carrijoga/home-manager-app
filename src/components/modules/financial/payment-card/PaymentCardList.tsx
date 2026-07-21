@@ -2,23 +2,23 @@ import { Plus } from 'lucide-react';
 
 import { Button } from '@/components/ui';
 import { cn } from '@/lib/utils';
-import type { CreditCardResponse } from '@/schemas/credit-card';
+import type { PaymentCardResponse } from '@/schemas/payment-card';
 
-import { CreditCardTile } from './CreditCardTile';
+import { PaymentCardTile } from './PaymentCardTile';
 
-interface CreditCardListProps {
-  cards: CreditCardResponse[];
+interface PaymentCardListProps {
+  cards: PaymentCardResponse[];
   selectedId: string | null;
   usedByCard: Record<string, number>;
   onSelect: (id: string) => void;
-  onEdit: (card: CreditCardResponse) => void;
-  onToggleActive: (card: CreditCardResponse) => void;
+  onEdit: (card: PaymentCardResponse) => void;
+  onToggleActive: (card: PaymentCardResponse) => void;
   onAdd: () => void;
 }
 
-export function CreditCardList({
+export function PaymentCardList({
   cards, selectedId, usedByCard, onSelect, onEdit, onToggleActive, onAdd,
-}: CreditCardListProps) {
+}: PaymentCardListProps) {
   return (
     <div className="flex flex-col gap-3">
       <Button onClick={onAdd} className="w-full gap-2 font-semibold">
@@ -32,12 +32,12 @@ export function CreditCardList({
         )}
       >
         {cards.map((card) => (
-          <div key={card.creditCardId} className="min-w-[220px] lg:min-w-0">
-            <CreditCardTile
+          <div key={card.paymentCardId} className="min-w-[220px] lg:min-w-0">
+            <PaymentCardTile
               card={card}
-              used={usedByCard[card.creditCardId] ?? Number(card.previousBalance)}
-              selected={card.creditCardId === selectedId}
-              onSelect={() => onSelect(card.creditCardId)}
+              used={usedByCard[card.paymentCardId] ?? Number(card.previousBalance ?? 0)}
+              selected={card.paymentCardId === selectedId}
+              onSelect={() => onSelect(card.paymentCardId)}
               onEdit={() => onEdit(card)}
               onToggleActive={() => onToggleActive(card)}
             />

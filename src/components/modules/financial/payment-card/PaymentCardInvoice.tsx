@@ -1,4 +1,4 @@
-import type { CreditCardInvoice } from '@/schemas/credit-card';
+import type { PaymentCardInvoice } from '@/schemas/payment-card';
 import { formatCurrency } from '@/utils/dashboardMetrics';
 
 const formatMonth = (month: string) => {
@@ -6,12 +6,12 @@ const formatMonth = (month: string) => {
   return new Date(y, m - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
 };
 
-interface CreditCardInvoiceProps {
-  invoice: CreditCardInvoice | null;
+interface PaymentCardInvoiceProps {
+  invoice: PaymentCardInvoice | null;
   loading: boolean;
 }
 
-export function CreditCardInvoiceSection({ invoice, loading }: CreditCardInvoiceProps) {
+export function PaymentCardInvoiceSection({ invoice, loading }: PaymentCardInvoiceProps) {
   return (
     <div className="rounded-xl border border-border bg-card p-4">
       <div className="flex items-center justify-between mb-3">

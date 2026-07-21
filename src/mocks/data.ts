@@ -6,11 +6,11 @@
 
 import type { BankAccountResponse } from '@/schemas/bank-account';
 import type { CategoryResponse } from '@/schemas/category';
-import type { PaymentCardInvoice, PaymentCardResponse } from '@/schemas/payment-card';
 import type {
   FinancialTransactionPaymentResponse,
   FinancialTransactionResponse,
 } from '@/schemas/financial';
+import type { PaymentCardInvoice, PaymentCardResponse } from '@/schemas/payment-card';
 import type { AppNotification, AppShoppingCategory, AppShoppingItem, AppShoppingList, AppShoppingListSummary, FutureItem, Notice, Task } from '@/types';
 import { ApiCategory, ApiPriority, FutureItemStatus, Priority } from '@/types';
 

@@ -2,6 +2,11 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Git Commits
+
+- All commits must be made under the user's identity: **Gabriel Carrijo** `<gabriel20carrijo@hotmail.com>`.
+- Never include a `Co-Authored-By` trailer or any other mention of Claude/AI authorship in commit messages.
+
 ## Project Overview
 
 **Ninho** — a Brazilian Portuguese PWA for family home management (tasks, shopping, finances, calendar). UI text is in Brazilian Portuguese; code comments/variable names can be mixed.

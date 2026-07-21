@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { TransactionTypeSchema } from './enums';
-import { PaginatedResponseSchema,UuidSchema } from './shared';
+import { UuidSchema } from './shared';
 
 // ── Requests ──────────────────────────────────────────────────────────────────
 
@@ -33,5 +33,9 @@ export const CategoryResponseSchema = z.object({
 });
 export type CategoryResponse = z.infer<typeof CategoryResponseSchema>;
 
-export const CategoryListResponseSchema = PaginatedResponseSchema(CategoryResponseSchema);
+// A API retorna um array puro de categorias (sem paginação) em /api/categories/list.
+export const CategoryListResponseSchema = z.array(CategoryResponseSchema);
 export type CategoryListResponse = z.infer<typeof CategoryListResponseSchema>;
+
+// /api/categories/create retorna apenas o UUID da categoria criada (não o objeto completo).
+export const CreateCategoryResponseSchema = UuidSchema;

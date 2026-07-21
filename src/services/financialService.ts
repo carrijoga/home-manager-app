@@ -4,6 +4,7 @@
  * Em modo mock usa dados locais de `mocks/data.ts`.
  */
 
+import { TransactionType } from '@/schemas/enums';
 import type {
   AddPaymentRequest,
   CreateTransactionRequest,
@@ -101,6 +102,7 @@ function applyMockFilter(
 
 // ── Queries ───────────────────────────────────────────────────────────────────
 
+/** Lista transações com filtro. A API retorna um array puro (sem paginação). */
 export async function listTransactions(
   filter?: FinancialTransactionFilter,
   nestId?: string,
@@ -111,12 +113,7 @@ export async function listTransactions(
     );
     const page = filter?.page ?? 1;
     const pageSize = filter?.pageSize ?? filtered.length;
-    return delay({
-      items: filtered.slice((page - 1) * pageSize, page * pageSize),
-      page,
-      pageSize,
-      totalCount: filtered.length,
-    });
+    return delay(filtered.slice((page - 1) * pageSize, page * pageSize));
   }
 
   const raw = await httpClient.post<unknown>(ENDPOINTS.financial.list, filter ?? {}, { nestId });
@@ -152,11 +149,10 @@ export async function getFinancialDashboard(
       return d.getMonth() + 1 === prevMonthNum && d.getFullYear() === prevYear;
     });
 
-    // transactionType: 0 = Expense, 1 = Income
     const sumIncome = (list: FinancialTransactionResponse[]) =>
-      list.filter(t => t.transactionType === 1).reduce((s, t) => s + Number(t.value), 0);
+      list.filter(t => t.transactionType === TransactionType.Income).reduce((s, t) => s + Number(t.value), 0);
     const sumExpenses = (list: FinancialTransactionResponse[]) =>
-      list.filter(t => t.transactionType === 0).reduce((s, t) => s + Number(t.value), 0);
+      list.filter(t => t.transactionType === TransactionType.Expense).reduce((s, t) => s + Number(t.value), 0);
 
     const curIncome = sumIncome(inMonth);
     const curExpenses = sumExpenses(inMonth);
@@ -170,7 +166,7 @@ export async function getFinancialDashboard(
     const upcomingBills = inMonth
       .filter(
         t =>
-          t.transactionType === 0 &&
+          t.transactionType === TransactionType.Expense &&
           !t.isPaid &&
           t.dueDate !== null &&
           String(t.dueDate).slice(0, 10) <= limitIso,
@@ -186,7 +182,7 @@ export async function getFinancialDashboard(
 
     const categoryTotals: Record<string, { categoryId: string; totalAmount: number }> = {};
     inMonth
-      .filter(t => t.transactionType === 0)
+      .filter(t => t.transactionType === TransactionType.Expense)
       .forEach(t => {
         const key = t.categoryName || 'Outros';
         if (!categoryTotals[key]) categoryTotals[key] = { categoryId: t.categoryId, totalAmount: 0 };
@@ -372,8 +368,7 @@ export async function getAllExpenses() {
   if (DATA_MODE === 'mock') {
     return delay(mockExpenses);
   }
-  const result = await listTransactions();
-  return result.items;
+  return listTransactions();
 }
 
 /** @deprecated Use `createTransaction` */

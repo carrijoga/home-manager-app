@@ -95,7 +95,7 @@ const Financial = () => {
       .then(([dashboard, list]) => {
         if (!active) return;
         setDashboardData(dashboard);
-        setMonthTransactions(list.items ?? []);
+        setMonthTransactions(list ?? []);
       })
       .catch(() => {
         if (active) showError('Erro ao carregar transações.');
@@ -114,7 +114,7 @@ const Financial = () => {
     let active = true;
     categoryService
       .listCategories({ pageSize: 100 }, nestId)
-      .then(res => { if (active) setCategories(res.items ?? []); })
+      .then(res => { if (active) setCategories(res ?? []); })
       .catch(() => {});
     return () => { active = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps

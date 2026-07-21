@@ -6,9 +6,9 @@ import {
   Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
 } from '@/components/ui/command';
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
+import { cn } from '@/lib/utils';
 import type { CategoryResponse } from '@/schemas/category';
 import { TransactionType } from '@/schemas/enums';
-import { cn } from '@/lib/utils';
 
 export interface CategoryComboboxProps {
   categories: CategoryResponse[];

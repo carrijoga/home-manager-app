@@ -4,7 +4,11 @@ import type {
   CategoryResponse,
   CreateCategoryRequest,
 } from '@/schemas/category';
-import { CategoryListResponseSchema,CategoryResponseSchema } from '@/schemas/category';
+import {
+  CategoryListResponseSchema,
+  CategoryResponseSchema,
+  CreateCategoryResponseSchema,
+} from '@/schemas/category';
 
 import { mockFinancialCategories } from '../mocks/data';
 import { DATA_MODE } from './api/config';
@@ -30,21 +34,22 @@ function safeParse<T>(
   return result.data!;
 }
 
-/** Lista categorias com filtro e paginação */
+/** Lista categorias com filtro. A API retorna um array puro (sem paginação). */
 export async function listCategories(filter?: CategoryFilter, nestId?: string): Promise<CategoryListResponse> {
   if (DATA_MODE === 'mock') {
     const items = filter?.types?.length
       ? mockCategoriesStore.filter(c => filter.types!.includes(c.type))
       : mockCategoriesStore;
-    return new Promise(resolve =>
-      setTimeout(() => resolve({ items, page: 1, pageSize: items.length, totalCount: items.length }), 100),
-    );
+    return new Promise(resolve => setTimeout(() => resolve(items), 100));
   }
   const raw = await httpClient.post<unknown>(ENDPOINTS.categories.list, filter ?? {}, { nestId });
   return safeParse(CategoryListResponseSchema, raw, 'listCategories');
 }
 
-/** Cria uma nova categoria */
+/**
+ * Cria uma nova categoria. A API retorna apenas o UUID da categoria criada,
+ * então o objeto completo é montado localmente a partir do payload enviado.
+ */
 export async function createCategory(payload: CreateCategoryRequest, nestId?: string): Promise<CategoryResponse> {
   if (DATA_MODE === 'mock') {
     const created: CategoryResponse = {
@@ -58,7 +63,14 @@ export async function createCategory(payload: CreateCategoryRequest, nestId?: st
     return new Promise(resolve => setTimeout(() => resolve(created), 100));
   }
   const raw = await httpClient.post<unknown>(ENDPOINTS.categories.create, payload, { nestId });
-  return safeParse(CategoryResponseSchema, raw, 'createCategory');
+  const categoryId = safeParse(CreateCategoryResponseSchema, raw, 'createCategory');
+  return {
+    categoryId,
+    nestId: nestId ?? '',
+    name: payload.name,
+    description: payload.description ?? undefined,
+    type: payload.type,
+  };
 }
 
 /** Busca uma categoria pelo ID */

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { ApiPaymentMethodSchema, FinancialSourceTypeSchema, ModulesSchema,TransactionTypeSchema } from './enums';
-import { DateSchema, DateTimeSchema, MoneyRequestSchema, MoneySchema, PaginatedResponseSchema, UuidSchema } from './shared';
+import { DateSchema, DateTimeSchema, MoneyRequestSchema, MoneySchema, UuidSchema } from './shared';
 
 // ── Requests ──────────────────────────────────────────────────────────────────
 
@@ -127,7 +127,8 @@ export const FinancialTransactionResponseSchema = z.object({
 });
 export type FinancialTransactionResponse = z.infer<typeof FinancialTransactionResponseSchema>;
 
-export const FinancialTransactionListResponseSchema = PaginatedResponseSchema(FinancialTransactionResponseSchema);
+// A API retorna um array puro de transações (sem paginação) em /api/financial-transactions/list.
+export const FinancialTransactionListResponseSchema = z.array(FinancialTransactionResponseSchema);
 export type FinancialTransactionListResponse = z.infer<typeof FinancialTransactionListResponseSchema>;
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────

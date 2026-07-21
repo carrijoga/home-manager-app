@@ -6,7 +6,7 @@
 
 import type { BankAccountResponse } from '@/schemas/bank-account';
 import type { CategoryResponse } from '@/schemas/category';
-import type { CreditCardInvoice, CreditCardResponse } from '@/schemas/credit-card';
+import type { PaymentCardInvoice, PaymentCardResponse } from '@/schemas/payment-card';
 import type {
   FinancialTransactionPaymentResponse,
   FinancialTransactionResponse,
@@ -694,9 +694,10 @@ export const mockGoals = [
 
 // ── Cartões de crédito ───────────────────────────────────────────────────────
 
-export const mockCreditCards: CreditCardResponse[] = [
+export const mockPaymentCards: PaymentCardResponse[] = [
   {
-    creditCardId: 'card-mock-0001',
+    paymentCardId: 'card-mock-0001',
+    type: 0, // Credit
     name: 'Nubank',
     creditLimit: 5000,
     dueDay: 10,
@@ -704,26 +705,40 @@ export const mockCreditCards: CreditCardResponse[] = [
     previousBalance: 0,
     color: '#820ad1',
     isActive: true,
-    bankAccountId: null,
+    bankAccountId: '11111111-1111-1111-1111-111111111111',
   },
   {
-    creditCardId: 'card-mock-0002',
-    name: 'Inter',
-    creditLimit: 2000,
-    dueDay: 15,
-    closingDay: 8,
-    previousBalance: 120,
+    paymentCardId: 'card-mock-0002',
+    type: 1, // Debit
+    name: 'Inter Débito',
+    creditLimit: null,
+    dueDay: null,
+    closingDay: null,
+    previousBalance: null,
     color: '#ff7a00',
+    isActive: true,
+    bankAccountId: '22222222-2222-2222-2222-222222222222',
+  },
+  {
+    paymentCardId: 'card-mock-0003',
+    type: 2, // Prepaid
+    name: 'Cartão Pré-pago',
+    creditLimit: null,
+    dueDay: null,
+    closingDay: null,
+    previousBalance: null,
+    color: '#10b981',
     isActive: true,
     bankAccountId: null,
   },
   {
-    creditCardId: 'card-mock-0003',
-    name: 'Itaú (antigo)',
-    creditLimit: 3000,
-    dueDay: 5,
-    closingDay: 28,
-    previousBalance: 0,
+    paymentCardId: 'card-mock-0004',
+    type: 3, // Other
+    name: 'Vale Refeição',
+    creditLimit: null,
+    dueDay: null,
+    closingDay: null,
+    previousBalance: null,
     color: '#ec7000',
     isActive: false,
     bankAccountId: null,
@@ -743,10 +758,10 @@ export const mockBankAccountLinkedCounts: Record<string, number> = {
   '33333333-3333-3333-3333-333333333333': 0,
 };
 
-// Mock-only: fatura sem back-end. Chave = creditCardId.
-export const mockCreditCardInvoices: Record<string, CreditCardInvoice> = {
+// Mock-only: fatura sem back-end. Chave = paymentCardId. Só cartões Credit têm fatura.
+export const mockPaymentCardInvoices: Record<string, PaymentCardInvoice> = {
   'card-mock-0001': {
-    creditCardId: 'card-mock-0001',
+    paymentCardId: 'card-mock-0001',
     month: '2026-06',
     total: 537.3,
     items: [
@@ -754,21 +769,6 @@ export const mockCreditCardInvoices: Record<string, CreditCardInvoice> = {
       { id: 'inv-2', description: 'Posto Shell', amount: 180.0, date: '2026-06-07', categoryName: 'Transporte', icon: '⛽' },
       { id: 'inv-3', description: 'Netflix', amount: 44.9, date: '2026-06-10', categoryName: 'Lazer', icon: '🎬' },
     ],
-  },
-  'card-mock-0002': {
-    creditCardId: 'card-mock-0002',
-    month: '2026-06',
-    total: 89.9,
-    items: [
-      { id: 'inv-4', description: 'Spotify', amount: 21.9, date: '2026-06-02', categoryName: 'Lazer', icon: '🎧' },
-      { id: 'inv-5', description: 'Farmácia', amount: 68.0, date: '2026-06-09', categoryName: 'Saúde', icon: '💊' },
-    ],
-  },
-  'card-mock-0003': {
-    creditCardId: 'card-mock-0003',
-    month: '2026-06',
-    total: 0,
-    items: [],
   },
 };
 

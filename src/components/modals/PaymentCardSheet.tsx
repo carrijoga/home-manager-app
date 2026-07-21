@@ -81,8 +81,12 @@ export function PaymentCardSheet({
     (!bankRequired || bankAccountId.length > 0) &&
     (!isCredit || (Number(limit) > 0 && (day(dueDay) || day(closingDay))));
 
-  // Na edição, o único campo sempre obrigatório é o nome; limite (se Credit) > 0
-  const editValid = name.trim().length > 0 && (!isCredit || Number(limit) > 0);
+  // Na edição, o nome é sempre obrigatório; se Credit, limite > 0 e ao menos
+  // um dos dias (vencimento/fechamento) válido — espelha a regra da criação,
+  // senão o update-credit-settings enviaria ambos os dias null e tomaria 400.
+  const editValid =
+    name.trim().length > 0 &&
+    (!isCredit || (Number(limit) > 0 && (day(dueDay) || day(closingDay))));
   const isValid = isEdit ? editValid : createValid;
 
   const handleSubmit = async (e: React.FormEvent) => {

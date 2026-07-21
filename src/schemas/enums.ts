@@ -153,3 +153,20 @@ export const CATEGORY_LABELS: Record<number, string> = {
   3: 'Finanças',
   4: 'Outros',
 };
+
+// Tipo de cartão de pagamento: 0 = Crédito, 1 = Débito, 2 = Pré-pago, 3 = Outro
+export const CardType = {
+  Credit: 0,
+  Debit: 1,
+  Prepaid: 2,
+  Other: 3,
+} as const;
+export type CardType = (typeof CardType)[keyof typeof CardType];
+export const CardTypeSchema = z.nativeEnum(CardType);
+
+export const CARD_TYPE_LABELS: Record<CardType, string> = {
+  0: 'Crédito',
+  1: 'Débito',
+  2: 'Pré-pago',
+  3: 'Outro',
+};

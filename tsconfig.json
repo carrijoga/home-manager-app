@@ -51,7 +51,9 @@
   },
   "include": [
     "src",
-    "src/**/*.d.ts"
+    "src/**/*.d.ts",
+    ".storybook/**/*.ts",
+    ".storybook/**/*.tsx"
   ],
   "references": [
     {

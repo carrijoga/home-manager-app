@@ -50,3 +50,6 @@ migrations/
 
 v1.json
 api.json
+
+*storybook.log
+storybook-static

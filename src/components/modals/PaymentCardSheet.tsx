@@ -6,8 +6,14 @@ import {
   Button,
   Input,
   Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   Sheet,
   SheetContent,
+  SheetTitle,
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -146,9 +152,9 @@ export function PaymentCardSheet({
         {isMobile && <div className="w-9 h-1 rounded-full bg-border mx-auto mb-4" aria-hidden />}
 
         <form onSubmit={(e) => { void handleSubmit(e).catch(() => {}); }} className="space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">
+          <SheetTitle className="text-lg font-semibold text-foreground">
             {isEdit ? 'Editar cartão' : 'Novo cartão'}
-          </h2>
+          </SheetTitle>
 
           <div
             className="h-20 rounded-2xl flex items-end p-3 text-white"
@@ -160,52 +166,65 @@ export function PaymentCardSheet({
           {/* Tipo de cartão — só na criação (o tipo é imutável após criado) */}
           {!isEdit && (
             <div className="space-y-1.5">
-              <Label htmlFor="pc-type">Tipo de cartão</Label>
-              <select
-                id="pc-type"
-                value={cardType}
-                onChange={(e) => setCardType(Number(e.target.value) as CardType)}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              <Label
+                htmlFor="pc-type"
+                className="text-xs text-muted-foreground uppercase tracking-wide"
               >
-                {CARD_TYPE_OPTIONS.map((t) => (
-                  <option key={t} value={t}>{CARD_TYPE_LABELS[t]}</option>
-                ))}
-              </select>
+                Tipo de cartão
+              </Label>
+              <Select
+                value={String(cardType)}
+                onValueChange={(v) => setCardType(Number(v) as CardType)}
+              >
+                <SelectTrigger id="pc-type" className="bg-muted/30 border-border/40">
+                  <SelectValue placeholder="Selecionar…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {CARD_TYPE_OPTIONS.map((t) => (
+                    <SelectItem key={t} value={String(t)}>{CARD_TYPE_LABELS[t]}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
 
           <div className="space-y-1.5">
-            <Label htmlFor="pc-name">Nome</Label>
-            <Input id="pc-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Nubank" />
+            <Label htmlFor="pc-name" className="text-xs text-muted-foreground uppercase tracking-wide">Nome</Label>
+            <Input id="pc-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Nubank"
+              className="bg-muted/30 border-border/40" />
           </div>
 
           {/* Config. de crédito — só p/ Credit (criação e edição) */}
           {isCredit && (
             <>
               <div className="space-y-1.5">
-                <Label htmlFor="pc-limit">Limite (R$)</Label>
+                <Label htmlFor="pc-limit" className="text-xs text-muted-foreground uppercase tracking-wide">Limite (R$)</Label>
                 <Input id="pc-limit" type="number" min="0" step="0.01" value={limit}
-                  onChange={(e) => setLimit(e.target.value)} placeholder="5000" />
+                  onChange={(e) => setLimit(e.target.value)} placeholder="5000"
+                  className="bg-muted/30 border-border/40" />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="pc-due">Dia de vencimento</Label>
+                  <Label htmlFor="pc-due" className="text-xs text-muted-foreground uppercase tracking-wide">Dia de vencimento</Label>
                   <Input id="pc-due" type="number" min="1" max="28" value={dueDay}
-                    onChange={(e) => setDueDay(e.target.value)} />
+                    onChange={(e) => setDueDay(e.target.value)}
+                    className="bg-muted/30 border-border/40" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="pc-closing">Dia de fechamento</Label>
+                  <Label htmlFor="pc-closing" className="text-xs text-muted-foreground uppercase tracking-wide">Dia de fechamento</Label>
                   <Input id="pc-closing" type="number" min="1" max="28" value={closingDay}
-                    onChange={(e) => setClosingDay(e.target.value)} />
+                    onChange={(e) => setClosingDay(e.target.value)}
+                    className="bg-muted/30 border-border/40" />
                 </div>
               </div>
 
               {!isEdit && (
                 <div className="space-y-1.5">
-                  <Label htmlFor="pc-prev">Saldo anterior (R$)</Label>
+                  <Label htmlFor="pc-prev" className="text-xs text-muted-foreground uppercase tracking-wide">Saldo anterior (R$)</Label>
                   <Input id="pc-prev" type="number" min="0" step="0.01" value={previousBalance}
-                    onChange={(e) => setPreviousBalance(e.target.value)} />
+                    onChange={(e) => setPreviousBalance(e.target.value)}
+                    className="bg-muted/30 border-border/40" />
                 </div>
               )}
             </>
@@ -214,7 +233,10 @@ export function PaymentCardSheet({
           {/* Conta vinculada — Credit/Debit/Prepaid (não Other), só na criação */}
           {!isEdit && showBank && (
             <div className="space-y-1.5">
-              <Label htmlFor="pc-bank" className="flex items-center gap-1.5">
+              <Label
+                htmlFor="pc-bank"
+                className="flex items-center gap-1.5 text-xs text-muted-foreground uppercase tracking-wide"
+              >
                 Conta vinculada{bankRequired ? '' : ' (opcional)'}
                 <TooltipProvider>
                   <Tooltip>
@@ -238,17 +260,18 @@ export function PaymentCardSheet({
                 </TooltipProvider>
               </Label>
               {bankAccounts.length > 0 ? (
-                <select
-                  id="pc-bank"
-                  value={bankAccountId}
-                  onChange={(e) => setBankAccountId(e.target.value)}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                >
-                  <option value="">{bankRequired ? 'Selecione uma conta' : 'Nenhuma'}</option>
-                  {bankAccounts.map((acc) => (
-                    <option key={acc.bankAccountId} value={acc.bankAccountId}>{acc.name}</option>
-                  ))}
-                </select>
+                <Select value={bankAccountId} onValueChange={setBankAccountId}>
+                  <SelectTrigger id="pc-bank" className="bg-muted/30 border-border/40">
+                    <SelectValue placeholder="Selecionar…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {bankAccounts.map((acc) => (
+                      <SelectItem key={acc.bankAccountId} value={acc.bankAccountId}>
+                        {acc.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               ) : (
                 <p className="text-xs text-muted-foreground rounded-md border border-dashed border-border px-3 py-2">
                   {bankRequired
@@ -260,7 +283,7 @@ export function PaymentCardSheet({
           )}
 
           <div className="space-y-1.5">
-            <Label htmlFor="pc-color">Cor</Label>
+            <Label htmlFor="pc-color" className="text-xs text-muted-foreground uppercase tracking-wide">Cor</Label>
             <div className="flex items-center gap-3">
               <input id="pc-color" type="color" value={color}
                 onChange={(e) => setColor(e.target.value)}

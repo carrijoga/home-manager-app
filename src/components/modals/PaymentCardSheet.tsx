@@ -1,7 +1,18 @@
+import { HelpCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { cardGradient } from '@/components/modules/financial/payment-card/gradient';
-import { Button, Input, Label, Sheet, SheetContent } from '@/components/ui';
+import {
+  Button,
+  Input,
+  Label,
+  Sheet,
+  SheetContent,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui';
 import { useIsMobile } from '@/hooks/use-mobile';
 import type { BankAccountResponse } from '@/schemas/bank-account';
 import { CARD_TYPE_LABELS, CardType } from '@/schemas/enums';
@@ -203,8 +214,28 @@ export function PaymentCardSheet({
           {/* Conta vinculada — Credit/Debit/Prepaid (não Other), só na criação */}
           {!isEdit && showBank && (
             <div className="space-y-1.5">
-              <Label htmlFor="pc-bank">
+              <Label htmlFor="pc-bank" className="flex items-center gap-1.5">
                 Conta vinculada{bankRequired ? '' : ' (opcional)'}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        className="text-muted-foreground transition-colors hover:text-foreground"
+                        aria-label="Por que informar uma conta?"
+                      >
+                        <HelpCircle size={14} />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="max-w-[220px]">
+                      <p>
+                        {bankRequired
+                          ? 'Cartões de crédito e débito são vinculados a uma conta bancária para acompanhar limites, faturas e lançamentos.'
+                          : 'Vincule uma conta para acompanhar os lançamentos deste cartão junto ao saldo da conta.'}
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </Label>
               {bankAccounts.length > 0 ? (
                 <select

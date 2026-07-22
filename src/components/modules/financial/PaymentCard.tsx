@@ -15,6 +15,7 @@ import type {
   UpdateCreditPaymentCardSettingsRequest,
   UpdatePaymentCardDetailsRequest,
 } from '@/schemas/payment-card';
+import * as bankAccountService from '@/services/bankAccountService';
 import * as paymentCardService from '@/services/paymentCardService';
 
 import { PaymentCardDetails } from './payment-card/PaymentCardDetails';
@@ -33,7 +34,7 @@ export function PaymentCard() {
 
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingCard, setEditingCard] = useState<PaymentCardResponse | null>(null);
-  const [bankAccounts] = useState<BankAccountResponse[]>([]);
+  const [bankAccounts, setBankAccounts] = useState<BankAccountResponse[]>([]);
 
   const nestId = activeNestId ?? undefined;
 
@@ -46,8 +47,12 @@ export function PaymentCard() {
   const loadCards = useCallback(async () => {
     setLoading(true);
     try {
-      const list = await paymentCardService.listPaymentCards(nestId);
+      const [list, accounts] = await Promise.all([
+        paymentCardService.listPaymentCards(nestId),
+        bankAccountService.listBankAccounts(nestId),
+      ]);
       setCards(list);
+      setBankAccounts(accounts);
       setSelectedId((prev) => {
         if (prev && list.some((c) => c.paymentCardId === prev)) return prev;
         return list.find((c) => c.isActive)?.paymentCardId ?? list[0]?.paymentCardId ?? null;

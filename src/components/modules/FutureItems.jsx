@@ -1,6 +1,13 @@
 import { Trash2 } from 'lucide-react';
 import { memo, useEffect, useState } from 'react';
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui';
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
 import * as futureItemsService from '@/services/futureItemsService';
 import { PriorityLevels } from '@/types';
@@ -89,15 +96,19 @@ const FutureItems = memo(() => {
             onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
           />
           <div className="grid grid-cols-2 gap-3">
-            <select
+            <Select
               value={newItem.priority}
-              onChange={(e) => setNewItem({ ...newItem, priority: e.target.value })}
-              className="p-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring bg-background text-foreground"
+              onValueChange={(v) => setNewItem({ ...newItem, priority: v })}
             >
-              <option value={PriorityLevels.HIGH}>Alta prioridade</option>
-              <option value={PriorityLevels.MEDIUM}>Média prioridade</option>
-              <option value={PriorityLevels.LOW}>Baixa prioridade</option>
-            </select>
+              <SelectTrigger id="future-priority" className="bg-muted/30 border-border/40">
+                <SelectValue placeholder="Selecionar…" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={PriorityLevels.HIGH}>Alta prioridade</SelectItem>
+                <SelectItem value={PriorityLevels.MEDIUM}>Média prioridade</SelectItem>
+                <SelectItem value={PriorityLevels.LOW}>Baixa prioridade</SelectItem>
+              </SelectContent>
+            </Select>
             <Input
               placeholder="Custo estimado..."
               value={newItem.estimatedCost}

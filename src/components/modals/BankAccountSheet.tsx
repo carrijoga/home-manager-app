@@ -1,7 +1,19 @@
 import { useEffect, useState } from 'react';
 
 import { ACCOUNT_TYPE_OPTIONS } from '@/components/modules/financial/account/accountType';
-import { Button, Input, Label, Sheet, SheetContent } from '@/components/ui';
+import {
+  Button,
+  Input,
+  Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Sheet,
+  SheetContent,
+  SheetTitle,
+} from '@/components/ui';
 import { useIsMobile } from '@/hooks/use-mobile';
 import type {
   BankAccountResponse,
@@ -85,41 +97,46 @@ export function BankAccountSheet({ open, onClose, account, onCreate, onUpdate }:
         {isMobile && <div className="w-9 h-1 rounded-full bg-border mx-auto mb-4" aria-hidden />}
 
         <form onSubmit={(e) => { void handleSubmit(e).catch(() => {}); }} className="space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">
+          <SheetTitle className="text-lg font-semibold text-foreground">
             {isEdit ? 'Editar conta' : 'Nova conta'}
-          </h2>
+          </SheetTitle>
 
           <div className="space-y-1.5">
-            <Label htmlFor="acc-name">Nome</Label>
-            <Input id="acc-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Conta Corrente" />
+            <Label htmlFor="acc-name" className="text-xs text-muted-foreground uppercase tracking-wide">Nome</Label>
+            <Input id="acc-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Conta Corrente"
+              className="bg-muted/30 border-border/40" />
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="acc-type">Tipo</Label>
-            <select
-              id="acc-type"
-              value={type}
-              onChange={(e) => setType(Number(e.target.value))}
+            <Label htmlFor="acc-type" className="text-xs text-muted-foreground uppercase tracking-wide">Tipo</Label>
+            <Select
+              value={String(type)}
+              onValueChange={(v) => setType(Number(v))}
               disabled={isEdit}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm disabled:opacity-50"
             >
-              {ACCOUNT_TYPE_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
+              <SelectTrigger id="acc-type" className="bg-muted/30 border-border/40">
+                <SelectValue placeholder="Selecionar…" />
+              </SelectTrigger>
+              <SelectContent>
+                {ACCOUNT_TYPE_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={String(o.value)}>{o.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             {isEdit && <p className="text-xs text-muted-foreground">O tipo não pode ser alterado.</p>}
           </div>
 
           {!isEdit && (
             <div className="space-y-1.5">
-              <Label htmlFor="acc-balance">Saldo inicial (R$)</Label>
+              <Label htmlFor="acc-balance" className="text-xs text-muted-foreground uppercase tracking-wide">Saldo inicial (R$)</Label>
               <Input id="acc-balance" type="number" step="0.01" value={balance}
-                onChange={(e) => setBalance(e.target.value)} placeholder="0,00" />
+                onChange={(e) => setBalance(e.target.value)} placeholder="0,00"
+                className="bg-muted/30 border-border/40" />
             </div>
           )}
 
           <div className="space-y-1.5">
-            <Label htmlFor="acc-color">Cor</Label>
+            <Label htmlFor="acc-color" className="text-xs text-muted-foreground uppercase tracking-wide">Cor</Label>
             <div className="flex items-center gap-3">
               <input id="acc-color" type="color" value={color}
                 onChange={(e) => setColor(e.target.value)}

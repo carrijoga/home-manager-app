@@ -22,6 +22,21 @@ const config: Config = {
 	darkMode: 'class',
 	theme: {
     	extend: {
+    		/**
+    		 * Valores de opacidade fora da escala padrão do Tailwind
+    		 * (que vai de 5 em 5, e pula de 10 para 20).
+    		 *
+    		 * Sem declará-los aqui, utilitárias como `bg-primary/8` não
+    		 * geram CSS nenhum e o elemento fica sem fundo — o mesmo
+    		 * sintoma que `alphaToken` corrigiu para os valores da escala.
+    		 * Usados pelo item ativo da sidebar e pelo hover da lista de
+    		 * compras.
+    		 */
+    		opacity: {
+    			'8':  '0.08',
+    			'12': '0.12',
+    			'15': '0.15',
+    		},
     		animation: {
     			'fade-in': 'fadeIn 0.3s var(--ease-out-quart)',
     			'slide-in': 'slideInRight 0.4s var(--ease-out-quart)',

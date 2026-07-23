@@ -1,6 +1,9 @@
 import type { Decorator, Preview } from '@storybook/react-vite';
 import { useEffect } from 'react';
+import { MemoryRouter } from 'react-router-dom';
 
+import { Toaster } from '@/components/ui/sonner';
+import { AppProvider } from '@/contexts/AppContext';
 import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
 
 import '../src/index.css';
@@ -29,12 +32,43 @@ const withTheme: Decorator = (Story, context) => (
       <div className="bg-background text-foreground min-h-screen p-6">
         <Story />
       </div>
+      <Toaster />
     </ThemeSync>
   </ThemeProvider>
 );
 
+/**
+ * Providers de aplicação, ligados por story via `parameters`.
+ *
+ * `AppProvider` dispara chamadas de serviço ao montar, então ele fica
+ * opt-in: stories de componentes puros não devem pagar esse custo. Ative
+ * com `parameters: { app: true }` — ou `{ router: true }` quando só o
+ * React Router for necessário.
+ *
+ * O `AppProvider` só funciona aqui porque os serviços caem no modo mock
+ * (`VITE_DATA_MODE`, definido em main.ts), servindo dados de src/mocks.
+ */
+const withAppProviders: Decorator = (Story, context) => {
+  const needsApp = context.parameters.app === true;
+  const needsRouter = needsApp || context.parameters.router === true;
+
+  let tree = <Story />;
+
+  if (needsApp) {
+    tree = <AppProvider>{tree}</AppProvider>;
+  }
+
+  if (needsRouter) {
+    tree = <MemoryRouter>{tree}</MemoryRouter>;
+  }
+
+  return tree;
+};
+
 const preview: Preview = {
-  decorators: [withTheme],
+  // Aplicados de fora para dentro: o tema (e o Toaster) envolve os
+  // providers de aplicação.
+  decorators: [withTheme, withAppProviders],
   globalTypes: {
     theme: {
       description: 'Tema da aplicação',

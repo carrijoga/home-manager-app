@@ -45,8 +45,8 @@ interface TransactionRowProps {
 
 function StatusBadge({ status, paidRatio }: { status: TransactionStatus; paidRatio: number }) {
   const styles: Record<TransactionStatus, { label: string; className: string }> = {
-    received: { label: 'RECEBIDO', className: 'bg-[var(--chart-2)]/15 text-[var(--chart-2)]' },
-    paid: { label: 'PAGA', className: 'bg-[var(--chart-2)]/15 text-[var(--chart-2)]' },
+    received: { label: 'RECEBIDO', className: 'bg-chart-2/15 text-chart-2' },
+    paid: { label: 'PAGA', className: 'bg-chart-2/15 text-chart-2' },
     pending: { label: 'PENDENTE', className: 'bg-muted text-muted-foreground' },
     partial: {
       label: `PARCIAL · ${Math.round(paidRatio * 100)}%`,
@@ -177,7 +177,7 @@ export function TransactionRow({
                   }}
                   onMouseEnter={() => payIconRef.current?.startAnimation()}
                   onMouseLeave={() => payIconRef.current?.stopAnimation()}
-                  className="font-ui bg-[var(--chart-2)]/10 border-[var(--chart-2)]/30 hover:bg-[var(--chart-2)]/20 duration-[length:var(--dur-base)] flex items-center gap-1.5 self-end rounded-lg border px-3 py-1.5 text-xs font-bold text-[var(--chart-2)] transition-colors"
+                  className="font-ui bg-chart-2/10 border-chart-2/30 hover:bg-chart-2/20 duration-[length:var(--dur-base)] flex items-center gap-1.5 self-end rounded-lg border px-3 py-1.5 text-xs font-bold text-chart-2 transition-colors"
                 >
                   <CheckIcon ref={payIconRef} size={14} />
                   Registrar Pagamento

@@ -502,8 +502,8 @@ const DashboardTasksSection = memo(({
 
         {pendingTasks.length === 0 ? (
           <div className="flex flex-col items-center py-8 gap-2">
-            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[var(--chart-2)]/10">
-              <CheckCircle2 size={22} className="text-[var(--chart-2)]" />
+            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-chart-2/10">
+              <CheckCircle2 size={22} className="text-chart-2" />
             </div>
             <p className="text-sm text-muted-foreground/80">Nenhuma tarefa pendente!</p>
           </div>

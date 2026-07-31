@@ -1,10 +1,11 @@
-import { Wallet } from 'lucide-react';
+import { Plus, Wallet } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import EmptyState from '@/components/common/EmptyState';
 import { BankAccountSheet } from '@/components/modals/BankAccountSheet';
 import { DeleteAccountDialog } from '@/components/modals/DeleteAccountDialog';
 import { AccountSkeleton } from '@/components/skeletons/AccountSkeleton';
+import { Button } from '@/components/ui';
 import { useApp } from '@/contexts/AppContext';
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
 import type {
@@ -99,26 +100,28 @@ export function FinancialAccount() {
   if (loading) return <AccountSkeleton />;
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-foreground">Contas</h1>
-        <p className="text-sm text-muted-foreground">Gerencie suas contas bancárias</p>
+    <div className="flex flex-col gap-6 max-w-full overflow-x-hidden">
+      <div className="flex items-center gap-3">
+        <Wallet size={18} className="text-foreground" strokeWidth={1.5} aria-hidden="true" />
+        <div>
+          <h1 className="font-editorial font-bold text-foreground text-2xl">Contas</h1>
+          <p className="font-ui text-sm text-muted-foreground">Gerencie suas contas bancárias</p>
+        </div>
       </div>
 
       {accounts.length === 0 ? (
-        <EmptyState
-          icon={Wallet}
-          title="Nenhuma conta ainda"
-          description="Adicione uma conta bancária para acompanhar seus saldos."
-          action={
-            <button
-              onClick={openCreate}
-              className="rounded-full bg-primary text-primary-foreground px-4 py-2 text-sm font-semibold"
-            >
-              Adicionar conta
-            </button>
-          }
-        />
+        <div className="p-6 rounded-3xl bg-card border border-border">
+          <EmptyState
+            icon={Wallet}
+            title="Nenhuma conta ainda"
+            description="Adicione uma conta bancária para acompanhar seus saldos."
+            action={
+              <Button onClick={openCreate} size="sm" className="gap-2 font-semibold">
+                <Plus size={16} strokeWidth={1.5} /> Adicionar conta
+              </Button>
+            }
+          />
+        </div>
       ) : (
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="lg:w-[240px] shrink-0">

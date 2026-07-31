@@ -71,9 +71,10 @@ export const ENDPOINTS = {
     create: '/api/bank-account',
     getById: (id: string) => `/api/bank-account/${id}`,
     update: (id: string) => `/api/bank-account/${id}`,
-    delete: (id: string, confirmDeletion: boolean) =>
-      `/api/bank-account/${id}?confirmDeletion=${confirmDeletion}`,
+    delete: (id: string) => `/api/bank-account/${id}`,
     canDelete: (id: string) => `/api/bank-account/${id}/can-delete`,
+    inactivate: (id: string) => `/api/bank-account/${id}/inactivate`,
+    activate: (id: string) => `/api/bank-account/${id}/activate`,
   },
 
   // Cartões de pagamento
@@ -85,6 +86,7 @@ export const ENDPOINTS = {
     updateCreditSettings: (id: string) => `/api/payment-cards/update-credit-settings/${id}`,
     inactivate: (id: string) => `/api/payment-cards/inactivate/${id}`,
     activate: (id: string) => `/api/payment-cards/activate/${id}`,
+    delete: (id: string) => `/api/payment-cards/delete/${id}`,
     // Fatura/lançamentos: SEM contrato de API (mock-only), igual future-items.
   },
 

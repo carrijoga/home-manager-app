@@ -16,6 +16,13 @@ export interface DeleteAccountDialogProps {
 export function DeleteAccountDialog({ open, account, onClose, onConfirm }: DeleteAccountDialogProps) {
   const [submitting, setSubmitting] = useState(false);
 
+  // Este diálogo só é aberto quando canDelete=true (o botão Excluir já vem
+  // desabilitado caso contrário) — logo, pela regra de negócio (API-45),
+  // qualquer cartão vinculado aqui é necessariamente "vazio" (sem lançamento),
+  // senão a exclusão da conta estaria bloqueada. Não é preciso um campo novo
+  // da API para essa contagem.
+  const emptyCardsCount = account?.paymentCards.length ?? 0;
+
   const handleConfirm = async () => {
     if (submitting) return;
     setSubmitting(true);
@@ -33,7 +40,9 @@ export function DeleteAccountDialog({ open, account, onClose, onConfirm }: Delet
         <AlertDialogHeader>
           <AlertDialogTitle>Excluir conta</AlertDialogTitle>
           <AlertDialogDescription>
-            Tem certeza que deseja excluir &quot;{account?.name ?? ''}&quot;? Esta ação não pode ser desfeita.
+            {emptyCardsCount > 0
+              ? `Tem certeza que deseja excluir "${account?.name ?? ''}"? ${emptyCardsCount} cartão(ões) vazio(s) vinculado(s) também será(ão) excluído(s). Esta ação não pode ser desfeita.`
+              : `Tem certeza que deseja excluir "${account?.name ?? ''}"? Esta ação não pode ser desfeita.`}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

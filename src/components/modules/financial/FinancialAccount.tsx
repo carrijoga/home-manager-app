@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import EmptyState from '@/components/common/EmptyState';
 import { BankAccountSheet } from '@/components/modals/BankAccountSheet';
 import { DeleteAccountDialog } from '@/components/modals/DeleteAccountDialog';
+import { InactivateAccountDialog } from '@/components/modals/InactivateAccountDialog';
 import { AccountSkeleton } from '@/components/skeletons/AccountSkeleton';
 import { Button } from '@/components/ui';
 import { useApp } from '@/contexts/AppContext';
@@ -25,12 +26,16 @@ export function FinancialAccount() {
   const [accounts, setAccounts] = useState<BankAccountResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [canDeleteSelected, setCanDeleteSelected] = useState(false);
 
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<BankAccountResponse | null>(null);
 
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState<BankAccountResponse | null>(null);
+
+  const [inactivateOpen, setInactivateOpen] = useState(false);
+  const [inactivatingAccount, setInactivatingAccount] = useState<BankAccountResponse | null>(null);
 
   const nestId = activeNestId ?? undefined;
 
@@ -59,6 +64,15 @@ export function FinancialAccount() {
 
   const selectedAccount = accounts.find((a) => a.bankAccountId === selectedId) ?? null;
 
+  useEffect(() => {
+    if (!selectedAccount) { setCanDeleteSelected(false); return; }
+    let active = true;
+    bankAccountService.canDeleteBankAccount(selectedAccount.bankAccountId, nestId)
+      .then((res) => { if (active) setCanDeleteSelected(res.canDelete); })
+      .catch(() => { if (active) setCanDeleteSelected(false); });
+    return () => { active = false; };
+  }, [selectedAccount, nestId]);
+
   const handleCreate = async (payload: CreateBankAccountRequest) => {
     try {
       await bankAccountService.createBankAccount(payload, nestId);
@@ -81,10 +95,10 @@ export function FinancialAccount() {
     }
   };
 
-  const handleConfirmDelete = async (confirmDeletion: boolean) => {
+  const handleConfirmDelete = async () => {
     if (!deletingAccount) return;
     try {
-      await bankAccountService.deleteBankAccount(deletingAccount.bankAccountId, confirmDeletion, nestId);
+      await bankAccountService.deleteBankAccount(deletingAccount.bankAccountId, nestId);
       showSuccess('Conta excluída.');
       await loadAccounts();
     } catch {
@@ -93,9 +107,29 @@ export function FinancialAccount() {
     }
   };
 
+  const handleConfirmInactivate = async () => {
+    if (!inactivatingAccount) return;
+    try {
+      const result = await bankAccountService.inactivateBankAccount(inactivatingAccount.bankAccountId, nestId);
+      showSuccess(
+        result.affectedPaymentCardsCount > 0
+          ? `Conta inativada. ${result.affectedPaymentCardsCount} cartão(ões) também foi(ram) inativado(s).`
+          : 'Conta inativada.',
+      );
+      await loadAccounts();
+    } catch {
+      showError('Não foi possível inativar a conta.');
+      throw new Error('inactivate failed');
+    }
+  };
+
   const openCreate = () => { setEditingAccount(null); setSheetOpen(true); };
   const openEdit = (account: BankAccountResponse) => { setEditingAccount(account); setSheetOpen(true); };
   const openDelete = (account: BankAccountResponse) => { setDeletingAccount(account); setDeleteOpen(true); };
+  const openInactivate = (account: BankAccountResponse) => {
+    setInactivatingAccount(account);
+    setInactivateOpen(true);
+  };
 
   if (loading) return <AccountSkeleton />;
 
@@ -134,7 +168,13 @@ export function FinancialAccount() {
           </div>
           <div className="flex-1">
             {selectedAccount && (
-              <AccountDetails account={selectedAccount} onEdit={openEdit} onDelete={openDelete} />
+              <AccountDetails
+                account={selectedAccount}
+                canDelete={canDeleteSelected}
+                onEdit={openEdit}
+                onDelete={openDelete}
+                onInactivate={openInactivate}
+              />
             )}
           </div>
         </div>
@@ -151,9 +191,15 @@ export function FinancialAccount() {
       <DeleteAccountDialog
         open={deleteOpen}
         account={deletingAccount}
-        nestId={nestId}
         onClose={() => setDeleteOpen(false)}
         onConfirm={handleConfirmDelete}
+      />
+
+      <InactivateAccountDialog
+        open={inactivateOpen}
+        account={inactivatingAccount}
+        onClose={() => setInactivateOpen(false)}
+        onConfirm={handleConfirmInactivate}
       />
     </div>
   );

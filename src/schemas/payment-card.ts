@@ -51,6 +51,12 @@ export const PaymentCardResponseSchema = z.object({
 });
 export type PaymentCardResponse = z.infer<typeof PaymentCardResponseSchema>;
 
+export const CanDeletePaymentCardResponseSchema = z.object({
+  canDelete: z.boolean(),
+  linkedTransactionsCount: z.number().int(),
+});
+export type CanDeletePaymentCardResponse = z.infer<typeof CanDeletePaymentCardResponseSchema>;
+
 // ── Mock-only (contrato INVENTADO — NÃO está em docs/api.json) ───────────────
 // Fatura/lançamentos ainda não têm back-end. Quando existir, mover para api.json.
 

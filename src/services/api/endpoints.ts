@@ -86,6 +86,7 @@ export const ENDPOINTS = {
     updateCreditSettings: (id: string) => `/api/payment-cards/update-credit-settings/${id}`,
     inactivate: (id: string) => `/api/payment-cards/inactivate/${id}`,
     activate: (id: string) => `/api/payment-cards/activate/${id}`,
+    canDelete: (id: string) => `/api/payment-cards/can-delete/${id}`,
     delete: (id: string) => `/api/payment-cards/delete/${id}`,
     // Fatura/lançamentos: SEM contrato de API (mock-only), igual future-items.
   },

@@ -10,6 +10,7 @@ interface PaymentCardListProps {
   cards: PaymentCardResponse[];
   selectedId: string | null;
   usedByCard: Record<string, number>;
+  canDeleteMap: Record<string, boolean>;
   onSelect: (id: string) => void;
   onEdit: (card: PaymentCardResponse) => void;
   onToggleActive: (card: PaymentCardResponse) => void;
@@ -18,7 +19,7 @@ interface PaymentCardListProps {
 }
 
 export function PaymentCardList({
-  cards, selectedId, usedByCard, onSelect, onEdit, onToggleActive, onDelete, onAdd,
+  cards, selectedId, usedByCard, canDeleteMap, onSelect, onEdit, onToggleActive, onDelete, onAdd,
 }: PaymentCardListProps) {
   return (
     <div className="flex flex-col gap-3">
@@ -38,6 +39,7 @@ export function PaymentCardList({
               card={card}
               used={usedByCard[card.paymentCardId] ?? Number(card.previousBalance ?? 0)}
               selected={card.paymentCardId === selectedId}
+              canDelete={canDeleteMap[card.paymentCardId] ?? true}
               onSelect={() => onSelect(card.paymentCardId)}
               onEdit={() => onEdit(card)}
               onToggleActive={() => onToggleActive(card)}

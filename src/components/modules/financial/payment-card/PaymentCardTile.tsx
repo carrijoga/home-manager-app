@@ -17,6 +17,7 @@ interface PaymentCardTileProps {
   card: PaymentCardResponse;
   used: number;
   selected: boolean;
+  canDelete: boolean;
   onSelect: () => void;
   onEdit: () => void;
   onToggleActive: () => void;
@@ -24,7 +25,7 @@ interface PaymentCardTileProps {
 }
 
 export function PaymentCardTile({
-  card, used, selected, onSelect, onEdit, onToggleActive, onDelete,
+  card, used, selected, canDelete, onSelect, onEdit, onToggleActive, onDelete,
 }: PaymentCardTileProps) {
   const isCredit = card.type === CardType.Credit;
   const limit = Number(card.creditLimit ?? 0);
@@ -71,7 +72,15 @@ export function PaymentCardTile({
               {card.isActive ? <PowerOff size={14} /> : <Power size={14} />}
               {card.isActive ? 'Inativar' : 'Ativar'}
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={onDelete} className="gap-2 text-destructive focus:text-destructive">
+            <DropdownMenuItem
+              onClick={canDelete ? onDelete : undefined}
+              disabled={!canDelete}
+              title={canDelete ? undefined : 'Este cartão possui lançamentos vinculados. Apenas inativação é permitida.'}
+              className={cn(
+                'gap-2',
+                canDelete ? 'text-destructive focus:text-destructive' : 'text-destructive/50',
+              )}
+            >
               <Trash2 size={14} /> Excluir
             </DropdownMenuItem>
           </DropdownMenuContent>

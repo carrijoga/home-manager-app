@@ -33,6 +33,8 @@ export function PaymentCard() {
   const [invoice, setInvoice] = useState<PaymentCardInvoice | null>(null);
   const [invoiceLoading, setInvoiceLoading] = useState(false);
 
+  const [canDeleteSelected, setCanDeleteSelected] = useState(false);
+
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingCard, setEditingCard] = useState<PaymentCardResponse | null>(null);
   const [bankAccounts, setBankAccounts] = useState<BankAccountResponse[]>([]);
@@ -78,6 +80,15 @@ export function PaymentCard() {
     return () => { active = false; };
   }, [selectedId]);
 
+  useEffect(() => {
+    if (!selectedId) { setCanDeleteSelected(false); return; }
+    let active = true;
+    paymentCardService.canDeletePaymentCard(selectedId, nestId)
+      .then((res) => { if (active) setCanDeleteSelected(res.canDelete); })
+      .catch(() => { if (active) setCanDeleteSelected(false); });
+    return () => { active = false; };
+  }, [selectedId, nestId]);
+
   const usedByCard = useMemo(() => {
     const map: Record<string, number> = {};
     for (const c of cards) {
@@ -89,6 +100,7 @@ export function PaymentCard() {
   }, [cards, selectedId, invoice]);
 
   const selectedCard = cards.find((c) => c.paymentCardId === selectedId) ?? null;
+  const canDeleteMap = selectedId ? { [selectedId]: canDeleteSelected } : {};
 
   const handleCreate = async (payload: CreatePaymentCardRequest) => {
     try {
@@ -187,6 +199,7 @@ export function PaymentCard() {
               cards={cards}
               selectedId={selectedId}
               usedByCard={usedByCard}
+              canDeleteMap={canDeleteMap}
               onSelect={setSelectedId}
               onEdit={openEdit}
               onToggleActive={handleToggleActive}

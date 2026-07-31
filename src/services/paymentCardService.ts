@@ -4,13 +4,14 @@ import {
   mockPaymentCardsWithLinkedTransactions,
 } from '@/mocks/data';
 import type {
+  CanDeletePaymentCardResponse,
   CreatePaymentCardRequest,
   PaymentCardInvoice,
   PaymentCardResponse,
   UpdateCreditPaymentCardSettingsRequest,
   UpdatePaymentCardDetailsRequest,
 } from '@/schemas/payment-card';
-import { PaymentCardResponseSchema } from '@/schemas/payment-card';
+import { CanDeletePaymentCardResponseSchema, PaymentCardResponseSchema } from '@/schemas/payment-card';
 
 import { DATA_MODE } from './api/config';
 import { ENDPOINTS } from './api/endpoints';
@@ -107,6 +108,19 @@ export async function activatePaymentCard(id: string, nestId?: string): Promise<
     return;
   }
   await httpClient.patch<unknown>(ENDPOINTS.paymentCards.activate(id), undefined, nestId);
+}
+
+/** Verifica se o cartão pode ser excluído (e quantas transações estão vinculadas) */
+export async function canDeletePaymentCard(
+  id: string,
+  nestId?: string,
+): Promise<CanDeletePaymentCardResponse> {
+  if (DATA_MODE === 'mock') {
+    const blocked = mockPaymentCardsWithLinkedTransactions.has(id);
+    return delay({ canDelete: !blocked, linkedTransactionsCount: blocked ? 1 : 0 });
+  }
+  const raw = await httpClient.get<unknown>(ENDPOINTS.paymentCards.canDelete(id), nestId);
+  return safeParse(CanDeletePaymentCardResponseSchema, raw, 'canDeletePaymentCard');
 }
 
 /**

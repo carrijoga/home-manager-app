@@ -6,15 +6,19 @@ import {
 } from '@/components/ui';
 import type { BankAccountResponse } from '@/schemas/bank-account';
 
-export interface DeleteAccountDialogProps {
+export interface InactivateAccountDialogProps {
   open: boolean;
   account: BankAccountResponse | null;
   onClose: () => void;
   onConfirm: () => Promise<void>;
 }
 
-export function DeleteAccountDialog({ open, account, onClose, onConfirm }: DeleteAccountDialogProps) {
+export function InactivateAccountDialog({
+  open, account, onClose, onConfirm,
+}: InactivateAccountDialogProps) {
   const [submitting, setSubmitting] = useState(false);
+
+  const linkedCardsCount = account?.paymentCards.length ?? 0;
 
   const handleConfirm = async () => {
     if (submitting) return;
@@ -31,9 +35,11 @@ export function DeleteAccountDialog({ open, account, onClose, onConfirm }: Delet
     <AlertDialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Excluir conta</AlertDialogTitle>
+          <AlertDialogTitle>Inativar conta</AlertDialogTitle>
           <AlertDialogDescription>
-            Tem certeza que deseja excluir &quot;{account?.name ?? ''}&quot;? Esta ação não pode ser desfeita.
+            {linkedCardsCount > 0
+              ? `"${account?.name ?? ''}" será inativada. ${linkedCardsCount} cartão(ões) vinculado(s) também será(ão) inativado(s).`
+              : `Tem certeza que deseja inativar "${account?.name ?? ''}"?`}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -41,9 +47,8 @@ export function DeleteAccountDialog({ open, account, onClose, onConfirm }: Delet
           <AlertDialogAction
             disabled={submitting}
             onClick={(e) => { e.preventDefault(); void handleConfirm(); }}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            {submitting ? 'Excluindo…' : 'Excluir'}
+            {submitting ? 'Inativando…' : 'Inativar'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

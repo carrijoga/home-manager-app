@@ -3,11 +3,13 @@ import type {
   BankAccountResponse,
   CanDeleteBankAccountResponse,
   CreateBankAccountRequest,
+  InactivateBankAccountResponse,
   UpdateBankAccountRequest,
 } from '@/schemas/bank-account';
 import {
   BankAccountResponseSchema,
   CanDeleteBankAccountResponseSchema,
+  InactivateBankAccountResponseSchema,
 } from '@/schemas/bank-account';
 
 import { DATA_MODE } from './api/config';
@@ -87,18 +89,37 @@ export async function canDeleteBankAccount(
 }
 
 /**
- * Exclui uma conta. Se houver transações vinculadas e confirmDeletion=false,
- * o backend bloqueia (BankAccount_HasLinkedTransactions). Com confirmDeletion=true,
- * exclui as transações vinculadas e a conta.
+ * Exclui uma conta. Permitido somente se a conta e nenhum cartão vinculado
+ * tiverem lançamentos. Bloqueado com 400 caso contrário — a UI deve
+ * prevenir isso desabilitando o botão via canDeleteBankAccount antes.
  */
-export async function deleteBankAccount(
-  id: string,
-  confirmDeletion: boolean,
-  nestId?: string,
-): Promise<void> {
+export async function deleteBankAccount(id: string, nestId?: string): Promise<void> {
   if (DATA_MODE === 'mock') {
     await delay(null);
     return;
   }
-  await httpClient.del<unknown>(ENDPOINTS.bankAccounts.delete(id, confirmDeletion), nestId);
+  await httpClient.del<unknown>(ENDPOINTS.bankAccounts.delete(id), nestId);
+}
+
+/** Inativa a conta; cascade automático inativa todos os cartões vinculados. */
+export async function inactivateBankAccount(
+  id: string,
+  nestId?: string,
+): Promise<InactivateBankAccountResponse> {
+  if (DATA_MODE === 'mock') {
+    const account = mockBankAccounts.find((a) => a.bankAccountId === id);
+    const count = account?.paymentCards.length ?? 0;
+    return delay({ affectedPaymentCardsCount: count });
+  }
+  const raw = await httpClient.patch<unknown>(ENDPOINTS.bankAccounts.inactivate(id), undefined, nestId);
+  return safeParse(InactivateBankAccountResponseSchema, raw, 'inactivateBankAccount');
+}
+
+/** Reativa uma conta previamente inativada. */
+export async function activateBankAccount(id: string, nestId?: string): Promise<void> {
+  if (DATA_MODE === 'mock') {
+    await delay(null);
+    return;
+  }
+  await httpClient.patch<unknown>(ENDPOINTS.bankAccounts.activate(id), undefined, nestId);
 }

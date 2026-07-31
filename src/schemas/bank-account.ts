@@ -49,3 +49,8 @@ export const CanDeleteBankAccountResponseSchema = z.object({
   linkedTransactionsCount: z.number().int(),
 });
 export type CanDeleteBankAccountResponse = z.infer<typeof CanDeleteBankAccountResponseSchema>;
+
+export const InactivateBankAccountResponseSchema = z.object({
+  affectedPaymentCardsCount: z.number().int(),
+});
+export type InactivateBankAccountResponse = z.infer<typeof InactivateBankAccountResponseSchema>;

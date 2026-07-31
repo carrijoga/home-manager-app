@@ -147,7 +147,7 @@ export function PaymentCard() {
       await loadCards();
     } catch (err) {
       const message =
-        err instanceof ApiError || err instanceof Error
+        err instanceof ApiError && err.status === 400 && err.message
           ? err.message
           : 'Não foi possível excluir o cartão.';
       showError(message);

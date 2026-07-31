@@ -39,6 +39,9 @@ export function PaymentCardList({
               card={card}
               used={usedByCard[card.paymentCardId] ?? Number(card.previousBalance ?? 0)}
               selected={card.paymentCardId === selectedId}
+              // Só o cartão selecionado tem canDelete verificado (ver PaymentCard.tsx);
+              // os demais assumem true (otimista) — o DELETE real ainda é bloqueado
+              // pelo servidor (400 + toast) se a checagem otimista estiver errada.
               canDelete={canDeleteMap[card.paymentCardId] ?? true}
               onSelect={() => onSelect(card.paymentCardId)}
               onEdit={() => onEdit(card)}

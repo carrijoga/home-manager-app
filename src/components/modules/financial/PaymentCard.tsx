@@ -15,6 +15,7 @@ import type {
   UpdateCreditPaymentCardSettingsRequest,
   UpdatePaymentCardDetailsRequest,
 } from '@/schemas/payment-card';
+import { ApiError } from '@/services/api/httpClient';
 import * as bankAccountService from '@/services/bankAccountService';
 import * as paymentCardService from '@/services/paymentCardService';
 
@@ -139,6 +140,20 @@ export function PaymentCard() {
     }
   };
 
+  const handleDelete = async (card: PaymentCardResponse) => {
+    try {
+      await paymentCardService.deletePaymentCard(card.paymentCardId, nestId);
+      showSuccess('Cartão excluído.');
+      await loadCards();
+    } catch (err) {
+      const message =
+        err instanceof ApiError || err instanceof Error
+          ? err.message
+          : 'Não foi possível excluir o cartão.';
+      showError(message);
+    }
+  };
+
   const openCreate = () => { setEditingCard(null); setSheetOpen(true); };
   const openEdit = (card: PaymentCardResponse) => { setEditingCard(card); setSheetOpen(true); };
 
@@ -175,6 +190,7 @@ export function PaymentCard() {
               onSelect={setSelectedId}
               onEdit={openEdit}
               onToggleActive={handleToggleActive}
+              onDelete={handleDelete}
               onAdd={openCreate}
             />
           </div>

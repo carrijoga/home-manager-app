@@ -13,11 +13,12 @@ interface PaymentCardListProps {
   onSelect: (id: string) => void;
   onEdit: (card: PaymentCardResponse) => void;
   onToggleActive: (card: PaymentCardResponse) => void;
+  onDelete: (card: PaymentCardResponse) => void;
   onAdd: () => void;
 }
 
 export function PaymentCardList({
-  cards, selectedId, usedByCard, onSelect, onEdit, onToggleActive, onAdd,
+  cards, selectedId, usedByCard, onSelect, onEdit, onToggleActive, onDelete, onAdd,
 }: PaymentCardListProps) {
   return (
     <div className="flex flex-col gap-3">
@@ -40,6 +41,7 @@ export function PaymentCardList({
               onSelect={() => onSelect(card.paymentCardId)}
               onEdit={() => onEdit(card)}
               onToggleActive={() => onToggleActive(card)}
+              onDelete={() => onDelete(card)}
             />
           </div>
         ))}

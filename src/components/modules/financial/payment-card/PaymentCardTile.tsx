@@ -1,4 +1,4 @@
-import { MoreVertical, Pencil, Power, PowerOff } from 'lucide-react';
+import { MoreVertical, Pencil, Power, PowerOff, Trash2 } from 'lucide-react';
 
 import {
   DropdownMenu,
@@ -20,10 +20,11 @@ interface PaymentCardTileProps {
   onSelect: () => void;
   onEdit: () => void;
   onToggleActive: () => void;
+  onDelete: () => void;
 }
 
 export function PaymentCardTile({
-  card, used, selected, onSelect, onEdit, onToggleActive,
+  card, used, selected, onSelect, onEdit, onToggleActive, onDelete,
 }: PaymentCardTileProps) {
   const isCredit = card.type === CardType.Credit;
   const limit = Number(card.creditLimit ?? 0);
@@ -69,6 +70,9 @@ export function PaymentCardTile({
             <DropdownMenuItem onClick={onToggleActive} className="gap-2">
               {card.isActive ? <PowerOff size={14} /> : <Power size={14} />}
               {card.isActive ? 'Inativar' : 'Ativar'}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onDelete} className="gap-2 text-destructive focus:text-destructive">
+              <Trash2 size={14} /> Excluir
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

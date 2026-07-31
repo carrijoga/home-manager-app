@@ -1,4 +1,8 @@
-import { mockPaymentCardInvoices, mockPaymentCards } from '@/mocks/data';
+import {
+  mockPaymentCardInvoices,
+  mockPaymentCards,
+  mockPaymentCardsWithLinkedTransactions,
+} from '@/mocks/data';
 import type {
   CreatePaymentCardRequest,
   PaymentCardInvoice,
@@ -103,6 +107,23 @@ export async function activatePaymentCard(id: string, nestId?: string): Promise<
     return;
   }
   await httpClient.patch<unknown>(ENDPOINTS.paymentCards.activate(id), undefined, nestId);
+}
+
+/**
+ * Exclui um cartão. Permitido somente se não houver lançamento/recorrência
+ * vinculada. Bloqueado com 400 caso contrário — não há precheck de
+ * elegibilidade no backend para cartões; o erro deve ser tratado no
+ * chamador (toast), sem diálogo de confirmação.
+ */
+export async function deletePaymentCard(id: string, nestId?: string): Promise<void> {
+  if (DATA_MODE === 'mock') {
+    await delay(null);
+    if (mockPaymentCardsWithLinkedTransactions.has(id)) {
+      throw new Error('Este cartão possui lançamentos vinculados e não pode ser excluído.');
+    }
+    return;
+  }
+  await httpClient.del<unknown>(ENDPOINTS.paymentCards.delete(id), nestId);
 }
 
 /**

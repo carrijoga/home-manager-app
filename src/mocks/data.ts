@@ -800,6 +800,9 @@ export const mockBankAccountLinkedCounts: Record<string, number> = {
   '33333333-3333-3333-3333-333333333333': 0,
 };
 
+// IDs de cartões com lançamento vinculado (mock do bloqueio de exclusão).
+export const mockPaymentCardsWithLinkedTransactions = new Set<string>(['card-mock-0001']);
+
 // Mock-only: fatura sem back-end. Chave = paymentCardId. Só cartões Credit têm fatura.
 export const mockPaymentCardInvoices: Record<string, PaymentCardInvoice> = {
   'card-mock-0001': {

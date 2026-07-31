@@ -1,6 +1,6 @@
-import { CreditCard, Pencil, Trash2 } from 'lucide-react';
+import { CreditCard, Pencil, PowerOff, Trash2 } from 'lucide-react';
 
-import { Button } from '@/components/ui';
+import { Button, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui';
 import type { BankAccountResponse } from '@/schemas/bank-account';
 import { CARD_TYPE_LABELS } from '@/schemas/enums';
 import { formatCurrency } from '@/utils/dashboardMetrics';
@@ -9,11 +9,15 @@ import { accountTypeLabel } from './accountType';
 
 interface AccountDetailsProps {
   account: BankAccountResponse;
+  canDelete: boolean;
   onEdit: (account: BankAccountResponse) => void;
   onDelete: (account: BankAccountResponse) => void;
+  onInactivate: (account: BankAccountResponse) => void;
 }
 
-export function AccountDetails({ account, onEdit, onDelete }: AccountDetailsProps) {
+export function AccountDetails({
+  account, canDelete, onEdit, onDelete, onInactivate,
+}: AccountDetailsProps) {
   const balance = Number(account.balance);
 
   return (
@@ -37,11 +41,41 @@ export function AccountDetails({ account, onEdit, onDelete }: AccountDetailsProp
           <Button
             variant="outline"
             size="sm"
-            className="gap-1.5 text-destructive hover:text-destructive"
-            onClick={() => onDelete(account)}
+            className="gap-1.5"
+            onClick={() => onInactivate(account)}
           >
-            <Trash2 size={15} strokeWidth={1.5} /> Excluir
+            <PowerOff size={15} strokeWidth={1.5} /> Inativar
           </Button>
+          {canDelete ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-destructive hover:text-destructive"
+              onClick={() => onDelete(account)}
+            >
+              <Trash2 size={15} strokeWidth={1.5} /> Excluir
+            </Button>
+          ) : (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5 text-destructive/50"
+                      disabled
+                    >
+                      <Trash2 size={15} strokeWidth={1.5} /> Excluir
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-[240px]">
+                  Esta conta possui lançamentos vinculados. Apenas inativação é permitida.
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
         </div>
       </div>
 

@@ -11,6 +11,8 @@ const meta = {
   args: {
     onEdit: () => {},
     onDelete: () => {},
+    onInactivate: () => {},
+    canDelete: true,
     account: {
       bankAccountId: 'acc-1',
       name: 'Conta Corrente Nubank',
@@ -72,5 +74,12 @@ export const LongName: Story = {
       ...meta.args.account,
       name: 'Conta Corrente Conjunta Família Carrijo Banco do Brasil',
     },
+  },
+};
+
+/** Conta com lançamento vinculado — Excluir fica desabilitado com tooltip. */
+export const CannotDelete: Story = {
+  args: {
+    canDelete: false,
   },
 };

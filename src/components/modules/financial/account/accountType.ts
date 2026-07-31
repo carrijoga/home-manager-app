@@ -9,7 +9,3 @@ export const ACCOUNT_TYPE_OPTIONS = [
 export function accountTypeLabel(type: number): string {
   return ACCOUNT_TYPE_OPTIONS.find((o) => o.value === type)?.label ?? 'Conta';
 }
-
-export function formatMoney(value: number): string {
-  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-}

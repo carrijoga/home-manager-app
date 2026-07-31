@@ -746,9 +746,51 @@ export const mockPaymentCards: PaymentCardResponse[] = [
 ];
 
 export const mockBankAccounts: BankAccountResponse[] = [
-  { bankAccountId: '11111111-1111-1111-1111-111111111111', name: 'Conta Corrente', type: 0, balance: 3250.75, color: '#3b82f6' },
-  { bankAccountId: '22222222-2222-2222-2222-222222222222', name: 'Poupança', type: 1, balance: 12800, color: '#10b981' },
-  { bankAccountId: '33333333-3333-3333-3333-333333333333', name: 'Carteira', type: 2, balance: 180.5, color: '#f59e0b' },
+  {
+    bankAccountId: '11111111-1111-1111-1111-111111111111',
+    name: 'Conta Corrente',
+    type: 0,
+    balance: 3250.75,
+    initialBalance: 1000,
+    color: '#3b82f6',
+    paymentCards: [
+      {
+        paymentCardId: 'card-mock-0001',
+        bankAccountId: '11111111-1111-1111-1111-111111111111',
+        type: 0,
+        name: 'Nubank',
+        color: '#820ad1',
+        isActive: true,
+      },
+    ],
+  },
+  {
+    bankAccountId: '22222222-2222-2222-2222-222222222222',
+    name: 'Poupança',
+    type: 1,
+    balance: 12800,
+    initialBalance: 12800,
+    color: '#10b981',
+    paymentCards: [
+      {
+        paymentCardId: 'card-mock-0002',
+        bankAccountId: '22222222-2222-2222-2222-222222222222',
+        type: 1,
+        name: 'Inter Débito',
+        color: '#ff7a00',
+        isActive: true,
+      },
+    ],
+  },
+  {
+    bankAccountId: '33333333-3333-3333-3333-333333333333',
+    name: 'Carteira',
+    type: 2,
+    balance: 180.5,
+    initialBalance: 180.5,
+    color: '#f59e0b',
+    paymentCards: [],
+  },
 ];
 
 // Quantidade de transações vinculadas por conta (mock do can-delete).

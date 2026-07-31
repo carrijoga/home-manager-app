@@ -2172,6 +2172,111 @@
         }
       }
     },
+    "/api/payment-cards/can-delete/{id}": {
+      "get": {
+        "tags": [
+          "PaymentCard"
+        ],
+        "summary": "Checks whether a payment card can be deleted",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the deletion eligibility check",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CanDeletePaymentCardResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CanDeletePaymentCardResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CanDeletePaymentCardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Payment card not found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/payment-cards/delete/{id}": {
+      "delete": {
+        "tags": [
+          "PaymentCard"
+        ],
+        "summary": "Deletes a payment card",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Payment card deleted successfully"
+          },
+          "400": {
+            "description": "Payment card has linked transactions and cannot be deleted",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/notices": {
       "get": {
         "tags": [
@@ -4142,23 +4247,14 @@
               "type": "string",
               "format": "uuid"
             }
-          },
-          {
-            "name": "confirmDeletion",
-            "in": "query",
-            "description": "Confirms deletion of the account along with its linked transactions",
-            "schema": {
-              "type": "boolean",
-              "default": false
-            }
           }
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Bank account deleted successfully"
           },
           "400": {
-            "description": "Bad Request",
+            "description": "Bank account has linked transactions (directly or via a linked card) and cannot be deleted",
             "content": {
               "text/plain": {
                 "schema": {
@@ -4218,6 +4314,113 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Bank account not found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/bank-account/{id}/inactivate": {
+      "patch": {
+        "tags": [
+          "BankAccount"
+        ],
+        "summary": "Inactivates a bank account, cascading to all linked payment cards",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The unique identifier of the bank account to inactivate",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bank account inactivated successfully",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/InactivateBankAccountResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InactivateBankAccountResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InactivateBankAccountResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bank account not found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/bank-account/{id}/activate": {
+      "patch": {
+        "tags": [
+          "BankAccount"
+        ],
+        "summary": "Activates a previously inactivated bank account",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The unique identifier of the bank account to activate",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bank account activated successfully"
           },
           "400": {
             "description": "Bank account not found",
@@ -4853,10 +5056,36 @@
           },
           "color": {
             "type": "string"
+          },
+          "paymentCards": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentCardSummaryResponse"
+            }
           }
         }
       },
       "CanDeleteBankAccountResponse": {
+        "required": [
+          "canDelete",
+          "linkedTransactionsCount"
+        ],
+        "type": "object",
+        "properties": {
+          "canDelete": {
+            "type": "boolean"
+          },
+          "linkedTransactionsCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "CanDeletePaymentCardResponse": {
         "required": [
           "canDelete",
           "linkedTransactionsCount"
@@ -5893,6 +6122,22 @@
         "type": "string",
         "format": "binary"
       },
+      "InactivateBankAccountResponse": {
+        "required": [
+          "affectedPaymentCardsCount"
+        ],
+        "type": "object",
+        "properties": {
+          "affectedPaymentCardsCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
       "InviteStatus": {
         "type": "integer"
       },
@@ -6184,6 +6429,37 @@
               "string"
             ],
             "format": "double"
+          },
+          "color": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PaymentCardSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "paymentCardId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bankAccountId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "type": {
+            "$ref": "#/components/schemas/CardType"
+          },
+          "name": {
+            "type": "string"
           },
           "color": {
             "type": [

@@ -56,7 +56,10 @@ const delay = <T,>(value: T, ms = 100): Promise<T> =>
   new Promise(resolve => setTimeout(() => resolve(value), ms));
 
 function getPaidSum(t: FinancialTransactionResponse): number {
-  return t.payments.reduce((sum, p) => sum + Number(p.amount ?? 0), 0);
+  return t.payments.reduce(
+    (sum, p) => sum + Number(p.amount ?? 0) + Number(p.interest ?? 0) - Number(p.discount ?? 0),
+    0,
+  );
 }
 
 /** Data local em YYYY-MM-DD — evita off-by-one perto da meia-noite em UTC-3. */

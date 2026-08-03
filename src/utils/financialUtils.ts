@@ -3,6 +3,11 @@ import type { FinancialTransactionResponse } from '@/schemas/financial';
 
 export type TransactionStatus = 'open' | 'partiallyPaid' | 'paid';
 
+/**
+ * Soma apenas Amount (sem interest/discount) — usado para exibição (% pago, saldo restante).
+ * Não confundir com a fórmula de quitação do ADR 0001 (financialService.ts getPaidSum), que
+ * inclui interest/discount para decidir PaymentStatus.
+ */
 export function getPaidAmount(t: FinancialTransactionResponse): number {
   return (t.payments ?? []).reduce((sum, p) => sum + Number(p.amount ?? 0), 0);
 }

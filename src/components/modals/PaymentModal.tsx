@@ -30,6 +30,8 @@ import * as paymentCardService from '@/services/paymentCardService';
 import { formatCurrency } from '@/utils/dashboardMetrics';
 import { getPaidAmount } from '@/utils/financialUtils';
 
+import { SourcePicker } from './payment-modal/SourcePicker';
+
 const PAYMENT_METHOD_OPTIONS = [
   { value: ApiPaymentMethod.Pix, label: 'PIX' },
   { value: ApiPaymentMethod.Cash, label: 'Dinheiro' },
@@ -57,13 +59,13 @@ function sourceDomainForMethod(method: number): number {
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
 
-/** Registrar pagamento — pré-preenchido com o valor restante, hoje, usuário atual e PIX. */
+/** Registrar pagamento — Valor/Data pré-preenchidos, Método e origem exigem escolha explícita. */
 export function PaymentModal({ open, onClose, transaction, currentUserId, nestId, onSubmit }: PaymentModalProps) {
   const remaining = transaction ? Math.max(Number(transaction.value) - getPaidAmount(transaction), 0) : 0;
 
   const [amount, setAmount] = useState<number | null>(null);
   const [paymentDate, setPaymentDate] = useState(todayIso());
-  const [method, setMethod] = useState<number>(ApiPaymentMethod.Pix);
+  const [method, setMethod] = useState<number | null>(null);
   const [sourceId, setSourceId] = useState('');
   const [bankAccounts, setBankAccounts] = useState<BankAccountResponse[]>([]);
   const [paymentCards, setPaymentCards] = useState<PaymentCardResponse[]>([]);
@@ -76,7 +78,7 @@ export function PaymentModal({ open, onClose, transaction, currentUserId, nestId
     if (!open || !transaction) return;
     setAmount(Math.max(Number(transaction.value) - getPaidAmount(transaction), 0));
     setPaymentDate(todayIso());
-    setMethod(ApiPaymentMethod.Pix);
+    setMethod(null);
     setSourceId('');
     setDiscount(null);
     setInterest(null);
@@ -93,25 +95,24 @@ export function PaymentModal({ open, onClose, transaction, currentUserId, nestId
       .catch(() => {});
   }, [open, nestId]);
 
-  const sourceDomain = sourceDomainForMethod(method);
+  const sourceDomain = method !== null ? sourceDomainForMethod(method) : null;
   // BankAccountResponse não expõe isActive (confirmado em src/schemas/bank-account.ts) — lista tudo que o service retorna.
   const activeBankAccounts = bankAccounts;
   const activeCards = paymentCards.filter(c => c.isActive);
-  const sourceOptions = sourceDomain === FinancialSourceType.CreditCard ? activeCards : activeBankAccounts;
 
   const handleMethodChange = (newMethod: number) => {
     const newDomain = sourceDomainForMethod(newMethod);
-    if (newDomain !== sourceDomain) setSourceId('');
+    if (sourceDomain !== null && newDomain !== sourceDomain) setSourceId('');
     setMethod(newMethod);
   };
 
   if (!transaction) return null;
 
-  const isValid = amount !== null && amount > 0 && Boolean(sourceId);
+  const isValid = amount !== null && amount > 0 && method !== null && Boolean(sourceId);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isValid || isSubmitting) return;
+    if (!isValid || isSubmitting || method === null) return;
     setIsSubmitting(true);
     try {
       await onSubmit({
@@ -156,9 +157,12 @@ export function PaymentModal({ open, onClose, transaction, currentUserId, nestId
 
           <div className="space-y-1">
             <Label htmlFor="pay-method">Método</Label>
-            <Select value={String(method)} onValueChange={v => handleMethodChange(Number(v))}>
+            <Select
+              value={method !== null ? String(method) : undefined}
+              onValueChange={v => handleMethodChange(Number(v))}
+            >
               <SelectTrigger id="pay-method">
-                <SelectValue />
+                <SelectValue placeholder="Selecionar…" />
               </SelectTrigger>
               <SelectContent>
                 {PAYMENT_METHOD_OPTIONS.map(opt => (
@@ -169,29 +173,17 @@ export function PaymentModal({ open, onClose, transaction, currentUserId, nestId
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="pay-source">Origem</Label>
-            {sourceOptions.length > 0 ? (
-              <Select value={sourceId} onValueChange={setSourceId}>
-                <SelectTrigger id="pay-source">
-                  <SelectValue placeholder="Selecionar…" />
-                </SelectTrigger>
-                <SelectContent>
-                  {sourceDomain === FinancialSourceType.CreditCard
-                    ? activeCards.map(c => (
-                        <SelectItem key={c.paymentCardId} value={c.paymentCardId}>{c.name}</SelectItem>
-                      ))
-                    : activeBankAccounts.map(a => (
-                        <SelectItem key={a.bankAccountId} value={a.bankAccountId}>{a.name}</SelectItem>
-                      ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <p className="text-xs text-muted-foreground bg-muted/30 border border-border/40 rounded-md px-3 py-2">
-                {sourceDomain === FinancialSourceType.CreditCard
-                  ? 'Nenhum cartão ativo cadastrado — crie um na tela de Cartões.'
-                  : 'Nenhuma conta bancária cadastrada — crie uma na tela de Contas.'}
-              </p>
-            )}
+            <Label htmlFor="pay-source">
+              {sourceDomain === FinancialSourceType.CreditCard ? 'Cartão' : 'Conta'}
+            </Label>
+            <SourcePicker
+              domain={sourceDomain ?? FinancialSourceType.BankAccount}
+              bankAccounts={activeBankAccounts}
+              cards={activeCards}
+              value={sourceId}
+              onChange={setSourceId}
+              disabled={method === null}
+            />
           </div>
 
           <Collapsible>

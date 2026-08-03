@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { cardGradient } from '@/components/modules/financial/payment-card/gradient';
 import { Button, Popover, PopoverContent, PopoverTrigger } from '@/components/ui';
 import {
-  Command, CommandEmpty, CommandGroup, CommandItem, CommandList,
+  Command, CommandGroup, CommandItem, CommandList,
 } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
 import type { BankAccountResponse } from '@/schemas/bank-account';
@@ -13,6 +13,7 @@ import type { PaymentCardResponse } from '@/schemas/payment-card';
 import { formatCurrency } from '@/utils/dashboardMetrics';
 
 export interface SourcePickerProps {
+  id?: string;
   domain: number;
   bankAccounts: BankAccountResponse[];
   cards: PaymentCardResponse[];
@@ -26,7 +27,7 @@ export interface SourcePickerProps {
  * real para cartões) — origem do Payment, domínio derivado do Método (ADR 0001).
  */
 export function SourcePicker({
-  domain, bankAccounts, cards, value, onChange, disabled,
+  id, domain, bankAccounts, cards, value, onChange, disabled,
 }: SourcePickerProps) {
   const [open, setOpen] = useState(false);
   const isCard = domain === FinancialSourceType.CreditCard;
@@ -68,7 +69,7 @@ export function SourcePicker({
     return (
       <p className="text-xs text-muted-foreground bg-muted/30 border border-border/40 rounded-md px-3 py-2">
         {isCard
-          ? 'Nenhum cartão ativo cadastrado — crie um na tela de Cartões.'
+          ? 'Nenhum cartão ativo compatível com este método — cadastre um na tela de Cartões.'
           : 'Nenhuma conta bancária cadastrada — crie uma na tela de Contas.'}
       </p>
     );
@@ -78,6 +79,7 @@ export function SourcePicker({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
+          id={id}
           type="button"
           variant="outline"
           role="combobox"
@@ -88,11 +90,8 @@ export function SourcePicker({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-1" align="start">
-        <Command>
+        <Command shouldFilter={false}>
           <CommandList>
-            <CommandEmpty className="px-3 py-3 text-sm text-muted-foreground">
-              Nenhuma opção encontrada.
-            </CommandEmpty>
             <CommandGroup>
               {isCard
                 ? cards.map(c => {

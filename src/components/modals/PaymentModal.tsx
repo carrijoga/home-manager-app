@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import MoneyInput from '@/components/common/MoneyInput';
 import {
@@ -25,7 +25,7 @@ import {
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { checkmarkVariants } from '@/lib/animations';
 import type { BankAccountResponse } from '@/schemas/bank-account';
-import { ApiPaymentMethod, FinancialSourceType } from '@/schemas/enums';
+import { ApiPaymentMethod, CardType, FinancialSourceType } from '@/schemas/enums';
 import type { AddPaymentRequest, FinancialTransactionResponse } from '@/schemas/financial';
 import type { PaymentCardResponse } from '@/schemas/payment-card';
 import * as bankAccountService from '@/services/bankAccountService';
@@ -77,6 +77,7 @@ export function PaymentModal({ open, onClose, transaction, currentUserId, nestId
   const [observation, setObservation] = useState('');
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
   const prefersReducedMotion = usePrefersReducedMotion();
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!open || !transaction) return;
@@ -88,7 +89,15 @@ export function PaymentModal({ open, onClose, transaction, currentUserId, nestId
     setInterest(null);
     setObservation('');
     setStatus('idle');
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
   }, [open, transaction]);
+
+  useEffect(() => () => {
+    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -103,7 +112,14 @@ export function PaymentModal({ open, onClose, transaction, currentUserId, nestId
   const sourceDomain = method !== null ? sourceDomainForMethod(method) : null;
   // BankAccountResponse não expõe isActive (confirmado em src/schemas/bank-account.ts) — lista tudo que o service retorna.
   const activeBankAccounts = bankAccounts;
-  const activeCards = paymentCards.filter(c => c.isActive);
+  // Cartão também precisa bater o tipo com o método — Débito só mostra CardType.Debit,
+  // Crédito só mostra CardType.Credit (Pré-pago/Outro não têm método de pagamento aqui).
+  const cardTypeForMethod = method === ApiPaymentMethod.Debit
+    ? CardType.Debit
+    : method === ApiPaymentMethod.Credit
+      ? CardType.Credit
+      : null;
+  const activeCards = paymentCards.filter(c => c.isActive && c.type === cardTypeForMethod);
 
   const handleMethodChange = (newMethod: number) => {
     const newDomain = sourceDomainForMethod(newMethod);
@@ -133,7 +149,7 @@ export function PaymentModal({ open, onClose, transaction, currentUserId, nestId
       });
       setStatus('success');
       const holdMs = prefersReducedMotion ? 0 : 450;
-      setTimeout(() => onClose(), holdMs);
+      closeTimerRef.current = setTimeout(() => onClose(), holdMs);
     } catch {
       setStatus('idle');
     }
@@ -184,6 +200,7 @@ export function PaymentModal({ open, onClose, transaction, currentUserId, nestId
               {sourceDomain === FinancialSourceType.CreditCard ? 'Cartão' : 'Conta'}
             </Label>
             <SourcePicker
+              id="pay-source"
               domain={sourceDomain ?? FinancialSourceType.BankAccount}
               bankAccounts={activeBankAccounts}
               cards={activeCards}
@@ -228,7 +245,7 @@ export function PaymentModal({ open, onClose, transaction, currentUserId, nestId
             <Button
               type="submit"
               disabled={status === 'submitting' || (status === 'idle' && !isValid)}
-              className={status === 'success' ? 'bg-[var(--chart-2)] hover:bg-[var(--chart-2)] text-white' : undefined}
+              className={status === 'success' ? 'bg-chart-2/15 hover:bg-chart-2/15 text-chart-2' : undefined}
             >
               <AnimatePresence mode="wait" initial={false}>
                 {status === 'success' ? (

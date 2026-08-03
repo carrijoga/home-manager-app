@@ -568,6 +568,8 @@ function makeFinPayment(
     paidByUserId: FIN_JOAO.id,
     paidByUserFullName: FIN_JOAO.name,
     observation: null,
+    sourceType: 0, // BankAccount (method Pix deriva pra conta)
+    sourceId: '11111111-1111-1111-1111-111111111111', // Conta Corrente (mockBankAccounts[0])
   };
 }
 
@@ -597,7 +599,9 @@ function makeFinTx(seed: FinTxSeed): FinancialTransactionResponse {
       : typeof seed.paid === 'number'
         ? [makeFinPayment(id, seed.paid, dateIso)]
         : [];
-  const isPaid = seed.paid === true;
+  const paidSum = payments.reduce((sum, p) => sum + p.amount, 0);
+  const paymentStatus = paidSum === 0 ? 0 : paidSum >= seed.value ? 2 : 1; // Open | Paid | PartiallyPaid
+  const isPaid = paymentStatus === 2;
   return {
     financialTransactionId: id,
     nestId: FIN_NEST_ID,
@@ -613,11 +617,10 @@ function makeFinTx(seed: FinTxSeed): FinancialTransactionResponse {
     origin: 0,
     originName: 'Financeiro',
     observation: null,
-    sourceType: 0,
-    sourceId: id,
-    sourceName: null,
+    // Income: aponta pra Conta Corrente mock; Expense: sempre null (fonte só via payments).
+    sourceId: seed.type === 0 ? '11111111-1111-1111-1111-111111111111' : null,
     payments,
-    isPaid,
+    paymentStatus,
     isOverdue: !isPaid && dueIso < toIsoDate(now),
   };
 }

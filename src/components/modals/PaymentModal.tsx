@@ -21,8 +21,12 @@ import {
   SelectValue,
   Textarea,
 } from '@/components/ui';
-import { ApiPaymentMethod } from '@/schemas/enums';
+import type { BankAccountResponse } from '@/schemas/bank-account';
+import { ApiPaymentMethod, FinancialSourceType } from '@/schemas/enums';
 import type { AddPaymentRequest, FinancialTransactionResponse } from '@/schemas/financial';
+import type { PaymentCardResponse } from '@/schemas/payment-card';
+import * as bankAccountService from '@/services/bankAccountService';
+import * as paymentCardService from '@/services/paymentCardService';
 import { formatCurrency } from '@/utils/dashboardMetrics';
 import { getPaidAmount } from '@/utils/financialUtils';
 
@@ -40,18 +44,29 @@ interface PaymentModalProps {
   onClose: () => void;
   transaction: FinancialTransactionResponse | null;
   currentUserId: string;
+  nestId: string | undefined;
   onSubmit: (payload: AddPaymentRequest) => Promise<void>;
+}
+
+/** Domínio da origem derivado do método — mesma regra do backend (ADR 0001). */
+function sourceDomainForMethod(method: number): number {
+  return method === ApiPaymentMethod.Debit || method === ApiPaymentMethod.Credit
+    ? FinancialSourceType.CreditCard
+    : FinancialSourceType.BankAccount;
 }
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
 
 /** Registrar pagamento — pré-preenchido com o valor restante, hoje, usuário atual e PIX. */
-export function PaymentModal({ open, onClose, transaction, currentUserId, onSubmit }: PaymentModalProps) {
+export function PaymentModal({ open, onClose, transaction, currentUserId, nestId, onSubmit }: PaymentModalProps) {
   const remaining = transaction ? Math.max(Number(transaction.value) - getPaidAmount(transaction), 0) : 0;
 
   const [amount, setAmount] = useState<number | null>(null);
   const [paymentDate, setPaymentDate] = useState(todayIso());
   const [method, setMethod] = useState<number>(ApiPaymentMethod.Pix);
+  const [sourceId, setSourceId] = useState('');
+  const [bankAccounts, setBankAccounts] = useState<BankAccountResponse[]>([]);
+  const [paymentCards, setPaymentCards] = useState<PaymentCardResponse[]>([]);
   const [discount, setDiscount] = useState<number | null>(null);
   const [interest, setInterest] = useState<number | null>(null);
   const [observation, setObservation] = useState('');
@@ -62,14 +77,37 @@ export function PaymentModal({ open, onClose, transaction, currentUserId, onSubm
     setAmount(Math.max(Number(transaction.value) - getPaidAmount(transaction), 0));
     setPaymentDate(todayIso());
     setMethod(ApiPaymentMethod.Pix);
+    setSourceId('');
     setDiscount(null);
     setInterest(null);
     setObservation('');
   }, [open, transaction]);
 
+  useEffect(() => {
+    if (!open) return;
+    bankAccountService.listBankAccounts(nestId)
+      .then(setBankAccounts)
+      .catch(() => {});
+    paymentCardService.listPaymentCards(nestId)
+      .then(setPaymentCards)
+      .catch(() => {});
+  }, [open, nestId]);
+
+  const sourceDomain = sourceDomainForMethod(method);
+  // BankAccountResponse não expõe isActive (confirmado em src/schemas/bank-account.ts) — lista tudo que o service retorna.
+  const activeBankAccounts = bankAccounts;
+  const activeCards = paymentCards.filter(c => c.isActive);
+  const sourceOptions = sourceDomain === FinancialSourceType.CreditCard ? activeCards : activeBankAccounts;
+
+  const handleMethodChange = (newMethod: number) => {
+    const newDomain = sourceDomainForMethod(newMethod);
+    if (newDomain !== sourceDomain) setSourceId('');
+    setMethod(newMethod);
+  };
+
   if (!transaction) return null;
 
-  const isValid = amount !== null && amount > 0;
+  const isValid = amount !== null && amount > 0 && Boolean(sourceId);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,6 +120,7 @@ export function PaymentModal({ open, onClose, transaction, currentUserId, onSubm
         discount: discount ?? undefined,
         interest: interest ?? undefined,
         method,
+        sourceId,
         paymentDate: new Date(`${paymentDate}T12:00:00`).toISOString(),
         paidByUserId: currentUserId,
         observation: observation.trim() || null,
@@ -117,7 +156,7 @@ export function PaymentModal({ open, onClose, transaction, currentUserId, onSubm
 
           <div className="space-y-1">
             <Label htmlFor="pay-method">Método</Label>
-            <Select value={String(method)} onValueChange={v => setMethod(Number(v))}>
+            <Select value={String(method)} onValueChange={v => handleMethodChange(Number(v))}>
               <SelectTrigger id="pay-method">
                 <SelectValue />
               </SelectTrigger>
@@ -127,6 +166,32 @@ export function PaymentModal({ open, onClose, transaction, currentUserId, onSubm
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-1">
+            <Label htmlFor="pay-source">Origem</Label>
+            {sourceOptions.length > 0 ? (
+              <Select value={sourceId} onValueChange={setSourceId}>
+                <SelectTrigger id="pay-source">
+                  <SelectValue placeholder="Selecionar…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {sourceDomain === FinancialSourceType.CreditCard
+                    ? activeCards.map(c => (
+                        <SelectItem key={c.paymentCardId} value={c.paymentCardId}>{c.name}</SelectItem>
+                      ))
+                    : activeBankAccounts.map(a => (
+                        <SelectItem key={a.bankAccountId} value={a.bankAccountId}>{a.name}</SelectItem>
+                      ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <p className="text-xs text-muted-foreground bg-muted/30 border border-border/40 rounded-md px-3 py-2">
+                {sourceDomain === FinancialSourceType.CreditCard
+                  ? 'Nenhum cartão ativo cadastrado — crie um na tela de Cartões.'
+                  : 'Nenhuma conta bancária cadastrada — crie uma na tela de Contas.'}
+              </p>
+            )}
           </div>
 
           <Collapsible>

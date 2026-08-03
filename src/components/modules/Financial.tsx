@@ -306,6 +306,7 @@ const Financial = () => {
         onClose={() => setPayingTx(null)}
         transaction={payingTx}
         currentUserId={currentUserId}
+        nestId={nestId}
         onSubmit={handlePaymentSubmit}
       />
       <AlertDialog

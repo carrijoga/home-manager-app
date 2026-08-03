@@ -21,7 +21,7 @@ import {
 import type { CheckIconHandle } from '@/components/ui/animated-icons/check';
 import { CheckIcon } from '@/components/ui/animated-icons/check';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
-import { TransactionType } from '@/schemas/enums';
+import { PaymentStatus, TransactionType } from '@/schemas/enums';
 import type { FinancialTransactionResponse } from '@/schemas/financial';
 import { formatCurrency } from '@/utils/dashboardMetrics';
 import {
@@ -41,18 +41,17 @@ interface TransactionRowProps {
   onPay: (t: FinancialTransactionResponse) => void;
   onDelete: (t: FinancialTransactionResponse) => void;
   onRemovePayment: (t: FinancialTransactionResponse, paymentId: string) => void;
+  sourceNameById: Map<string, string>;
 }
 
-function StatusBadge({ status, paidRatio }: { status: TransactionStatus; paidRatio: number }) {
+function StatusBadge({ status, paidRatio, isIncome }: { status: TransactionStatus; paidRatio: number; isIncome: boolean }) {
   const styles: Record<TransactionStatus, { label: string; className: string }> = {
-    received: { label: 'RECEBIDO', className: 'bg-chart-2/15 text-chart-2' },
-    paid: { label: 'PAGA', className: 'bg-chart-2/15 text-chart-2' },
-    pending: { label: 'PENDENTE', className: 'bg-muted text-muted-foreground' },
-    partial: {
+    paid: { label: isIncome ? 'RECEBIDO' : 'PAGA', className: 'bg-chart-2/15 text-chart-2' },
+    open: { label: 'EM ABERTO', className: 'bg-muted text-muted-foreground' },
+    partiallyPaid: {
       label: `PARCIAL · ${Math.round(paidRatio * 100)}%`,
       className: 'bg-honey-400/20 text-honey-700 dark:text-honey-400',
     },
-    overdue: { label: 'VENCIDA', className: 'bg-destructive/10 text-destructive' },
   };
   const s = styles[status];
   return (
@@ -70,6 +69,7 @@ export function TransactionRow({
   onPay,
   onDelete,
   onRemovePayment,
+  sourceNameById,
 }: TransactionRowProps) {
   const [expanded, setExpanded] = useState(false);
   const prefersReducedMotion = usePrefersReducedMotion();
@@ -78,7 +78,7 @@ export function TransactionRow({
   const isIncome = t.transactionType === TransactionType.Income;
   const status = getTransactionStatus(t);
   const paidRatio = Number(t.value) > 0 ? getPaidAmount(t) / Number(t.value) : 0;
-  const canPay = !isIncome && !t.isPaid;
+  const canPay = !isIncome && t.paymentStatus !== PaymentStatus.Paid;
 
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card">
@@ -115,7 +115,11 @@ export function TransactionRow({
           <p className="font-ui truncate text-sm font-semibold text-foreground">{t.description}</p>
           <p className="font-ui truncate text-xs text-muted-foreground">
             {t.categoryName} · {t.responsibleUserName}
-            {!t.isPaid && t.dueDate && ` · ${getDueLabel(String(t.dueDate))}`}
+            {t.paymentStatus !== PaymentStatus.Paid && t.dueDate && (
+              <span className={t.isOverdue ? 'text-destructive font-semibold' : undefined}>
+                {' '}· {getDueLabel(String(t.dueDate))}
+              </span>
+            )}
           </p>
         </div>
 
@@ -127,7 +131,7 @@ export function TransactionRow({
             {isIncome ? '+' : '−'} {formatCurrency(Number(t.value))}
           </span>
           <div className="flex items-center gap-1.5">
-            <StatusBadge status={status} paidRatio={paidRatio} />
+            <StatusBadge status={status} paidRatio={paidRatio} isIncome={isIncome} />
           </div>
         </div>
 
@@ -192,7 +196,8 @@ export function TransactionRow({
                       className="flex items-center justify-between gap-2"
                     >
                       <span>
-                        {formatLocalDate(String(p.paymentDate))} · {p.methodName ?? 'Outro'} ·{' '}
+                        {formatLocalDate(String(p.paymentDate))} · {p.methodName ?? 'Outro'}
+                        {sourceNameById.get(p.sourceId) && ` · ${sourceNameById.get(p.sourceId)}`} ·{' '}
                         {p.paidByUserFullName}
                       </span>
                       <span className="flex items-center gap-2">

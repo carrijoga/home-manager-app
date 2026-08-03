@@ -19,6 +19,7 @@ interface TransactionListProps {
   onPay: (t: FinancialTransactionResponse) => void;
   onDelete: (t: FinancialTransactionResponse) => void;
   onRemovePayment: (t: FinancialTransactionResponse, paymentId: string) => void;
+  sourceNameById: Map<string, string>;
 }
 
 /** Lista agrupada por dia com entrada em cascata e paginação "Carregar mais". */
@@ -33,6 +34,7 @@ export function TransactionList({
   onPay,
   onDelete,
   onRemovePayment,
+  sourceNameById,
 }: TransactionListProps) {
   const prefersReducedMotion = usePrefersReducedMotion();
   const groups = groupTransactionsByDay(transactions);
@@ -73,6 +75,7 @@ export function TransactionList({
                 onPay={onPay}
                 onDelete={onDelete}
                 onRemovePayment={onRemovePayment}
+                sourceNameById={sourceNameById}
               />
             </motion.div>
           ))}

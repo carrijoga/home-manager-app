@@ -19,8 +19,9 @@ import { useApp } from '@/contexts/AppContext';
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
 import { useDebounce } from '@/hooks/useDebounce';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import type { BankAccountResponse } from '@/schemas/bank-account';
 import type { CategoryResponse } from '@/schemas/category';
-import { TransactionType } from '@/schemas/enums';
+import { PaymentStatus, TransactionType } from '@/schemas/enums';
 import type {
   AddPaymentRequest,
   CreateTransactionRequest,
@@ -28,8 +29,11 @@ import type {
   FinancialTransactionResponse,
   FinancialTransactionUpcomingBillResponse,
 } from '@/schemas/financial';
+import type { PaymentCardResponse } from '@/schemas/payment-card';
+import * as bankAccountService from '@/services/bankAccountService';
 import * as categoryService from '@/services/categoryService';
 import * as financialService from '@/services/financialService';
+import * as paymentCardService from '@/services/paymentCardService';
 import { formatCurrency } from '@/utils/dashboardMetrics';
 import { getMonthRange } from '@/utils/financialUtils';
 
@@ -77,6 +81,8 @@ const Financial = () => {
   const [monthTransactions, setMonthTransactions] = useState<FinancialTransactionResponse[]>([]);
   const [dashboardData, setDashboardData] = useState<FinancialTransactionDashboardResponse | null>(null);
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
+  const [bankAccounts, setBankAccounts] = useState<BankAccountResponse[]>([]);
+  const [paymentCards, setPaymentCards] = useState<PaymentCardResponse[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
 
   // ── Modais ─────────────────────────────────────────────────────────────────
@@ -120,6 +126,19 @@ const Financial = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nestId]);
 
+  // Contas e cartões — para resolver nomes de origem nos pagamentos expandidos
+  useEffect(() => {
+    let active = true;
+    Promise.all([
+      bankAccountService.listBankAccounts(nestId),
+      paymentCardService.listPaymentCards(nestId),
+    ]).then(([accounts, cards]) => {
+      if (active) { setBankAccounts(accounts); setPaymentCards(cards); }
+    }).catch(() => {});
+    return () => { active = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nestId]);
+
   const handleCreateCategory = async (payload: { name: string; type: number }) => {
     const created = await categoryService.createCategory({ name: payload.name, type: payload.type }, nestId);
     setCategories(prev => [...prev, created]);
@@ -131,7 +150,7 @@ const Financial = () => {
     let result = monthTransactions;
     if (filters.type === 'expense') result = result.filter(t => t.transactionType === TransactionType.Expense);
     if (filters.type === 'income') result = result.filter(t => t.transactionType === TransactionType.Income);
-    if (filters.status === 'unpaid') result = result.filter(t => !t.isPaid);
+    if (filters.status === 'unpaid') result = result.filter(t => t.paymentStatus !== PaymentStatus.Paid);
     if (filters.status === 'overdue') result = result.filter(t => t.isOverdue);
     if (filters.categoryId) result = result.filter(t => t.categoryId === filters.categoryId);
     if (debouncedSearch.trim()) {
@@ -201,6 +220,13 @@ const Financial = () => {
 
   const hasActiveFilters =
     Boolean(debouncedSearch) || filters.type !== 'all' || filters.status !== 'all' || Boolean(filters.categoryId);
+
+  const sourceNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    bankAccounts.forEach(a => map.set(a.bankAccountId, a.name));
+    paymentCards.forEach(c => map.set(c.paymentCardId, c.name));
+    return map;
+  }, [bankAccounts, paymentCards]);
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
@@ -272,6 +298,7 @@ const Financial = () => {
             onPay={setPayingTx}
             onDelete={setDeletingTx}
             onRemovePayment={(t, paymentId) => { void handleRemovePayment(t, paymentId); }}
+            sourceNameById={sourceNameById}
           />
         </motion.div>
 

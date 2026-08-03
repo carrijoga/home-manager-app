@@ -1,18 +1,17 @@
-import { TransactionType } from '@/schemas/enums';
+import { PaymentStatus } from '@/schemas/enums';
 import type { FinancialTransactionResponse } from '@/schemas/financial';
 
-export type TransactionStatus = 'paid' | 'received' | 'overdue' | 'partial' | 'pending';
+export type TransactionStatus = 'open' | 'partiallyPaid' | 'paid';
 
 export function getPaidAmount(t: FinancialTransactionResponse): number {
   return (t.payments ?? []).reduce((sum, p) => sum + Number(p.amount ?? 0), 0);
 }
 
-/** Precedência: quitada > vencida > parcial > pendente. */
+/** Mapeamento 1:1 do PaymentStatus — isOverdue é indicado separadamente (não altera este status). */
 export function getTransactionStatus(t: FinancialTransactionResponse): TransactionStatus {
-  if (t.isPaid) return t.transactionType === TransactionType.Income ? 'received' : 'paid';
-  if (t.isOverdue) return 'overdue';
-  if (getPaidAmount(t) > 0) return 'partial';
-  return 'pending';
+  if (t.paymentStatus === PaymentStatus.Paid) return 'paid';
+  if (t.paymentStatus === PaymentStatus.PartiallyPaid) return 'partiallyPaid';
+  return 'open';
 }
 
 /** Data LOCAL em YYYY-MM-DD (não usar toISOString — off-by-one em UTC-3). */

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { ApiPaymentMethodSchema, FinancialSourceTypeSchema, ModulesSchema,TransactionTypeSchema } from './enums';
+import { ApiPaymentMethodSchema, FinancialSourceTypeSchema, ModulesSchema, PaymentStatusSchema, TransactionTypeSchema } from './enums';
 import { DateSchema, DateTimeSchema, MoneyRequestSchema, MoneySchema, UuidSchema } from './shared';
 
 // ── Requests ──────────────────────────────────────────────────────────────────
@@ -11,11 +11,12 @@ export const CreateTransactionRequestSchema = z.object({
   amount: MoneyRequestSchema,
   transactionDate: DateTimeSchema,
   dueDate: DateTimeSchema.nullable().optional(),
-  incomeOrigin: z.string().nullable().optional(),
   categoryId: UuidSchema,
   responsibleUserId: UuidSchema,
-  sourceType: FinancialSourceTypeSchema,
-  sourceId: UuidSchema.optional(),
+  // Obrigatório quando type === TransactionType.Income (aponta pra BankAccount);
+  // ausente/null quando type === TransactionType.Expense. Validação de obrigatoriedade
+  // por tipo é responsabilidade do formulário (TransactionSheet), não deste schema.
+  sourceId: UuidSchema.nullable().optional(),
 });
 export type CreateTransactionRequest = z.infer<typeof CreateTransactionRequestSchema>;
 
@@ -25,6 +26,10 @@ export const AddPaymentRequestSchema = z.object({
   discount: MoneyRequestSchema.optional(),
   interest: MoneyRequestSchema.optional(),
   method: ApiPaymentMethodSchema,
+  // Conta bancária ou cartão, conforme o domínio derivado de `method` no frontend
+  // (ver FinancialSourceType em enums.ts). O backend deriva sourceType a partir do
+  // method recebido — este payload não carrega sourceType.
+  sourceId: UuidSchema,
   paymentDate: DateTimeSchema,
   paidByUserId: UuidSchema,
   observation: z.string().nullable().optional(),
@@ -46,11 +51,9 @@ export const UpdateTransactionRequestSchema = z.object({
   amount: MoneyRequestSchema,
   transactionDate: DateTimeSchema,
   dueDate: DateTimeSchema.nullable().optional(),
-  incomeOrigin: z.string().nullable().optional(),
   categoryId: UuidSchema,
   responsibleUserId: UuidSchema,
-  sourceType: FinancialSourceTypeSchema,
-  sourceId: UuidSchema.optional(),
+  sourceId: UuidSchema.nullable().optional(),
   // Intencional: 'observation' só existe no update (form de edição). O contrato
   // de create em docs/api.json não possui este campo.
   observation: z.string().nullable().optional(),
@@ -77,9 +80,8 @@ export const FinancialTransactionFilterSchema = z.object({
   responsibleUserIds: z.array(UuidSchema).nullable().optional(),
   categoryIds: z.array(UuidSchema).nullable().optional(),
   origins: z.array(ModulesSchema).nullable().optional(),
-  sourceTypes: z.array(FinancialSourceTypeSchema).nullable().optional(),
   sourceIds: z.array(UuidSchema).nullable().optional(),
-  isPaid: z.boolean().nullable().optional(),
+  paymentStatuses: z.array(PaymentStatusSchema).nullable().optional(),
   isOverdue: z.boolean().nullable().optional(),
 });
 export type FinancialTransactionFilter = z.infer<typeof FinancialTransactionFilterSchema>;
@@ -99,6 +101,8 @@ export const FinancialTransactionPaymentResponseSchema = z.object({
   paidByUserId: UuidSchema,
   paidByUserFullName: z.string(),
   observation: z.string().nullable().optional(),
+  sourceType: FinancialSourceTypeSchema,
+  sourceId: UuidSchema,
 });
 export type FinancialTransactionPaymentResponse = z.infer<typeof FinancialTransactionPaymentResponseSchema>;
 
@@ -116,13 +120,13 @@ export const FinancialTransactionResponseSchema = z.object({
   categoryName: z.string(),
   origin: ModulesSchema,
   originName: z.string().nullable().optional(),
-  incomeOrigin: z.string().nullable().optional(),
   observation: z.string().nullable().optional(),
-  sourceType: FinancialSourceTypeSchema,
-  sourceId: UuidSchema,
-  sourceName: z.string().nullable().optional(),
+  // Nullable: só preenchido quando transactionType === Income, sempre aponta pra
+  // BankAccount. Expense nunca tem sourceId na própria transação — a origem só
+  // aparece via payments[].sourceId.
+  sourceId: UuidSchema.nullable(),
   payments: z.array(FinancialTransactionPaymentResponseSchema),
-  isPaid: z.boolean(),
+  paymentStatus: PaymentStatusSchema,
   isOverdue: z.boolean(),
 });
 export type FinancialTransactionResponse = z.infer<typeof FinancialTransactionResponseSchema>;

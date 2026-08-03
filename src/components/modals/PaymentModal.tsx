@@ -1,3 +1,4 @@
+import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -21,6 +22,8 @@ import {
   SelectValue,
   Textarea,
 } from '@/components/ui';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { checkmarkVariants } from '@/lib/animations';
 import type { BankAccountResponse } from '@/schemas/bank-account';
 import { ApiPaymentMethod, FinancialSourceType } from '@/schemas/enums';
 import type { AddPaymentRequest, FinancialTransactionResponse } from '@/schemas/financial';
@@ -72,7 +75,8 @@ export function PaymentModal({ open, onClose, transaction, currentUserId, nestId
   const [discount, setDiscount] = useState<number | null>(null);
   const [interest, setInterest] = useState<number | null>(null);
   const [observation, setObservation] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [status, setStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   useEffect(() => {
     if (!open || !transaction) return;
@@ -83,6 +87,7 @@ export function PaymentModal({ open, onClose, transaction, currentUserId, nestId
     setDiscount(null);
     setInterest(null);
     setObservation('');
+    setStatus('idle');
   }, [open, transaction]);
 
   useEffect(() => {
@@ -112,8 +117,8 @@ export function PaymentModal({ open, onClose, transaction, currentUserId, nestId
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isValid || isSubmitting || method === null) return;
-    setIsSubmitting(true);
+    if (!isValid || status !== 'idle' || method === null) return;
+    setStatus('submitting');
     try {
       await onSubmit({
         transactionId: transaction.financialTransactionId,
@@ -126,9 +131,11 @@ export function PaymentModal({ open, onClose, transaction, currentUserId, nestId
         paidByUserId: currentUserId,
         observation: observation.trim() || null,
       });
-      onClose();
-    } finally {
-      setIsSubmitting(false);
+      setStatus('success');
+      const holdMs = prefersReducedMotion ? 0 : 450;
+      setTimeout(() => onClose(), holdMs);
+    } catch {
+      setStatus('idle');
     }
   };
 
@@ -215,11 +222,43 @@ export function PaymentModal({ open, onClose, transaction, currentUserId, nestId
           </Collapsible>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
+            <Button type="button" variant="outline" onClick={onClose} disabled={status !== 'idle'}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={isSubmitting || !isValid}>
-              {isSubmitting ? 'Registrando…' : 'Confirmar pagamento'}
+            <Button
+              type="submit"
+              disabled={status === 'submitting' || (status === 'idle' && !isValid)}
+              className={status === 'success' ? 'bg-[var(--chart-2)] hover:bg-[var(--chart-2)] text-white' : undefined}
+            >
+              <AnimatePresence mode="wait" initial={false}>
+                {status === 'success' ? (
+                  <motion.span
+                    key="success"
+                    initial={{ scale: 1 }}
+                    animate={prefersReducedMotion ? { scale: 1 } : { scale: [1, 1.15, 1] }}
+                    transition={{ duration: 0.4, ease: 'easeOut' }}
+                    className="flex items-center gap-1.5"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <motion.path
+                        d="M4 12.5L9.5 18L20 6"
+                        stroke="currentColor"
+                        strokeWidth={3}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        variants={checkmarkVariants}
+                        initial="unchecked"
+                        animate="checked"
+                      />
+                    </svg>
+                    Pago!
+                  </motion.span>
+                ) : (
+                  <motion.span key="label">
+                    {status === 'submitting' ? 'Registrando…' : 'Confirmar pagamento'}
+                  </motion.span>
+                )}
+              </AnimatePresence>
             </Button>
           </DialogFooter>
         </form>

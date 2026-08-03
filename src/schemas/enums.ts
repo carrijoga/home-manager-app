@@ -64,12 +64,25 @@ export const NotificationType = {
   Success: 3,
 } as const;
 
-// Tipo de fonte financeira: 0 = Manual, 1 = BankAccount
+// Origem do Payment (FinancialTransactionPayment.SourceType), derivada do PaymentMethod
+// pelo backend — nunca setável livremente pelo frontend. Não confundir com a origem da
+// própria Transaction (FinancialTransaction.SourceId), que não tem SourceType — é sempre
+// BankAccount quando presente (só em Income).
 export const FinancialSourceTypeSchema = z.number().int();
 export type FinancialSourceType = z.infer<typeof FinancialSourceTypeSchema>;
 export const FinancialSourceType = {
-  Manual: 0,
-  BankAccount: 1,
+  BankAccount: 0,
+  CreditCard: 1,
+} as const;
+
+// Status de pagamento da FinancialTransaction — substitui o antigo IsPaid boolean.
+// Nunca setável diretamente via API; resulta do recálculo (soma dos Payments vs. Value).
+export const PaymentStatusSchema = z.number().int();
+export type PaymentStatus = z.infer<typeof PaymentStatusSchema>;
+export const PaymentStatus = {
+  Open: 0,
+  PartiallyPaid: 1,
+  Paid: 2,
 } as const;
 
 // Módulo de origem: 0 = Financial, 1 = Shopping, etc.

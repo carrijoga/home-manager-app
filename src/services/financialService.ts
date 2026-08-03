@@ -4,7 +4,7 @@
  * Em modo mock usa dados locais de `mocks/data.ts`.
  */
 
-import { TransactionType } from '@/schemas/enums';
+import { ApiPaymentMethod, PaymentStatus, TransactionType } from '@/schemas/enums';
 import type {
   AddPaymentRequest,
   CreateTransactionRequest,
@@ -65,10 +65,25 @@ function localToday(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
+function computePaymentStatus(t: FinancialTransactionResponse): number {
+  const paidSum = getPaidSum(t);
+  if (paidSum === 0) return PaymentStatus.Open;
+  if (paidSum < Number(t.value)) return PaymentStatus.PartiallyPaid;
+  return PaymentStatus.Paid;
+}
+
 function recomputeStatus(t: FinancialTransactionResponse): FinancialTransactionResponse {
-  const isPaid = getPaidSum(t) >= Number(t.value);
+  const paymentStatus = computePaymentStatus(t);
   const due = t.dueDate ? String(t.dueDate).slice(0, 10) : null;
-  return { ...t, isPaid, isOverdue: !isPaid && due !== null && due < localToday() };
+  const isOverdue = paymentStatus !== PaymentStatus.Paid && due !== null && due < localToday();
+  return { ...t, paymentStatus, isOverdue };
+}
+
+/** Deriva a origem do Payment a partir do método — espelha a regra do backend (ADR 0001). */
+function deriveSourceType(method: number): number {
+  return method === ApiPaymentMethod.Debit || method === ApiPaymentMethod.Credit
+    ? 1 // CreditCard
+    : 0; // BankAccount
 }
 
 function applyMockFilter(
@@ -79,16 +94,15 @@ function applyMockFilter(
   if (
     import.meta.env.DEV &&
     (filter.ids?.length || filter.minValue != null || filter.maxValue != null ||
-      filter.responsibleUserIds?.length || filter.origins?.length ||
-      filter.sourceTypes?.length || filter.sourceIds?.length)
+      filter.responsibleUserIds?.length || filter.origins?.length || filter.sourceIds?.length)
   ) {
-    console.warn('[financialService] applyMockFilter: ids/min-maxValue/responsibleUserIds/origins/sourceTypes/sourceIds não implementados em modo mock');
+    console.warn('[financialService] applyMockFilter: ids/min-maxValue/responsibleUserIds/origins/sourceIds não implementados em modo mock');
   }
   return items.filter(t => {
     if (filter.types?.length && !filter.types.includes(t.transactionType)) return false;
     if (filter.description && !t.description.toLowerCase().includes(filter.description.toLowerCase())) return false;
     if (filter.categoryIds?.length && !filter.categoryIds.includes(t.categoryId)) return false;
-    if (filter.isPaid != null && t.isPaid !== filter.isPaid) return false;
+    if (filter.paymentStatuses?.length && !filter.paymentStatuses.includes(t.paymentStatus)) return false;
     if (filter.isOverdue != null && t.isOverdue !== filter.isOverdue) return false;
     const txDate = String(t.transactionDate).slice(0, 10);
     if (filter.minTransactionDate && txDate < filter.minTransactionDate) return false;
@@ -167,7 +181,7 @@ export async function getFinancialDashboard(
       .filter(
         t =>
           t.transactionType === TransactionType.Expense &&
-          !t.isPaid &&
+          t.paymentStatus !== PaymentStatus.Paid &&
           t.dueDate !== null &&
           String(t.dueDate).slice(0, 10) <= limitIso,
       )
@@ -235,13 +249,11 @@ export async function createTransaction(
       categoryName: category?.name ?? 'Geral',
       origin: 0,
       originName: 'Financeiro',
-      incomeOrigin: payload.incomeOrigin ?? null,
       observation: null,
-      sourceType: payload.sourceType,
-      sourceId: payload.sourceId ?? crypto.randomUUID(),
-      sourceName: null,
+      // Income: sourceId vem do form (obrigatório, validado lá). Expense: sempre null.
+      sourceId: payload.type === TransactionType.Income ? (payload.sourceId ?? null) : null,
       payments: [],
-      isPaid: false,
+      paymentStatus: PaymentStatus.Open,
       isOverdue: false,
     });
     mockStore = [created, ...mockStore];
@@ -271,9 +283,7 @@ export async function updateTransaction(
       categoryId: payload.categoryId,
       categoryName: category?.name ?? mockStore[idx].categoryName,
       responsibleUserId: payload.responsibleUserId,
-      sourceType: payload.sourceType,
-      sourceId: payload.sourceId ?? mockStore[idx].sourceId,
-      incomeOrigin: payload.incomeOrigin ?? mockStore[idx].incomeOrigin,
+      sourceId: payload.type === TransactionType.Income ? (payload.sourceId ?? mockStore[idx].sourceId) : null,
       observation: payload.observation ?? mockStore[idx].observation,
     });
     mockStore = mockStore.map((t, i) => (i === idx ? updated : t));
@@ -314,6 +324,8 @@ export async function addPayment(payload: AddPaymentRequest, nestId?: string): P
       paidByUserId: payload.paidByUserId,
       paidByUserFullName: 'João (Você)',
       observation: payload.observation ?? null,
+      sourceType: deriveSourceType(payload.method),
+      sourceId: payload.sourceId,
     };
     const updated = recomputeStatus({ ...tx, payments: [...tx.payments, payment] });
     mockStore = mockStore.map((t, i) => (i === idx ? updated : t));

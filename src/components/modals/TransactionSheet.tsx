@@ -5,10 +5,12 @@ import { useEffect, useState } from 'react';
 import { Button, Sheet, SheetContent } from '@/components/ui';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import type { BankAccountResponse } from '@/schemas/bank-account';
 import type { CategoryResponse } from '@/schemas/category';
-import { FinancialSourceType, TransactionType } from '@/schemas/enums';
+import { TransactionType } from '@/schemas/enums';
 import type { CreateTransactionRequest } from '@/schemas/financial';
 import type { NestMember } from '@/schemas/nest';
+import * as bankAccountService from '@/services/bankAccountService';
 import * as nestService from '@/services/nestService';
 
 import { AmountHero } from './transaction-sheet/AmountHero';
@@ -48,19 +50,29 @@ export function TransactionSheet({
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [members, setMembers] = useState<NestMember[]>([]);
+  const [bankAccounts, setBankAccounts] = useState<BankAccountResponse[]>([]);
 
   // Expense extras
   const [dueDate, setDueDate] = useState(todayIso());
   const [paymentMethod, setPaymentMethod] = useState<number | null>(null);
 
   // Income extras
-  const [incomeSource, setIncomeSource] = useState('');
+  const [sourceId, setSourceId] = useState('');
 
   useEffect(() => {
     if (!nestId) return;
     let active = true;
     nestService.getNestMembers(nestId)
       .then(m => { if (active) setMembers(m); })
+      .catch(() => {});
+    return () => { active = false; };
+  }, [nestId]);
+
+  useEffect(() => {
+    if (!nestId) return;
+    let active = true;
+    bankAccountService.listBankAccounts(nestId)
+      .then(a => { if (active) setBankAccounts(a); })
       .catch(() => {});
     return () => { active = false; };
   }, [nestId]);
@@ -76,7 +88,7 @@ export function TransactionSheet({
     setObservation('');
     setDueDate(todayIso());
     setPaymentMethod(null);
-    setIncomeSource('');
+    setSourceId('');
     setIsDetailsOpen(false);
   }, [open, currentUserId]);
 
@@ -85,7 +97,7 @@ export function TransactionSheet({
     setCategoryId('');
     setDueDate(todayIso());
     setPaymentMethod(null);
-    setIncomeSource('');
+    setSourceId('');
     setIsDetailsOpen(false);
   };
 
@@ -96,7 +108,8 @@ export function TransactionSheet({
     amount !== null && amount > 0 &&
     Boolean(categoryId) &&
     Boolean(responsibleUserId) &&
-    members.length > 0;
+    members.length > 0 &&
+    (type !== TransactionType.Income || Boolean(sourceId));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -110,10 +123,9 @@ export function TransactionSheet({
         amount: amount as number,
         transactionDate: toApiDateTime(transactionDate),
         dueDate: isExpenseType ? toApiDateTime(dueDate) : null,
-        incomeOrigin: isExpenseType ? null : (incomeSource.trim() || null),
         categoryId,
         responsibleUserId,
-        sourceType: FinancialSourceType.Manual,
+        sourceId: isExpenseType ? null : sourceId,
       });
       onClose();
     } finally {
@@ -196,8 +208,9 @@ export function TransactionSheet({
                   onDateChange={setTransactionDate}
                   responsibleUserId={responsibleUserId}
                   onResponsibleChange={setResponsibleUserId}
-                  incomeSource={incomeSource}
-                  onIncomeSourceChange={setIncomeSource}
+                  sourceId={sourceId}
+                  onSourceIdChange={setSourceId}
+                  bankAccounts={bankAccounts}
                   observation={observation}
                   onObservationChange={setObservation}
                   isDetailsOpen={isDetailsOpen}

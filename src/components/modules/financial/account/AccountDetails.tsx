@@ -1,6 +1,7 @@
-import { CreditCard, Pencil, PowerOff, Trash2 } from 'lucide-react';
+import { CreditCard, Pencil, Power, PowerOff, Trash2 } from 'lucide-react';
 
 import { Button, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui';
+import { cn } from '@/lib/utils';
 import type { BankAccountResponse } from '@/schemas/bank-account';
 import { CARD_TYPE_LABELS } from '@/schemas/enums';
 import { formatCurrency } from '@/utils/dashboardMetrics';
@@ -12,26 +13,47 @@ interface AccountDetailsProps {
   canDelete: boolean;
   onEdit: (account: BankAccountResponse) => void;
   onDelete: (account: BankAccountResponse) => void;
-  onInactivate: (account: BankAccountResponse) => void;
+  onToggleActive: (account: BankAccountResponse) => void;
 }
 
 export function AccountDetails({
-  account, canDelete, onEdit, onDelete, onInactivate,
+  account, canDelete, onEdit, onDelete, onToggleActive,
 }: AccountDetailsProps) {
   const balance = Number(account.balance);
 
   return (
     <div className="flex flex-col gap-4 p-6 rounded-3xl bg-card border border-border">
+      {!account.isActive && (
+        <div className="flex items-center gap-2 rounded-xl border border-dashed border-border bg-muted/40 px-3 py-2">
+          <PowerOff size={15} strokeWidth={1.5} className="text-muted-foreground shrink-0" />
+          <p className="font-ui text-sm text-muted-foreground">Esta conta está inativa.</p>
+        </div>
+      )}
+
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">
           <span
-            className="h-10 w-10 rounded-full shrink-0"
+            className={cn(
+              'h-10 w-10 rounded-full shrink-0',
+              !account.isActive && 'grayscale opacity-60',
+            )}
             style={{ backgroundColor: account.color }}
             aria-hidden="true"
           />
           <div className="min-w-0">
             <h3 className="font-editorial font-bold text-foreground text-lg truncate">{account.name}</h3>
-            <p className="font-ui text-sm text-muted-foreground">{accountTypeLabel(account.type)}</p>
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              <p className="font-ui text-sm text-muted-foreground">{accountTypeLabel(account.type)}</p>
+              <span
+                className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                  account.isActive
+                    ? 'bg-emerald-500/10 text-emerald-600'
+                    : 'bg-muted text-muted-foreground'
+                }`}
+              >
+                {account.isActive ? 'Ativa' : 'Inativa'}
+              </span>
+            </div>
           </div>
         </div>
         <div className="flex gap-2 shrink-0">
@@ -42,9 +64,17 @@ export function AccountDetails({
             variant="outline"
             size="sm"
             className="gap-1.5"
-            onClick={() => onInactivate(account)}
+            onClick={() => onToggleActive(account)}
           >
-            <PowerOff size={15} strokeWidth={1.5} /> Inativar
+            {account.isActive ? (
+              <>
+                <PowerOff size={15} strokeWidth={1.5} /> Inativar
+              </>
+            ) : (
+              <>
+                <Power size={15} strokeWidth={1.5} /> Ativar
+              </>
+            )}
           </Button>
           {canDelete ? (
             <Button
@@ -84,7 +114,11 @@ export function AccountDetails({
           <p className="font-ui text-[11px] uppercase tracking-wide text-muted-foreground">Saldo</p>
           <p
             className="font-editorial text-3xl font-bold mt-1"
-            style={{ color: balance < 0 ? 'var(--destructive)' : 'var(--chart-2)' }}
+            style={
+              account.isActive
+                ? { color: balance < 0 ? 'var(--destructive)' : 'var(--chart-2)' }
+                : { color: 'var(--muted-foreground)' }
+            }
           >
             {formatCurrency(balance)}
           </p>

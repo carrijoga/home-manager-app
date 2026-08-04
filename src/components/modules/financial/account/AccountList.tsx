@@ -40,35 +40,36 @@ export function AccountList({
       <div
         key={acc.bankAccountId}
         className={cn(
-          'relative min-w-[220px] lg:min-w-0 rounded-2xl border-2 bg-card transition-colors',
-          selected ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : 'hover:bg-muted/50',
+          'relative min-w-[220px] lg:min-w-0 overflow-hidden rounded-2xl border bg-card transition-colors',
+          selected ? 'border-primary' : 'border-border',
           !acc.isActive && 'opacity-50',
         )}
-        style={{
-          borderColor: acc.color,
-          ...(selected ? { background: 'var(--primary-subtle)' } : {}),
-        }}
       >
+        {/*
+          A cor da conta é livre (color picker) e o tema muda entre claro e
+          escuro, então ela entra como camada sobreposta ao bg-card em baixa
+          opacidade, em vez de compor a cor final via color-mix — que resolveria
+          var(--card) no escopo errado ao alternar o tema.
+        */}
+        <span
+          className="pointer-events-none absolute inset-0 opacity-[0.12]"
+          style={{ backgroundColor: acc.color }}
+          aria-hidden="true"
+        />
+
         <button
           type="button"
           aria-pressed={selected}
           onClick={() => onSelect(acc.bankAccountId)}
-          className="w-full text-left p-4 pr-11"
+          className="relative w-full text-left p-4 pr-11"
         >
-          <div className="flex items-center gap-2">
-            <span
-              className="h-3 w-3 rounded-full shrink-0"
-              style={{ backgroundColor: acc.color }}
-              aria-hidden="true"
-            />
-            <span className="font-ui font-semibold text-foreground truncate">{acc.name}</span>
-          </div>
+          <span className="block font-ui font-semibold text-foreground truncate">{acc.name}</span>
           <p className="font-ui text-[11px] uppercase tracking-wide text-muted-foreground mt-1.5">
             {accountTypeLabel(acc.type)}
           </p>
         </button>
 
-        <div className="absolute top-3 right-3">
+        <div className="absolute top-3 right-3 z-10">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button

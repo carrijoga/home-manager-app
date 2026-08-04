@@ -48,19 +48,18 @@ export function AccountList({ accounts, selectedId, onSelect, onAdd }: AccountLi
       <p className="font-ui text-[11px] uppercase tracking-wide text-muted-foreground mt-1.5">
         {accountTypeLabel(acc.type)}
       </p>
-      <span
-        className={cn(
-          'inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold mt-1.5',
-          acc.isActive
-            ? 'bg-emerald-500/10 text-emerald-600'
-            : 'bg-muted text-muted-foreground',
-        )}
-      >
-        {acc.isActive ? 'Ativa' : 'Inativa'}
-      </span>
+      {acc.isActive && (
+        <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold mt-1.5 bg-emerald-500/10 text-emerald-600">
+          Ativa
+        </span>
+      )}
       <p
         className="font-ui text-sm font-semibold mt-1.5"
-        style={{ color: Number(acc.balance) < 0 ? 'var(--destructive)' : 'var(--chart-2)' }}
+        style={
+          acc.isActive
+            ? { color: Number(acc.balance) < 0 ? 'var(--destructive)' : 'var(--chart-2)' }
+            : { color: 'var(--muted-foreground)' }
+        }
       >
         {formatCurrency(Number(acc.balance))}
       </p>
@@ -78,7 +77,7 @@ export function AccountList({ accounts, selectedId, onSelect, onAdd }: AccountLi
       </div>
 
       {inactiveAccounts.length > 0 && (
-        <div className="flex flex-col gap-3 pt-3 border-t border-dashed border-border lg:pt-3">
+        <div className="flex flex-col gap-3 pt-3 border-t border-dashed border-border">
           <p className="font-ui text-[11px] uppercase tracking-wide text-muted-foreground">
             Inativas
           </p>

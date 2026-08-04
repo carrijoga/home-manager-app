@@ -9,14 +9,11 @@ const meta = {
   component: AccountDetails,
   parameters: { layout: 'padded' },
   args: {
-    onEdit: () => {},
-    onDelete: () => {},
-    onInactivate: () => {},
-    canDelete: true,
     account: {
       bankAccountId: 'acc-1',
       name: 'Conta Corrente Nubank',
       type: AccountType.Checking,
+      isActive: true,
       balance: 4820.55,
       initialBalance: 1000,
       color: '#8A05BE',
@@ -67,7 +64,7 @@ export const NoLinkedCards: Story = {
   },
 };
 
-/** Nome longo deve truncar sem empurrar os botões de ação. */
+/** Nome longo deve truncar sem quebrar o cabeçalho. */
 export const LongName: Story = {
   args: {
     account: {
@@ -77,9 +74,9 @@ export const LongName: Story = {
   },
 };
 
-/** Conta com lançamento vinculado — Excluir fica desabilitado com tooltip. */
-export const CannotDelete: Story = {
+/** Conta inativa — banner no topo, saldo em muted-foreground e cor esmaecida. */
+export const Inactive: Story = {
   args: {
-    canDelete: false,
+    account: { ...meta.args.account, isActive: false },
   },
 };

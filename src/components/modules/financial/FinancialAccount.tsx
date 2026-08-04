@@ -51,7 +51,7 @@ export function FinancialAccount() {
       setAccounts(list);
       setSelectedId((prev) => {
         if (prev && list.some((a) => a.bankAccountId === prev)) return prev;
-        return list[0]?.bankAccountId ?? null;
+        return list.find((a) => a.isActive)?.bankAccountId ?? list[0]?.bankAccountId ?? null;
       });
     } catch {
       showErrorRef.current('Não foi possível carregar as contas.');
@@ -123,13 +123,28 @@ export function FinancialAccount() {
     }
   };
 
+  const handleToggleActive = async (account: BankAccountResponse) => {
+    if (account.isActive) {
+      setInactivatingAccount(account);
+      setInactivateOpen(true);
+      return;
+    }
+
+    try {
+      await bankAccountService.activateBankAccount(account.bankAccountId, nestId);
+      showSuccess('Conta ativada.');
+      await loadAccounts();
+    } catch {
+      showError('Não foi possível ativar a conta.');
+      throw new Error('activate failed');
+    }
+  };
+
+  const canDeleteMap = selectedId ? { [selectedId]: canDeleteSelected } : {};
+
   const openCreate = () => { setEditingAccount(null); setSheetOpen(true); };
   const openEdit = (account: BankAccountResponse) => { setEditingAccount(account); setSheetOpen(true); };
   const openDelete = (account: BankAccountResponse) => { setDeletingAccount(account); setDeleteOpen(true); };
-  const openInactivate = (account: BankAccountResponse) => {
-    setInactivatingAccount(account);
-    setInactivateOpen(true);
-  };
 
   if (loading) return <AccountSkeleton />;
 
@@ -162,20 +177,16 @@ export function FinancialAccount() {
             <AccountList
               accounts={accounts}
               selectedId={selectedId}
+              canDeleteMap={canDeleteMap}
               onSelect={setSelectedId}
+              onEdit={openEdit}
+              onToggleActive={handleToggleActive}
+              onDelete={openDelete}
               onAdd={openCreate}
             />
           </div>
           <div className="flex-1">
-            {selectedAccount && (
-              <AccountDetails
-                account={selectedAccount}
-                canDelete={canDeleteSelected}
-                onEdit={openEdit}
-                onDelete={openDelete}
-                onInactivate={openInactivate}
-              />
-            )}
+            {selectedAccount && <AccountDetails account={selectedAccount} />}
           </div>
         </div>
       )}

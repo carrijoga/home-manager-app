@@ -1,6 +1,5 @@
-import { CreditCard, Pencil, Power, PowerOff, Trash2 } from 'lucide-react';
+import { CreditCard, PowerOff } from 'lucide-react';
 
-import { Button, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui';
 import { cn } from '@/lib/utils';
 import type { BankAccountResponse } from '@/schemas/bank-account';
 import { CARD_TYPE_LABELS } from '@/schemas/enums';
@@ -10,15 +9,9 @@ import { accountTypeLabel } from './accountType';
 
 interface AccountDetailsProps {
   account: BankAccountResponse;
-  canDelete: boolean;
-  onEdit: (account: BankAccountResponse) => void;
-  onDelete: (account: BankAccountResponse) => void;
-  onToggleActive: (account: BankAccountResponse) => void;
 }
 
-export function AccountDetails({
-  account, canDelete, onEdit, onDelete, onToggleActive,
-}: AccountDetailsProps) {
+export function AccountDetails({ account }: AccountDetailsProps) {
   const balance = Number(account.balance);
 
   return (
@@ -30,82 +23,30 @@ export function AccountDetails({
         </div>
       )}
 
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="flex items-center gap-3 min-w-0">
-          <span
-            className={cn(
-              'h-10 w-10 rounded-full shrink-0',
-              !account.isActive && 'grayscale opacity-60',
-            )}
-            style={{ backgroundColor: account.color }}
-            aria-hidden="true"
-          />
-          <div className="min-w-0">
-            <h3 className="font-editorial font-bold text-foreground text-lg truncate">{account.name}</h3>
-            <div className="mt-1 flex flex-wrap items-center gap-2">
-              <p className="font-ui text-sm text-muted-foreground">{accountTypeLabel(account.type)}</p>
-              <span
-                className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                  account.isActive
-                    ? 'bg-emerald-500/10 text-emerald-600'
-                    : 'bg-muted text-muted-foreground'
-                }`}
-              >
-                {account.isActive ? 'Ativa' : 'Inativa'}
-              </span>
-            </div>
-          </div>
-        </div>
-        <div className="flex gap-2 shrink-0">
-          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => onEdit(account)}>
-            <Pencil size={15} strokeWidth={1.5} /> Editar
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1.5"
-            onClick={() => onToggleActive(account)}
-          >
-            {account.isActive ? (
-              <>
-                <PowerOff size={15} strokeWidth={1.5} /> Inativar
-              </>
-            ) : (
-              <>
-                <Power size={15} strokeWidth={1.5} /> Ativar
-              </>
-            )}
-          </Button>
-          {canDelete ? (
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5 text-destructive hover:text-destructive"
-              onClick={() => onDelete(account)}
-            >
-              <Trash2 size={15} strokeWidth={1.5} /> Excluir
-            </Button>
-          ) : (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="gap-1.5 text-destructive/50"
-                      disabled
-                    >
-                      <Trash2 size={15} strokeWidth={1.5} /> Excluir
-                    </Button>
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-[240px]">
-                  Esta conta possui lançamentos vinculados. Apenas inativação é permitida.
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+      <div className="flex items-center gap-3 min-w-0">
+        <span
+          className={cn(
+            'h-10 w-10 rounded-full shrink-0',
+            !account.isActive && 'opacity-60',
           )}
+          style={{ backgroundColor: account.color }}
+          aria-hidden="true"
+        />
+        <div className="min-w-0">
+          <h3 className="font-editorial font-bold text-foreground text-lg truncate">{account.name}</h3>
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            <p className="font-ui text-sm text-muted-foreground">{accountTypeLabel(account.type)}</p>
+            <span
+              className={cn(
+                'inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold',
+                account.isActive
+                  ? 'bg-emerald-500/10 text-emerald-600'
+                  : 'bg-muted text-muted-foreground',
+              )}
+            >
+              {account.isActive ? 'Ativa' : 'Inativa'}
+            </span>
+          </div>
         </div>
       </div>
 

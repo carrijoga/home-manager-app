@@ -5,9 +5,11 @@
 | File | Purpose |
 |------|---------|
 | `api.json` | **Source of truth** for all API endpoints and response shapes (~70KB). Update schemas in `src/schemas/` whenever this changes. |
-| `ENVIRONMENTS.md` | Environment variable reference and multi-env configuration guide |
-| `DEPLOY.md` | Step-by-step deployment guides for Vercel, Netlify, and Docker |
-| `DESIGN.md` | UI/UX design decisions, component design rationale, visual style notes |
+| `ENVIRONMENTS.md` | Environment variable reference, multi-env execution scripts (`dev:staging`, `build:production`), and data mode guide (`mock` vs `api`). |
+| `DEPLOY.md` | Step-by-step deployment guides for Vercel, Netlify, Docker, and production PWA setup. |
+| `DESIGN.md` | UI/UX design rationale, form guidelines, animation policies, and visual style notes. |
+| `ROADMAP.md` | Completed feature checklist, TypeScript migration progress, and future project milestones. |
+| `payment-card-frontend-prompt.md` | Technical specifications prompt for credit card module migration and integration. |
 
 ## api.json
 

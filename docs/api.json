@@ -311,6 +311,7 @@
         "tags": [
           "User"
         ],
+        "summary": "Updates the configuration settings for the currently authenticated user.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -334,6 +335,26 @@
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           }
         }
       }
@@ -456,12 +477,12 @@
         }
       }
     },
-    "/api/tasks": {
+    "/api/users/avatar-options": {
       "get": {
         "tags": [
-          "Task"
+          "User"
         ],
-        "summary": "Lists all active (pending) tasks for the current nest",
+        "summary": "Retrieves the list of hand-drawn avatar icons available for selection.",
         "responses": {
           "200": {
             "description": "OK",
@@ -470,7 +491,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/TaskResponse"
+                    "type": "string"
                   }
                 }
               },
@@ -478,7 +499,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/TaskResponse"
+                    "type": "string"
                   }
                 }
               },
@@ -486,8 +507,246 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/TaskResponse"
+                    "type": "string"
                   }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/me/avatar-slug": {
+      "patch": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Changes the avatar icon of the currently authenticated user.",
+        "requestBody": {
+          "description": "The avatar slug to select",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeAvatarSlugRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeAvatarSlugRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeAvatarSlugRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/me/profile-picture": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Uploads a profile picture for the currently authenticated user, replacing any previous picture or avatar icon shown.",
+        "requestBody": {
+          "description": "The image file to upload",
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ContentType": {
+                    "type": "string"
+                  },
+                  "ContentDisposition": {
+                    "type": "string"
+                  },
+                  "Headers": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "Length": {
+                    "pattern": "^-?(?:0|[1-9]\\d*)$",
+                    "type": [
+                      "integer",
+                      "string"
+                    ],
+                    "format": "int64"
+                  },
+                  "Name": {
+                    "type": "string"
+                  },
+                  "FileName": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Removes the profile picture of the currently authenticated user, reverting the display back to the selected avatar icon.",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tasks": {
+      "get": {
+        "tags": [
+          "Task"
+        ],
+        "summary": "Lists all active (pending) tasks for the current nest",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskPagedResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskPagedResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskPagedResponse"
                 }
               }
             }
@@ -868,6 +1127,50 @@
           "Task"
         ],
         "summary": "Marks a task as completed",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tasks/{id}/uncomplete": {
+      "patch": {
+        "tags": [
+          "Task"
+        ],
+        "summary": "Marks a completed task as not completed",
         "parameters": [
           {
             "name": "id",
@@ -2767,6 +3070,107 @@
         }
       }
     },
+    "/api/nests/configuration": {
+      "get": {
+        "tags": [
+          "NestConfiguration"
+        ],
+        "summary": "Gets the current Nest's configuration",
+        "responses": {
+          "200": {
+            "description": "Returns the Nest configuration",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/NestConfigurationResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NestConfigurationResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NestConfigurationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Configuration not found or invalid request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "NestConfiguration"
+        ],
+        "summary": "Updates the current Nest's configuration. Only the Owner or an Administrator may call this.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateNestConfigurationRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateNestConfigurationRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateNestConfigurationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Configuration updated successfully"
+          },
+          "400": {
+            "description": "Invalid request, insufficient permissions, or validation error",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/nests/create": {
       "post": {
         "tags": [
@@ -2880,6 +3284,50 @@
           "Nest"
         ],
         "summary": "Processes a request for the current user to leave their assigned nest.",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/nests/{nestId}/set-default": {
+      "post": {
+        "tags": [
+          "Nest"
+        ],
+        "summary": "Sets the specified nest as the authenticated user's default nest.",
+        "parameters": [
+          {
+            "name": "nestId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK"
@@ -3352,6 +3800,115 @@
           },
           "400": {
             "description": "Invalid request or validation error",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/financial-transactions/{id}": {
+      "put": {
+        "tags": [
+          "FinancialTransaction"
+        ],
+        "summary": "Updates an existing financial transaction that has no linked payments",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The unique identifier of the financial transaction",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "The transaction update request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTransactionRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTransactionRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTransactionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Transaction updated successfully"
+          },
+          "400": {
+            "description": "Invalid request, transaction not found, or transaction has linked payments",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "FinancialTransaction"
+        ],
+        "summary": "Deletes a financial transaction and any linked payments",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The unique identifier of the financial transaction",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Transaction deleted successfully"
+          },
+          "400": {
+            "description": "Transaction not found",
             "content": {
               "text/plain": {
                 "schema": {
@@ -3901,6 +4458,195 @@
           },
           "400": {
             "description": "Invalid filter or request error",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/categories/list-options": {
+      "post": {
+        "tags": [
+          "Category"
+        ],
+        "summary": "Lists a minified set of categories (id and name only) for use in selection inputs",
+        "requestBody": {
+          "description": "The filter criteria for listing category options",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListCategoryOptionsQuery"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListCategoryOptionsQuery"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListCategoryOptionsQuery"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Returns the list of category options",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CategoryOptionResponse"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CategoryOptionResponse"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CategoryOptionResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid filter or request error",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/categories/{Id}": {
+      "put": {
+        "tags": [
+          "Category"
+        ],
+        "summary": "Updates an existing category",
+        "parameters": [
+          {
+            "name": "Id",
+            "in": "path",
+            "description": "The unique identifier of the category",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "The category update request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCategoryRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCategoryRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCategoryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Category updated successfully"
+          },
+          "400": {
+            "description": "Category not found, invalid request, or validation error",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Category"
+        ],
+        "summary": "Deletes a category",
+        "parameters": [
+          {
+            "name": "Id",
+            "in": "path",
+            "description": "The unique identifier of the category",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Category deleted successfully"
+          },
+          "400": {
+            "description": "Category not found, in use by financial transactions, or invalid request",
             "content": {
               "text/plain": {
                 "schema": {
@@ -4995,6 +5741,10 @@
           "method": {
             "$ref": "#/components/schemas/PaymentMethod"
           },
+          "sourceId": {
+            "type": "string",
+            "format": "uuid"
+          },
           "paymentDate": {
             "type": "string",
             "format": "date-time"
@@ -5037,6 +5787,9 @@
           },
           "type": {
             "$ref": "#/components/schemas/AccountType"
+          },
+          "isActive": {
+            "type": "boolean"
           },
           "balance": {
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
@@ -5163,6 +5916,18 @@
           }
         }
       },
+      "CategoryOptionResponse": {
+        "type": "object",
+        "properties": {
+          "categoryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
       "CategoryResponse": {
         "type": "object",
         "properties": {
@@ -5182,6 +5947,14 @@
           },
           "type": {
             "$ref": "#/components/schemas/TransactionType"
+          }
+        }
+      },
+      "ChangeAvatarSlugRequest": {
+        "type": "object",
+        "properties": {
+          "avatarSlug": {
+            "type": "string"
           }
         }
       },
@@ -5495,11 +6268,11 @@
             "type": "string",
             "format": "uuid"
           },
-          "sourceType": {
-            "$ref": "#/components/schemas/FinancialSourceType"
-          },
           "sourceId": {
-            "type": "string",
+            "type": [
+              "null",
+              "string"
+            ],
             "format": "uuid"
           },
           "dueDate": {
@@ -5920,15 +6693,6 @@
               "$ref": "#/components/schemas/Modules"
             }
           },
-          "sourceTypes": {
-            "type": [
-              "null",
-              "array"
-            ],
-            "items": {
-              "$ref": "#/components/schemas/FinancialSourceType"
-            }
-          },
           "sourceIds": {
             "type": [
               "null",
@@ -5939,11 +6703,14 @@
               "format": "uuid"
             }
           },
-          "isPaid": {
+          "paymentStatuses": {
             "type": [
               "null",
-              "boolean"
-            ]
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/PaymentStatus"
+            }
           },
           "isOverdue": {
             "type": [
@@ -6017,6 +6784,13 @@
               "null",
               "string"
             ]
+          },
+          "sourceType": {
+            "$ref": "#/components/schemas/FinancialSourceType"
+          },
+          "sourceId": {
+            "type": "string",
+            "format": "uuid"
           }
         }
       },
@@ -6091,18 +6865,12 @@
               "string"
             ]
           },
-          "sourceType": {
-            "$ref": "#/components/schemas/FinancialSourceType"
-          },
           "sourceId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "sourceName": {
             "type": [
               "null",
               "string"
-            ]
+            ],
+            "format": "uuid"
           },
           "payments": {
             "type": "array",
@@ -6110,8 +6878,8 @@
               "$ref": "#/components/schemas/FinancialTransactionPaymentResponse"
             }
           },
-          "isPaid": {
-            "type": "boolean"
+          "paymentStatus": {
+            "$ref": "#/components/schemas/PaymentStatus"
           },
           "isOverdue": {
             "type": "boolean"
@@ -6141,7 +6909,31 @@
       "InviteStatus": {
         "type": "integer"
       },
-      "Languages": {
+      "ListCategoryOptionsQuery": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/TransactionType"
+          },
+          "ids": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "Locale": {
         "type": "integer"
       },
       "LoginUserRequest": {
@@ -6166,6 +6958,14 @@
             ],
             "format": "double"
           },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
           "purchasedAt": {
             "type": "string",
             "format": "date-time"
@@ -6174,6 +6974,29 @@
       },
       "Modules": {
         "type": "integer"
+      },
+      "NestConfigurationResponse": {
+        "type": "object",
+        "properties": {
+          "nestConfigurationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nestId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "finishedShoppingListGenerateFinancial": {
+            "type": "boolean"
+          },
+          "defaultShoppingExpenseCategoryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
       },
       "NestInviteResponse": {
         "required": [
@@ -6213,6 +7036,7 @@
         "required": [
           "userId",
           "name",
+          "photoUrl",
           "nestId",
           "role"
         ],
@@ -6224,6 +7048,12 @@
           },
           "name": {
             "type": "string"
+          },
+          "photoUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "nestId": {
             "type": "string",
@@ -6473,6 +7303,9 @@
         }
       },
       "PaymentMethod": {
+        "type": "integer"
+      },
+      "PaymentStatus": {
         "type": "integer"
       },
       "Priority": {
@@ -6787,6 +7620,47 @@
           }
         }
       },
+      "TaskPagedResponse": {
+        "required": [
+          "items",
+          "totalCount",
+          "page",
+          "pageSize"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaskResponse"
+            }
+          },
+          "totalCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "page": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "pageSize": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
       "TaskResponse": {
         "required": [
           "taskId",
@@ -6923,6 +7797,26 @@
           }
         }
       },
+      "UpdateCategoryRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "color": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "UpdateCreditPaymentCardSettingsRequest": {
         "type": "object",
         "properties": {
@@ -6951,6 +7845,21 @@
               "string"
             ],
             "format": "int32"
+          }
+        }
+      },
+      "UpdateNestConfigurationRequest": {
+        "type": "object",
+        "properties": {
+          "finishedShoppingListGenerateFinancial": {
+            "type": "boolean"
+          },
+          "defaultShoppingExpenseCategoryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
           }
         }
       },
@@ -7149,6 +8058,53 @@
           }
         }
       },
+      "UpdateTransactionRequest": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "transactionDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "categoryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "expenseProfile": {
+            "$ref": "#/components/schemas/ExpenseProfile"
+          },
+          "sourceId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "dueDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "incomeOrigin": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "UpdateUserConfigurationRequest": {
         "type": "object",
         "properties": {
@@ -7159,8 +8115,8 @@
           "theme": {
             "$ref": "#/components/schemas/Themes"
           },
-          "language": {
-            "$ref": "#/components/schemas/Languages"
+          "locale": {
+            "$ref": "#/components/schemas/Locale"
           },
           "city": {
             "type": [
@@ -7201,8 +8157,8 @@
           "theme": {
             "$ref": "#/components/schemas/Themes"
           },
-          "language": {
-            "$ref": "#/components/schemas/Languages"
+          "locale": {
+            "type": "string"
           },
           "city": {
             "type": [
@@ -7359,6 +8315,12 @@
           "profilePictureUrl": {
             "type": "string"
           },
+          "avatarSlug": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
           "profile": {
             "$ref": "#/components/schemas/ProfileResponse"
           },
@@ -7394,6 +8356,12 @@
           },
           "profilePictureUrl": {
             "type": "string"
+          },
+          "avatarSlug": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       }
@@ -7423,6 +8391,9 @@
     },
     {
       "name": "Notice"
+    },
+    {
+      "name": "NestConfiguration"
     },
     {
       "name": "Nest"

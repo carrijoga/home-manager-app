@@ -7,14 +7,16 @@ Domain-specific utility functions for business logic and data transformation.
 | File                  | Purpose                                                                                   |
 | --------------------- | ----------------------------------------------------------------------------------------- |
 | `dashboardMetrics.ts` | Computes KPI metrics from task/financial/shopping data. Used by Dashboard module.         |
-| `formatters.js`       | String formatting: currency, dates, names. General-purpose formatters (migrate to `.ts`). |
+| `financialUtils.ts`   | Financial calculation helpers, balance computing, statement groupers, and formatters.   |
+| `formatters.js`       | String formatting: currency, dates, names. General-purpose formatters.                    |
 
-## dashboardMetrics.ts
+## dashboardMetrics.ts & financialUtils.ts
 
-Transforms raw data into metrics for the dashboard display:
+Transforms raw data into metrics and financial summaries:
 
 ```ts
 import { calculateTaskMetrics, calculateFinancialMetrics } from '@/utils/dashboardMetrics';
+import { calculateBalance, groupTransactionsByDate } from '@/utils/financialUtils';
 
 const taskMetrics = calculateTaskMetrics(tasks, activeNestId);
 // Returns: { completed, pending, overdue, completionRate }
@@ -52,10 +54,11 @@ formatDate(new Date()); // "19 de maio de 2026"
 formatTime(new Date()); // "14:30"
 ```
 
-Used everywhere dates/currency/times are displayed. **Migrate to `.ts` gradually.**
+Used everywhere dates/currency/times are displayed.
 
 ## Adding a New Utility
 
 1. If it computes **metrics or dashboard stats** → `dashboardMetrics.ts`
-2. If it **formats display values** → `formatters.js` (or `.ts` after migration)
-3. If it's a **generic helper** → consider `src/lib/utils.ts`
+2. If it computes **financial math or groupings** → `financialUtils.ts`
+3. If it **formats display values** → `formatters.js`
+4. If it's a **generic helper** → consider `src/lib/utils.ts`

@@ -10,8 +10,23 @@ Custom React hooks shared across the application. Always use hooks from here ins
 | `useToastNotifications()`   | Toast notification system. Returns `{ show, hide, showSuccess, showError }`. Use for user feedback on async operations.          |
 | `useDebounce()`             | Debounce hook for search/filter inputs. Returns debounced value after delay (default 300ms).                                     |
 | `use-mobile()`              | Mobile device detection. Returns boolean `isMobile`. Use for responsive behavior decisions.                                      |
+| `useSignalR()`              | SignalR WebSocket connection hook for real-time item updates (e.g., shopping list synchronization).                               |
 
 ## Usage Patterns
+
+### useSignalR
+
+```ts
+import { useSignalR } from '@/hooks/useSignalR';
+
+// Establish connection to SignalR hub and register event listeners
+useSignalR({
+  hubUrl: import.meta.env.VITE_SIGNALR_URL,
+  onItemUpdated: (item) => {
+    // Handle real-time update
+  },
+});
+```
 
 ### useToastNotifications
 

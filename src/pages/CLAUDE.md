@@ -1,14 +1,15 @@
 # src/pages/CLAUDE.md
 
-Pages in this directory are **auth-flow pages only** — the main feature pages (Dashboard, Tasks, etc.) live in `src/components/modules/` and are registered directly in `src/App.jsx`.
+Pages in this directory are **standalone public flow pages** (auth and invitations) — the main feature pages (Dashboard, Tasks, Financial, etc.) live in `src/components/modules/` and are registered directly in `src/App.jsx`.
 
-## Auth Pages
+## Standalone Pages
 
-| File | Route | Description |
-|------|-------|-------------|
-| `Login.tsx` | `/login` | Email/password + Google OAuth login |
-| `Register.tsx` | `/register` | New account registration form |
-| `GoogleCallback.tsx` | `/auth/google/callback` | Handles the OAuth redirect from Google |
+| File                 | Route                   | Description                                                |
+| -------------------- | ----------------------- | ---------------------------------------------------------- |
+| `Login.tsx`          | `/login`                | Email/password + Google OAuth login                        |
+| `Register.tsx`       | `/register`             | New account registration form                              |
+| `GoogleCallback.tsx` | `/auth/google/callback` | Handles the OAuth redirect from Google                     |
+| `InviteAccept.tsx`   | `/invite`               | Handles nest invitation code validation and member join    |
 
 ## Route Registration
 
@@ -26,7 +27,7 @@ const Dashboard = lazy(() => import('@components/modules/Dashboard'))
 } />
 ```
 
-Auth pages (`/login`, `/register`) do NOT use `RequireAuth`. They redirect to `/dashboard` if the user is already authenticated.
+Auth pages (`/login`, `/register`) and standalone flow pages (`/invite`) do NOT use `RequireAuth`. Auth pages redirect to `/dashboard` if the user is already authenticated.
 
 ## RequireAuth
 
@@ -38,3 +39,10 @@ Auth pages (`/login`, `/register`) do NOT use `RequireAuth`. They redirect to `/
 2. Google redirects back to `/auth/google/callback` with `?code=...`
 3. `GoogleCallback.tsx` sends the code to `authService.googleCallback()`
 4. On success, redirects to `/dashboard`
+
+## Invitation Accept Flow (`InviteAccept.tsx`)
+
+1. User receives an invitation link with `?code=...` or navigates to `/invite`
+2. `InviteAccept.tsx` validates the invitation token via `nestService.validateInvite(code)`
+3. Displays nest details and allows the user to accept the invitation to join the family nest
+4. On acceptance, updates active nest state and redirects to `/dashboard`

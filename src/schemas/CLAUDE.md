@@ -16,20 +16,20 @@ export type Thing = z.infer<typeof ThingSchema>
 
 ## Schema Files
 
-| File | Covers |
-|------|--------|
-| `auth.ts` | Login/register request + response shapes |
-| `user.ts` | User profile and nest member shapes |
-| `tasks.ts` | Task and subtask shapes |
-| `shopping.ts` | Shopping list and item shapes |
-| `financial.ts` | Expense and income shapes |
-| `bank-account.ts` | Bank account shape |
-| `category.ts` | Category shape (shared by financial + shopping) |
-| `notices.ts` | Notice/aviso shape |
-| `settingsSchemas.ts` | User and nest settings shapes |
-| `shared.ts` | Reusable sub-schemas (pagination, timestamps, IDs) |
-| `enums.ts` | Zod enums matching backend enum types |
-| `index.ts` | Barrel export |
+| File                 | Covers                                             |
+| -------------------- | -------------------------------------------------- |
+| `auth.ts`            | Login/register request + response shapes           |
+| `user.ts`            | User profile and nest member shapes                |
+| `tasks.ts`           | Task and subtask shapes                            |
+| `shopping.ts`        | Shopping list and item shapes                      |
+| `financial.ts`       | Expense and income shapes                          |
+| `bank-account.ts`    | Bank account shape                                 |
+| `category.ts`        | Category shape (shared by financial + shopping)    |
+| `notices.ts`         | Notice/aviso shape                                 |
+| `settingsSchemas.ts` | User and nest settings shapes                      |
+| `shared.ts`          | Reusable sub-schemas (pagination, timestamps, IDs) |
+| `enums.ts`           | Zod enums matching backend enum types              |
+| `index.ts`           | Barrel export                                      |
 
 ## Enums
 
@@ -38,6 +38,7 @@ All enums are defined in `enums.ts` as `z.enum([...])`. Import from there — do
 ## Shared Sub-schemas
 
 `shared.ts` contains reusable building blocks:
+
 - `TimestampsSchema` — `createdAt`, `updatedAt`
 - `PaginatedResponseSchema` — wraps list responses with `total`, `page`, `pageSize`
 - `IdSchema` — UUID string

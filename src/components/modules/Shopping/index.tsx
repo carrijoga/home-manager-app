@@ -42,10 +42,7 @@ const Shopping = memo(function Shopping() {
     deleteShoppingCategory: data.deleteShoppingCategory,
   });
 
-  const hubUrl =
-    DATA_MODE !== 'mock' && activeNestId
-      ? ENDPOINTS.shoppingHub(activeNestId)
-      : null;
+  const hubUrl = DATA_MODE !== 'mock' && activeNestId ? ENDPOINTS.shoppingHub(activeNestId) : null;
 
   const { connectionRef, isConnected } = useSignalR(hubUrl);
 
@@ -54,6 +51,7 @@ const Shopping = memo(function Shopping() {
     isConnected,
     viewMode: nav.viewMode,
     selectedListId: nav.selectedListId,
+    shoppingCategories: data.shoppingCategories,
     setDetailData: nav.setDetailData,
     setShoppingLists: nav.setShoppingLists,
     backToLists: nav.backToLists,
@@ -184,8 +182,12 @@ const Shopping = memo(function Shopping() {
           onUploadFile={actions.handleUploadFile}
           onBulkEdit={(patch) => actions.handleBulkEdit(patch, selectedItems)}
           onBulkDelete={() => actions.handleBulkDelete(selectedItems)}
-          onCreateCategory={async (name) => { await actions.createShoppingCategory(name); }}
-          onDeleteCategory={async (id) => { await actions.deleteShoppingCategory(id); }}
+          onCreateCategory={async (name) => {
+            await actions.createShoppingCategory(name);
+          }}
+          onDeleteCategory={async (id) => {
+            await actions.deleteShoppingCategory(id);
+          }}
         />
       )}
     </AnimatePresence>

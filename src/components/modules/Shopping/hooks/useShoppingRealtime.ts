@@ -3,7 +3,7 @@ import type React from 'react';
 import { useEffect } from 'react';
 
 import { getShoppingListById, mapItem } from '@/services/shoppingService';
-import type { AppShoppingList, AppShoppingListSummary } from '@/types';
+import type { AppShoppingCategory, AppShoppingList, AppShoppingListSummary } from '@/types';
 
 import type { ViewMode } from '../types';
 
@@ -12,6 +12,7 @@ interface UseShoppingRealtimeArgs {
   isConnected: boolean;
   viewMode: ViewMode;
   selectedListId: string | null;
+  shoppingCategories: AppShoppingCategory[];
   setDetailData: React.Dispatch<React.SetStateAction<AppShoppingList | null>>;
   setShoppingLists: React.Dispatch<React.SetStateAction<AppShoppingListSummary[]>>;
   backToLists: () => void;
@@ -23,6 +24,7 @@ export function useShoppingRealtime({
   isConnected,
   viewMode,
   selectedListId,
+  shoppingCategories,
   setDetailData,
   setShoppingLists,
   backToLists,
@@ -62,8 +64,8 @@ export function useShoppingRealtime({
           prev.map((l) =>
             l.shoppingListId === payload.listId
               ? { ...l, name: updated.name, notes: updated.notes }
-              : l,
-          ),
+              : l
+          )
         );
       } catch {
         // list may have been deleted — ignore
@@ -73,8 +75,8 @@ export function useShoppingRealtime({
     const onListStatusChanged = (payload: { listId: string; isFinished: boolean }) => {
       setShoppingLists((prev) =>
         prev.map((l) =>
-          l.shoppingListId === payload.listId ? { ...l, isFinished: payload.isFinished } : l,
-        ),
+          l.shoppingListId === payload.listId ? { ...l, isFinished: payload.isFinished } : l
+        )
       );
     };
 
@@ -102,22 +104,42 @@ export function useShoppingRealtime({
     const connection = connectionRef.current;
     if (!connection || !isConnected) return;
 
+    // O payload do hub (ReceiveItemCreated/ReceiveItemUpdated) traz o registro
+    // cru do banco, sem o join de categoryName que a REST API faz — deriva
+    // localmente a partir do shoppingCategoryId para não perder/zerar a categoria.
+    const resolveCategoryName = (categoryId: string | null | undefined): string | null =>
+      categoryId
+        ? (shoppingCategories.find((c) => c.shoppingCategoryId === categoryId)?.name ?? null)
+        : null;
+
     const onItemCreated = (raw: unknown) => {
       const item = mapItem(raw as Parameters<typeof mapItem>[0]);
+      const resolved = {
+        ...item,
+        categoryName: item.categoryName ?? resolveCategoryName(item.shoppingCategoryId),
+      };
       setDetailData((prev) => {
         if (!prev) return prev;
-        return { ...prev, items: [...prev.items, item] };
+        const idx = prev.items.findIndex((i) => i.shoppingItemId === resolved.shoppingItemId);
+        if (idx === -1) return { ...prev, items: [...prev.items, resolved] };
+        const items = [...prev.items];
+        items[idx] = resolved;
+        return { ...prev, items };
       });
     };
 
     const onItemUpdated = (raw: unknown) => {
       const item = mapItem(raw as Parameters<typeof mapItem>[0]);
+      const resolved = {
+        ...item,
+        categoryName: item.categoryName ?? resolveCategoryName(item.shoppingCategoryId),
+      };
       setDetailData((prev) => {
         if (!prev) return prev;
         return {
           ...prev,
           items: prev.items.map((i) =>
-            i.shoppingItemId === item.shoppingItemId ? item : i,
+            i.shoppingItemId === resolved.shoppingItemId ? resolved : i
           ),
         };
       });
@@ -145,7 +167,7 @@ export function useShoppingRealtime({
           items: prev.items.map((i) =>
             i.shoppingItemId === payload.itemId
               ? { ...i, isPurchased: payload.isPurchased, price: payload.price }
-              : i,
+              : i
           ),
         };
       });
@@ -162,5 +184,5 @@ export function useShoppingRealtime({
       connection.off('ReceiveItemDeleted', onItemDeleted);
       connection.off('ReceiveItemPurchaseChanged', onItemPurchaseChanged);
     };
-  }, [connectionRef, isConnected, setDetailData]);
+  }, [connectionRef, isConnected, shoppingCategories, setDetailData]);
 }

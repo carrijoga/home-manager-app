@@ -14,7 +14,11 @@ interface ShoppingNavigationDeps {
   loadShoppingListDetail: (id: string) => Promise<AppShoppingList>;
 }
 
-export function useShoppingNavigation({ remoteShoppingLists, shoppingCategories, loadShoppingListDetail }: ShoppingNavigationDeps) {
+export function useShoppingNavigation({
+  remoteShoppingLists,
+  shoppingCategories,
+  loadShoppingListDetail,
+}: ShoppingNavigationDeps) {
   const [shoppingLists, setShoppingLists] = useState(remoteShoppingLists);
   const { showError } = useToastNotifications();
 
@@ -60,7 +64,9 @@ export function useShoppingNavigation({ remoteShoppingLists, shoppingCategories,
   const categoriesInDetail = useMemo((): string[] => {
     if (!detailData) return [];
     const set = new Set<string>();
-    detailData.items.forEach((i) => { if (i.categoryName) set.add(i.categoryName); });
+    detailData.items.forEach((i) => {
+      if (i.categoryName) set.add(i.categoryName);
+    });
     return Array.from(set).sort((a, b) => {
       if (a === 'Sem categoria') return 1;
       if (b === 'Sem categoria') return -1;
@@ -182,18 +188,40 @@ export function useShoppingNavigation({ remoteShoppingLists, shoppingCategories,
 
   return {
     // state
-    viewMode, selectedListId, detailData, setDetailData, isLoadingDetail,
-    filterMonth, monthNavDir, categoryFilter, setCategoryFilter,
-    sortOrder, setSortOrder, searchTerm, setSearchTerm,
-    debouncedSearch, isSearchPending, collapsedCategories,
-    shoppingLists, setShoppingLists, uniqueCategories,
+    viewMode,
+    selectedListId,
+    detailData,
+    setDetailData,
+    isLoadingDetail,
+    filterMonth,
+    monthNavDir,
+    categoryFilter,
+    setCategoryFilter,
+    sortOrder,
+    setSortOrder,
+    searchTerm,
+    setSearchTerm,
+    debouncedSearch,
+    isSearchPending,
+    collapsedCategories,
+    shoppingLists,
+    setShoppingLists,
+    uniqueCategories,
     // refs
     categoryScrollRef,
     // computed
-    filteredLists, categoriesInDetail, groupedItemEntries,
+    filteredLists,
+    categoriesInDetail,
+    groupedItemEntries,
     // actions
-    openListDetail, backToLists, toggleCategoryCollapse,
-    scrollCategories, handleCategoryPointerDown, handleCategoryPointerMove, handleCategoryPointerUp,
-    navigateMonth, resetMonthToToday,
+    openListDetail,
+    backToLists,
+    toggleCategoryCollapse,
+    scrollCategories,
+    handleCategoryPointerDown,
+    handleCategoryPointerMove,
+    handleCategoryPointerUp,
+    navigateMonth,
+    resetMonthToToday,
   };
 }

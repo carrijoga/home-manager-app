@@ -1,10 +1,5 @@
 import { formatCurrency } from '@utils/formatters';
-import {
-  ArrowLeft,
-  CheckCircle2,
-  ShoppingCart,
-  Tag,
-} from 'lucide-react';
+import { ArrowLeft, CheckCircle2, ShoppingCart, Tag } from 'lucide-react';
 
 import type { AppShoppingList } from '@/types';
 
@@ -17,20 +12,14 @@ interface DetailHeaderProps {
 }
 
 export function DetailHeader(props: DetailHeaderProps) {
-  const {
-    detailData,
-    totalEstimated,
-    totalSpent,
-    remaining,
-    onBack,
-  } = props;
+  const { detailData, totalEstimated, totalSpent, remaining, onBack } = props;
 
   return (
     <div className="flex flex-col gap-4">
       {/* Left: title area */}
       <div className="space-y-1">
         {/* Module context pill */}
-        <div className="border-border/40 inline-flex items-center gap-2 rounded-full border bg-card px-3 py-1">
+        <div className="inline-flex items-center gap-2 rounded-full border border-border/40 bg-card px-3 py-1">
           <div className="h-2 w-2 rounded-full" style={{ background: '#ffcad9' }} />
           <span
             className="text-[10px] font-semibold uppercase tracking-widest"

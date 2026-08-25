@@ -1,7 +1,12 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
-import type { AppShoppingCategory, AppShoppingItem, AppShoppingList, AppShoppingListSummary } from '@/types';
+import type {
+  AppShoppingCategory,
+  AppShoppingItem,
+  AppShoppingList,
+  AppShoppingListSummary,
+} from '@/types';
 
 import { fromISOMonthYear, todayISO, toISOMonthYear } from '../helpers';
 import type { BulkEditPatch, ItemFormData, ListFormData, PurchaseFormData } from '../types';
@@ -10,15 +15,58 @@ interface ShoppingActionsDeps {
   shoppingLists: AppShoppingListSummary[];
   shoppingCategories: AppShoppingCategory[];
   createShoppingList: (name: string, monthYear: string, notes?: string) => Promise<void>;
-  updateShoppingList: (id: string, name: string, monthYear: string, notes?: string) => Promise<void>;
+  updateShoppingList: (
+    id: string,
+    name: string,
+    monthYear: string,
+    notes?: string
+  ) => Promise<void>;
   deleteShoppingList: (id: string) => Promise<void>;
   finishShoppingList: (id: string) => Promise<void>;
   unfinishShoppingList: (id: string) => Promise<void>;
-  addShoppingItem: (listId: string, name: string, quantity: number, unitType: number, categoryId?: string | null, estimatedPrice?: number | null, notes?: string | null) => Promise<AppShoppingItem>;
-  updateShoppingItem: (id: string, listId: string, name: string, quantity: number, unitType: number, categoryId?: string | null, estimatedPrice?: number | null, notes?: string | null) => Promise<void>;
-  deleteShoppingItem: (id: string, listId: string, quantity: number, unitType: number, estimatedPrice?: number | null, isPurchased?: boolean, price?: number | null) => Promise<void>;
-  markItemAsPurchased: (id: string, listId: string, quantity: number, unitType: number, price: number, purchasedAt: string) => Promise<void>;
-  unmarkItemAsPurchased: (id: string, listId: string, quantity: number, unitType: number, price: number) => Promise<void>;
+  addShoppingItem: (
+    listId: string,
+    name: string,
+    quantity: number,
+    unitType: number,
+    categoryId?: string | null,
+    estimatedPrice?: number | null,
+    notes?: string | null
+  ) => Promise<AppShoppingItem>;
+  updateShoppingItem: (
+    id: string,
+    listId: string,
+    name: string,
+    quantity: number,
+    unitType: number,
+    categoryId?: string | null,
+    estimatedPrice?: number | null,
+    notes?: string | null
+  ) => Promise<void>;
+  deleteShoppingItem: (
+    id: string,
+    listId: string,
+    quantity: number,
+    unitType: number,
+    estimatedPrice?: number | null,
+    isPurchased?: boolean,
+    price?: number | null
+  ) => Promise<void>;
+  markItemAsPurchased: (
+    id: string,
+    listId: string,
+    quantity: number,
+    unitType: number,
+    price: number,
+    purchasedAt: string
+  ) => Promise<void>;
+  unmarkItemAsPurchased: (
+    id: string,
+    listId: string,
+    quantity: number,
+    unitType: number,
+    price: number
+  ) => Promise<void>;
   uploadShoppingItems: (listId: string, file: File) => Promise<AppShoppingList>;
   createShoppingCategory: (name: string, description?: string) => Promise<AppShoppingCategory>;
   deleteShoppingCategory: (id: string) => Promise<void>;
@@ -27,15 +75,24 @@ interface ShoppingActionsDeps {
 export function useShoppingActions(
   selectedListId: string | null,
   setDetailData: React.Dispatch<React.SetStateAction<AppShoppingList | null>>,
-  deps: ShoppingActionsDeps,
+  deps: ShoppingActionsDeps
 ) {
   const {
-    shoppingLists, shoppingCategories,
-    createShoppingList, updateShoppingList, deleteShoppingList,
-    finishShoppingList, unfinishShoppingList,
-    addShoppingItem, updateShoppingItem, deleteShoppingItem,
-    markItemAsPurchased, unmarkItemAsPurchased,
-    uploadShoppingItems, createShoppingCategory, deleteShoppingCategory,
+    shoppingLists,
+    shoppingCategories,
+    createShoppingList,
+    updateShoppingList,
+    deleteShoppingList,
+    finishShoppingList,
+    unfinishShoppingList,
+    addShoppingItem,
+    updateShoppingItem,
+    deleteShoppingItem,
+    markItemAsPurchased,
+    unmarkItemAsPurchased,
+    uploadShoppingItems,
+    createShoppingCategory,
+    deleteShoppingCategory,
   } = deps;
   const { showSuccess, showError } = useToastNotifications();
 
@@ -64,8 +121,14 @@ export function useShoppingActions(
 
   // ── Inline edit state ─────────────────────────────────────────────────────
   const [inlineEditingId, setInlineEditingId] = useState<string | null>(null);
-  const [inlineForm, setInlineForm] = useState<{ qty: string; estimated: number | null; paid: number | null }>({
-    qty: '', estimated: null, paid: null,
+  const [inlineForm, setInlineForm] = useState<{
+    qty: string;
+    estimated: number | null;
+    paid: number | null;
+  }>({
+    qty: '',
+    estimated: null,
+    paid: null,
   });
   const [inlineSaving, setInlineSaving] = useState(false);
 
@@ -116,7 +179,11 @@ export function useShoppingActions(
   // ── Inline edit helpers ───────────────────────────────────────────────────
   const openInlineEdit = useCallback((item: AppShoppingItem) => {
     setInlineEditingId(item.shoppingItemId);
-    setInlineForm({ qty: String(item.quantity), estimated: item.estimatedPrice ?? null, paid: item.price ?? null });
+    setInlineForm({
+      qty: String(item.quantity),
+      estimated: item.estimatedPrice ?? null,
+      paid: item.price ?? null,
+    });
   }, []);
 
   const cancelInlineEdit = useCallback(() => {
@@ -132,31 +199,55 @@ export function useShoppingActions(
         const newEstimated = inlineForm.estimated;
         const newPaid = inlineForm.paid;
         await updateShoppingItem(
-          item.shoppingItemId, selectedListId!, item.name, newQty, item.unitType,
-          item.shoppingCategoryId ?? null, newEstimated, item.notes ?? null
+          item.shoppingItemId,
+          selectedListId!,
+          item.name,
+          newQty,
+          item.unitType,
+          item.shoppingCategoryId ?? null,
+          newEstimated,
+          item.notes ?? null
         );
         if (newPaid != null && !item.isPurchased) {
           await markItemAsPurchased(
-            item.shoppingItemId, selectedListId!, newQty, item.unitType, newPaid,
+            item.shoppingItemId,
+            selectedListId!,
+            newQty,
+            item.unitType,
+            newPaid,
             `${todayISO()}T12:00:00Z`
           );
-          setDetailData((prev) => prev ? {
-            ...prev,
-            items: prev.items.map((i) =>
-              i.shoppingItemId === item.shoppingItemId
-                ? { ...i, quantity: newQty, estimatedPrice: newEstimated, isPurchased: true, price: newPaid }
-                : i
-            ),
-          } : prev);
+          setDetailData((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  items: prev.items.map((i) =>
+                    i.shoppingItemId === item.shoppingItemId
+                      ? {
+                          ...i,
+                          quantity: newQty,
+                          estimatedPrice: newEstimated,
+                          isPurchased: true,
+                          price: newPaid,
+                        }
+                      : i
+                  ),
+                }
+              : prev
+          );
         } else {
-          setDetailData((prev) => prev ? {
-            ...prev,
-            items: prev.items.map((i) =>
-              i.shoppingItemId === item.shoppingItemId
-                ? { ...i, quantity: newQty, estimatedPrice: newEstimated }
-                : i
-            ),
-          } : prev);
+          setDetailData((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  items: prev.items.map((i) =>
+                    i.shoppingItemId === item.shoppingItemId
+                      ? { ...i, quantity: newQty, estimatedPrice: newEstimated }
+                      : i
+                  ),
+                }
+              : prev
+          );
         }
         showSuccess('Item atualizado!');
         setInlineEditingId(null);
@@ -164,27 +255,60 @@ export function useShoppingActions(
         setInlineSaving(false);
       }
     },
-    [inlineForm, selectedListId, updateShoppingItem, markItemAsPurchased, showSuccess, setDetailData]
+    [
+      inlineForm,
+      selectedListId,
+      updateShoppingItem,
+      markItemAsPurchased,
+      showSuccess,
+      setDetailData,
+    ]
   );
 
   // ── List CRUD ─────────────────────────────────────────────────────────────
   const handleCreateList = useCallback(
     async (data: ListFormData) => {
-      await createShoppingList(data.name, toISOMonthYear(data.monthYear), data.notes || undefined);
-      showSuccess('Lista criada!');
+      try {
+        await createShoppingList(
+          data.name,
+          toISOMonthYear(data.monthYear),
+          data.notes || undefined
+        );
+        showSuccess('Lista criada!');
+      } catch (err) {
+        showError('Erro ao criar lista.');
+        throw err;
+      }
     },
-    [createShoppingList, showSuccess]
+    [createShoppingList, showSuccess, showError]
   );
 
   const handleEditList = useCallback(
     async (data: ListFormData, listId: string, _currentDetailData: AppShoppingList | null) => {
-      await updateShoppingList(listId, data.name, toISOMonthYear(data.monthYear), data.notes || undefined);
-      setDetailData((prev) =>
-        prev ? { ...prev, name: data.name, monthYear: toISOMonthYear(data.monthYear), notes: data.notes || null } : prev
-      );
-      showSuccess('Lista atualizada!');
+      try {
+        await updateShoppingList(
+          listId,
+          data.name,
+          toISOMonthYear(data.monthYear),
+          data.notes || undefined
+        );
+        setDetailData((prev) =>
+          prev
+            ? {
+                ...prev,
+                name: data.name,
+                monthYear: toISOMonthYear(data.monthYear),
+                notes: data.notes || null,
+              }
+            : prev
+        );
+        showSuccess('Lista atualizada!');
+      } catch (err) {
+        showError('Erro ao atualizar lista.');
+        throw err;
+      }
     },
-    [updateShoppingList, showSuccess, setDetailData]
+    [updateShoppingList, showSuccess, showError, setDetailData]
   );
 
   const handleDeleteList = useCallback(
@@ -232,11 +356,21 @@ export function useShoppingActions(
   const handleEditListFromGrid = useCallback(
     async (data: ListFormData) => {
       if (!editingListId) return;
-      await updateShoppingList(editingListId, data.name, toISOMonthYear(data.monthYear), data.notes || undefined);
-      showSuccess('Lista atualizada!');
-      setEditingListId(null);
+      try {
+        await updateShoppingList(
+          editingListId,
+          data.name,
+          toISOMonthYear(data.monthYear),
+          data.notes || undefined
+        );
+        showSuccess('Lista atualizada!');
+        setEditingListId(null);
+      } catch (err) {
+        showError('Erro ao atualizar lista.');
+        throw err;
+      }
     },
-    [editingListId, updateShoppingList, showSuccess]
+    [editingListId, updateShoppingList, showSuccess, showError]
   );
 
   const handleDeleteListFromGrid = useCallback(async () => {
@@ -257,50 +391,93 @@ export function useShoppingActions(
   // ── Item CRUD ─────────────────────────────────────────────────────────────
   const handleAddItem = useCallback(
     async (data: ItemFormData) => {
-      if (!selectedListId) return;
-      const newItem = await addShoppingItem(
-        selectedListId, data.name, parseFloat(data.quantity) || 1,
-        parseInt(data.unitType) || 0, data.categoryId || null,
-        data.estimatedPrice ?? null, data.notes || null
-      );
-      setDetailData((prev) => prev ? { ...prev, items: [...prev.items, newItem] } : prev);
-      showSuccess('Item adicionado!');
+      if (!selectedListId) {
+        showError('Nenhuma lista selecionada.');
+        return;
+      }
+      try {
+        const newItem = await addShoppingItem(
+          selectedListId,
+          data.name,
+          parseFloat(data.quantity) || 1,
+          parseInt(data.unitType) || 0,
+          data.categoryId || null,
+          data.estimatedPrice ?? null,
+          data.notes || null
+        );
+        setDetailData((prev) => {
+          if (!prev) return prev;
+          const idx = prev.items.findIndex((i) => i.shoppingItemId === newItem.shoppingItemId);
+          if (idx === -1) return { ...prev, items: [...prev.items, newItem] };
+          // Item já foi inserido pelo broadcast do SignalR — substitui pelos dados
+          // completos vindos da própria resposta do POST (fonte mais confiável).
+          const items = [...prev.items];
+          items[idx] = newItem;
+          return { ...prev, items };
+        });
+        showSuccess('Item adicionado!');
+      } catch (err) {
+        showError('Erro ao adicionar item.');
+        throw err;
+      }
     },
-    [selectedListId, addShoppingItem, showSuccess, setDetailData]
+    [selectedListId, addShoppingItem, showSuccess, showError, setDetailData]
   );
 
   const handleEditItem = useCallback(
     async (data: ItemFormData) => {
-      if (!selectedItem || !selectedListId) return;
-      await updateShoppingItem(
-        selectedItem.shoppingItemId, selectedListId, data.name,
-        parseFloat(data.quantity) || 1, parseInt(data.unitType) || 0,
-        data.categoryId || null, data.estimatedPrice ?? null, data.notes || null
-      );
-      const catName = shoppingCategories.find((c) => c.shoppingCategoryId === data.categoryId)?.name ?? null;
-      setDetailData((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          items: prev.items.map((i) =>
-            i.shoppingItemId === selectedItem.shoppingItemId
-              ? {
-                  ...i,
-                  name: data.name,
-                  quantity: parseFloat(data.quantity) || 1,
-                  unitType: parseInt(data.unitType) || 0,
-                  shoppingCategoryId: data.categoryId || null,
-                  categoryName: catName,
-                  estimatedPrice: data.estimatedPrice ?? null,
-                  notes: data.notes || null,
-                }
-              : i
-          ),
-        };
-      });
-      showSuccess('Item atualizado!');
+      if (!selectedItem || !selectedListId) {
+        showError('Nenhum item selecionado.');
+        return;
+      }
+      try {
+        await updateShoppingItem(
+          selectedItem.shoppingItemId,
+          selectedListId,
+          data.name,
+          parseFloat(data.quantity) || 1,
+          parseInt(data.unitType) || 0,
+          data.categoryId || null,
+          data.estimatedPrice ?? null,
+          data.notes || null
+        );
+        const catName =
+          shoppingCategories.find((c) => c.shoppingCategoryId === data.categoryId)?.name ?? null;
+        setDetailData((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            items: prev.items.map((i) =>
+              i.shoppingItemId === selectedItem.shoppingItemId
+                ? {
+                    ...i,
+                    name: data.name,
+                    quantity: parseFloat(data.quantity) || 1,
+                    unitType: parseInt(data.unitType) || 0,
+                    shoppingCategoryId: data.categoryId || null,
+                    categoryName: catName,
+                    estimatedPrice: data.estimatedPrice ?? null,
+                    notes: data.notes || null,
+                  }
+                : i
+            ),
+          };
+        });
+        showSuccess('Item atualizado!');
+      } catch (err) {
+        showError('Erro ao atualizar item.');
+        throw err;
+      }
     },
-    [selectedItem, selectedListId, updateShoppingItem, shoppingCategories, showSuccess, setDetailData]
+    [
+      selectedItem,
+      selectedListId,
+      updateShoppingItem,
+      shoppingCategories,
+      showSuccess,
+      showError,
+      setDetailData,
+    ]
   );
 
   const handleDeleteItem = useCallback(
@@ -308,11 +485,18 @@ export function useShoppingActions(
       setPendingId(item.shoppingItemId);
       try {
         await deleteShoppingItem(
-          item.shoppingItemId, selectedListId!, item.quantity, item.unitType,
-          item.estimatedPrice, item.isPurchased, item.price
+          item.shoppingItemId,
+          selectedListId!,
+          item.quantity,
+          item.unitType,
+          item.estimatedPrice,
+          item.isPurchased,
+          item.price
         );
         setDetailData((prev) =>
-          prev ? { ...prev, items: prev.items.filter((i) => i.shoppingItemId !== item.shoppingItemId) } : prev
+          prev
+            ? { ...prev, items: prev.items.filter((i) => i.shoppingItemId !== item.shoppingItemId) }
+            : prev
         );
         showSuccess('Item removido!');
       } catch {
@@ -327,13 +511,18 @@ export function useShoppingActions(
   const handleMarkAsPurchased = useCallback(
     async (data: PurchaseFormData) => {
       if (!selectedItem) return;
+      const qty = parseFloat(data.quantity) || selectedItem.quantity;
       const price = data.price ?? 0;
       const purchasedAt = `${data.purchasedAt}T12:00:00Z`;
       setPendingId(selectedItem.shoppingItemId);
       try {
         await markItemAsPurchased(
-          selectedItem.shoppingItemId, selectedListId!, selectedItem.quantity,
-          selectedItem.unitType, price, purchasedAt
+          selectedItem.shoppingItemId,
+          selectedListId!,
+          qty,
+          selectedItem.unitType,
+          price,
+          purchasedAt
         );
         setDetailData((prev) => {
           if (!prev) return prev;
@@ -341,7 +530,7 @@ export function useShoppingActions(
             ...prev,
             items: prev.items.map((i) =>
               i.shoppingItemId === selectedItem.shoppingItemId
-                ? { ...i, isPurchased: true, price, purchasedAt }
+                ? { ...i, quantity: qty, isPurchased: true, price, purchasedAt }
                 : i
             ),
           };
@@ -361,7 +550,11 @@ export function useShoppingActions(
       setPendingId(item.shoppingItemId);
       try {
         await unmarkItemAsPurchased(
-          item.shoppingItemId, selectedListId!, item.quantity, item.unitType, item.price ?? 0
+          item.shoppingItemId,
+          selectedListId!,
+          item.quantity,
+          item.unitType,
+          item.price ?? 0
         );
         setDetailData((prev) => {
           if (!prev) return prev;
@@ -407,10 +600,14 @@ export function useShoppingActions(
     async (patch: BulkEditPatch, selectedItems: AppShoppingItem[]) => {
       for (const item of selectedItems) {
         await updateShoppingItem(
-          item.shoppingItemId, selectedListId!, item.name,
-          patch.quantity ?? item.quantity, patch.unitType ?? item.unitType,
+          item.shoppingItemId,
+          selectedListId!,
+          item.name,
+          patch.quantity ?? item.quantity,
+          patch.unitType ?? item.unitType,
           'categoryId' in patch ? (patch.categoryId ?? null) : (item.shoppingCategoryId ?? null),
-          patch.estimatedPrice ?? item.estimatedPrice ?? null, item.notes ?? null
+          patch.estimatedPrice ?? item.estimatedPrice ?? null,
+          item.notes ?? null
         );
       }
       const catMap = new Map(shoppingCategories.map((c) => [c.shoppingCategoryId, c.name]));
@@ -434,25 +631,43 @@ export function useShoppingActions(
           }),
         };
       });
-      showSuccess(`${selectedItems.length} ${selectedItems.length === 1 ? 'item atualizado' : 'itens atualizados'}!`);
+      showSuccess(
+        `${selectedItems.length} ${selectedItems.length === 1 ? 'item atualizado' : 'itens atualizados'}!`
+      );
       exitBulkMode();
     },
-    [selectedListId, updateShoppingItem, shoppingCategories, showSuccess, exitBulkMode, setDetailData]
+    [
+      selectedListId,
+      updateShoppingItem,
+      shoppingCategories,
+      showSuccess,
+      exitBulkMode,
+      setDetailData,
+    ]
   );
 
   const handleBulkDelete = useCallback(
     async (selectedItems: AppShoppingItem[]) => {
       for (const item of selectedItems) {
         await deleteShoppingItem(
-          item.shoppingItemId, selectedListId!, item.quantity, item.unitType,
-          item.estimatedPrice, item.isPurchased, item.price
+          item.shoppingItemId,
+          selectedListId!,
+          item.quantity,
+          item.unitType,
+          item.estimatedPrice,
+          item.isPurchased,
+          item.price
         );
       }
       const deletedIds = new Set(selectedItems.map((i) => i.shoppingItemId));
       setDetailData((prev) =>
-        prev ? { ...prev, items: prev.items.filter((i) => !deletedIds.has(i.shoppingItemId)) } : prev
+        prev
+          ? { ...prev, items: prev.items.filter((i) => !deletedIds.has(i.shoppingItemId)) }
+          : prev
       );
-      showSuccess(`${selectedItems.length} ${selectedItems.length === 1 ? 'item excluído' : 'itens excluídos'}!`);
+      showSuccess(
+        `${selectedItems.length} ${selectedItems.length === 1 ? 'item excluído' : 'itens excluídos'}!`
+      );
       exitBulkMode();
     },
     [selectedListId, deleteShoppingItem, showSuccess, exitBulkMode, setDetailData]
@@ -460,45 +675,73 @@ export function useShoppingActions(
 
   return {
     // dialog open/close state
-    showCreateList, setShowCreateList,
-    showEditList, setShowEditList,
-    showAddItem, setShowAddItem,
-    showEditItem, setShowEditItem,
-    showPurchase, setShowPurchase,
-    showCategories, setShowCategories,
-    showDeleteAlert, setShowDeleteAlert,
-    showBulkEdit, setShowBulkEdit,
-    showBulkDelete, setShowBulkDelete,
-    showMobileEditSheet, setShowMobileEditSheet,
+    showCreateList,
+    setShowCreateList,
+    showEditList,
+    setShowEditList,
+    showAddItem,
+    setShowAddItem,
+    showEditItem,
+    setShowEditItem,
+    showPurchase,
+    setShowPurchase,
+    showCategories,
+    setShowCategories,
+    showDeleteAlert,
+    setShowDeleteAlert,
+    showBulkEdit,
+    setShowBulkEdit,
+    showBulkDelete,
+    setShowBulkDelete,
+    showMobileEditSheet,
+    setShowMobileEditSheet,
     // item/list selection
-    selectedItem, setSelectedItem,
-    editingListId, setEditingListId,
+    selectedItem,
+    setSelectedItem,
+    editingListId,
+    setEditingListId,
     pendingId,
     isDeleting,
     isUploading,
     uploadInputRef,
     // bulk
-    isBulkMode, setIsBulkMode,
-    selectedItemIds, setSelectedItemIds,
+    isBulkMode,
+    setIsBulkMode,
+    selectedItemIds,
+    setSelectedItemIds,
     // inline edit
     inlineEditingId,
-    inlineForm, setInlineForm,
+    inlineForm,
+    setInlineForm,
     inlineSaving,
     // derived
     uniqueCategories,
     editingListSummaryData,
     editItemInitialData,
     // helpers
-    exitBulkMode, toggleItemSelection,
-    openInlineEdit, cancelInlineEdit, saveInlineEdit,
+    exitBulkMode,
+    toggleItemSelection,
+    openInlineEdit,
+    cancelInlineEdit,
+    saveInlineEdit,
     // handlers
-    handleCreateList, handleEditList, handleDeleteList,
-    handleFinishList, handleUnfinishList,
-    handleEditListFromGrid, handleDeleteListFromGrid,
-    handleAddItem, handleEditItem, handleDeleteItem,
-    handleMarkAsPurchased, handleUnmarkAsPurchased,
-    handleUploadFile, handleBulkEdit, handleBulkDelete,
+    handleCreateList,
+    handleEditList,
+    handleDeleteList,
+    handleFinishList,
+    handleUnfinishList,
+    handleEditListFromGrid,
+    handleDeleteListFromGrid,
+    handleAddItem,
+    handleEditItem,
+    handleDeleteItem,
+    handleMarkAsPurchased,
+    handleUnmarkAsPurchased,
+    handleUploadFile,
+    handleBulkEdit,
+    handleBulkDelete,
     // category management
-    createShoppingCategory, deleteShoppingCategory,
+    createShoppingCategory,
+    deleteShoppingCategory,
   };
 }

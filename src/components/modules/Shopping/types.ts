@@ -16,6 +16,7 @@ export interface ItemFormData {
 }
 
 export interface PurchaseFormData {
+  quantity: string;
   price: number | null;
   purchasedAt: string; // YYYY-MM-DD
 }

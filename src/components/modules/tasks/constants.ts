@@ -43,7 +43,22 @@ export const CATEGORIES = [
 ] as const;
 
 export const KANBAN_COLUMNS = [
-  { status: TaskStatus.AFazer, label: 'A Fazer', color: 'text-honey-700 dark:text-honey-300', headerBg: 'bg-honey-50 dark:bg-honey-900/20' },
-  { status: TaskStatus.EmAndamento, label: 'Em Andamento', color: 'text-blue-700 dark:text-blue-300', headerBg: 'bg-blue-50 dark:bg-blue-900/20' },
-  { status: TaskStatus.Concluido, label: 'Concluído', color: 'text-sage-700 dark:text-sage-300', headerBg: 'bg-sage-50 dark:bg-sage-900/20' },
+  {
+    status: TaskStatus.AFazer,
+    label: 'A Fazer',
+    color: 'text-honey-700 dark:text-honey-300',
+    headerBg: 'bg-honey-50 dark:bg-honey-900/20',
+  },
+  {
+    status: TaskStatus.EmAndamento,
+    label: 'Em Andamento',
+    color: 'text-blue-700 dark:text-blue-300',
+    headerBg: 'bg-blue-50 dark:bg-blue-900/20',
+  },
+  {
+    status: TaskStatus.Concluido,
+    label: 'Concluído',
+    color: 'text-sage-700 dark:text-sage-300',
+    headerBg: 'bg-sage-50 dark:bg-sage-900/20',
+  },
 ] as const;

@@ -1,13 +1,7 @@
 import { Plus } from 'lucide-react';
 import { useRef, useState } from 'react';
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui';
 
 import { PRIORITIES } from './constants';
 
@@ -41,32 +35,34 @@ export function TaskInlineAdd({ onAdd, disabled }: TaskInlineAddProps) {
   };
 
   return (
-    <div className={`flex items-center gap-2 px-3 py-2 rounded-2xl border transition-colors ${
-      focused
-        ? 'border-primary bg-card shadow-sm'
-        : 'border-dashed border-border bg-transparent hover:border-muted-foreground/40'
-    }`}>
-      <Plus size={14} className="text-muted-foreground shrink-0" />
+    <div
+      className={`flex items-center gap-2 rounded-2xl border px-3 py-2 transition-colors ${
+        focused
+          ? 'border-primary bg-card shadow-sm'
+          : 'border-dashed border-border bg-transparent hover:border-muted-foreground/40'
+      }`}
+    >
+      <Plus size={14} className="shrink-0 text-muted-foreground" />
       <input
         ref={inputRef}
         type="text"
         value={value}
-        onChange={e => setValue(e.target.value)}
+        onChange={(e) => setValue(e.target.value)}
         onKeyDown={handleKeyDown}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
         placeholder="Adicionar tarefa..."
         disabled={disabled || loading}
         maxLength={200}
-        className="flex-1 bg-transparent font-ui text-sm text-foreground placeholder:text-muted-foreground outline-none disabled:opacity-50"
+        className="font-ui flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground disabled:opacity-50"
       />
       {focused && (
         <Select value={priority} onValueChange={setPriority}>
-          <SelectTrigger className="h-7 w-[100px] text-xs rounded-full border-border">
+          <SelectTrigger className="h-7 w-[100px] rounded-full border-border text-xs">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {PRIORITIES.map(p => (
+            {PRIORITIES.map((p) => (
               <SelectItem key={p.value} value={p.value} className="text-xs">
                 {p.label}
               </SelectItem>

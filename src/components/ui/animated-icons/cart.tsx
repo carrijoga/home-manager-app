@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import type { Variants } from "framer-motion";
-import { motion, useAnimation } from "framer-motion";
-import type { HTMLAttributes } from "react";
-import { forwardRef, useCallback, useImperativeHandle } from "react";
+import type { Variants } from 'framer-motion';
+import { motion, useAnimation } from 'framer-motion';
+import type { HTMLAttributes } from 'react';
+import { forwardRef, useCallback, useImperativeHandle } from 'react';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 export interface CartIconHandle {
   startAnimation: () => void;
@@ -23,7 +23,7 @@ const CART_VARIANTS: Variants = {
     y: [0, -5, 0],
     transition: {
       duration: 0.3,
-      ease: "easeInOut",
+      ease: 'easeInOut',
       y: { repeat: 1, delay: 0.1, duration: 0.4 },
     },
   },
@@ -34,13 +34,13 @@ const CartIcon = forwardRef<CartIconHandle, CartIconProps>(
     const controls = useAnimation();
 
     useImperativeHandle(ref, () => ({
-      startAnimation: () => controls.start("animate"),
-      stopAnimation: () => controls.start("normal"),
+      startAnimation: () => controls.start('animate'),
+      stopAnimation: () => controls.start('normal'),
     }));
 
     const handleMouseEnter = useCallback(
       (e: React.MouseEvent<HTMLDivElement>) => {
-        controls.start("animate");
+        controls.start('animate');
         onMouseEnter?.(e);
       },
       [controls, onMouseEnter]
@@ -48,7 +48,7 @@ const CartIcon = forwardRef<CartIconHandle, CartIconProps>(
 
     const handleMouseLeave = useCallback(
       (e: React.MouseEvent<HTMLDivElement>) => {
-        controls.start("normal");
+        controls.start('normal');
         onMouseLeave?.(e);
       },
       [controls, onMouseLeave]
@@ -82,6 +82,6 @@ const CartIcon = forwardRef<CartIconHandle, CartIconProps>(
   }
 );
 
-CartIcon.displayName = "CartIcon";
+CartIcon.displayName = 'CartIcon';
 
 export { CartIcon };

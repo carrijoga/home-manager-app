@@ -3,12 +3,7 @@ import { HelpCircle } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 /**
  * Todo tooltip precisa de um `TooltipProvider` acima na árvore — no app
@@ -49,10 +44,7 @@ export const FieldHelp: Story = {
     <TooltipProvider>
       <div className="w-[280px] space-y-1.5">
         <div className="flex items-center gap-1.5">
-          <Label
-            htmlFor="conta"
-            className="text-muted-foreground text-xs uppercase tracking-wide"
-          >
+          <Label htmlFor="conta" className="text-xs uppercase tracking-wide text-muted-foreground">
             Conta vinculada
           </Label>
           <Tooltip>
@@ -70,7 +62,7 @@ export const FieldHelp: Story = {
             </TooltipContent>
           </Tooltip>
         </div>
-        <div className="bg-muted/30 border-border/40 h-9 rounded-md border" />
+        <div className="h-9 rounded-md border border-border/40 bg-muted/30" />
       </div>
     </TooltipProvider>
   ),

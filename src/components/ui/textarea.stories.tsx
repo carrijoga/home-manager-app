@@ -28,10 +28,10 @@ export const Default: Story = {
 export const WithLabel: Story = {
   render: (args) => (
     <div className="w-[320px] space-y-1.5">
-      <Label htmlFor="recado" className="text-muted-foreground text-xs uppercase tracking-wide">
+      <Label htmlFor="recado" className="text-xs uppercase tracking-wide text-muted-foreground">
         Observações
       </Label>
-      <Textarea {...args} id="recado" className="bg-muted/30 border-border/40" />
+      <Textarea {...args} id="recado" className="border-border/40 bg-muted/30" />
     </div>
   ),
 };

@@ -1,15 +1,18 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface ListSkeletonProps {
   items?: number;
   className?: string;
 }
 
-export function ListSkeleton({ items = 5, className = "" }: ListSkeletonProps) {
+export function ListSkeleton({ items = 5, className = '' }: ListSkeletonProps) {
   return (
     <div className={`space-y-3 ${className}`} aria-busy="true" aria-live="polite">
       {Array.from({ length: items }).map((_, i) => (
-        <div key={i} className="flex items-center space-x-4 p-4 rounded-lg border border-dark-border-subtle bg-dark-bg-secondary">
+        <div
+          key={i}
+          className="border-dark-border-subtle bg-dark-bg-secondary flex items-center space-x-4 rounded-lg border p-4"
+        >
           <Skeleton className="h-12 w-12 rounded-full" />
           <div className="flex-1 space-y-2">
             <Skeleton className="h-4 w-3/4" />
@@ -25,7 +28,10 @@ export function TaskListSkeleton({ items = 5 }: { items?: number }) {
   return (
     <div className="space-y-2" aria-busy="true" aria-live="polite">
       {Array.from({ length: items }).map((_, i) => (
-        <div key={i} className="flex items-start space-x-3 p-3 rounded-lg border border-dark-border-subtle bg-dark-bg-secondary">
+        <div
+          key={i}
+          className="border-dark-border-subtle bg-dark-bg-secondary flex items-start space-x-3 rounded-lg border p-3"
+        >
           <Skeleton className="h-5 w-5 rounded" />
           <div className="flex-1 space-y-2">
             <Skeleton className="h-4 w-full" />
@@ -44,8 +50,11 @@ export function ShoppingListSkeleton({ items = 5 }: { items?: number }) {
   return (
     <div className="space-y-2" aria-busy="true" aria-live="polite">
       {Array.from({ length: items }).map((_, i) => (
-        <div key={i} className="flex items-center justify-between p-3 rounded-lg border border-dark-border-subtle bg-dark-bg-secondary">
-          <div className="flex items-center space-x-3 flex-1">
+        <div
+          key={i}
+          className="border-dark-border-subtle bg-dark-bg-secondary flex items-center justify-between rounded-lg border p-3"
+        >
+          <div className="flex flex-1 items-center space-x-3">
             <Skeleton className="h-5 w-5 rounded" />
             <div className="flex-1 space-y-2">
               <Skeleton className="h-4 w-3/4" />
@@ -63,15 +72,18 @@ export function ExpenseListSkeleton({ items = 5 }: { items?: number }) {
   return (
     <div className="space-y-2" aria-busy="true" aria-live="polite">
       {Array.from({ length: items }).map((_, i) => (
-        <div key={i} className="flex items-center justify-between p-4 rounded-lg border border-dark-border-subtle bg-dark-bg-secondary">
-          <div className="flex items-center space-x-4 flex-1">
+        <div
+          key={i}
+          className="border-dark-border-subtle bg-dark-bg-secondary flex items-center justify-between rounded-lg border p-4"
+        >
+          <div className="flex flex-1 items-center space-x-4">
             <Skeleton className="h-10 w-10 rounded-full" />
             <div className="flex-1 space-y-2">
               <Skeleton className="h-4 w-2/3" />
               <Skeleton className="h-3 w-1/3" />
             </div>
           </div>
-          <div className="text-right space-y-2">
+          <div className="space-y-2 text-right">
             <Skeleton className="h-5 w-20" />
             <Skeleton className="h-3 w-16" />
           </div>

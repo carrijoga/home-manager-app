@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import type { Variants } from "framer-motion";
-import { motion, useAnimation } from "framer-motion";
-import type { HTMLAttributes } from "react";
-import { forwardRef, useCallback, useImperativeHandle } from "react";
+import type { Variants } from 'framer-motion';
+import { motion, useAnimation } from 'framer-motion';
+import type { HTMLAttributes } from 'react';
+import { forwardRef, useCallback, useImperativeHandle } from 'react';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 export interface CircleHelpIconHandle {
   startAnimation: () => void;
@@ -26,13 +26,13 @@ const CircleHelpIcon = forwardRef<CircleHelpIconHandle, CircleHelpIconProps>(
     const controls = useAnimation();
 
     useImperativeHandle(ref, () => ({
-      startAnimation: () => controls.start("animate"),
-      stopAnimation: () => controls.start("normal"),
+      startAnimation: () => controls.start('animate'),
+      stopAnimation: () => controls.start('normal'),
     }));
 
     const handleMouseEnter = useCallback(
       (e: React.MouseEvent<HTMLDivElement>) => {
-        controls.start("animate");
+        controls.start('animate');
         onMouseEnter?.(e);
       },
       [controls, onMouseEnter]
@@ -40,7 +40,7 @@ const CircleHelpIcon = forwardRef<CircleHelpIconHandle, CircleHelpIconProps>(
 
     const handleMouseLeave = useCallback(
       (e: React.MouseEvent<HTMLDivElement>) => {
-        controls.start("normal");
+        controls.start('normal');
         onMouseLeave?.(e);
       },
       [controls, onMouseLeave]
@@ -67,7 +67,7 @@ const CircleHelpIcon = forwardRef<CircleHelpIconHandle, CircleHelpIconProps>(
           <circle cx="12" cy="12" r="10" />
           <motion.g
             animate={controls}
-            transition={{ duration: 0.5, ease: "easeInOut" }}
+            transition={{ duration: 0.5, ease: 'easeInOut' }}
             variants={VARIANTS}
           >
             <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
@@ -79,6 +79,6 @@ const CircleHelpIcon = forwardRef<CircleHelpIconHandle, CircleHelpIconProps>(
   }
 );
 
-CircleHelpIcon.displayName = "CircleHelpIcon";
+CircleHelpIcon.displayName = 'CircleHelpIcon';
 
 export { CircleHelpIcon };

@@ -5,30 +5,30 @@
  * incluindo transições, variantes e utilitários.
  */
 
-import { Transition,Variants } from "framer-motion";
+import { Transition, Variants } from 'framer-motion';
 
 // ============================================================================
 // TRANSIÇÕES GLOBAIS
 // ============================================================================
 
 export const transitions = {
-  fast: { duration: 0.15, ease: "easeOut" },
-  normal: { duration: 0.3, ease: "easeInOut" },
-  slow: { duration: 0.5, ease: "easeInOut" },
+  fast: { duration: 0.15, ease: 'easeOut' },
+  normal: { duration: 0.3, ease: 'easeInOut' },
+  slow: { duration: 0.5, ease: 'easeInOut' },
   spring: {
-    type: "spring" as const,
+    type: 'spring' as const,
     stiffness: 300,
-    damping: 30
+    damping: 30,
   },
   springGentle: {
-    type: "spring" as const,
+    type: 'spring' as const,
     stiffness: 200,
-    damping: 25
+    damping: 25,
   },
   springBouncy: {
-    type: "spring" as const,
+    type: 'spring' as const,
     stiffness: 400,
-    damping: 20
+    damping: 20,
   },
 } as const;
 
@@ -223,7 +223,7 @@ export const accordionVariants: Variants = {
     transition: transitions.normal,
   },
   expanded: {
-    height: "auto",
+    height: 'auto',
     opacity: 1,
     transition: transitions.normal,
   },
@@ -297,7 +297,7 @@ export const checkmarkVariants: Variants = {
     pathLength: 1,
     opacity: 1,
     transition: {
-      pathLength: { duration: 0.2, ease: "easeOut" },
+      pathLength: { duration: 0.2, ease: 'easeOut' },
       opacity: { duration: 0.1 },
     },
   },
@@ -356,7 +356,7 @@ export const postItVariants: Variants = {
     scale: 1.1,
     rotate: 0,
     zIndex: 20,
-    cursor: "grabbing",
+    cursor: 'grabbing',
   },
 };
 
@@ -389,12 +389,12 @@ export const taskVariants: Variants = {
 
 export const taskCheckboxVariants: Variants = {
   unchecked: {
-    backgroundColor: "transparent",
-    borderColor: "currentColor",
+    backgroundColor: 'transparent',
+    borderColor: 'currentColor',
     transition: transitions.fast,
   },
   checked: {
-    backgroundColor: "currentColor",
+    backgroundColor: 'currentColor',
     scale: [1, 1.2, 1],
     transition: transitions.spring,
   },
@@ -402,11 +402,11 @@ export const taskCheckboxVariants: Variants = {
 
 export const strikethroughVariants: Variants = {
   unchecked: {
-    width: "0%",
+    width: '0%',
     transition: transitions.normal,
   },
   checked: {
-    width: "100%",
+    width: '100%',
     transition: transitions.normal,
   },
 };
@@ -496,9 +496,9 @@ export const scaleVariants: Variants = {
  * Hook para detectar preferência de movimento reduzido
  */
 export const usePrefersReducedMotion = (): boolean => {
-  if (typeof window === "undefined") return false;
+  if (typeof window === 'undefined') return false;
 
-  const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
   return mediaQuery.matches;
 };
 
@@ -519,7 +519,7 @@ export const getTransition = (
  * Propriedades comuns para AnimatePresence
  */
 export const animatePresenceProps = {
-  mode: "wait" as const,
+  mode: 'wait' as const,
   initial: false,
 };
 

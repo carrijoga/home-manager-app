@@ -27,7 +27,7 @@ export const Horizontal: Story = {
   render: () => (
     <div className="w-[280px]">
       <p className="text-sm font-medium">Conta Corrente</p>
-      <p className="text-muted-foreground text-xs">Banco do Brasil</p>
+      <p className="text-xs text-muted-foreground">Banco do Brasil</p>
       <Separator className="my-3" />
       <p className="text-sm">R$ 2.480,00</p>
     </div>

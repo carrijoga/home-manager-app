@@ -66,7 +66,7 @@ export const Centered: Story = {
   render: () => (
     <div className="flex h-[160px] w-[280px] flex-col items-center justify-center gap-3 rounded-xl border">
       <Spinner size="lg" className="text-primary" />
-      <p className="text-muted-foreground text-sm">Carregando suas contas...</p>
+      <p className="text-sm text-muted-foreground">Carregando suas contas...</p>
     </div>
   ),
 };

@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { motion, useAnimation } from "framer-motion";
-import type { HTMLAttributes } from "react";
-import { forwardRef, useCallback, useImperativeHandle } from "react";
+import { motion, useAnimation } from 'framer-motion';
+import type { HTMLAttributes } from 'react';
+import { forwardRef, useCallback, useImperativeHandle } from 'react';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 export interface LayoutPanelTopIconHandle {
   startAnimation: () => void;
@@ -20,13 +20,13 @@ const LayoutPanelTopIcon = forwardRef<LayoutPanelTopIconHandle, LayoutPanelTopIc
     const controls = useAnimation();
 
     useImperativeHandle(ref, () => ({
-      startAnimation: () => controls.start("animate"),
-      stopAnimation: () => controls.start("normal"),
+      startAnimation: () => controls.start('animate'),
+      stopAnimation: () => controls.start('normal'),
     }));
 
     const handleMouseEnter = useCallback(
       (e: React.MouseEvent<HTMLDivElement>) => {
-        controls.start("animate");
+        controls.start('animate');
         onMouseEnter?.(e);
       },
       [controls, onMouseEnter]
@@ -34,7 +34,7 @@ const LayoutPanelTopIcon = forwardRef<LayoutPanelTopIconHandle, LayoutPanelTopIc
 
     const handleMouseLeave = useCallback(
       (e: React.MouseEvent<HTMLDivElement>) => {
-        controls.start("normal");
+        controls.start('normal');
         onMouseLeave?.(e);
       },
       [controls, onMouseLeave]
@@ -126,6 +126,6 @@ const LayoutPanelTopIcon = forwardRef<LayoutPanelTopIconHandle, LayoutPanelTopIc
   }
 );
 
-LayoutPanelTopIcon.displayName = "LayoutPanelTopIcon";
+LayoutPanelTopIcon.displayName = 'LayoutPanelTopIcon';
 
 export { LayoutPanelTopIcon };

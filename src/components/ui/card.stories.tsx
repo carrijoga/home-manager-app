@@ -36,7 +36,7 @@ export const Default: Story = {
       </CardHeader>
       <CardContent>
         <p className="text-2xl font-semibold">R$ 2.480,00</p>
-        <p className="text-muted-foreground text-xs">Atualizado hoje às 14:32</p>
+        <p className="text-xs text-muted-foreground">Atualizado hoje às 14:32</p>
       </CardContent>
       <CardFooter className="gap-2">
         <Button size="sm">Ver extrato</Button>
@@ -68,7 +68,7 @@ export const ContentOnly: Story = {
   render: () => (
     <Card className="w-[320px]">
       <CardContent className="pt-6">
-        <p className="text-muted-foreground text-xs uppercase tracking-wide">Saldo total</p>
+        <p className="text-xs uppercase tracking-wide text-muted-foreground">Saldo total</p>
         <p className="text-2xl font-semibold">R$ 8.712,45</p>
       </CardContent>
     </Card>
@@ -82,7 +82,7 @@ export const Grid: Story = {
       {['Mercado', 'Transporte', 'Lazer', 'Casa'].map((label) => (
         <Card key={label} className="w-[180px]">
           <CardContent className="pt-6">
-            <p className="text-muted-foreground text-xs uppercase tracking-wide">{label}</p>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
             <p className="text-lg font-semibold">R$ 320,00</p>
           </CardContent>
         </Card>

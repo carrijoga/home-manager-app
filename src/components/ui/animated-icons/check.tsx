@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import type { Variants } from "framer-motion";
-import { motion, useAnimation } from "framer-motion";
-import type { HTMLAttributes } from "react";
-import { forwardRef, useCallback, useImperativeHandle } from "react";
+import type { Variants } from 'framer-motion';
+import { motion, useAnimation } from 'framer-motion';
+import type { HTMLAttributes } from 'react';
+import { forwardRef, useCallback, useImperativeHandle } from 'react';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 export interface CheckIconHandle {
   startAnimation: () => void;
@@ -42,13 +42,13 @@ const CheckIcon = forwardRef<CheckIconHandle, CheckIconProps>(
     const controls = useAnimation();
 
     useImperativeHandle(ref, () => ({
-      startAnimation: () => controls.start("animate"),
-      stopAnimation: () => controls.start("normal"),
+      startAnimation: () => controls.start('animate'),
+      stopAnimation: () => controls.start('normal'),
     }));
 
     const handleMouseEnter = useCallback(
       (e: React.MouseEvent<HTMLDivElement>) => {
-        controls.start("animate");
+        controls.start('animate');
         onMouseEnter?.(e);
       },
       [controls, onMouseEnter]
@@ -56,7 +56,7 @@ const CheckIcon = forwardRef<CheckIconHandle, CheckIconProps>(
 
     const handleMouseLeave = useCallback(
       (e: React.MouseEvent<HTMLDivElement>) => {
-        controls.start("normal");
+        controls.start('normal');
         onMouseLeave?.(e);
       },
       [controls, onMouseLeave]
@@ -92,6 +92,6 @@ const CheckIcon = forwardRef<CheckIconHandle, CheckIconProps>(
   }
 );
 
-CheckIcon.displayName = "CheckIcon";
+CheckIcon.displayName = 'CheckIcon';
 
 export { CheckIcon };

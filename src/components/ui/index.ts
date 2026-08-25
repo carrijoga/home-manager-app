@@ -15,23 +15,48 @@ export { Button, buttonVariants } from './button';
 export { Input } from './input';
 export { Label } from './label';
 export {
-  Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectScrollDownButton, SelectScrollUpButton, SelectSeparator, SelectTrigger, SelectValue
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectScrollDownButton,
+  SelectScrollUpButton,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
 } from './select';
 export { Textarea } from './textarea';
 
 // Layout Components
-export {
-  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle
-} from './card';
+export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './card';
 export { Separator } from './separator';
 
 // Overlay Components
 export {
-  AlertDialog, AlertDialogAction,
-  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogOverlay, AlertDialogPortal, AlertDialogTitle, AlertDialogTrigger
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogOverlay,
+  AlertDialogPortal,
+  AlertDialogTitle,
+  AlertDialogTrigger,
 } from './alert-dialog';
 export {
-  Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogOverlay, DialogPortal, DialogTitle, DialogTrigger
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogOverlay,
+  DialogPortal,
+  DialogTitle,
+  DialogTrigger,
 } from './dialog';
 
 // Display Components
@@ -46,22 +71,18 @@ export { DatePicker } from './date-picker';
 export { Popover, PopoverContent, PopoverTrigger } from './popover';
 
 // Navigation Components
-export {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger
-} from './accordion';
+export { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './accordion';
 
 // Feedback Components
 export { Checkbox } from './checkbox';
+export { Switch } from './switch';
 
 // Menu Components
 export {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from './dropdown-menu';
 
 // Toast/Notifications
@@ -92,7 +113,7 @@ export {
   SidebarRail,
   SidebarSeparator,
   SidebarTrigger,
-  useSidebar
+  useSidebar,
 } from './sidebar';
 
 // Sheet Components
@@ -106,21 +127,11 @@ export {
   SheetOverlay,
   SheetPortal,
   SheetTitle,
-  SheetTrigger
+  SheetTrigger,
 } from './sheet';
 
 // Tooltip Components
-export {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger
-} from './tooltip';
+export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './tooltip';
 
 // Collapsible Components
-export {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger
-} from './collapsible';
-
+export { Collapsible, CollapsibleContent, CollapsibleTrigger } from './collapsible';

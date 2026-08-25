@@ -1,12 +1,12 @@
-import { Card } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface CardSkeletonProps {
   className?: string;
   lines?: number;
 }
 
-export function CardSkeleton({ className = "", lines = 3 }: CardSkeletonProps) {
+export function CardSkeleton({ className = '', lines = 3 }: CardSkeletonProps) {
   return (
     <Card className={className}>
       <div className="space-y-3">
@@ -19,13 +19,13 @@ export function CardSkeleton({ className = "", lines = 3 }: CardSkeletonProps) {
   );
 }
 
-export function MetricCardSkeleton({ className = "" }: { className?: string }) {
+export function MetricCardSkeleton({ className = '' }: { className?: string }) {
   return (
     <Card className={className}>
       <div className="space-y-3">
         {/* Header: Ícone + Título */}
         <div className="flex items-center space-x-3">
-          <Skeleton className="w-10 h-10 rounded-lg" />
+          <Skeleton className="h-10 w-10 rounded-lg" />
           <Skeleton className="h-4 w-24" />
         </div>
 
@@ -42,7 +42,7 @@ export function MetricCardSkeleton({ className = "" }: { className?: string }) {
         <Skeleton className="h-12 w-full" />
 
         {/* Footer */}
-        <div className="pt-3 border-t border-linen-200 dark:border-muted space-y-2">
+        <div className="space-y-2 border-t border-linen-200 pt-3 dark:border-muted">
           <Skeleton className="h-3 w-full" />
           <Skeleton className="h-3 w-3/4" />
         </div>

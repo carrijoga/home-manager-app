@@ -39,13 +39,27 @@ export const Default: Story = {};
 export const Variants: Story = {
   render: (args) => (
     <div className="flex flex-wrap items-center gap-3">
-      <Button {...args} variant="default">Padrão</Button>
-      <Button {...args} variant="secondary">Secundário</Button>
-      <Button {...args} variant="warm">Warm</Button>
-      <Button {...args} variant="outline">Outline</Button>
-      <Button {...args} variant="ghost">Ghost</Button>
-      <Button {...args} variant="destructive">Excluir</Button>
-      <Button {...args} variant="link">Link</Button>
+      <Button {...args} variant="default">
+        Padrão
+      </Button>
+      <Button {...args} variant="secondary">
+        Secundário
+      </Button>
+      <Button {...args} variant="warm">
+        Warm
+      </Button>
+      <Button {...args} variant="outline">
+        Outline
+      </Button>
+      <Button {...args} variant="ghost">
+        Ghost
+      </Button>
+      <Button {...args} variant="destructive">
+        Excluir
+      </Button>
+      <Button {...args} variant="link">
+        Link
+      </Button>
     </div>
   ),
 };
@@ -53,9 +67,15 @@ export const Variants: Story = {
 export const Sizes: Story = {
   render: (args) => (
     <div className="flex flex-wrap items-center gap-3">
-      <Button {...args} size="sm">Pequeno</Button>
-      <Button {...args} size="default">Padrão</Button>
-      <Button {...args} size="lg">Grande</Button>
+      <Button {...args} size="sm">
+        Pequeno
+      </Button>
+      <Button {...args} size="default">
+        Padrão
+      </Button>
+      <Button {...args} size="lg">
+        Grande
+      </Button>
       <Button {...args} size="icon" aria-label="Adicionar">
         <Plus />
       </Button>

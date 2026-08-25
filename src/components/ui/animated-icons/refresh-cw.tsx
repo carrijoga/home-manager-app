@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { motion, useAnimation } from "framer-motion";
-import type { HTMLAttributes } from "react";
-import { forwardRef, useCallback, useImperativeHandle } from "react";
+import { motion, useAnimation } from 'framer-motion';
+import type { HTMLAttributes } from 'react';
+import { forwardRef, useCallback, useImperativeHandle } from 'react';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 export interface RefreshCWIconHandle {
   startAnimation: () => void;
@@ -20,13 +20,13 @@ const RefreshCWIcon = forwardRef<RefreshCWIconHandle, RefreshCWIconProps>(
     const controls = useAnimation();
 
     useImperativeHandle(ref, () => ({
-      startAnimation: () => controls.start("animate"),
-      stopAnimation: () => controls.start("normal"),
+      startAnimation: () => controls.start('animate'),
+      stopAnimation: () => controls.start('normal'),
     }));
 
     const handleMouseEnter = useCallback(
       (e: React.MouseEvent<HTMLDivElement>) => {
-        controls.start("animate");
+        controls.start('animate');
         onMouseEnter?.(e);
       },
       [controls, onMouseEnter]
@@ -34,7 +34,7 @@ const RefreshCWIcon = forwardRef<RefreshCWIconHandle, RefreshCWIconProps>(
 
     const handleMouseLeave = useCallback(
       (e: React.MouseEvent<HTMLDivElement>) => {
-        controls.start("normal");
+        controls.start('normal');
         onMouseLeave?.(e);
       },
       [controls, onMouseLeave]
@@ -55,10 +55,10 @@ const RefreshCWIcon = forwardRef<RefreshCWIconHandle, RefreshCWIconProps>(
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeWidth="2"
-          transition={{ type: "spring", stiffness: 250, damping: 25 }}
+          transition={{ type: 'spring', stiffness: 250, damping: 25 }}
           variants={{
-            normal: { rotate: "0deg" },
-            animate: { rotate: "50deg" },
+            normal: { rotate: '0deg' },
+            animate: { rotate: '50deg' },
           }}
           viewBox="0 0 24 24"
           width={size}
@@ -74,6 +74,6 @@ const RefreshCWIcon = forwardRef<RefreshCWIconHandle, RefreshCWIconProps>(
   }
 );
 
-RefreshCWIcon.displayName = "RefreshCWIcon";
+RefreshCWIcon.displayName = 'RefreshCWIcon';
 
 export { RefreshCWIcon };

@@ -25,16 +25,25 @@ export function getNotificationPreferences(): NotificationPreferences {
 
     return {
       info: typeof parsed.info === 'boolean' ? parsed.info : DEFAULT_NOTIFICATION_PREFERENCES.info,
-      warning: typeof parsed.warning === 'boolean' ? parsed.warning : DEFAULT_NOTIFICATION_PREFERENCES.warning,
-      error: typeof parsed.error === 'boolean' ? parsed.error : DEFAULT_NOTIFICATION_PREFERENCES.error,
-      success: typeof parsed.success === 'boolean' ? parsed.success : DEFAULT_NOTIFICATION_PREFERENCES.success,
+      warning:
+        typeof parsed.warning === 'boolean'
+          ? parsed.warning
+          : DEFAULT_NOTIFICATION_PREFERENCES.warning,
+      error:
+        typeof parsed.error === 'boolean' ? parsed.error : DEFAULT_NOTIFICATION_PREFERENCES.error,
+      success:
+        typeof parsed.success === 'boolean'
+          ? parsed.success
+          : DEFAULT_NOTIFICATION_PREFERENCES.success,
     };
   } catch {
     return { ...DEFAULT_NOTIFICATION_PREFERENCES };
   }
 }
 
-export function saveNotificationPreferences(next: Partial<NotificationPreferences>): NotificationPreferences {
+export function saveNotificationPreferences(
+  next: Partial<NotificationPreferences>
+): NotificationPreferences {
   const current = getNotificationPreferences();
   const merged: NotificationPreferences = {
     info: typeof next.info === 'boolean' ? next.info : current.info,

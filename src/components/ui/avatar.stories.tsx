@@ -67,7 +67,7 @@ export const Group: Story = {
   render: () => (
     <div className="flex -space-x-2">
       {['GC', 'MC', 'AS', 'LP'].map((initials) => (
-        <Avatar key={initials} className="border-background h-9 w-9 border-2">
+        <Avatar key={initials} className="h-9 w-9 border-2 border-background">
           <AvatarFallback className="text-xs">{initials}</AvatarFallback>
         </Avatar>
       ))}

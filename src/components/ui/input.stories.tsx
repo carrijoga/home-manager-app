@@ -37,10 +37,15 @@ export const Default: Story = {
 export const WithLabel: Story = {
   render: (args) => (
     <div className="w-[280px] space-y-1.5">
-      <Label htmlFor="nome" className="text-muted-foreground text-xs uppercase tracking-wide">
+      <Label htmlFor="nome" className="text-xs uppercase tracking-wide text-muted-foreground">
         Nome da conta
       </Label>
-      <Input {...args} id="nome" placeholder="Ex: Conta Corrente" className="bg-muted/30 border-border/40" />
+      <Input
+        {...args}
+        id="nome"
+        placeholder="Ex: Conta Corrente"
+        className="border-border/40 bg-muted/30"
+      />
     </div>
   ),
 };
@@ -55,7 +60,7 @@ export const WithIcon: Story = {
   render: (args) => (
     <div className="relative w-[280px]">
       <Search
-        className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 -translate-y-1/2"
+        className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
         size={16}
       />
       <Input {...args} placeholder="Buscar..." className="pl-9" />

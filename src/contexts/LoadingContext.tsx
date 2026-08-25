@@ -20,11 +20,7 @@ export function LoadingProvider({ children }: { children: ReactNode }) {
     }
   }, [sessionChecked]);
 
-  return (
-    <LoadingContext.Provider value={{ appReady }}>
-      {children}
-    </LoadingContext.Provider>
-  );
+  return <LoadingContext.Provider value={{ appReady }}>{children}</LoadingContext.Provider>;
 }
 
 export function useAppReady(): boolean {

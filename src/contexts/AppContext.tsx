@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 import * as authService from '@/services/authService';
 import * as nestService from '@/services/nestService';
@@ -25,7 +26,11 @@ interface AppContextValue {
 
   // Nest actions
   createNest: (payload: import('@/schemas/nest').CreateNestRequest) => Promise<void>;
-  updateNest: (nestId: string, payload: Omit<import('@/schemas/nest').UpdateNestRequest, 'nestId'>) => Promise<void>;
+  updateNest: (
+    nestId: string,
+    payload: Omit<import('@/schemas/nest').UpdateNestRequest, 'nestId'>
+  ) => Promise<void>;
+  setDefaultNest: (nestId: string) => Promise<void>;
   deleteNest: (nestId: string) => Promise<void>;
   leaveNest: (nestId: string) => Promise<void>;
 
@@ -56,7 +61,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // Helper to derive default nestId from an AppUser
   const deriveDefaultNestId = (appUser: AppUser): string | null => {
     const nests = appUser.nests ?? [];
-    const defaultNest = nests.find(n => n.isDefault) ?? nests[0];
+    const defaultNest = nests.find((n) => n.isDefault) ?? nests[0];
     return defaultNest?.nestId ?? null;
   };
 
@@ -71,19 +76,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [user]);
 
   const markAsRead = (notificationId: string) => {
-    setNotifications(prev =>
-      prev.map(n => n.notificationId === notificationId ? { ...n, isRead: true } : n)
+    setNotifications((prev) =>
+      prev.map((n) => (n.notificationId === notificationId ? { ...n, isRead: true } : n))
     );
     // TODO: API call to mark notification as read
   };
 
   const markAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
     // TODO: API call to mark all notifications as read
   };
 
   const clearNotification = (notificationId: string) => {
-    setNotifications(prev => prev.filter(n => n.notificationId !== notificationId));
+    setNotifications((prev) => prev.filter((n) => n.notificationId !== notificationId));
     // TODO: API call to delete notification
   };
 
@@ -93,7 +98,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const pushNotification = (notification: AppNotification) => {
-    setNotifications(prev => [notification, ...prev]);
+    setNotifications((prev) => [notification, ...prev]);
   };
 
   // ========== USER PROFILE ==========
@@ -103,7 +108,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const profileData = await authService.getUserProfile();
       const appUser = userProfileToAppUser(profileData);
       setUser(appUser);
-      setActiveNestId(prev => prev ?? deriveDefaultNestId(appUser));
+      setActiveNestId((prev) => prev ?? deriveDefaultNestId(appUser));
       return appUser;
     } catch (error) {
       console.error('Erro ao carregar perfil do usuário:', error);
@@ -121,14 +126,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const refreshNests = async (): Promise<AppUserNest[]> => {
     try {
-      const nests: AppUserNest[] = (await userService.getNests()).map(n => ({
+      const nests: AppUserNest[] = (await userService.getNests()).map((n) => ({
         nestId: n.nestId,
         name: n.name,
         icon: n.icon,
         isDefault: n.isDefault,
         role: n.role as number,
       }));
-      setUser(prev => prev ? { ...prev, nests } : prev);
+      setUser((prev) => (prev ? { ...prev, nests } : prev));
       return nests;
     } catch (error) {
       console.error('Erro ao atualizar ninhos:', error);
@@ -141,8 +146,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     await refreshNests();
   };
 
-  const updateNest = async (nestId: string, payload: Omit<import('@/schemas/nest').UpdateNestRequest, 'nestId'>): Promise<void> => {
+  const updateNest = async (
+    nestId: string,
+    payload: Omit<import('@/schemas/nest').UpdateNestRequest, 'nestId'>
+  ): Promise<void> => {
     await nestService.updateNest(nestId, payload);
+    await refreshNests();
+  };
+
+  const setDefaultNest = async (nestId: string): Promise<void> => {
+    await userService.setDefaultNest(nestId);
+    setUser((prev) => {
+      if (!prev) return prev;
+      const updatedNests = (prev.nests ?? []).map((n) => ({
+        ...n,
+        isDefault: n.nestId === nestId,
+      }));
+      return { ...prev, nests: updatedNests };
+    });
     await refreshNests();
   };
 
@@ -158,7 +179,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     await nestService.leaveNest(nestId);
     const updatedNests = await refreshNests();
     if (activeNestId === nestId) {
-      const defaultNest = updatedNests.find(n => n.isDefault) ?? updatedNests[0];
+      const defaultNest = updatedNests.find((n) => n.isDefault) ?? updatedNests[0];
       setActiveNestId(defaultNest?.nestId ?? null);
     }
   };
@@ -176,7 +197,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const profileData = await authService.getUserProfile();
       const appUser = userProfileToAppUser(profileData);
       setUser(appUser);
-      setActiveNestId(prev => prev ?? deriveDefaultNestId(appUser));
+      setActiveNestId((prev) => prev ?? deriveDefaultNestId(appUser));
     } catch {
       setUser(null);
     } finally {
@@ -187,50 +208,52 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // Kick off session check on mount so the splash screen resolves on public routes too.
   useEffect(() => {
     checkSession();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ========== SESSION EXPIRY LISTENER ==========
   useEffect(() => {
     const handleSessionExpired = () => {
+      authService.logout();
       setUser(null);
       setActiveNestId(null);
       sessionCheckRef.current = false;
-      setSessionChecked(false);
+      setSessionChecked(true);
+      toast.error('Sessão expirada. Faça login novamente.');
     };
     window.addEventListener('auth:session-expired', handleSessionExpired);
     return () => window.removeEventListener('auth:session-expired', handleSessionExpired);
   }, []);
 
   // ========== MEMOIZED VALUE ==========
-  const value = useMemo<AppContextValue>(() => ({
-    user,
-    userLoading,
-    sessionChecked,
-    activeNestId,
-    notifications,
-    checkSession,
-    loadUserProfile,
-    clearUser,
-    setActiveNestId,
-    refreshNests,
-    createNest,
-    updateNest,
-    deleteNest,
-    leaveNest,
-    markAsRead,
-    markAllAsRead,
-    clearNotification,
-    clearAllNotifications,
-    pushNotification,
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [user, userLoading, sessionChecked, activeNestId, notifications]);
-
-  return (
-    <AppContext.Provider value={value}>
-      {children}
-    </AppContext.Provider>
+  const value = useMemo<AppContextValue>(
+    () => ({
+      user,
+      userLoading,
+      sessionChecked,
+      activeNestId,
+      notifications,
+      checkSession,
+      loadUserProfile,
+      clearUser,
+      setActiveNestId,
+      refreshNests,
+      createNest,
+      updateNest,
+      setDefaultNest,
+      deleteNest,
+      leaveNest,
+      markAsRead,
+      markAllAsRead,
+      clearNotification,
+      clearAllNotifications,
+      pushNotification,
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }),
+    [user, userLoading, sessionChecked, activeNestId, notifications]
   );
+
+  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
 
 // ========== HOOK ==========

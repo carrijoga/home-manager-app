@@ -17,7 +17,59 @@ export default defineConfig({
   },
   server: {
     port: 3000,
-    open: true
+    open: true,
+    // Expõe na rede local para testar em dispositivos móveis
+    host: true,
+    // Encaminha as chamadas de API para o back-end, mantendo tudo na mesma
+    // origem do dev server. Evita CORS e permite acesso via IP da rede local.
+    proxy: {
+      '/api': {
+        target: process.env.VITE_PROXY_TARGET || 'https://localhost:7067',
+        changeOrigin: true,
+        secure: false,
+        configure: (proxy) => {
+          proxy.on('proxyRes', (proxyRes) => {
+            const setCookie = proxyRes.headers['set-cookie'];
+            if (setCookie) {
+              proxyRes.headers['set-cookie'] = setCookie.map((cookie: string) =>
+                cookie.replace(/;\s*secure/gi, '')
+              );
+            }
+          });
+        },
+      },
+      '/hubs': {
+        target: process.env.VITE_PROXY_TARGET || 'https://localhost:7067',
+        changeOrigin: true,
+        secure: false,
+        ws: true,
+        configure: (proxy) => {
+          proxy.on('proxyRes', (proxyRes) => {
+            const setCookie = proxyRes.headers['set-cookie'];
+            if (setCookie) {
+              proxyRes.headers['set-cookie'] = setCookie.map((cookie: string) =>
+                cookie.replace(/;\s*secure/gi, '')
+              );
+            }
+          });
+        },
+      },
+      '/health': {
+        target: process.env.VITE_PROXY_TARGET || 'https://localhost:7067',
+        changeOrigin: true,
+        secure: false,
+        configure: (proxy) => {
+          proxy.on('proxyRes', (proxyRes) => {
+            const setCookie = proxyRes.headers['set-cookie'];
+            if (setCookie) {
+              proxyRes.headers['set-cookie'] = setCookie.map((cookie: string) =>
+                cookie.replace(/;\s*secure/gi, '')
+              );
+            }
+          });
+        },
+      }
+    }
   },
   build: {
     outDir: 'dist',

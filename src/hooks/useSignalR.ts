@@ -18,7 +18,7 @@ export function useSignalR(url: string | null): SignalRHandle {
       .withUrl(url, { withCredentials: true })
       .withAutomaticReconnect()
       .configureLogging(
-        import.meta.env.DEV ? signalR.LogLevel.Information : signalR.LogLevel.Warning,
+        import.meta.env.DEV ? signalR.LogLevel.Information : signalR.LogLevel.Warning
       )
       .build();
 
@@ -28,7 +28,8 @@ export function useSignalR(url: string | null): SignalRHandle {
     connection.onreconnecting(() => setIsConnected(false));
     connection.onclose(() => setIsConnected(false));
 
-    connection.start()
+    connection
+      .start()
       .then(() => setIsConnected(true))
       .catch((err) => {
         if (import.meta.env.DEV) {

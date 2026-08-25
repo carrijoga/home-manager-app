@@ -90,14 +90,10 @@ export const ThemeProvider = ({ children }) => {
     theme,
     setTheme,
     toggleTheme,
-    isDark: effectiveTheme === 'dark'
+    isDark: effectiveTheme === 'dark',
   };
 
-  return (
-    <ThemeContext.Provider value={value}>
-      {children}
-    </ThemeContext.Provider>
-  );
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 };
 
 export default ThemeContext;

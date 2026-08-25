@@ -1,4 +1,4 @@
-import { toast } from "sonner";
+import { toast } from 'sonner';
 
 /**
  * Cache de áudios pré-carregados
@@ -12,13 +12,16 @@ const createAudioData = (
   type: 'success-add' | 'success-update' | 'success-delete' | 'error' | 'warning' | 'info'
 ): string => {
   // Frequências otimizadas para cada tipo (notas musicais)
-  const configs: Record<string, { freq1: number; freq2: number; freq3?: number; duration: number }> = {
+  const configs: Record<
+    string,
+    { freq1: number; freq2: number; freq3?: number; duration: number }
+  > = {
     'success-add': { freq1: 523.25, freq2: 659.25, freq3: 783.99, duration: 0.18 }, // C5 + E5 + G5 (acorde maior ascendente)
     'success-update': { freq1: 523.25, freq2: 698.46, duration: 0.15 }, // C5 + F5 (quinta perfeita)
     'success-delete': { freq1: 659.25, freq2: 523.25, duration: 0.16 }, // E5 + C5 (descendente)
-    'error': { freq1: 466.16, freq2: 415.30, duration: 0.20 }, // Bb4 + Ab4 (dissonante)
-    'warning': { freq1: 587.33, freq2: 587.33, duration: 0.18 }, // D5 (neutro)
-    'info': { freq1: 698.46, freq2: 698.46, duration: 0.12 }, // F5 (suave)
+    error: { freq1: 466.16, freq2: 415.3, duration: 0.2 }, // Bb4 + Ab4 (dissonante)
+    warning: { freq1: 587.33, freq2: 587.33, duration: 0.18 }, // D5 (neutro)
+    info: { freq1: 698.46, freq2: 698.46, duration: 0.12 }, // F5 (suave)
   };
 
   const config = configs[type];
@@ -126,7 +129,7 @@ const createWavBlob = (samples: Float32Array, sampleRate: number): Blob => {
   const offset = 44;
   for (let i = 0; i < samples.length; i++) {
     const sample = Math.max(-1, Math.min(1, samples[i]));
-    view.setInt16(offset + i * 2, sample * 0x7FFF, true);
+    view.setInt16(offset + i * 2, sample * 0x7fff, true);
   }
 
   return new Blob([buffer], { type: 'audio/wav' });
@@ -185,7 +188,7 @@ export const useToastNotifications = () => {
 
     if (options?.playSound !== false) {
       const soundType = options?.soundVariant
-        ? `success-${options.soundVariant}` as const
+        ? (`success-${options.soundVariant}` as const)
         : 'success-add';
       playSound(soundType);
     }

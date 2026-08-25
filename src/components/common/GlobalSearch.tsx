@@ -1,9 +1,9 @@
-import { Search, X } from "lucide-react";
-import type { FC } from "react";
-import { useEffect, useRef, useState } from "react";
+import { Search, X } from 'lucide-react';
+import type { FC } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
-import { cn } from "@/lib/utils";
-import type { ModuleId } from "@/types";
+import { cn } from '@/lib/utils';
+import type { ModuleId } from '@/types';
 
 interface SearchResult {
   id: string;
@@ -25,10 +25,10 @@ interface GlobalSearchProps {
 const GlobalSearch: FC<GlobalSearchProps> = ({
   onSearch,
   onResultClick,
-  placeholder = "Buscar... (Ctrl + K)",
+  placeholder = 'Buscar... (Ctrl + K)',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -36,17 +36,17 @@ const GlobalSearch: FC<GlobalSearchProps> = ({
   // Atalho de teclado Ctrl/Cmd + K
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
         e.preventDefault();
         setIsOpen((prev) => !prev);
       }
-      if (e.key === "Escape") {
+      if (e.key === 'Escape') {
         setIsOpen(false);
       }
     };
 
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   // Buscar quando o query mudar - com debounce de 300ms
@@ -75,40 +75,40 @@ const GlobalSearch: FC<GlobalSearchProps> = ({
         clearTimeout(debounceTimerRef.current);
       }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
 
   const handleResultClick = (result: SearchResult) => {
     onResultClick?.(result);
     setIsOpen(false);
-    setQuery("");
+    setQuery('');
     setResults([]);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "ArrowDown") {
+    if (e.key === 'ArrowDown') {
       e.preventDefault();
       setSelectedIndex((prev) => (prev < results.length - 1 ? prev + 1 : prev));
-    } else if (e.key === "ArrowUp") {
+    } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       setSelectedIndex((prev) => (prev > 0 ? prev - 1 : 0));
-    } else if (e.key === "Enter" && results[selectedIndex]) {
+    } else if (e.key === 'Enter' && results[selectedIndex]) {
       e.preventDefault();
       handleResultClick(results[selectedIndex]);
     }
   };
 
   const handleClear = () => {
-    setQuery("");
+    setQuery('');
     setResults([]);
     setSelectedIndex(0);
   };
 
   return (
-    <div className="relative flex-1 max-w-md">
+    <div className="relative max-w-md flex-1">
       <div className="relative">
         <Search
-          className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-muted-foreground"
+          className="absolute left-3 top-1/2 -translate-y-1/2 transform text-gray-400 dark:text-muted-foreground"
           size={18}
         />
         <input
@@ -119,19 +119,19 @@ const GlobalSearch: FC<GlobalSearchProps> = ({
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           className={cn(
-            "w-full pl-10 pr-10 py-2 rounded-lg border transition-all duration-200",
-            "bg-background dark:bg-card",
-            "border-border",
-            "text-foreground",
-            "placeholder-muted-foreground",
-            "focus:outline-none focus:ring-2 focus:ring-ring",
-            "focus:border-transparent"
+            'w-full rounded-lg border py-2 pl-10 pr-10 transition-all duration-200',
+            'bg-background dark:bg-card',
+            'border-border',
+            'text-foreground',
+            'placeholder-muted-foreground',
+            'focus:outline-none focus:ring-2 focus:ring-ring',
+            'focus:border-transparent'
           )}
         />
         {query && (
           <button
             onClick={handleClear}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+            className="absolute right-3 top-1/2 -translate-y-1/2 transform text-muted-foreground transition-colors hover:text-foreground"
             aria-label="Limpar busca"
           >
             <X size={18} />
@@ -143,35 +143,28 @@ const GlobalSearch: FC<GlobalSearchProps> = ({
       {isOpen && query && results.length > 0 && (
         <>
           {/* Backdrop */}
-          <div
-            className="fixed inset-0 z-40"
-            onClick={() => setIsOpen(false)}
-          />
+          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
 
           {/* Dropdown de resultados */}
-          <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-popover rounded-lg shadow-lg border border-border max-h-96 overflow-y-auto">
+          <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-96 overflow-y-auto rounded-lg border border-border bg-popover shadow-lg">
             {results.map((result, index) => (
               <button
                 key={result.id}
                 onClick={() => handleResultClick(result)}
                 className={cn(
-                  "w-full text-left px-4 py-3 border-b border-border last:border-b-0 transition-colors",
-                  "hover:bg-accent",
-                  index === selectedIndex && "bg-accent"
+                  'w-full border-b border-border px-4 py-3 text-left transition-colors last:border-b-0',
+                  'hover:bg-accent',
+                  index === selectedIndex && 'bg-accent'
                 )}
               >
                 <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">
-                      {result.title}
-                    </p>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-foreground">{result.title}</p>
                     {result.subtitle && (
-                      <p className="text-xs text-muted-foreground truncate">
-                        {result.subtitle}
-                      </p>
+                      <p className="truncate text-xs text-muted-foreground">{result.subtitle}</p>
                     )}
                   </div>
-                  <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded flex-shrink-0">
+                  <span className="flex-shrink-0 rounded bg-muted px-2 py-1 text-xs text-muted-foreground">
                     {result.moduleLabel}
                   </span>
                 </div>
@@ -184,12 +177,9 @@ const GlobalSearch: FC<GlobalSearchProps> = ({
       {/* Mensagem de sem resultados */}
       {isOpen && query && results.length === 0 && (
         <>
-          <div
-            className="fixed inset-0 z-40"
-            onClick={() => setIsOpen(false)}
-          />
-          <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-popover rounded-lg shadow-lg border border-border p-4">
-            <p className="text-sm text-center text-muted-foreground">
+          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+          <div className="absolute left-0 right-0 top-full z-50 mt-2 rounded-lg border border-border bg-popover p-4 shadow-lg">
+            <p className="text-center text-sm text-muted-foreground">
               Nenhum resultado encontrado para &quot;{query}&quot;
             </p>
           </div>

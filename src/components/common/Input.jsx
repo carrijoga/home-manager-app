@@ -1,4 +1,3 @@
-
 /**
  * Componente de input reutilizável
  */
@@ -15,7 +14,7 @@ const Input = ({
   required = false,
   disabled = false,
   name = '',
-  id = ''
+  id = '',
 }) => {
   const inputClasses = `w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring transition-colors duration-300 bg-background text-foreground placeholder-muted-foreground ${
     error ? 'border-red-500' : 'border-input'
@@ -24,9 +23,9 @@ const Input = ({
   return (
     <div className={`${className}`}>
       {label && (
-        <label htmlFor={id} className="block text-sm font-medium text-foreground mb-1">
+        <label htmlFor={id} className="mb-1 block text-sm font-medium text-foreground">
           {label}
-          {required && <span className="text-red-500 ml-1">*</span>}
+          {required && <span className="ml-1 text-red-500">*</span>}
         </label>
       )}
       <input

@@ -1,19 +1,19 @@
-import { motion } from "framer-motion";
-import React, { useEffect, useRef } from "react";
+import { motion } from 'framer-motion';
+import React, { useEffect, useRef } from 'react';
 
-import type { BellIconHandle } from "@/components/ui/animated-icons/bell";
-import { BellIcon } from "@/components/ui/animated-icons/bell";
+import type { BellIconHandle } from '@/components/ui/animated-icons/bell';
+import { BellIcon } from '@/components/ui/animated-icons/bell';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
+} from '@/components/ui/dropdown-menu';
+import { cn } from '@/lib/utils';
 
 export interface Notification {
   id: string;
-  type: "task" | "notice" | "reminder";
+  type: 'task' | 'notice' | 'reminder';
   title: string;
   message: string;
   timestamp: Date;
@@ -26,16 +26,16 @@ interface NotificationsMenuProps {
   onMarkAllAsRead?: () => void;
 }
 
-const TYPE_COLORS: Record<Notification["type"], string> = {
-  task: "bg-[color-mix(in_srgb,var(--chart-2)_15%,transparent)] text-[var(--chart-2)]",
-  notice: "bg-primary/20 text-primary",
-  reminder: "bg-[color-mix(in_srgb,var(--chart-4)_15%,transparent)] text-[var(--chart-4)]",
+const TYPE_COLORS: Record<Notification['type'], string> = {
+  task: 'bg-[color-mix(in_srgb,var(--chart-2)_15%,transparent)] text-[var(--chart-2)]',
+  notice: 'bg-primary/20 text-primary',
+  reminder: 'bg-[color-mix(in_srgb,var(--chart-4)_15%,transparent)] text-[var(--chart-4)]',
 };
 
-const TYPE_ICONS: Record<Notification["type"], string> = {
-  task: "✓",
-  notice: "📌",
-  reminder: "⏰",
+const TYPE_ICONS: Record<Notification['type'], string> = {
+  task: '✓',
+  notice: '📌',
+  reminder: '⏰',
 };
 
 function BellTrigger({ hasUnread }: { hasUnread: boolean }) {
@@ -51,7 +51,7 @@ function BellTrigger({ hasUnread }: { hasUnread: boolean }) {
 
   return (
     <button
-      className="relative flex items-center justify-center size-10 rounded-full transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      className="relative flex size-10 items-center justify-center rounded-full transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       aria-label="Notificações"
       onMouseEnter={() => bellRef.current?.startAnimation()}
       onMouseLeave={() => bellRef.current?.stopAnimation()}
@@ -60,11 +60,11 @@ function BellTrigger({ hasUnread }: { hasUnread: boolean }) {
 
       {hasUnread && (
         <motion.span
-          className="absolute top-2 right-2 size-2 rounded-full bg-secondary"
+          className="absolute right-2 top-2 size-2 rounded-full bg-secondary"
           aria-hidden="true"
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
-          transition={{ type: "spring", stiffness: 500, damping: 20, delay: 0.5 }}
+          transition={{ type: 'spring', stiffness: 500, damping: 20, delay: 0.5 }}
         />
       )}
     </button>
@@ -78,12 +78,12 @@ function formatTimestamp(date: Date): string {
   const diffHours = Math.floor(diffMs / 3600000);
   const diffDays = Math.floor(diffMs / 86400000);
 
-  if (diffMins < 1) return "Agora";
+  if (diffMins < 1) return 'Agora';
   if (diffMins < 60) return `${diffMins}min atrás`;
   if (diffHours < 24) return `${diffHours}h atrás`;
-  if (diffDays === 1) return "Ontem";
+  if (diffDays === 1) return 'Ontem';
   if (diffDays < 7) return `${diffDays}d atrás`;
-  return date.toLocaleDateString("pt-BR");
+  return date.toLocaleDateString('pt-BR');
 }
 
 const NotificationsMenu: React.FC<NotificationsMenuProps> = ({
@@ -101,15 +101,15 @@ const NotificationsMenu: React.FC<NotificationsMenuProps> = ({
         </span>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" className="w-80 p-0 overflow-hidden">
+      <DropdownMenuContent align="end" className="w-80 overflow-hidden p-0">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3">
-          <span className="font-semibold text-sm text-foreground">Notificações</span>
+          <span className="text-sm font-semibold text-foreground">Notificações</span>
           {unreadCount > 0 && onMarkAllAsRead && (
             <button
               onClick={onMarkAllAsRead}
               className="font-semibold uppercase tracking-wide text-primary hover:underline"
-            style={{ fontSize: "var(--text-xs)" }}
+              style={{ fontSize: 'var(--text-xs)' }}
             >
               Marcar tudo como lido
             </button>
@@ -129,16 +129,16 @@ const NotificationsMenu: React.FC<NotificationsMenuProps> = ({
               <button
                 key={notification.id}
                 className={cn(
-                  "w-full flex items-start gap-3 px-4 py-3 text-left transition-colors",
-                  "hover:bg-muted/60 focus-visible:outline-none focus-visible:bg-muted/60",
-                  !notification.read && "bg-accent/40"
+                  'flex w-full items-start gap-3 px-4 py-3 text-left transition-colors',
+                  'hover:bg-muted/60 focus-visible:bg-muted/60 focus-visible:outline-none',
+                  !notification.read && 'bg-accent/40'
                 )}
                 onClick={() => onNotificationClick?.(notification.id)}
               >
                 {/* Icon circle */}
                 <div
                   className={cn(
-                    "flex-shrink-0 size-9 rounded-full flex items-center justify-center text-base",
+                    'flex size-9 flex-shrink-0 items-center justify-center rounded-full text-base',
                     TYPE_COLORS[notification.type]
                   )}
                 >
@@ -146,21 +146,21 @@ const NotificationsMenu: React.FC<NotificationsMenuProps> = ({
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm text-foreground leading-snug truncate">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold leading-snug text-foreground">
                     {notification.title}
                   </p>
-                  <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
+                  <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
                     {notification.message}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="mt-1 text-xs text-muted-foreground">
                     {formatTimestamp(notification.timestamp)}
                   </p>
                 </div>
 
                 {/* Unread dot */}
                 {!notification.read && (
-                  <div className="flex-shrink-0 size-2 rounded-full bg-primary mt-1.5" />
+                  <div className="mt-1.5 size-2 flex-shrink-0 rounded-full bg-primary" />
                 )}
               </button>
             ))}

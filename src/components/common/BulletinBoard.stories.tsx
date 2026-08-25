@@ -89,10 +89,34 @@ export const ReadOnly: Story = {
 export const Priorities: Story = {
   args: {
     notes: [
-      { id: 'p0', priority: ApiPriority.Urgente, content: 'Urgente', authorName: 'Gabriel', timeLabel: 'Agora' },
-      { id: 'p1', priority: ApiPriority.Alta, content: 'Alta', authorName: 'Gabriel', timeLabel: 'Agora' },
-      { id: 'p2', priority: ApiPriority.Media, content: 'Média', authorName: 'Gabriel', timeLabel: 'Agora' },
-      { id: 'p3', priority: ApiPriority.Baixa, content: 'Baixa', authorName: 'Gabriel', timeLabel: 'Agora' },
+      {
+        id: 'p0',
+        priority: ApiPriority.Urgente,
+        content: 'Urgente',
+        authorName: 'Gabriel',
+        timeLabel: 'Agora',
+      },
+      {
+        id: 'p1',
+        priority: ApiPriority.Alta,
+        content: 'Alta',
+        authorName: 'Gabriel',
+        timeLabel: 'Agora',
+      },
+      {
+        id: 'p2',
+        priority: ApiPriority.Media,
+        content: 'Média',
+        authorName: 'Gabriel',
+        timeLabel: 'Agora',
+      },
+      {
+        id: 'p3',
+        priority: ApiPriority.Baixa,
+        content: 'Baixa',
+        authorName: 'Gabriel',
+        timeLabel: 'Agora',
+      },
     ],
   },
 };
@@ -109,9 +133,27 @@ export const ManyNotes: Story = {
   args: {
     notes: [
       ...notes,
-      { id: '4', priority: ApiPriority.Baixa, content: 'Trocar a lâmpada do corredor.', authorName: 'Marina', timeLabel: 'Há 4 dias' },
-      { id: '5', priority: ApiPriority.Media, content: 'Reunião de condomínio dia 30, às 19h.', authorName: 'Gabriel', timeLabel: 'Há 5 dias' },
-      { id: '6', priority: ApiPriority.Alta, content: 'Boleto do seguro vence sexta.', authorName: 'Marina', timeLabel: 'Há 1 semana' },
+      {
+        id: '4',
+        priority: ApiPriority.Baixa,
+        content: 'Trocar a lâmpada do corredor.',
+        authorName: 'Marina',
+        timeLabel: 'Há 4 dias',
+      },
+      {
+        id: '5',
+        priority: ApiPriority.Media,
+        content: 'Reunião de condomínio dia 30, às 19h.',
+        authorName: 'Gabriel',
+        timeLabel: 'Há 5 dias',
+      },
+      {
+        id: '6',
+        priority: ApiPriority.Alta,
+        content: 'Boleto do seguro vence sexta.',
+        authorName: 'Marina',
+        timeLabel: 'Há 1 semana',
+      },
     ],
   },
 };

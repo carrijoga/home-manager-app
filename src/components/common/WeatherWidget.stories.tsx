@@ -58,11 +58,58 @@ export const Onboarding: Story = {
   args: { mode: 'onboarding' },
 };
 
-/** Nome de cidade longo é truncado em `max-w-[120px]`. */
 export const LongCityName: Story = {
   args: {
     city: 'São José do Rio Preto',
     temperatureLabel: '31°',
     description: 'Ensolarado',
+  },
+};
+
+export const Sunny: Story = {
+  args: {
+    description: 'Ensolarado',
+    temperatureLabel: '28°C',
+    conditionCode: 'sunny',
+  },
+};
+
+export const Rainy: Story = {
+  args: {
+    description: 'Chuva forte',
+    temperatureLabel: '19°C',
+    conditionCode: 'rain',
+  },
+};
+
+export const Storm: Story = {
+  args: {
+    description: 'Tempestade com trovoada',
+    temperatureLabel: '17°C',
+    conditionCode: 'thunderstorm',
+  },
+};
+
+export const Windy: Story = {
+  args: {
+    description: 'Vento forte',
+    temperatureLabel: '15°C',
+    conditionCode: 'windy',
+  },
+};
+
+export const Hot: Story = {
+  args: {
+    description: 'Muito quente',
+    temperatureLabel: '37°C',
+    conditionCode: 'hot',
+  },
+};
+
+export const Cold: Story = {
+  args: {
+    description: 'Muito frio / Geada',
+    temperatureLabel: '-1°C',
+    conditionCode: 'snow',
   },
 };

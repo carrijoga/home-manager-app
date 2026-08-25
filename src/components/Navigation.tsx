@@ -13,24 +13,24 @@ import {
   Package,
   ShoppingCart,
   X,
-} from "lucide-react";
-import type { FC } from "react";
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+} from 'lucide-react';
+import type { FC } from 'react';
+import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-import { cn } from "@/lib/utils";
-import * as authService from "@/services/authService";
-import type { AppUser } from "@/types";
+import { cn } from '@/lib/utils';
+import * as authService from '@/services/authService';
+import type { AppUser } from '@/types';
 
-import GlobalSearch from "./common/GlobalSearch";
-import NotificationsMenu from "./common/NotificationsMenu";
-import ProfileMenu from "./common/ProfileMenu";
+import GlobalSearch from './common/GlobalSearch';
+import NotificationsMenu from './common/NotificationsMenu';
+import ProfileMenu from './common/ProfileMenu';
 
 interface NavigationProps {
   currentPath: string;
   user?: AppUser;
-  onThemeChange?: (theme: "light" | "dark" | "system") => void;
-  currentTheme?: "light" | "dark" | "system";
+  onThemeChange?: (theme: 'light' | 'dark' | 'system') => void;
+  currentTheme?: 'light' | 'dark' | 'system';
 }
 
 interface Module {
@@ -43,17 +43,17 @@ interface Module {
 
 // Módulos definidos fora do componente para evitar recriação
 const MODULES: Module[] = [
-  { id: "dashboard", name: "Dashboard", icon: Home, path: "/dashboard" },
-  { id: "tasks", name: "Tarefas", icon: CheckSquare, path: "/tasks" },
+  { id: 'dashboard', name: 'Dashboard', icon: Home, path: '/dashboard' },
+  { id: 'tasks', name: 'Tarefas', icon: CheckSquare, path: '/tasks' },
   {
-    id: "shopping",
-    name: "Lista de Compras",
+    id: 'shopping',
+    name: 'Lista de Compras',
     icon: ShoppingCart,
-    path: "/shopping",
+    path: '/shopping',
   },
-  { id: "financial", name: "Financeiro", icon: DollarSign, path: "/financial" },
-  { id: "future", name: "Compras Futuras", icon: Package, path: "/future" },
-  { id: "calendar", name: "Calendário", icon: Calendar, path: "/calendar" },
+  { id: 'financial', name: 'Financeiro', icon: DollarSign, path: '/financial' },
+  { id: 'future', name: 'Compras Futuras', icon: Package, path: '/future' },
+  { id: 'calendar', name: 'Calendário', icon: Calendar, path: '/calendar' },
 ];
 
 /**
@@ -63,17 +63,17 @@ const Navigation: FC<NavigationProps> = ({
   currentPath,
   user,
   onThemeChange,
-  currentTheme = "system",
+  currentTheme = 'system',
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
 
   // Usuário padrão para desenvolvimento
   const defaultUser: AppUser = {
-    id: "1",
-    name: "Usuário",
-    callmeby: "Você",
-    email: "usuario@ninho.app",
+    id: '1',
+    name: 'Usuário',
+    callmeby: 'Você',
+    email: 'usuario@ninho.app',
   };
 
   const currentUser = user || defaultUser;
@@ -84,18 +84,18 @@ const Navigation: FC<NavigationProps> = ({
   const mockNotifications = useMemo(
     () => [
       {
-        id: "1",
-        type: "task" as const,
-        title: "Tarefa vencendo",
+        id: '1',
+        type: 'task' as const,
+        title: 'Tarefa vencendo',
         message: 'A tarefa "Comprar mantimentos" vence hoje',
         timestamp: new Date(Date.now() - 3600000), // 1h atrás
         read: false,
       },
       {
-        id: "2",
-        type: "notice" as const,
-        title: "Novo aviso",
-        message: "Gabriel adicionou um novo aviso no quadro",
+        id: '2',
+        type: 'notice' as const,
+        title: 'Novo aviso',
+        message: 'Gabriel adicionou um novo aviso no quadro',
         timestamp: new Date(Date.now() - 7200000), // 2h atrás
         read: false,
       },
@@ -112,37 +112,37 @@ const Navigation: FC<NavigationProps> = ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleSearchResultClick = (result: any) => {
     // TODO: Navegar para o módulo e item específico
-    console.log("Search result clicked:", result);
+    console.log('Search result clicked:', result);
   };
 
   const handleNotificationClick = (notificationId: string) => {
     // TODO: Marcar notificação como lida e navegar para o item
-    console.log("Notification clicked:", notificationId);
+    console.log('Notification clicked:', notificationId);
   };
 
   const handleMarkAllAsRead = () => {
     // TODO: Marcar todas notificações como lidas
-    console.log("Mark all as read");
+    console.log('Mark all as read');
   };
 
   const handleProfileClick = () => {
     // TODO: Navegar para página de perfil
-    console.log("Profile clicked");
+    console.log('Profile clicked');
   };
 
   const handleSettingsClick = () => {
     // TODO: Navegar para página de configurações
-    console.log("Settings clicked");
+    console.log('Settings clicked');
   };
 
   const handleLogoutClick = async () => {
     try {
       await authService.logout();
       // Limpar estado do usuário, se houver (opcional: useApp()?.setUser(null))
-      navigate("/login");
+      navigate('/login');
     } catch (error) {
       // Exibir erro (opcional: toast)
-      console.error("Erro ao sair:", error);
+      console.error('Erro ao sair:', error);
     }
   };
 
@@ -154,24 +154,24 @@ const Navigation: FC<NavigationProps> = ({
   const isActive = (path: string) => currentPath === path;
 
   return (
-    <nav className="bg-white dark:bg-slate-900 shadow-sm border-b border-slate-200 dark:border-slate-700 sticky top-0 z-50 transition-colors duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+    <nav className="sticky top-0 z-50 border-b border-slate-200 bg-white shadow-sm transition-colors duration-300 dark:border-slate-700 dark:bg-slate-900">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 items-center justify-between">
           {/* Logo e Nome */}
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex flex-shrink-0 items-center gap-2">
             <button
-              onClick={() => navigate("/dashboard")}
-              className="flex items-center gap-2 hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 rounded-lg px-2 py-1"
+              onClick={() => navigate('/dashboard')}
+              className="flex items-center gap-2 rounded-lg px-2 py-1 transition-opacity hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
             >
               <span className="text-2xl">🪺</span>
-              <span className="text-xl font-bold text-indigo-700 dark:text-indigo-400 hidden sm:inline">
+              <span className="hidden text-xl font-bold text-indigo-700 dark:text-indigo-400 sm:inline">
                 Ninho
               </span>
             </button>
           </div>
 
           {/* Links de Navegação - Desktop */}
-          <div className="hidden lg:flex items-center gap-1 flex-1 px-6">
+          <div className="hidden flex-1 items-center gap-1 px-6 lg:flex">
             {modules.map((module) => {
               const Icon = module.icon;
               const active = isActive(module.path);
@@ -180,12 +180,12 @@ const Navigation: FC<NavigationProps> = ({
                   key={module.id}
                   onClick={() => navigate(module.path)}
                   className={cn(
-                    "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200",
-                    "hover:bg-indigo-50 dark:hover:bg-slate-800",
-                    "focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400",
+                    'flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
+                    'hover:bg-indigo-50 dark:hover:bg-slate-800',
+                    'focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400',
                     active
-                      ? "bg-indigo-100 dark:bg-slate-800 text-indigo-700 dark:text-indigo-400"
-                      : "text-slate-700 dark:text-slate-300"
+                      ? 'bg-indigo-100 text-indigo-700 dark:bg-slate-800 dark:text-indigo-400'
+                      : 'text-slate-700 dark:text-slate-300'
                   )}
                 >
                   <Icon size={16} />
@@ -196,11 +196,8 @@ const Navigation: FC<NavigationProps> = ({
           </div>
 
           {/* Busca Global - Desktop */}
-          <div className="hidden md:flex flex-1 max-w-md mx-4">
-            <GlobalSearch
-              onSearch={handleSearch}
-              onResultClick={handleSearchResultClick}
-            />
+          <div className="mx-4 hidden max-w-md flex-1 md:flex">
+            <GlobalSearch onSearch={handleSearch} onResultClick={handleSearchResultClick} />
           </div>
 
           {/* Notificações e Perfil */}
@@ -222,23 +219,20 @@ const Navigation: FC<NavigationProps> = ({
             {/* Botão de menu mobile */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden ml-2 p-2 rounded-lg hover:bg-indigo-50 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
+              className="ml-2 rounded-lg p-2 hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:hover:bg-slate-800 dark:focus:ring-indigo-400 lg:hidden"
               aria-label="Menu"
             >
               {mobileMenuOpen ? (
                 <X size={20} className="text-slate-700 dark:text-slate-300" />
               ) : (
-                <Menu
-                  size={20}
-                  className="text-slate-700 dark:text-slate-300"
-                />
+                <Menu size={20} className="text-slate-700 dark:text-slate-300" />
               )}
             </button>
           </div>
         </div>
 
         {/* Busca Global - Mobile */}
-        <div className="md:hidden pb-3">
+        <div className="pb-3 md:hidden">
           <GlobalSearch
             onSearch={handleSearch}
             onResultClick={handleSearchResultClick}
@@ -249,8 +243,8 @@ const Navigation: FC<NavigationProps> = ({
 
       {/* Menu Mobile */}
       {mobileMenuOpen && (
-        <div className="lg:hidden border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
-          <div className="px-2 pt-2 pb-3 space-y-1">
+        <div className="border-t border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900 lg:hidden">
+          <div className="space-y-1 px-2 pb-3 pt-2">
             {modules.map((module) => {
               const Icon = module.icon;
               const active = isActive(module.path);
@@ -259,10 +253,10 @@ const Navigation: FC<NavigationProps> = ({
                   key={module.id}
                   onClick={() => handleModuleClick(module.path)}
                   className={cn(
-                    "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-base font-medium transition-all duration-200",
+                    'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-base font-medium transition-all duration-200',
                     active
-                      ? "bg-indigo-100 dark:bg-slate-800 text-indigo-700 dark:text-indigo-400"
-                      : "text-slate-700 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-slate-800"
+                      ? 'bg-indigo-100 text-indigo-700 dark:bg-slate-800 dark:text-indigo-400'
+                      : 'text-slate-700 hover:bg-indigo-50 dark:text-slate-300 dark:hover:bg-slate-800'
                   )}
                 >
                   <Icon size={20} />

@@ -98,8 +98,20 @@ export const ProgressExtremes: Story = {
   ],
   render: (args) => (
     <>
-      <ModuleMetricWidget {...args} label="Nada feito ainda" value="0 de 8" progress={0} progressLabel="0%" />
-      <ModuleMetricWidget {...args} label="Tudo concluído" value="8 de 8" progress={1} progressLabel="100%" />
+      <ModuleMetricWidget
+        {...args}
+        label="Nada feito ainda"
+        value="0 de 8"
+        progress={0}
+        progressLabel="0%"
+      />
+      <ModuleMetricWidget
+        {...args}
+        label="Tudo concluído"
+        value="8 de 8"
+        progress={1}
+        progressLabel="100%"
+      />
     </>
   ),
 };

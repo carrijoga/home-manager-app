@@ -137,7 +137,13 @@ export const Board: Story = {
     <>
       <PostIt {...args} noticeId="d1" isPinned message="Reunião dia 30, 19h." index={0} />
       <PostIt {...args} noticeId="d2" message="Comprar ração para o gato." index={1} />
-      <PostIt {...args} noticeId="d3" message="Consulta da Ana: quinta, 14h." authorName="Marina" index={2} />
+      <PostIt
+        {...args}
+        noticeId="d3"
+        message="Consulta da Ana: quinta, 14h."
+        authorName="Marina"
+        index={2}
+      />
     </>
   ),
 };

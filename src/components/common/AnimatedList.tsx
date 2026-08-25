@@ -5,11 +5,11 @@
  * Os itens filhos aparecem em sequência com delay progressivo.
  */
 
-import { AnimatePresence,motion } from "framer-motion";
-import { ReactNode } from "react";
+import { AnimatePresence, motion } from 'framer-motion';
+import { ReactNode } from 'react';
 
-import { listContainerVariants, listItemVariants } from "@/lib/animations";
-import { cn } from "@/lib/utils";
+import { listContainerVariants, listItemVariants } from '@/lib/animations';
+import { cn } from '@/lib/utils';
 
 interface AnimatedListProps {
   children: ReactNode;
@@ -22,11 +22,7 @@ interface AnimatedListProps {
 /**
  * Container de lista com stagger animation
  */
-export function AnimatedList({
-  children,
-  className = "",
-  staggerDelay = 0.05,
-}: AnimatedListProps) {
+export function AnimatedList({ children, className = '', staggerDelay = 0.05 }: AnimatedListProps) {
   return (
     <motion.div
       variants={listContainerVariants}
@@ -58,7 +54,7 @@ interface AnimatedListItemProps {
  */
 export function AnimatedListItem({
   children,
-  className = "",
+  className = '',
   itemKey,
   onClick,
 }: AnimatedListItemProps) {
@@ -68,10 +64,7 @@ export function AnimatedListItem({
       variants={listItemVariants}
       layout
       onClick={onClick}
-      className={cn(
-        onClick && "cursor-pointer",
-        className
-      )}
+      className={cn(onClick && 'cursor-pointer', className)}
     >
       {children}
     </motion.div>
@@ -89,11 +82,7 @@ interface AnimatedGridProps {
 /**
  * Grid animado com stagger (similar ao AnimatedList mas para grids)
  */
-export function AnimatedGrid({
-  children,
-  className = "",
-  staggerDelay = 0.05,
-}: AnimatedGridProps) {
+export function AnimatedGrid({ children, className = '', staggerDelay = 0.05 }: AnimatedGridProps) {
   return (
     <AnimatePresence mode="wait">
       <motion.div

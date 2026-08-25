@@ -7,7 +7,14 @@ import { FadeIn } from './components/common/FadeIn';
 import RequireAuth from './components/common/RequireAuth';
 import { SplashScreen } from './components/common/SplashScreen';
 import { TopNavbar } from './components/common/TopNavbar';
-import { AccountSkeleton, DashboardSkeleton, FinancialSkeleton, PaymentCardSkeleton, ShoppingListSkeleton, TaskListSkeleton } from './components/skeletons';
+import {
+  AccountSkeleton,
+  DashboardSkeleton,
+  FinancialSkeleton,
+  PaymentCardSkeleton,
+  ShoppingListSkeleton,
+  TaskListSkeleton,
+} from './components/skeletons';
 import { SidebarInset, SidebarProvider } from './components/ui/sidebar';
 import { Toaster } from './components/ui/sonner';
 import { AppProvider, useApp } from './contexts/AppContext';
@@ -19,13 +26,22 @@ const DashboardModule = lazy(() => import('./components/modules/Dashboard'));
 const TasksModule = lazy(() => import('./components/modules/Tasks'));
 const ShoppingListModule = lazy(() => import('./components/modules/ShoppingList'));
 const FinancialModule = lazy(() => import('./components/modules/Financial'));
+const FinancialV2Module = lazy(() => import('./components/modules/FinancialV2'));
 const CalendarModule = lazy(() => import('./components/modules/Calendar'));
 const PaymentCardModule = lazy(() => import('./components/modules/financial/PaymentCard'));
-const FinancialAccountModule = lazy(() => import('./components/modules/financial/FinancialAccount'));
+const FinancialAccountModule = lazy(
+  () => import('./components/modules/financial/FinancialAccount')
+);
+const FinancialGoalsModule = lazy(() => import('./components/modules/financial/FinancialGoals'));
+const FinancialRecurrencesModule = lazy(
+  () => import('./components/modules/financial/FinancialRecurrences')
+);
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const GoogleCallback = lazy(() => import('./pages/GoogleCallback'));
 const InviteAccept = lazy(() => import('./pages/InviteAccept'));
+
 
 // Componentes wrapper que conectam o context aos módulos
 const Dashboard = () => {
@@ -44,17 +60,17 @@ const Financial = () => {
   return <FinancialModule />;
 };
 
-const FinancialGoals = () => (
-  <div className="p-6">
-    <h1 className="text-2xl font-semibold">Metas</h1>
-  </div>
-);
+const FinancialV2 = () => {
+  return <FinancialV2Module />;
+};
 
-const FinancialRecurrences = () => (
-  <div className="p-6">
-    <h1 className="text-2xl font-semibold">Recorrências</h1>
-  </div>
-);
+const FinancialGoals = () => {
+  return <FinancialGoalsModule />;
+};
+
+const FinancialRecurrences = () => {
+  return <FinancialRecurrencesModule />;
+};
 
 const Calendar = () => {
   return <CalendarModule />;
@@ -64,9 +80,7 @@ const AppShell = ({ children }) => {
   const appReady = useAppReady();
   return (
     <>
-      <AnimatePresence>
-        {!appReady && <SplashScreen key="splash" />}
-      </AnimatePresence>
+      <AnimatePresence>{!appReady && <SplashScreen key="splash" />}</AnimatePresence>
       {children}
     </>
   );
@@ -83,75 +97,168 @@ const App = () => {
         <AppShell>
           <Routes>
             {/* Rota pública */}
-            <Route path="/login" element={
-              <Suspense fallback={<DashboardSkeleton />}>
-                <Login />
-              </Suspense>
-            } />
-            <Route path="/register" element={
-              <Suspense fallback={<DashboardSkeleton />}>
-                <Register />
-              </Suspense>
-            } />
-            <Route path="/auth/google/callback" element={
-              <Suspense fallback={<DashboardSkeleton />}>
-                <GoogleCallback />
-              </Suspense>
-            } />
+            <Route
+              path="/login"
+              element={
+                <Suspense fallback={<DashboardSkeleton />}>
+                  <Login />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/register"
+              element={
+                <Suspense fallback={<DashboardSkeleton />}>
+                  <Register />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/reset-password"
+              element={
+                <Suspense fallback={<DashboardSkeleton />}>
+                  <ResetPassword />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/recovery-password"
+              element={
+                <Suspense fallback={<DashboardSkeleton />}>
+                  <ResetPassword />
+                </Suspense>
+              }
+            />
 
-            {/* Rota privada sem layout — aceite de convite */}
-            <Route path="/invite" element={
-              <RequireAuth>
+            <Route
+              path="/auth/google/callback"
+              element={
+                <Suspense fallback={<DashboardSkeleton />}>
+                  <GoogleCallback />
+                </Suspense>
+              }
+            />
+
+            {/* Rota pública sem layout — aceite de convite */}
+            <Route
+              path="/invite"
+              element={
                 <Suspense fallback={<DashboardSkeleton />}>
                   <InviteAccept />
                 </Suspense>
-              </RequireAuth>
-            } />
+              }
+            />
 
             {/* Rotas privadas com layout compartilhado */}
-            <Route path="/" element={<RequireAuth><HomeLayout /></RequireAuth>}>
+            <Route
+              path="/"
+              element={
+                <RequireAuth>
+                  <HomeLayout />
+                </RequireAuth>
+              }
+            >
               <Route index element={<Navigate to="/dashboard" replace />} />
-              <Route path="dashboard" element={
-                <Suspense fallback={<DashboardSkeleton />}>
-                  <FadeIn><Dashboard /></FadeIn>
-                </Suspense>
-              } />
-              <Route path="tasks" element={
-                <Suspense fallback={<TaskListSkeleton />}>
-                  <FadeIn><Tasks /></FadeIn>
-                </Suspense>
-              } />
-              <Route path="shopping" element={
-                <Suspense fallback={<ShoppingListSkeleton />}>
-                  <FadeIn><ShoppingList /></FadeIn>
-                </Suspense>
-              } />
-              <Route path="financial" element={
-                <Suspense fallback={<FinancialSkeleton />}>
-                  <FadeIn><Financial /></FadeIn>
-                </Suspense>
-              } />
-              <Route path="financial/goals" element={
-                <FadeIn><FinancialGoals /></FadeIn>
-              } />
-              <Route path="financial/recurrences" element={
-                <FadeIn><FinancialRecurrences /></FadeIn>
-              } />
-              <Route path="financial/account" element={
-                <Suspense fallback={<AccountSkeleton />}>
-                  <FadeIn><FinancialAccountModule /></FadeIn>
-                </Suspense>
-              } />
-              <Route path="financial/card" element={
-                <Suspense fallback={<PaymentCardSkeleton />}>
-                  <FadeIn><PaymentCardModule /></FadeIn>
-                </Suspense>
-              } />
-              <Route path="calendar" element={
-                <Suspense fallback={<DashboardSkeleton />}>
-                  <FadeIn><Calendar /></FadeIn>
-                </Suspense>
-              } />
+              <Route
+                path="dashboard"
+                element={
+                  <Suspense fallback={<DashboardSkeleton />}>
+                    <FadeIn>
+                      <Dashboard />
+                    </FadeIn>
+                  </Suspense>
+                }
+              />
+              <Route
+                path="tasks"
+                element={
+                  <Suspense fallback={<TaskListSkeleton />}>
+                    <FadeIn>
+                      <Tasks />
+                    </FadeIn>
+                  </Suspense>
+                }
+              />
+              <Route
+                path="shopping"
+                element={
+                  <Suspense fallback={<ShoppingListSkeleton />}>
+                    <FadeIn>
+                      <ShoppingList />
+                    </FadeIn>
+                  </Suspense>
+                }
+              />
+              <Route
+                path="financial"
+                element={
+                  <Suspense fallback={<FinancialSkeleton />}>
+                    <FadeIn>
+                      <Financial />
+                    </FadeIn>
+                  </Suspense>
+                }
+              />
+              <Route
+                path="financial-v2"
+                element={
+                  <Suspense fallback={<FinancialSkeleton />}>
+                    <FadeIn>
+                      <FinancialV2 />
+                    </FadeIn>
+                  </Suspense>
+                }
+              />
+              <Route
+                path="financial/goals"
+                element={
+                  <Suspense fallback={<DashboardSkeleton />}>
+                    <FadeIn>
+                      <FinancialGoals />
+                    </FadeIn>
+                  </Suspense>
+                }
+              />
+              <Route
+                path="financial/recurrences"
+                element={
+                  <Suspense fallback={<DashboardSkeleton />}>
+                    <FadeIn>
+                      <FinancialRecurrences />
+                    </FadeIn>
+                  </Suspense>
+                }
+              />
+              <Route
+                path="financial/account"
+                element={
+                  <Suspense fallback={<AccountSkeleton />}>
+                    <FadeIn>
+                      <FinancialAccountModule />
+                    </FadeIn>
+                  </Suspense>
+                }
+              />
+              <Route
+                path="financial/card"
+                element={
+                  <Suspense fallback={<PaymentCardSkeleton />}>
+                    <FadeIn>
+                      <PaymentCardModule />
+                    </FadeIn>
+                  </Suspense>
+                }
+              />
+              <Route
+                path="calendar"
+                element={
+                  <Suspense fallback={<DashboardSkeleton />}>
+                    <FadeIn>
+                      <Calendar />
+                    </FadeIn>
+                  </Suspense>
+                }
+              />
             </Route>
 
             {/* Fallback para rotas não encontradas */}
@@ -179,8 +286,8 @@ const HomeLayout = () => {
       <AppSidebar user={user} />
       <SidebarInset className="overflow-x-hidden">
         <TopNavbar />
-        <div className="flex flex-1 flex-col gap-4 p-3 sm:p-4 md:p-6 overflow-x-hidden">
-          <div className="flex-1 max-w-full">
+        <div className="flex flex-1 flex-col gap-4 overflow-x-hidden p-3 sm:p-4 md:p-6">
+          <div className="max-w-full flex-1">
             <Outlet />
           </div>
         </div>

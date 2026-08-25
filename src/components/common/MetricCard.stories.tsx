@@ -109,8 +109,13 @@ export const WithChart: Story = {
     tone: 'honey',
     comparison: { value: 5 },
     chartData: [
-      { value: 240 }, { value: 300 }, { value: 280 },
-      { value: 360 }, { value: 320 }, { value: 400 }, { value: 320 },
+      { value: 240 },
+      { value: 300 },
+      { value: 280 },
+      { value: 360 },
+      { value: 320 },
+      { value: 400 },
+      { value: 320 },
     ],
   },
 };

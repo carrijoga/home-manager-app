@@ -1,7 +1,7 @@
-import { motion } from "framer-motion";
-import { ReactNode } from "react";
+import { motion } from 'framer-motion';
+import { ReactNode } from 'react';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 interface FooterItem {
   label: string;
@@ -45,7 +45,7 @@ export function ModuleMetricWidget({
   value,
   footer,
   progress,
-  progressColor = "var(--chart-2)",
+  progressColor = 'var(--chart-2)',
   progressLabel,
   progressLabelColor,
   extra,
@@ -54,54 +54,55 @@ export function ModuleMetricWidget({
 }: ModuleMetricWidgetProps) {
   return (
     <div
-      role={onClick ? "button" : undefined}
+      role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
       onClick={onClick}
-      onKeyDown={onClick ? (e) => e.key === "Enter" && onClick() : undefined}
+      onKeyDown={onClick ? (e) => e.key === 'Enter' && onClick() : undefined}
       className={cn(
-        "flex flex-col justify-between p-6 rounded-3xl h-full gap-6 bg-card border border-border outline-none",
-        onClick && "cursor-pointer hover:brightness-105 active:scale-[0.98] transition-all duration-[length:var(--dur-base)] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        'flex h-full flex-col justify-between gap-6 rounded-3xl border border-border bg-card p-6 outline-none',
+        onClick &&
+          'duration-[length:var(--dur-base)] cursor-pointer transition-all hover:brightness-105 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98]',
         className
       )}
     >
       {/* Icon + category label */}
-      <div className="flex items-center justify-between w-full">
+      <div className="flex w-full items-center justify-between">
         <div style={{ color: iconColor }}>{icon}</div>
         <span
-          className="font-ui font-semibold uppercase text-muted-foreground/80 tracking-[1px]"
-          style={{ fontSize: "var(--text-xs)" }}
+          className="font-ui font-semibold uppercase tracking-[1px] text-muted-foreground/80"
+          style={{ fontSize: 'var(--text-xs)' }}
         >
           {category}
         </span>
       </div>
 
       {/* Main value */}
-      <div className="flex flex-col gap-0.5 w-full">
-        <p className="font-ui text-muted-foreground" style={{ fontSize: "var(--text-xs)" }}>
+      <div className="flex w-full flex-col gap-0.5">
+        <p className="font-ui text-muted-foreground" style={{ fontSize: 'var(--text-xs)' }}>
           {label}
         </p>
-        <p className="font-ui font-semibold text-foreground text-2xl leading-tight truncate">
+        <p className="font-ui truncate text-2xl font-semibold leading-tight text-foreground">
           {value}
         </p>
       </div>
 
       {/* Footer stats */}
       {footer && (
-        <div className="flex items-end justify-between w-full">
+        <div className="flex w-full items-end justify-between">
           {footer.map((item, i) =>
             item ? (
-              <div key={i} className="flex flex-col gap-1 min-w-0">
+              <div key={i} className="flex min-w-0 flex-col gap-1">
                 <span
-                  className="font-ui uppercase text-muted-foreground/80 truncate"
-                  style={{ fontSize: "var(--text-xs)", textAlign: i === 1 ? "right" : "left" }}
+                  className="font-ui truncate uppercase text-muted-foreground/80"
+                  style={{ fontSize: 'var(--text-xs)', textAlign: i === 1 ? 'right' : 'left' }}
                 >
                   {item.label}
                 </span>
                 <span
-                  className="font-ui font-semibold text-sm truncate"
+                  className="font-ui truncate text-sm font-semibold"
                   style={{
-                    color: item.valueColor ?? "var(--foreground)",
-                    textAlign: i === 1 ? "right" : "left",
+                    color: item.valueColor ?? 'var(--foreground)',
+                    textAlign: i === 1 ? 'right' : 'left',
                   }}
                 >
                   {item.value}
@@ -114,10 +115,8 @@ export function ModuleMetricWidget({
 
       {/* Progress bar */}
       {progress !== undefined && (
-        <div className="flex items-center gap-2 w-full">
-          <div
-            className="flex-1 h-1.5 rounded-full overflow-hidden bg-muted"
-          >
+        <div className="flex w-full items-center gap-2">
+          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
             <motion.div
               className="h-full rounded-full"
               initial={{ width: 0 }}
@@ -128,9 +127,9 @@ export function ModuleMetricWidget({
           </div>
           {progressLabel && (
             <span
-              className="font-ui font-semibold shrink-0"
+              className="font-ui shrink-0 font-semibold"
               style={{
-                fontSize: "var(--text-xs)",
+                fontSize: 'var(--text-xs)',
                 color: progressLabelColor ?? progressColor,
               }}
             >

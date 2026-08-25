@@ -5,7 +5,7 @@ import {
   PieChart,
   Target,
   TrendingDown,
-  TrendingUp
+  TrendingUp,
 } from 'lucide-react';
 
 import { formatCurrency } from '@/utils/dashboardMetrics';
@@ -29,17 +29,17 @@ export function SavingsCard({ savings, percentage, animationDelay = 0 }) {
       animationDelay={animationDelay}
       comparison={{
         value: percentage,
-        label: 'vs mês anterior'
+        label: 'vs mês anterior',
       }}
       alertType={!isSaving ? 'warning' : undefined}
       footer={
         <div className="text-xs text-gray-600 dark:text-muted-foreground">
           {isSaving ? (
-            <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+            <span className="font-semibold text-emerald-600 dark:text-emerald-400">
               ✓ Você economizou este mês!
             </span>
           ) : (
-            <span className="text-red-600 dark:text-red-400 font-semibold">
+            <span className="font-semibold text-red-600 dark:text-red-400">
               ⚠ Gastos aumentaram
             </span>
           )}
@@ -94,7 +94,7 @@ export function NextBillCard({ days, bill, animationDelay = 0 }) {
         <div className="text-xs text-gray-600 dark:text-muted-foreground">
           <span className="font-semibold">{bill}</span>
           {isUrgent && (
-            <div className="mt-1 text-red-600 dark:text-red-400 flex items-center gap-1">
+            <div className="mt-1 flex items-center gap-1 text-red-600 dark:text-red-400">
               <AlertCircle size={14} />
               <span>Vence em breve!</span>
             </div>
@@ -123,11 +123,11 @@ export function OverdueTasksCard({ count, animationDelay = 0 }) {
       footer={
         <div className="text-xs text-gray-600 dark:text-muted-foreground">
           {hasOverdue ? (
-            <span className="text-red-600 dark:text-red-400 font-semibold">
+            <span className="font-semibold text-red-600 dark:text-red-400">
               ⚠ {count} {count === 1 ? 'tarefa atrasada' : 'tarefas atrasadas'}
             </span>
           ) : (
-            <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+            <span className="font-semibold text-emerald-600 dark:text-emerald-400">
               ✓ Nenhuma tarefa atrasada
             </span>
           )}
@@ -161,9 +161,7 @@ export function DailyAverageCard({ average, animationDelay = 0 }) {
  * Card: Projeção de Gastos do Mês
  */
 export function MonthProjectionCard({ projection, current, animationDelay = 0 }) {
-  const percentageOfProjection = current > 0 
-    ? Math.round((current / projection) * 100)
-    : 0;
+  const percentageOfProjection = current > 0 ? Math.round((current / projection) * 100) : 0;
 
   return (
     <MetricCard
@@ -178,13 +176,13 @@ export function MonthProjectionCard({ projection, current, animationDelay = 0 })
             <span>Gasto atual:</span>
             <span className="font-semibold">{formatCurrency(current)}</span>
           </div>
-          <div className="w-full bg-muted rounded-full h-2">
-            <div 
-              className="bg-pink-500 h-2 rounded-full transition-all duration-500"
+          <div className="h-2 w-full rounded-full bg-muted">
+            <div
+              className="h-2 rounded-full bg-pink-500 transition-all duration-500"
               style={{ width: `${Math.min(percentageOfProjection, 100)}%` }}
             />
           </div>
-          <div className="text-xs text-muted-foreground text-center">
+          <div className="text-center text-xs text-muted-foreground">
             {percentageOfProjection}% da projeção
           </div>
         </div>

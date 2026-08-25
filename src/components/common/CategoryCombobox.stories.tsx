@@ -9,16 +9,43 @@ import { TransactionType } from '@/schemas/enums';
 const NEST_ID = '11111111-1111-4111-8111-111111111111';
 
 const categories: CategoryResponse[] = [
-  { categoryId: '22222222-2222-4222-8222-222222222201', nestId: NEST_ID, name: 'Mercado', type: TransactionType.Expense },
-  { categoryId: '22222222-2222-4222-8222-222222222202', nestId: NEST_ID, name: 'Transporte', type: TransactionType.Expense },
-  { categoryId: '22222222-2222-4222-8222-222222222203', nestId: NEST_ID, name: 'Moradia', type: TransactionType.Expense },
-  { categoryId: '22222222-2222-4222-8222-222222222204', nestId: NEST_ID, name: 'Lazer', type: TransactionType.Expense },
-  { categoryId: '22222222-2222-4222-8222-222222222205', nestId: NEST_ID, name: 'Salário', type: TransactionType.Income },
+  {
+    categoryId: '22222222-2222-4222-8222-222222222201',
+    nestId: NEST_ID,
+    name: 'Mercado',
+    type: TransactionType.Expense,
+  },
+  {
+    categoryId: '22222222-2222-4222-8222-222222222202',
+    nestId: NEST_ID,
+    name: 'Transporte',
+    type: TransactionType.Expense,
+  },
+  {
+    categoryId: '22222222-2222-4222-8222-222222222203',
+    nestId: NEST_ID,
+    name: 'Moradia',
+    type: TransactionType.Expense,
+  },
+  {
+    categoryId: '22222222-2222-4222-8222-222222222204',
+    nestId: NEST_ID,
+    name: 'Lazer',
+    type: TransactionType.Expense,
+  },
+  {
+    categoryId: '22222222-2222-4222-8222-222222222205',
+    nestId: NEST_ID,
+    name: 'Salário',
+    type: TransactionType.Income,
+  },
 ];
 
 /**
- * Combobox de categorias financeiras, com busca e criação inline —
- * digite um nome que não existe e a opção de criar aparece.
+ * Combobox de categorias financeiras com criação intuitiva:
+ * 1. Botão fixo no rodapé "+ Nova categoria" sempre visível ao abrir o dropdown.
+ * 2. Ao digitar um termo na busca, exibe ação imediata '+ Criar "termo"'.
+ * 3. Formulário inline com seletor de tipo (Despesa / Receita) e salvamento rápido.
  *
  * É o padrão do projeto para dados criados pelo usuário; enums fechados
  * usam `Select`. Recebe tudo por prop, então não precisa de `AppProvider`.
@@ -67,7 +94,7 @@ export const Default: Story = {
 
     return (
       <div className="w-[280px] space-y-1.5">
-        <Label className="text-muted-foreground text-xs uppercase tracking-wide">Categoria</Label>
+        <Label className="text-xs uppercase tracking-wide text-muted-foreground">Categoria</Label>
         <CategoryCombobox
           {...args}
           categories={list}

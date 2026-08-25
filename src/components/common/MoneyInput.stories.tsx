@@ -34,7 +34,7 @@ export const Default: Story = {
     return (
       <div className="w-[280px] space-y-2">
         <MoneyInput {...args} value={value} onChange={setValue} />
-        <p className="text-muted-foreground text-xs">
+        <p className="text-xs text-muted-foreground">
           Valor: <code>{value === null ? 'null' : value}</code>
         </p>
       </div>
@@ -60,7 +60,7 @@ export const WithLabel: Story = {
     const [value, setValue] = useState<number | null>(args.value);
     return (
       <div className="w-[280px] space-y-1.5">
-        <Label htmlFor="valor" className="text-muted-foreground text-xs uppercase tracking-wide">
+        <Label htmlFor="valor" className="text-xs uppercase tracking-wide text-muted-foreground">
           Valor da despesa
         </Label>
         <MoneyInput {...args} id="valor" value={value} onChange={setValue} />

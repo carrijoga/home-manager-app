@@ -1,7 +1,7 @@
-import { Trophy } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Trophy } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 export interface FamilyGoal {
   id: string;
@@ -55,23 +55,29 @@ export function FamilyGoalCard({ goals = [], className }: FamilyGoalCardProps) {
   };
 
   return (
-    <div className={cn(
-      "flex flex-col gap-6 rounded-3xl h-full bg-card border border-border outline-none p-8 pb-11", 
-      className
+    <div
+      className={cn(
+        'flex h-full flex-col gap-6 rounded-3xl border border-border bg-card p-8 pb-11 outline-none',
+        className
       )}
     >
       {/* Section title */}
-      <div className="flex items-center gap-3 shrink-0">
-        <Trophy size={18} className="text-foreground shrink-0" strokeWidth={1.5} aria-hidden="true" />
-        <h3 className="font-editorial font-bold text-foreground text-lg whitespace-nowrap">
+      <div className="flex shrink-0 items-center gap-3">
+        <Trophy
+          size={18}
+          className="shrink-0 text-foreground"
+          strokeWidth={1.5}
+          aria-hidden="true"
+        />
+        <h3 className="font-editorial whitespace-nowrap text-lg font-bold text-foreground">
           Metas da Família
         </h3>
       </div>
 
       {/* Goal content */}
-      <div className="flex flex-col flex-1">
+      <div className="flex flex-1 flex-col">
         {!hasGoals ? (
-          <p className="font-ui text-sm text-muted-foreground/50 leading-relaxed">
+          <p className="font-ui text-sm leading-relaxed text-muted-foreground/50">
             Sem metas definidas ainda.
           </p>
         ) : (
@@ -80,11 +86,11 @@ export function FamilyGoalCard({ goals = [], className }: FamilyGoalCardProps) {
       </div>
 
       {hasGoals && goals.length > 1 ? (
-        <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/40">
+        <div className="flex items-center justify-between gap-2 border-t border-border/40 pt-2">
           <button
             type="button"
             onClick={showPreviousGoal}
-            className="font-ui text-xs text-muted-foreground hover:text-foreground transition-colors"
+            className="font-ui text-xs text-muted-foreground transition-colors hover:text-foreground"
           >
             Anterior
           </button>
@@ -94,7 +100,7 @@ export function FamilyGoalCard({ goals = [], className }: FamilyGoalCardProps) {
           <button
             type="button"
             onClick={showNextGoal}
-            className="font-ui text-xs text-muted-foreground hover:text-foreground transition-colors"
+            className="font-ui text-xs text-muted-foreground transition-colors hover:text-foreground"
           >
             Próxima
           </button>
@@ -108,45 +114,43 @@ function GoalItem({ goal }: { goal: FamilyGoal }) {
   const pct = Math.round(goal.progress * 100);
 
   return (
-    <div
-      className="flex flex-col gap-4 py-5 cursor-pointer transition-opacity hover:opacity-90"
-    >
+    <div className="flex cursor-pointer flex-col gap-4 py-5 transition-opacity hover:opacity-90">
       {/* Header row */}
-      <div className="flex items-end justify-between gap-3 min-w-0">
-        <div className="flex flex-col gap-1 min-w-0 flex-1">
+      <div className="flex min-w-0 items-end justify-between gap-3">
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
           <span
-            className="font-ui font-semibold uppercase text-secondary tracking-[1.2px] truncate"
-            style={{ fontSize: "var(--text-xs)" }}
+            className="font-ui truncate font-semibold uppercase tracking-[1.2px] text-secondary"
+            style={{ fontSize: 'var(--text-xs)' }}
           >
             {goal.categoryLabel}
           </span>
-          <span className="font-ui font-semibold text-foreground text-2xl truncate">
+          <span className="font-ui truncate text-2xl font-semibold text-foreground">
             {goal.title}
           </span>
         </div>
-        <span className="font-ui font-semibold text-secondary shrink-0 text-[30px] leading-9">
+        <span className="font-ui shrink-0 text-[30px] font-semibold leading-9 text-secondary">
           {pct}%
         </span>
       </div>
 
       {/* Gold progress bar with glow */}
-      <div className="w-full h-3 rounded-full overflow-hidden bg-muted">
+      <div className="h-3 w-full overflow-hidden rounded-full bg-muted">
         <div
-          className="h-full rounded-full transition-all duration-[length:var(--dur-slow)]"
+          className="duration-[length:var(--dur-slow)] h-full rounded-full transition-all"
           style={{
-            background: "var(--secondary)",
+            background: 'var(--secondary)',
             width: `${Math.min(100, pct)}%`,
-            boxShadow: "0px 0px 15px 0px color-mix(in srgb, var(--secondary) 35%, transparent)",
+            boxShadow: '0px 0px 15px 0px color-mix(in srgb, var(--secondary) 35%, transparent)',
           }}
         />
       </div>
 
       {/* Remaining label */}
       <div className="flex items-center gap-2">
-        <span style={{ fontSize: 12 }} aria-hidden="true">⏳</span>
-        <span className="font-ui text-sm text-muted-foreground">
-          {goal.remainingLabel}
+        <span style={{ fontSize: 12 }} aria-hidden="true">
+          ⏳
         </span>
+        <span className="font-ui text-sm text-muted-foreground">{goal.remainingLabel}</span>
       </div>
     </div>
   );

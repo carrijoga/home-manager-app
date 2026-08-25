@@ -5,17 +5,17 @@
  * Wrapper para o Button do shadcn/ui com animações adicionais.
  */
 
-import { motion } from "framer-motion";
-import { forwardRef,ReactNode } from "react";
+import { motion } from 'framer-motion';
+import { forwardRef, ReactNode } from 'react';
 
-import { Button, ButtonProps } from "@/components/ui/button";
-import { buttonVariants, iconButtonVariants, transitions } from "@/lib/animations";
-import { cn } from "@/lib/utils";
+import { Button, ButtonProps } from '@/components/ui/button';
+import { buttonVariants, iconButtonVariants, transitions } from '@/lib/animations';
+import { cn } from '@/lib/utils';
 
 interface AnimatedButtonProps extends ButtonProps {
   children: ReactNode;
   /** Tipo de animação */
-  animationType?: "default" | "icon" | "none";
+  animationType?: 'default' | 'icon' | 'none';
   /** Habilitar efeito ripple (experimental) */
   enableRipple?: boolean;
 }
@@ -27,8 +27,8 @@ const AnimatedButton = forwardRef<HTMLButtonElement, AnimatedButtonProps>(
   (
     {
       children,
-      className = "",
-      animationType = "default",
+      className = '',
+      animationType = 'default',
       enableRipple: _enableRipple = false,
       disabled,
       ...props
@@ -45,7 +45,7 @@ const AnimatedButton = forwardRef<HTMLButtonElement, AnimatedButtonProps>(
     }
 
     // Se animação desabilitada
-    if (animationType === "none") {
+    if (animationType === 'none') {
       return (
         <Button ref={ref} className={className} {...props}>
           {children}
@@ -54,8 +54,7 @@ const AnimatedButton = forwardRef<HTMLButtonElement, AnimatedButtonProps>(
     }
 
     // Seleciona variantes baseado no tipo
-    const variants =
-      animationType === "icon" ? iconButtonVariants : buttonVariants;
+    const variants = animationType === 'icon' ? iconButtonVariants : buttonVariants;
 
     return (
       <motion.div
@@ -73,7 +72,7 @@ const AnimatedButton = forwardRef<HTMLButtonElement, AnimatedButtonProps>(
   }
 );
 
-AnimatedButton.displayName = "AnimatedButton";
+AnimatedButton.displayName = 'AnimatedButton';
 
 export default AnimatedButton;
 
@@ -81,83 +80,81 @@ interface AnimatedIconButtonProps extends AnimatedButtonProps {
   /** Ícone a ser exibido */
   icon: ReactNode;
   /** Label para acessibilidade */
-  "aria-label": string;
+  'aria-label': string;
 }
 
 /**
  * Botão de ícone com animação de rotação ao hover
  */
-export const AnimatedIconButton = forwardRef<
-  HTMLButtonElement,
-  AnimatedIconButtonProps
->(({ icon, className = "", ...props }, ref) => {
-  return (
-    <AnimatedButton
-      ref={ref}
-      animationType="icon"
-      variant="ghost"
-      size="icon"
-      className={cn("relative", className)}
-      {...props}
-    >
-      {icon}
-    </AnimatedButton>
-  );
-});
+export const AnimatedIconButton = forwardRef<HTMLButtonElement, AnimatedIconButtonProps>(
+  ({ icon, className = '', ...props }, ref) => {
+    return (
+      <AnimatedButton
+        ref={ref}
+        animationType="icon"
+        variant="ghost"
+        size="icon"
+        className={cn('relative', className)}
+        {...props}
+      >
+        {icon}
+      </AnimatedButton>
+    );
+  }
+);
 
-AnimatedIconButton.displayName = "AnimatedIconButton";
+AnimatedIconButton.displayName = 'AnimatedIconButton';
 
 interface FloatingActionButtonProps extends AnimatedButtonProps {
   /** Posição do FAB */
-  position?: "bottom-right" | "bottom-left" | "top-right" | "top-left";
+  position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
 }
 
 /**
  * Floating Action Button com animação de entrada
  */
-export const FloatingActionButton = forwardRef<
-  HTMLButtonElement,
-  FloatingActionButtonProps
->(({ children, position = "bottom-right", className = "", ...props }, ref) => {
-  const positionClasses = {
-    "bottom-right": "bottom-6 right-6",
-    "bottom-left": "bottom-6 left-6",
-    "top-right": "top-6 right-6",
-    "top-left": "top-6 left-6",
-  };
+export const FloatingActionButton = forwardRef<HTMLButtonElement, FloatingActionButtonProps>(
+  ({ children, position = 'bottom-right', className = '', ...props }, ref) => {
+    const positionClasses = {
+      'bottom-right': 'bottom-6 right-6',
+      'bottom-left': 'bottom-6 left-6',
+      'top-right': 'top-6 right-6',
+      'top-left': 'top-6 left-6',
+    };
 
-  return (
-    <motion.div
-      initial={{ scale: 0, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      exit={{ scale: 0, opacity: 0 }}
-      transition={transitions.springBouncy}
-      className={cn("fixed z-50", positionClasses[position])}
-    >
-      <AnimatedButton
-        ref={ref}
-        size="lg"
-        className={cn("rounded-full shadow-lg h-14 w-14 p-0", className)}
-        {...props}
+    return (
+      <motion.div
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0, opacity: 0 }}
+        transition={transitions.springBouncy}
+        className={cn('fixed z-50', positionClasses[position])}
       >
-        {children}
-      </AnimatedButton>
-    </motion.div>
-  );
-});
+        <AnimatedButton
+          ref={ref}
+          size="lg"
+          className={cn('h-14 w-14 rounded-full p-0 shadow-lg', className)}
+          {...props}
+        >
+          {children}
+        </AnimatedButton>
+      </motion.div>
+    );
+  }
+);
 
-FloatingActionButton.displayName = "FloatingActionButton";
+FloatingActionButton.displayName = 'FloatingActionButton';
 
 interface PulsingButtonProps extends ButtonProps {
   /** Intensidade da pulsação */
-  intensity?: "low" | "medium" | "high";
+  intensity?: 'low' | 'medium' | 'high';
 }
 
 /**
  * Botão com efeito de pulsação para chamar atenção
  */
 export const PulsingButton = forwardRef<HTMLButtonElement, PulsingButtonProps>(
-  ({ children, intensity = "medium", className = "", ...props }, ref) => {
+  ({ children, intensity = 'medium', className = '', ...props }, ref) => {
     const pulseIntensity = {
       low: [1, 1.02, 1],
       medium: [1, 1.05, 1],
@@ -172,7 +169,7 @@ export const PulsingButton = forwardRef<HTMLButtonElement, PulsingButtonProps>(
         transition={{
           duration: 2,
           repeat: Infinity,
-          ease: "easeInOut",
+          ease: 'easeInOut',
         }}
       >
         <Button ref={ref} className={className} {...props}>
@@ -183,7 +180,7 @@ export const PulsingButton = forwardRef<HTMLButtonElement, PulsingButtonProps>(
   }
 );
 
-PulsingButton.displayName = "PulsingButton";
+PulsingButton.displayName = 'PulsingButton';
 
 interface ShakeButtonProps extends ButtonProps {
   /** Estado de shake */
@@ -196,10 +193,7 @@ interface ShakeButtonProps extends ButtonProps {
  * Botão que pode "chacoalhar" para indicar erro
  */
 export const ShakeButton = forwardRef<HTMLButtonElement, ShakeButtonProps>(
-  (
-    { children, shake = false, onShakeComplete, className = "", ...props },
-    ref
-  ) => {
+  ({ children, shake = false, onShakeComplete, className = '', ...props }, ref) => {
     return (
       <motion.div
         animate={
@@ -220,4 +214,4 @@ export const ShakeButton = forwardRef<HTMLButtonElement, ShakeButtonProps>(
   }
 );
 
-ShakeButton.displayName = "ShakeButton";
+ShakeButton.displayName = 'ShakeButton';

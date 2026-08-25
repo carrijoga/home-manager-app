@@ -5,8 +5,8 @@
  * Wrapper sobre o Dialog do shadcn/ui com animações customizadas.
  */
 
-import { AnimatePresence,motion } from "framer-motion";
-import { ReactNode } from "react";
+import { AnimatePresence, motion } from 'framer-motion';
+import { ReactNode } from 'react';
 
 import {
   Dialog,
@@ -15,9 +15,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { modalVariants } from "@/lib/animations";
-import { cn } from "@/lib/utils";
+} from '@/components/ui/dialog';
+import { modalVariants } from '@/lib/animations';
+import { cn } from '@/lib/utils';
 
 interface AnimatedDialogProps {
   /** Estado de abertura do dialog */
@@ -48,26 +48,19 @@ export default function AnimatedDialog({
   description,
   children,
   footer,
-  className = "",
-  maxWidth = "max-w-lg",
+  className = '',
+  maxWidth = 'max-w-lg',
 }: AnimatedDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={cn(maxWidth, className)}>
         <AnimatePresence mode="wait">
           {open && (
-            <motion.div
-              variants={modalVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-            >
+            <motion.div variants={modalVariants} initial="initial" animate="animate" exit="exit">
               {title && (
                 <DialogHeader>
                   <DialogTitle>{title}</DialogTitle>
-                  {description && (
-                    <DialogDescription>{description}</DialogDescription>
-                  )}
+                  {description && <DialogDescription>{description}</DialogDescription>}
                 </DialogHeader>
               )}
 
@@ -85,11 +78,4 @@ export default function AnimatedDialog({
 /**
  * Componentes exportados para uso direto
  */
-export {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-};
+export { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle };

@@ -1,5 +1,5 @@
-const CACHE_NAME = 'ninho-v2'; // Incrementa versão para forçar atualização
-const RUNTIME_CACHE = 'ninho-runtime-v2';
+const CACHE_NAME = 'ninho-v3'; // Incrementa versão para forçar atualização
+const RUNTIME_CACHE = 'ninho-runtime-v3';
 
 // Assets essenciais para cache durante a instalação
 const PRECACHE_URLS = [
@@ -53,8 +53,14 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // IMPORTANTE: A Cache API só suporta requisições GET.
+  // Ignora requisições POST, PUT, DELETE, PATCH, etc. (deixa passar direto para a rede)
+  if (request.method !== 'GET') {
+    return;
+  }
+
   // IMPORTANTE: Ignora requisições de API - deixa passar direto para a rede
-  if (url.pathname.startsWith('/api/') || url.port === '5026' || url.hostname.includes('localhost') && url.port !== '') {
+  if (url.pathname.startsWith('/api/') || url.port === '5026' || (url.hostname.includes('localhost') && url.port !== '')) {
     return; // Não intercepta, deixa o fetch normal acontecer
   }
 

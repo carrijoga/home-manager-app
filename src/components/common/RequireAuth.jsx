@@ -12,8 +12,7 @@ export default function RequireAuth({ children }) {
     if (!sessionChecked) {
       checkSession();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [sessionChecked, checkSession]);
 
   if (!sessionChecked) {
     return <DashboardSkeleton />;

@@ -9,13 +9,19 @@ interface CategoryBreakdownCardProps {
   expensesByCategory: FinancialTransactionCategoryExpenseResponse[];
 }
 
-const COLORS = ['var(--primary)', 'var(--secondary)', 'var(--chart-2)', 'var(--chart-5)', 'var(--chart-4)'];
+const COLORS = [
+  'var(--primary)',
+  'var(--secondary)',
+  'var(--chart-2)',
+  'var(--chart-5)',
+  'var(--chart-4)',
+];
 
 /** Despesas do mês agrupadas por categoria, em barras (dados do dashboard). */
 export function CategoryBreakdownCard({ expensesByCategory }: CategoryBreakdownCardProps) {
   const prefersReducedMotion = usePrefersReducedMotion();
 
-  const max = Math.max(...expensesByCategory.map(r => Number(r.totalAmount)), 1);
+  const max = Math.max(...expensesByCategory.map((r) => Number(r.totalAmount)), 1);
   const rows = expensesByCategory.slice(0, 5).map((r, i) => ({
     label: r.categoryName,
     amount: Number(r.totalAmount),
@@ -24,23 +30,23 @@ export function CategoryBreakdownCard({ expensesByCategory }: CategoryBreakdownC
   }));
 
   return (
-    <div className="flex flex-col gap-4 p-6 rounded-3xl bg-card border border-border">
+    <div className="flex flex-col gap-4 rounded-3xl border border-border bg-card p-6">
       <div className="flex items-center gap-3">
         <TrendingUp size={18} className="text-foreground" strokeWidth={1.5} aria-hidden="true" />
-        <h3 className="font-editorial font-bold text-foreground text-lg">Gastos por categoria</h3>
+        <h3 className="font-editorial text-lg font-bold text-foreground">Gastos por categoria</h3>
       </div>
 
       {rows.length === 0 ? (
         <p className="font-ui text-sm text-muted-foreground">Sem despesas neste mês.</p>
       ) : (
         <div className="flex flex-col gap-3">
-          {rows.map(row => (
+          {rows.map((row) => (
             <div key={row.label} className="flex flex-col gap-1">
-              <div className="flex items-center justify-between font-ui text-sm">
+              <div className="font-ui flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">{row.label}</span>
                 <span className="font-semibold text-foreground">{formatCurrency(row.amount)}</span>
               </div>
-              <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+              <div className="h-1.5 overflow-hidden rounded-full bg-muted">
                 <motion.div
                   className="h-full rounded-full"
                   initial={prefersReducedMotion ? false : { width: 0 }}

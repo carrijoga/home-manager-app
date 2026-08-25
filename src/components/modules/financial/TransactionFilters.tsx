@@ -1,12 +1,6 @@
 import { Search } from 'lucide-react';
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui';
 import type { CategoryResponse } from '@/schemas/category';
 
 export interface TransactionFiltersState {
@@ -37,8 +31,10 @@ function Pill({ active, label, onClick }: { active: boolean; label: string; onCl
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`font-ui text-xs font-semibold rounded-full px-3 py-1.5 transition-colors duration-[length:var(--dur-base)] ${
-        active ? 'bg-foreground text-background' : 'bg-muted text-muted-foreground hover:text-foreground'
+      className={`font-ui duration-[length:var(--dur-base)] rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+        active
+          ? 'bg-foreground text-background'
+          : 'bg-muted text-muted-foreground hover:text-foreground'
       }`}
     >
       {label}
@@ -56,7 +52,11 @@ export function TransactionFilters({ value, onChange, categories }: TransactionF
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-wrap items-center gap-1.5">
-        <Pill active={isAll} label="Todas" onClick={() => onChange({ ...value, type: 'all', status: 'all' })} />
+        <Pill
+          active={isAll}
+          label="Todas"
+          onClick={() => onChange({ ...value, type: 'all', status: 'all' })}
+        />
         <Pill
           active={value.type === 'expense'}
           label="Despesas"
@@ -70,12 +70,16 @@ export function TransactionFilters({ value, onChange, categories }: TransactionF
         <Pill
           active={value.status === 'unpaid'}
           label="A pagar"
-          onClick={() => onChange({ ...value, status: value.status === 'unpaid' ? 'all' : 'unpaid' })}
+          onClick={() =>
+            onChange({ ...value, status: value.status === 'unpaid' ? 'all' : 'unpaid' })
+          }
         />
         <Pill
           active={value.status === 'overdue'}
           label="Vencidas"
-          onClick={() => onChange({ ...value, status: value.status === 'overdue' ? 'all' : 'overdue' })}
+          onClick={() =>
+            onChange({ ...value, status: value.status === 'overdue' ? 'all' : 'overdue' })
+          }
         />
       </div>
 
@@ -84,28 +88,31 @@ export function TransactionFilters({ value, onChange, categories }: TransactionF
           <Search
             size={15}
             strokeWidth={1.5}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
             aria-hidden="true"
           />
           <input
             type="search"
             value={value.search}
-            onChange={e => onChange({ ...value, search: e.target.value })}
+            onChange={(e) => onChange({ ...value, search: e.target.value })}
             placeholder="Buscar transação…"
             aria-label="Buscar transação"
-            className="w-full font-ui text-sm bg-card border border-border rounded-full pl-9 pr-4 py-2 text-foreground placeholder:text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="font-ui w-full rounded-full border border-border bg-card py-2 pl-9 pr-4 text-sm text-foreground outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
           />
         </div>
         <Select
           value={value.categoryId ?? ALL_CATEGORIES}
-          onValueChange={v => onChange({ ...value, categoryId: v === ALL_CATEGORIES ? null : v })}
+          onValueChange={(v) => onChange({ ...value, categoryId: v === ALL_CATEGORIES ? null : v })}
         >
-          <SelectTrigger className="w-[150px] rounded-full font-ui text-sm" aria-label="Filtrar por categoria">
+          <SelectTrigger
+            className="font-ui w-[150px] rounded-full text-sm"
+            aria-label="Filtrar por categoria"
+          >
             <SelectValue placeholder="Categoria" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value={ALL_CATEGORIES}>Todas categorias</SelectItem>
-            {categories.map(c => (
+            {categories.map((c) => (
               <SelectItem key={c.categoryId} value={c.categoryId}>
                 {c.name}
               </SelectItem>

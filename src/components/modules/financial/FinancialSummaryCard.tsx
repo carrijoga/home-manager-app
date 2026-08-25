@@ -17,13 +17,13 @@ export function FinancialSummaryCard({ currentMonth, previousMonth }: FinancialS
       : null;
 
   return (
-    <div className="flex flex-col gap-4 p-6 rounded-3xl bg-card border border-border">
+    <div className="flex flex-col gap-4 rounded-3xl border border-border bg-card p-6">
       <div className="flex items-center gap-3">
         <Wallet size={18} className="text-foreground" strokeWidth={1.5} aria-hidden="true" />
-        <h3 className="font-editorial font-bold text-foreground text-lg">Resumo do mês</h3>
+        <h3 className="font-editorial text-lg font-bold text-foreground">Resumo do mês</h3>
       </div>
 
-      <div className="flex flex-col gap-2 font-ui text-sm">
+      <div className="font-ui flex flex-col gap-2 text-sm">
         <div className="flex items-center justify-between">
           <span className="text-muted-foreground">Receitas</span>
           <span className="font-semibold" style={{ color: 'var(--chart-2)' }}>
@@ -36,9 +36,9 @@ export function FinancialSummaryCard({ currentMonth, previousMonth }: FinancialS
             {formatCurrency(Number(currentMonth.totalExpenses))}
           </span>
         </div>
-        <div className="flex items-center justify-between pt-2 border-t border-dashed border-border">
-          <span className="text-foreground font-medium">Saldo</span>
-          <span className="font-bold text-foreground text-base">
+        <div className="flex items-center justify-between border-t border-dashed border-border pt-2">
+          <span className="font-medium text-foreground">Saldo</span>
+          <span className="text-base font-bold text-foreground">
             {formatCurrency(Number(currentMonth.balance))}
           </span>
         </div>

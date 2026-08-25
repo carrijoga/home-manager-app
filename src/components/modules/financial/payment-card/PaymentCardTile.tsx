@@ -25,7 +25,14 @@ interface PaymentCardTileProps {
 }
 
 export function PaymentCardTile({
-  card, used, selected, canDelete, onSelect, onEdit, onToggleActive, onDelete,
+  card,
+  used,
+  selected,
+  canDelete,
+  onSelect,
+  onEdit,
+  onToggleActive,
+  onDelete,
 }: PaymentCardTileProps) {
   const isCredit = card.type === CardType.Credit;
   const limit = Number(card.creditLimit ?? 0);
@@ -38,12 +45,17 @@ export function PaymentCardTile({
       role="button"
       tabIndex={0}
       onClick={onSelect}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(); } }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onSelect();
+        }
+      }}
       className={cn(
-        'relative rounded-2xl p-4 text-left cursor-pointer transition-all',
-        'min-h-[120px] flex flex-col justify-between',
+        'relative cursor-pointer rounded-2xl p-4 text-left transition-all',
+        'flex min-h-[120px] flex-col justify-between',
         selected ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : 'ring-0',
-        inactive && 'opacity-50 grayscale',
+        inactive && 'opacity-50 grayscale'
       )}
       style={{ background: cardGradient(card.color ?? ''), color: CARD_TEXT_COLOR }}
     >
@@ -58,7 +70,7 @@ export function PaymentCardTile({
           <DropdownMenuTrigger asChild>
             <button
               onClick={(e) => e.stopPropagation()}
-              className="rounded-md p-1 hover:bg-black/15 transition-colors"
+              className="rounded-md p-1 transition-colors hover:bg-black/15"
               aria-label="Ações do cartão"
             >
               <MoreVertical size={16} />
@@ -75,10 +87,14 @@ export function PaymentCardTile({
             <DropdownMenuItem
               onClick={canDelete ? onDelete : undefined}
               disabled={!canDelete}
-              title={canDelete ? undefined : 'Este cartão possui lançamentos vinculados. Apenas inativação é permitida.'}
+              title={
+                canDelete
+                  ? undefined
+                  : 'Este cartão possui lançamentos vinculados. Apenas inativação é permitida.'
+              }
               className={cn(
                 'gap-2',
-                canDelete ? 'text-destructive focus:text-destructive' : 'text-destructive/50',
+                canDelete ? 'text-destructive focus:text-destructive' : 'text-destructive/50'
               )}
             >
               <Trash2 size={14} /> Excluir
@@ -91,11 +107,12 @@ export function PaymentCardTile({
         <div>
           <div className="text-[11px] opacity-85">Disponível</div>
           <div className="text-lg font-bold drop-shadow-sm">{formatCurrency(available)}</div>
-          <div className="mt-2 h-1.5 rounded-full bg-white/25 overflow-hidden">
+          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/25">
             <div className="h-full rounded-full bg-white/80" style={{ width: `${usedPct}%` }} />
           </div>
-          <div className="text-[10px] opacity-80 mt-1">
-            {formatCurrency(used)} de {formatCurrency(limit)}{inactive ? ' · Inativo' : ''}
+          <div className="mt-1 text-[10px] opacity-80">
+            {formatCurrency(used)} de {formatCurrency(limit)}
+            {inactive ? ' · Inativo' : ''}
           </div>
         </div>
       ) : (

@@ -24,7 +24,14 @@ interface AccountListProps {
 }
 
 export function AccountList({
-  accounts, selectedId, canDeleteMap, onSelect, onEdit, onToggleActive, onDelete, onAdd,
+  accounts,
+  selectedId,
+  canDeleteMap,
+  onSelect,
+  onEdit,
+  onToggleActive,
+  onDelete,
+  onAdd,
 }: AccountListProps) {
   const activeAccounts = accounts.filter((acc) => acc.isActive);
   const inactiveAccounts = accounts.filter((acc) => !acc.isActive);
@@ -40,9 +47,9 @@ export function AccountList({
       <div
         key={acc.bankAccountId}
         className={cn(
-          'relative min-w-[220px] lg:min-w-0 overflow-hidden rounded-2xl border bg-card transition-colors',
+          'relative min-w-[220px] overflow-hidden rounded-2xl border bg-card transition-colors lg:min-w-0',
           selected ? 'border-primary' : 'border-border',
-          !acc.isActive && 'opacity-50',
+          !acc.isActive && 'opacity-50'
         )}
       >
         {/*
@@ -61,20 +68,20 @@ export function AccountList({
           type="button"
           aria-pressed={selected}
           onClick={() => onSelect(acc.bankAccountId)}
-          className="relative w-full text-left p-4 pr-11"
+          className="relative w-full p-4 pr-11 text-left"
         >
-          <span className="block font-ui font-semibold text-foreground truncate">{acc.name}</span>
-          <p className="font-ui text-[11px] uppercase tracking-wide text-muted-foreground mt-1.5">
+          <span className="font-ui block truncate font-semibold text-foreground">{acc.name}</span>
+          <p className="font-ui mt-1.5 text-[11px] uppercase tracking-wide text-muted-foreground">
             {accountTypeLabel(acc.type)}
           </p>
         </button>
 
-        <div className="absolute top-3 right-3 z-10">
+        <div className="absolute right-3 top-3 z-10">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
                 onClick={(e) => e.stopPropagation()}
-                className="rounded-md p-1 text-muted-foreground hover:bg-muted transition-colors"
+                className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted"
                 aria-label="Ações da conta"
               >
                 <MoreVertical size={16} strokeWidth={1.5} />
@@ -85,16 +92,24 @@ export function AccountList({
                 <Pencil size={14} strokeWidth={1.5} /> Editar
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onToggleActive(acc)} className="gap-2">
-                {acc.isActive ? <PowerOff size={14} strokeWidth={1.5} /> : <Power size={14} strokeWidth={1.5} />}
+                {acc.isActive ? (
+                  <PowerOff size={14} strokeWidth={1.5} />
+                ) : (
+                  <Power size={14} strokeWidth={1.5} />
+                )}
                 {acc.isActive ? 'Inativar' : 'Ativar'}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={canDelete ? () => onDelete(acc) : undefined}
                 disabled={!canDelete}
-                title={canDelete ? undefined : 'Esta conta possui lançamentos vinculados. Apenas inativação é permitida.'}
+                title={
+                  canDelete
+                    ? undefined
+                    : 'Esta conta possui lançamentos vinculados. Apenas inativação é permitida.'
+                }
                 className={cn(
                   'gap-2',
-                  canDelete ? 'text-destructive focus:text-destructive' : 'text-destructive/50',
+                  canDelete ? 'text-destructive focus:text-destructive' : 'text-destructive/50'
                 )}
               >
                 <Trash2 size={14} strokeWidth={1.5} /> Excluir
@@ -112,16 +127,16 @@ export function AccountList({
         <Plus size={16} strokeWidth={1.5} /> Nova conta
       </Button>
 
-      <div className="flex gap-3 flex-row overflow-x-auto pb-2 lg:flex-col lg:overflow-visible lg:pb-0">
+      <div className="flex flex-row gap-3 overflow-x-auto pb-2 lg:flex-col lg:overflow-visible lg:pb-0">
         {activeAccounts.map(renderTile)}
       </div>
 
       {inactiveAccounts.length > 0 && (
-        <div className="flex flex-col gap-3 pt-3 border-t border-dashed border-border">
+        <div className="flex flex-col gap-3 border-t border-dashed border-border pt-3">
           <p className="font-ui text-[11px] uppercase tracking-wide text-muted-foreground">
             Inativas
           </p>
-          <div className="flex gap-3 flex-row overflow-x-auto pb-2 lg:flex-col lg:overflow-visible lg:pb-0">
+          <div className="flex flex-row gap-3 overflow-x-auto pb-2 lg:flex-col lg:overflow-visible lg:pb-0">
             {inactiveAccounts.map(renderTile)}
           </div>
         </div>

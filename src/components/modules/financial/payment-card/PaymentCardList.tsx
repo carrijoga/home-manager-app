@@ -19,7 +19,15 @@ interface PaymentCardListProps {
 }
 
 export function PaymentCardList({
-  cards, selectedId, usedByCard, canDeleteMap, onSelect, onEdit, onToggleActive, onDelete, onAdd,
+  cards,
+  selectedId,
+  usedByCard,
+  canDeleteMap,
+  onSelect,
+  onEdit,
+  onToggleActive,
+  onDelete,
+  onAdd,
 }: PaymentCardListProps) {
   const activeCards = cards.filter((card) => card.isActive);
   const inactiveCards = cards.filter((card) => !card.isActive);
@@ -51,21 +59,21 @@ export function PaymentCardList({
       <div
         className={cn(
           'flex gap-3',
-          'flex-row overflow-x-auto pb-2 lg:flex-col lg:overflow-visible lg:pb-0',
+          'flex-row overflow-x-auto pb-2 lg:flex-col lg:overflow-visible lg:pb-0'
         )}
       >
         {activeCards.map(renderTile)}
       </div>
 
       {inactiveCards.length > 0 && (
-        <div className="flex flex-col gap-3 pt-3 border-t border-dashed border-border">
+        <div className="flex flex-col gap-3 border-t border-dashed border-border pt-3">
           <p className="font-ui text-[11px] uppercase tracking-wide text-muted-foreground">
             Inativos
           </p>
           <div
             className={cn(
               'flex gap-3',
-              'flex-row overflow-x-auto pb-2 lg:flex-col lg:overflow-visible lg:pb-0',
+              'flex-row overflow-x-auto pb-2 lg:flex-col lg:overflow-visible lg:pb-0'
             )}
           >
             {inactiveCards.map(renderTile)}

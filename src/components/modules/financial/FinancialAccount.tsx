@@ -60,17 +60,29 @@ export function FinancialAccount() {
     }
   }, [nestId]);
 
-  useEffect(() => { void loadAccounts(); }, [loadAccounts]);
+  useEffect(() => {
+    void loadAccounts();
+  }, [loadAccounts]);
 
   const selectedAccount = accounts.find((a) => a.bankAccountId === selectedId) ?? null;
 
   useEffect(() => {
-    if (!selectedAccount) { setCanDeleteSelected(false); return; }
+    if (!selectedAccount) {
+      setCanDeleteSelected(false);
+      return;
+    }
     let active = true;
-    bankAccountService.canDeleteBankAccount(selectedAccount.bankAccountId, nestId)
-      .then((res) => { if (active) setCanDeleteSelected(res.canDelete); })
-      .catch(() => { if (active) setCanDeleteSelected(false); });
-    return () => { active = false; };
+    bankAccountService
+      .canDeleteBankAccount(selectedAccount.bankAccountId, nestId)
+      .then((res) => {
+        if (active) setCanDeleteSelected(res.canDelete);
+      })
+      .catch(() => {
+        if (active) setCanDeleteSelected(false);
+      });
+    return () => {
+      active = false;
+    };
   }, [selectedAccount, nestId]);
 
   const handleCreate = async (payload: CreateBankAccountRequest) => {
@@ -110,11 +122,14 @@ export function FinancialAccount() {
   const handleConfirmInactivate = async () => {
     if (!inactivatingAccount) return;
     try {
-      const result = await bankAccountService.inactivateBankAccount(inactivatingAccount.bankAccountId, nestId);
+      const result = await bankAccountService.inactivateBankAccount(
+        inactivatingAccount.bankAccountId,
+        nestId
+      );
       showSuccess(
         result.affectedPaymentCardsCount > 0
           ? `Conta inativada. ${result.affectedPaymentCardsCount} cartão(ões) também foi(ram) inativado(s).`
-          : 'Conta inativada.',
+          : 'Conta inativada.'
       );
       await loadAccounts();
     } catch {
@@ -142,24 +157,33 @@ export function FinancialAccount() {
 
   const canDeleteMap = selectedId ? { [selectedId]: canDeleteSelected } : {};
 
-  const openCreate = () => { setEditingAccount(null); setSheetOpen(true); };
-  const openEdit = (account: BankAccountResponse) => { setEditingAccount(account); setSheetOpen(true); };
-  const openDelete = (account: BankAccountResponse) => { setDeletingAccount(account); setDeleteOpen(true); };
+  const openCreate = () => {
+    setEditingAccount(null);
+    setSheetOpen(true);
+  };
+  const openEdit = (account: BankAccountResponse) => {
+    setEditingAccount(account);
+    setSheetOpen(true);
+  };
+  const openDelete = (account: BankAccountResponse) => {
+    setDeletingAccount(account);
+    setDeleteOpen(true);
+  };
 
   if (loading) return <AccountSkeleton />;
 
   return (
-    <div className="flex flex-col gap-6 max-w-full overflow-x-hidden">
+    <div className="flex max-w-full flex-col gap-6 overflow-x-hidden">
       <div className="flex items-center gap-3">
         <Wallet size={18} className="text-foreground" strokeWidth={1.5} aria-hidden="true" />
         <div>
-          <h1 className="font-editorial font-bold text-foreground text-2xl">Contas</h1>
+          <h1 className="font-editorial text-2xl font-bold text-foreground">Contas</h1>
           <p className="font-ui text-sm text-muted-foreground">Gerencie suas contas bancárias</p>
         </div>
       </div>
 
       {accounts.length === 0 ? (
-        <div className="p-6 rounded-3xl bg-card border border-border">
+        <div className="rounded-3xl border border-border bg-card p-6">
           <EmptyState
             icon={Wallet}
             title="Nenhuma conta ainda"
@@ -172,8 +196,8 @@ export function FinancialAccount() {
           />
         </div>
       ) : (
-        <div className="flex flex-col lg:flex-row gap-4">
-          <div className="lg:w-[240px] shrink-0">
+        <div className="flex flex-col gap-4 lg:flex-row">
+          <div className="shrink-0 lg:w-[240px]">
             <AccountList
               accounts={accounts}
               selectedId={selectedId}

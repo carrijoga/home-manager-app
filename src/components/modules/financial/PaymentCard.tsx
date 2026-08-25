@@ -55,7 +55,7 @@ export function PaymentCard() {
         bankAccountService.listBankAccounts(nestId),
       ]);
       setCards(list);
-      setBankAccounts(accounts);
+      setBankAccounts(accounts.filter((acc) => acc.isActive));
       setSelectedId((prev) => {
         if (prev && list.some((c) => c.paymentCardId === prev)) return prev;
         return list.find((c) => c.isActive)?.paymentCardId ?? list[0]?.paymentCardId ?? null;
@@ -67,26 +67,50 @@ export function PaymentCard() {
     }
   }, [nestId]);
 
-  useEffect(() => { void loadCards(); }, [loadCards]);
+  useEffect(() => {
+    void loadCards();
+  }, [loadCards]);
 
   useEffect(() => {
-    if (!selectedId) { setInvoice(null); return; }
+    if (!selectedId) {
+      setInvoice(null);
+      return;
+    }
     let active = true;
     setInvoiceLoading(true);
-    paymentCardService.getPaymentCardInvoice(selectedId)
-      .then((inv) => { if (active) setInvoice(inv); })
-      .catch(() => { if (active) setInvoice(null); })
-      .finally(() => { if (active) setInvoiceLoading(false); });
-    return () => { active = false; };
+    paymentCardService
+      .getPaymentCardInvoice(selectedId)
+      .then((inv) => {
+        if (active) setInvoice(inv);
+      })
+      .catch(() => {
+        if (active) setInvoice(null);
+      })
+      .finally(() => {
+        if (active) setInvoiceLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, [selectedId]);
 
   useEffect(() => {
-    if (!selectedId) { setCanDeleteSelected(false); return; }
+    if (!selectedId) {
+      setCanDeleteSelected(false);
+      return;
+    }
     let active = true;
-    paymentCardService.canDeletePaymentCard(selectedId, nestId)
-      .then((res) => { if (active) setCanDeleteSelected(res.canDelete); })
-      .catch(() => { if (active) setCanDeleteSelected(false); });
-    return () => { active = false; };
+    paymentCardService
+      .canDeletePaymentCard(selectedId, nestId)
+      .then((res) => {
+        if (active) setCanDeleteSelected(res.canDelete);
+      })
+      .catch(() => {
+        if (active) setCanDeleteSelected(false);
+      });
+    return () => {
+      active = false;
+    };
   }, [selectedId, nestId]);
 
   const usedByCard = useMemo(() => {
@@ -126,7 +150,7 @@ export function PaymentCard() {
 
   const handleUpdateCreditSettings = async (
     id: string,
-    payload: UpdateCreditPaymentCardSettingsRequest,
+    payload: UpdateCreditPaymentCardSettingsRequest
   ) => {
     try {
       await paymentCardService.updateCreditPaymentCardSettings(id, payload, nestId);
@@ -166,8 +190,14 @@ export function PaymentCard() {
     }
   };
 
-  const openCreate = () => { setEditingCard(null); setSheetOpen(true); };
-  const openEdit = (card: PaymentCardResponse) => { setEditingCard(card); setSheetOpen(true); };
+  const openCreate = () => {
+    setEditingCard(null);
+    setSheetOpen(true);
+  };
+  const openEdit = (card: PaymentCardResponse) => {
+    setEditingCard(card);
+    setSheetOpen(true);
+  };
 
   if (loading) return <PaymentCardSkeleton />;
 
@@ -186,15 +216,15 @@ export function PaymentCard() {
           action={
             <button
               onClick={openCreate}
-              className="rounded-full bg-primary text-primary-foreground px-4 py-2 text-sm font-semibold"
+              className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
             >
               Adicionar cartão
             </button>
           }
         />
       ) : (
-        <div className="flex flex-col lg:flex-row gap-4">
-          <div className="lg:w-[240px] shrink-0">
+        <div className="flex flex-col gap-4 lg:flex-row">
+          <div className="shrink-0 lg:w-[240px]">
             <PaymentCardList
               cards={cards}
               selectedId={selectedId}
@@ -211,7 +241,10 @@ export function PaymentCard() {
             {selectedCard && (
               <PaymentCardDetails
                 card={selectedCard}
-                used={usedByCard[selectedCard.paymentCardId] ?? Number(selectedCard.previousBalance ?? 0)}
+                used={
+                  usedByCard[selectedCard.paymentCardId] ??
+                  Number(selectedCard.previousBalance ?? 0)
+                }
                 invoice={selectedCard.type === CardType.Credit ? invoice : null}
                 invoiceLoading={invoiceLoading}
               />

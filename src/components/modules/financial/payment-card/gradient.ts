@@ -26,7 +26,7 @@ function lighten(hex: string, amount: number): string {
   return toHex(
     Math.round(rgb.r + (255 - rgb.r) * amount),
     Math.round(rgb.g + (255 - rgb.g) * amount),
-    Math.round(rgb.b + (255 - rgb.b) * amount),
+    Math.round(rgb.b + (255 - rgb.b) * amount)
   );
 }
 

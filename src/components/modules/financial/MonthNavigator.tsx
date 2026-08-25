@@ -18,18 +18,18 @@ export function MonthNavigator({ month, onChange }: MonthNavigatorProps) {
         type="button"
         aria-label="Mês anterior"
         onClick={() => shift(-1)}
-        className="p-2 rounded-full text-muted-foreground hover:bg-muted hover:text-foreground transition-colors duration-[length:var(--dur-base)]"
+        className="duration-[length:var(--dur-base)] rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
       >
         <ChevronLeft size={18} strokeWidth={1.5} />
       </button>
-      <h2 className="font-editorial font-bold text-foreground text-xl min-w-[170px] text-center">
+      <h2 className="font-editorial min-w-[170px] text-center text-xl font-bold text-foreground">
         {getMonthLabel(month)}
       </h2>
       <button
         type="button"
         aria-label="Próximo mês"
         onClick={() => shift(1)}
-        className="p-2 rounded-full text-muted-foreground hover:bg-muted hover:text-foreground transition-colors duration-[length:var(--dur-base)]"
+        className="duration-[length:var(--dur-base)] rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
       >
         <ChevronRight size={18} strokeWidth={1.5} />
       </button>

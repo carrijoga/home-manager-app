@@ -25,3 +25,10 @@ export const RequestPasswordRecoverySchema = z.object({
   userEmail: z.string().email('E-mail inválido'),
 });
 export type RequestPasswordRecovery = z.infer<typeof RequestPasswordRecoverySchema>;
+
+export const ResetPasswordRequestSchema = z.object({
+  token: z.string().min(1, 'Token é obrigatório'),
+  newPassword: z.string().min(6, 'A nova senha deve ter pelo menos 6 caracteres'),
+});
+export type ResetPasswordRequest = z.infer<typeof ResetPasswordRequestSchema>;
+

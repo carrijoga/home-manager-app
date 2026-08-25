@@ -11,7 +11,10 @@ import type {
   UpdateCreditPaymentCardSettingsRequest,
   UpdatePaymentCardDetailsRequest,
 } from '@/schemas/payment-card';
-import { CanDeletePaymentCardResponseSchema, PaymentCardResponseSchema } from '@/schemas/payment-card';
+import {
+  CanDeletePaymentCardResponseSchema,
+  PaymentCardResponseSchema,
+} from '@/schemas/payment-card';
 
 import { DATA_MODE } from './api/config';
 import { ENDPOINTS } from './api/endpoints';
@@ -21,9 +24,11 @@ const delay = <T>(value: T): Promise<T> =>
   new Promise((resolve) => setTimeout(() => resolve(value), 100));
 
 function safeParse<T>(
-  schema: { safeParse: (v: unknown) => { success: boolean; data?: T; error?: { flatten: () => unknown } } },
+  schema: {
+    safeParse: (v: unknown) => { success: boolean; data?: T; error?: { flatten: () => unknown } };
+  },
   raw: unknown,
-  name: string,
+  name: string
 ): T {
   const result = schema.safeParse(raw);
   if (!result.success) {
@@ -46,7 +51,10 @@ export async function listPaymentCards(nestId?: string): Promise<PaymentCardResp
 }
 
 /** Busca um cartão pelo ID */
-export async function getPaymentCardById(id: string, nestId?: string): Promise<PaymentCardResponse> {
+export async function getPaymentCardById(
+  id: string,
+  nestId?: string
+): Promise<PaymentCardResponse> {
   if (DATA_MODE === 'mock') {
     const found = mockPaymentCards.find((c) => c.paymentCardId === id) ?? mockPaymentCards[0];
     return delay({ ...found });
@@ -58,7 +66,7 @@ export async function getPaymentCardById(id: string, nestId?: string): Promise<P
 /** Cria um novo cartão. Retorna o uuid criado. */
 export async function createPaymentCard(
   payload: CreatePaymentCardRequest,
-  nestId?: string,
+  nestId?: string
 ): Promise<string> {
   if (DATA_MODE === 'mock') {
     return delay(`card-mock-${Date.now()}`);
@@ -70,7 +78,7 @@ export async function createPaymentCard(
 export async function updatePaymentCardDetails(
   id: string,
   payload: UpdatePaymentCardDetailsRequest,
-  nestId?: string,
+  nestId?: string
 ): Promise<void> {
   if (DATA_MODE === 'mock') {
     await delay(null);
@@ -83,7 +91,7 @@ export async function updatePaymentCardDetails(
 export async function updateCreditPaymentCardSettings(
   id: string,
   payload: UpdateCreditPaymentCardSettingsRequest,
-  nestId?: string,
+  nestId?: string
 ): Promise<void> {
   if (DATA_MODE === 'mock') {
     await delay(null);
@@ -113,7 +121,7 @@ export async function activatePaymentCard(id: string, nestId?: string): Promise<
 /** Verifica se o cartão pode ser excluído (e quantas transações estão vinculadas) */
 export async function canDeletePaymentCard(
   id: string,
-  nestId?: string,
+  nestId?: string
 ): Promise<CanDeletePaymentCardResponse> {
   if (DATA_MODE === 'mock') {
     const blocked = mockPaymentCardsWithLinkedTransactions.has(id);

@@ -28,7 +28,10 @@ export function toIsoDate(d: Date): string {
 }
 
 /** Range [primeiro dia, último dia] do mês, em ISO date local. */
-export function getMonthRange(month: Date): { minTransactionDate: string; maxTransactionDate: string } {
+export function getMonthRange(month: Date): {
+  minTransactionDate: string;
+  maxTransactionDate: string;
+} {
   return {
     minTransactionDate: toIsoDate(new Date(month.getFullYear(), month.getMonth(), 1)),
     maxTransactionDate: toIsoDate(new Date(month.getFullYear(), month.getMonth() + 1, 0)),
@@ -53,7 +56,9 @@ export function getDayGroupLabel(isoDateTime: string): string {
     .replace('.', '');
   if (dayDiff === 0) return `Hoje · ${dayMonth}`;
   if (dayDiff === 1) return `Ontem · ${dayMonth}`;
-  const weekday = new Intl.DateTimeFormat('pt-BR', { weekday: 'short' }).format(date).replace('.', '');
+  const weekday = new Intl.DateTimeFormat('pt-BR', { weekday: 'short' })
+    .format(date)
+    .replace('.', '');
   return `${weekday} · ${dayMonth}`;
 }
 

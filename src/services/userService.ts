@@ -9,10 +9,18 @@ import type {
 } from '@/schemas/user';
 import { UserProfileResponseSchema, UserSummaryResponseSchema } from '@/schemas/user';
 
+import { DATA_MODE } from './api/config';
 import { ENDPOINTS } from './api/endpoints';
 import { httpClient } from './api/httpClient';
+import * as nestService from './nestService';
 
-function safeParse<T>(schema: { safeParse: (v: unknown) => { success: boolean; data?: T; error?: { flatten: () => unknown } } }, raw: unknown, name: string): T {
+function safeParse<T>(
+  schema: {
+    safeParse: (v: unknown) => { success: boolean; data?: T; error?: { flatten: () => unknown } };
+  },
+  raw: unknown,
+  name: string
+): T {
   const result = schema.safeParse(raw);
   if (!result.success) {
     if (import.meta.env.DEV) {
@@ -48,6 +56,9 @@ export async function getConfiguration(): Promise<UserConfigurationResponse> {
 
 /** Nests (grupos/famílias) do usuário */
 export async function getNests(): Promise<UserNestResponse[]> {
+  if (DATA_MODE === 'mock') {
+    return nestService.getMockNests() as UserNestResponse[];
+  }
   return httpClient.get<UserNestResponse[]>(ENDPOINTS.users.meNests);
 }
 
@@ -59,6 +70,11 @@ export async function createNest(payload: CreateNestRequest): Promise<void> {
 /** Atualiza um ninho existente */
 export async function updateNest(nestId: string, payload: UpdateNestRequest): Promise<void> {
   await httpClient.put<void>(ENDPOINTS.nests.update, { ...payload, nestId }, nestId);
+}
+
+/** Define um ninho como o principal/padrão */
+export async function setDefaultNest(nestId: string): Promise<void> {
+  await nestService.setDefaultNest(nestId);
 }
 
 /** Remove um ninho */

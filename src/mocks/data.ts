@@ -4,6 +4,7 @@
  * Cada array usa `satisfies` para garantir conformidade com os tipos em build.
  */
 
+import { getItemEstimatedTotal, getItemSpentTotal } from '@/components/modules/Shopping/helpers';
 import type { BankAccountResponse } from '@/schemas/bank-account';
 import type { CategoryResponse } from '@/schemas/category';
 import type {
@@ -11,7 +12,16 @@ import type {
   FinancialTransactionResponse,
 } from '@/schemas/financial';
 import type { PaymentCardInvoice, PaymentCardResponse } from '@/schemas/payment-card';
-import type { AppNotification, AppShoppingCategory, AppShoppingItem, AppShoppingList, AppShoppingListSummary, FutureItem, Notice, Task } from '@/types';
+import type {
+  AppNotification,
+  AppShoppingCategory,
+  AppShoppingItem,
+  AppShoppingList,
+  AppShoppingListSummary,
+  FutureItem,
+  Notice,
+  Task,
+} from '@/types';
 import { ApiCategory, ApiPriority, FutureItemStatus, Priority } from '@/types';
 
 const MOCK_USER_ID = 'user-mock-0001';
@@ -116,9 +126,7 @@ export const mockNotices: Notice[] = [
     createdAt: new Date(now.getTime() - 30 * 60 * 1000).toISOString(),
     authorName: 'Pedro',
     color: 'green',
-    reactions: [
-      { emoji: '✅', count: 4 },
-    ],
+    reactions: [{ emoji: '✅', count: 4 }],
   },
   {
     noticeId: 'notice-mock-0004',
@@ -315,22 +323,118 @@ export const mockTasks: Task[] = [
 // ── Categorias de compra (padrões do sistema) ─────────────────────────────────
 
 export const mockShoppingCategories: AppShoppingCategory[] = [
-  { shoppingCategoryId: 'cat-0001-0000-0000-000000000001', nestId: null, name: 'Alimentos',    description: 'Produtos alimentícios',               isDefault: true },
-  { shoppingCategoryId: 'cat-0001-0000-0000-000000000002', nestId: null, name: 'Limpeza',      description: 'Produtos de limpeza',                isDefault: true },
-  { shoppingCategoryId: 'cat-0001-0000-0000-000000000003', nestId: null, name: 'Higiene',      description: 'Produtos de higiene pessoal',        isDefault: true },
-  { shoppingCategoryId: 'cat-0001-0000-0000-000000000004', nestId: null, name: 'Geral',        description: 'Itens diversos',                     isDefault: true },
-  { shoppingCategoryId: 'cat-0001-0000-0000-000000000005', nestId: null, name: 'Bebidas',      description: 'Bebidas e refrigerantes',            isDefault: true },
-  { shoppingCategoryId: 'cat-0001-0000-0000-000000000006', nestId: null, name: 'Vestuário',    description: 'Roupas e acessórios',                isDefault: true },
-  { shoppingCategoryId: 'cat-0001-0000-0000-000000000007', nestId: null, name: 'Eletrônicos',  description: 'Aparelhos eletrônicos',              isDefault: true },
-  { shoppingCategoryId: 'cat-0001-0000-0000-000000000008', nestId: null, name: 'Móveis',       description: 'Móveis e decoração',                 isDefault: true },
-  { shoppingCategoryId: 'cat-0001-0000-0000-000000000009', nestId: null, name: 'Brinquedos',   description: 'Brinquedos e jogos infantis',        isDefault: true },
-  { shoppingCategoryId: 'cat-0001-0000-0000-000000000010', nestId: null, name: 'Papelaria',    description: 'Artigos de papelaria',               isDefault: true },
-  { shoppingCategoryId: 'cat-0001-0000-0000-000000000011', nestId: null, name: 'Medicamentos', description: 'Medicamentos e produtos farmacêuticos', isDefault: true },
-  { shoppingCategoryId: 'cat-0001-0000-0000-000000000012', nestId: null, name: 'PetShop',      description: 'Produtos para animais de estimação', isDefault: true },
-  { shoppingCategoryId: 'cat-0001-0000-0000-000000000013', nestId: null, name: 'Ferramentas',  description: 'Ferramentas e materiais de construção', isDefault: true },
-  { shoppingCategoryId: 'cat-0001-0000-0000-000000000014', nestId: null, name: 'Esportes',     description: 'Equipamentos esportivos',            isDefault: true },
-  { shoppingCategoryId: 'cat-0001-0000-0000-000000000015', nestId: null, name: 'Beleza',       description: 'Produtos de beleza e cosméticos',   isDefault: true },
-  { shoppingCategoryId: 'cat-0001-0000-0000-000000000016', nestId: null, name: 'Outro',        description: 'Outros',                             isDefault: true },
+  {
+    shoppingCategoryId: 'cat-0001-0000-0000-000000000001',
+    nestId: null,
+    name: 'Alimentos',
+    description: 'Produtos alimentícios',
+    isDefault: true,
+  },
+  {
+    shoppingCategoryId: 'cat-0001-0000-0000-000000000002',
+    nestId: null,
+    name: 'Limpeza',
+    description: 'Produtos de limpeza',
+    isDefault: true,
+  },
+  {
+    shoppingCategoryId: 'cat-0001-0000-0000-000000000003',
+    nestId: null,
+    name: 'Higiene',
+    description: 'Produtos de higiene pessoal',
+    isDefault: true,
+  },
+  {
+    shoppingCategoryId: 'cat-0001-0000-0000-000000000004',
+    nestId: null,
+    name: 'Geral',
+    description: 'Itens diversos',
+    isDefault: true,
+  },
+  {
+    shoppingCategoryId: 'cat-0001-0000-0000-000000000005',
+    nestId: null,
+    name: 'Bebidas',
+    description: 'Bebidas e refrigerantes',
+    isDefault: true,
+  },
+  {
+    shoppingCategoryId: 'cat-0001-0000-0000-000000000006',
+    nestId: null,
+    name: 'Vestuário',
+    description: 'Roupas e acessórios',
+    isDefault: true,
+  },
+  {
+    shoppingCategoryId: 'cat-0001-0000-0000-000000000007',
+    nestId: null,
+    name: 'Eletrônicos',
+    description: 'Aparelhos eletrônicos',
+    isDefault: true,
+  },
+  {
+    shoppingCategoryId: 'cat-0001-0000-0000-000000000008',
+    nestId: null,
+    name: 'Móveis',
+    description: 'Móveis e decoração',
+    isDefault: true,
+  },
+  {
+    shoppingCategoryId: 'cat-0001-0000-0000-000000000009',
+    nestId: null,
+    name: 'Brinquedos',
+    description: 'Brinquedos e jogos infantis',
+    isDefault: true,
+  },
+  {
+    shoppingCategoryId: 'cat-0001-0000-0000-000000000010',
+    nestId: null,
+    name: 'Papelaria',
+    description: 'Artigos de papelaria',
+    isDefault: true,
+  },
+  {
+    shoppingCategoryId: 'cat-0001-0000-0000-000000000011',
+    nestId: null,
+    name: 'Medicamentos',
+    description: 'Medicamentos e produtos farmacêuticos',
+    isDefault: true,
+  },
+  {
+    shoppingCategoryId: 'cat-0001-0000-0000-000000000012',
+    nestId: null,
+    name: 'PetShop',
+    description: 'Produtos para animais de estimação',
+    isDefault: true,
+  },
+  {
+    shoppingCategoryId: 'cat-0001-0000-0000-000000000013',
+    nestId: null,
+    name: 'Ferramentas',
+    description: 'Ferramentas e materiais de construção',
+    isDefault: true,
+  },
+  {
+    shoppingCategoryId: 'cat-0001-0000-0000-000000000014',
+    nestId: null,
+    name: 'Esportes',
+    description: 'Equipamentos esportivos',
+    isDefault: true,
+  },
+  {
+    shoppingCategoryId: 'cat-0001-0000-0000-000000000015',
+    nestId: null,
+    name: 'Beleza',
+    description: 'Produtos de beleza e cosméticos',
+    isDefault: true,
+  },
+  {
+    shoppingCategoryId: 'cat-0001-0000-0000-000000000016',
+    nestId: null,
+    name: 'Outro',
+    description: 'Outros',
+    isDefault: true,
+  },
 ] satisfies AppShoppingCategory[];
 
 // ── Lista de compras ──────────────────────────────────────────────────────────
@@ -345,26 +449,184 @@ const toIsoDateTimeDaysAgo = (daysAgo: number, hour = 10): string => {
 const getMonthStartIso = (monthsAgo: number): string =>
   new Date(now.getFullYear(), now.getMonth() - monthsAgo, 1).toISOString();
 const getMonthLabel = (monthsAgo: number): string =>
-  new Intl.DateTimeFormat('pt-BR', { month: 'long' }).format(new Date(now.getFullYear(), now.getMonth() - monthsAgo, 1));
+  new Intl.DateTimeFormat('pt-BR', { month: 'long' }).format(
+    new Date(now.getFullYear(), now.getMonth() - monthsAgo, 1)
+  );
 const getDateInMonth = (monthsAgo: number, day: number): string =>
   toIsoDate(new Date(now.getFullYear(), now.getMonth() - monthsAgo, day));
 
 const mockShoppingItemsWeek1: AppShoppingItem[] = [
-  { shoppingItemId: 'item-0001', shoppingListId: 'list-0001', name: 'Arroz',          quantity: 5,  unitType: 1, shoppingCategoryId: 'cat-0001-0000-0000-000000000001', categoryName: 'Alimentos', isPurchased: true,  price: 34,   estimatedPrice: 32,  purchasedAt: toIsoDateTimeDaysAgo(26), notes: null },
-  { shoppingItemId: 'item-0002', shoppingListId: 'list-0001', name: 'Feijão',         quantity: 2,  unitType: 1, shoppingCategoryId: 'cat-0001-0000-0000-000000000001', categoryName: 'Alimentos', isPurchased: true,  price: 19,   estimatedPrice: 18,  purchasedAt: toIsoDateTimeDaysAgo(26), notes: null },
-  { shoppingItemId: 'item-0003', shoppingListId: 'list-0001', name: 'Macarrão',       quantity: 3,  unitType: 7, shoppingCategoryId: 'cat-0001-0000-0000-000000000001', categoryName: 'Alimentos', isPurchased: false, price: null, estimatedPrice: 12,  purchasedAt: null,                   notes: null },
-  { shoppingItemId: 'item-0004', shoppingListId: 'list-0001', name: 'Café',           quantity: 500, unitType: 2, shoppingCategoryId: 'cat-0001-0000-0000-000000000001', categoryName: 'Alimentos', isPurchased: false, price: null, estimatedPrice: 24,  purchasedAt: null,                   notes: null },
-  { shoppingItemId: 'item-0005', shoppingListId: 'list-0001', name: 'Detergente',     quantity: 3,  unitType: 0, shoppingCategoryId: 'cat-0001-0000-0000-000000000002', categoryName: 'Limpeza',   isPurchased: true,  price: 11,   estimatedPrice: 10,  purchasedAt: toIsoDateTimeDaysAgo(26), notes: null },
-  { shoppingItemId: 'item-0006', shoppingListId: 'list-0001', name: 'Sabão em pó',    quantity: 2,  unitType: 0, shoppingCategoryId: 'cat-0001-0000-0000-000000000002', categoryName: 'Limpeza',   isPurchased: false, price: null, estimatedPrice: 25,  purchasedAt: null,                   notes: null },
-  { shoppingItemId: 'item-0007', shoppingListId: 'list-0001', name: 'Papel higiênico', quantity: 12, unitType: 0, shoppingCategoryId: 'cat-0001-0000-0000-000000000002', categoryName: 'Limpeza',   isPurchased: false, price: null, estimatedPrice: 39,  purchasedAt: null,                   notes: null },
-  { shoppingItemId: 'item-0008', shoppingListId: 'list-0001', name: 'Shampoo',        quantity: 1,  unitType: 0, shoppingCategoryId: 'cat-0001-0000-0000-000000000003', categoryName: 'Higiene',   isPurchased: false, price: null, estimatedPrice: 21,  purchasedAt: null,                   notes: 'Sem sulfato' },
+  {
+    shoppingItemId: 'item-0001',
+    shoppingListId: 'list-0001',
+    name: 'Arroz',
+    quantity: 5,
+    unitType: 1,
+    shoppingCategoryId: 'cat-0001-0000-0000-000000000001',
+    categoryName: 'Alimentos',
+    isPurchased: true,
+    price: 34,
+    estimatedPrice: 32,
+    purchasedAt: toIsoDateTimeDaysAgo(26),
+    notes: null,
+  },
+  {
+    shoppingItemId: 'item-0002',
+    shoppingListId: 'list-0001',
+    name: 'Feijão',
+    quantity: 2,
+    unitType: 1,
+    shoppingCategoryId: 'cat-0001-0000-0000-000000000001',
+    categoryName: 'Alimentos',
+    isPurchased: true,
+    price: 19,
+    estimatedPrice: 18,
+    purchasedAt: toIsoDateTimeDaysAgo(26),
+    notes: null,
+  },
+  {
+    shoppingItemId: 'item-0003',
+    shoppingListId: 'list-0001',
+    name: 'Macarrão',
+    quantity: 3,
+    unitType: 7,
+    shoppingCategoryId: 'cat-0001-0000-0000-000000000001',
+    categoryName: 'Alimentos',
+    isPurchased: false,
+    price: null,
+    estimatedPrice: 12,
+    purchasedAt: null,
+    notes: null,
+  },
+  {
+    shoppingItemId: 'item-0004',
+    shoppingListId: 'list-0001',
+    name: 'Café',
+    quantity: 500,
+    unitType: 2,
+    shoppingCategoryId: 'cat-0001-0000-0000-000000000001',
+    categoryName: 'Alimentos',
+    isPurchased: false,
+    price: null,
+    estimatedPrice: 24,
+    purchasedAt: null,
+    notes: null,
+  },
+  {
+    shoppingItemId: 'item-0005',
+    shoppingListId: 'list-0001',
+    name: 'Detergente',
+    quantity: 3,
+    unitType: 0,
+    shoppingCategoryId: 'cat-0001-0000-0000-000000000002',
+    categoryName: 'Limpeza',
+    isPurchased: true,
+    price: 11,
+    estimatedPrice: 10,
+    purchasedAt: toIsoDateTimeDaysAgo(26),
+    notes: null,
+  },
+  {
+    shoppingItemId: 'item-0006',
+    shoppingListId: 'list-0001',
+    name: 'Sabão em pó',
+    quantity: 2,
+    unitType: 0,
+    shoppingCategoryId: 'cat-0001-0000-0000-000000000002',
+    categoryName: 'Limpeza',
+    isPurchased: false,
+    price: null,
+    estimatedPrice: 25,
+    purchasedAt: null,
+    notes: null,
+  },
+  {
+    shoppingItemId: 'item-0007',
+    shoppingListId: 'list-0001',
+    name: 'Papel higiênico',
+    quantity: 12,
+    unitType: 0,
+    shoppingCategoryId: 'cat-0001-0000-0000-000000000002',
+    categoryName: 'Limpeza',
+    isPurchased: false,
+    price: null,
+    estimatedPrice: 39,
+    purchasedAt: null,
+    notes: null,
+  },
+  {
+    shoppingItemId: 'item-0008',
+    shoppingListId: 'list-0001',
+    name: 'Shampoo',
+    quantity: 1,
+    unitType: 0,
+    shoppingCategoryId: 'cat-0001-0000-0000-000000000003',
+    categoryName: 'Higiene',
+    isPurchased: false,
+    price: null,
+    estimatedPrice: 21,
+    purchasedAt: null,
+    notes: 'Sem sulfato',
+  },
 ] satisfies AppShoppingItem[];
 
 const mockShoppingItemsWeek2: AppShoppingItem[] = [
-  { shoppingItemId: 'item-0009', shoppingListId: 'list-0002', name: 'Açúcar',         quantity: 1,  unitType: 1, shoppingCategoryId: 'cat-0001-0000-0000-000000000001', categoryName: 'Alimentos', isPurchased: false, price: null, estimatedPrice: 5,   purchasedAt: null,                   notes: null },
-  { shoppingItemId: 'item-0010', shoppingListId: 'list-0002', name: 'Óleo de soja',   quantity: 2,  unitType: 0, shoppingCategoryId: 'cat-0001-0000-0000-000000000001', categoryName: 'Alimentos', isPurchased: false, price: null, estimatedPrice: 14,  purchasedAt: null,                   notes: null },
-  { shoppingItemId: 'item-0011', shoppingListId: 'list-0002', name: 'Iogurte',        quantity: 4,  unitType: 0, shoppingCategoryId: 'cat-0001-0000-0000-000000000001', categoryName: 'Alimentos', isPurchased: false, price: null, estimatedPrice: 20,  purchasedAt: null,                   notes: null },
-  { shoppingItemId: 'item-0012', shoppingListId: 'list-0002', name: 'Água sanitária', quantity: 2,  unitType: 0, shoppingCategoryId: 'cat-0001-0000-0000-000000000002', categoryName: 'Limpeza',   isPurchased: false, price: null, estimatedPrice: 8,   purchasedAt: null,                   notes: null },
+  {
+    shoppingItemId: 'item-0009',
+    shoppingListId: 'list-0002',
+    name: 'Açúcar',
+    quantity: 1,
+    unitType: 1,
+    shoppingCategoryId: 'cat-0001-0000-0000-000000000001',
+    categoryName: 'Alimentos',
+    isPurchased: false,
+    price: null,
+    estimatedPrice: 5,
+    purchasedAt: null,
+    notes: null,
+  },
+  {
+    shoppingItemId: 'item-0010',
+    shoppingListId: 'list-0002',
+    name: 'Óleo de soja',
+    quantity: 2,
+    unitType: 0,
+    shoppingCategoryId: 'cat-0001-0000-0000-000000000001',
+    categoryName: 'Alimentos',
+    isPurchased: false,
+    price: null,
+    estimatedPrice: 14,
+    purchasedAt: null,
+    notes: null,
+  },
+  {
+    shoppingItemId: 'item-0011',
+    shoppingListId: 'list-0002',
+    name: 'Iogurte',
+    quantity: 4,
+    unitType: 0,
+    shoppingCategoryId: 'cat-0001-0000-0000-000000000001',
+    categoryName: 'Alimentos',
+    isPurchased: false,
+    price: null,
+    estimatedPrice: 20,
+    purchasedAt: null,
+    notes: null,
+  },
+  {
+    shoppingItemId: 'item-0012',
+    shoppingListId: 'list-0002',
+    name: 'Água sanitária',
+    quantity: 2,
+    unitType: 0,
+    shoppingCategoryId: 'cat-0001-0000-0000-000000000002',
+    categoryName: 'Limpeza',
+    isPurchased: false,
+    price: null,
+    estimatedPrice: 8,
+    purchasedAt: null,
+    notes: null,
+  },
 ] satisfies AppShoppingItem[];
 
 export const mockShoppingLists: AppShoppingListSummary[] = [
@@ -374,9 +636,14 @@ export const mockShoppingLists: AppShoppingListSummary[] = [
     monthYear: getMonthStartIso(1),
     notes: 'Lista fechada do mês anterior',
     totalItems: mockShoppingItemsWeek1.length,
-    purchasedItems: mockShoppingItemsWeek1.filter(i => i.isPurchased).length,
-    totalEstimated: mockShoppingItemsWeek1.reduce((s, i) => s + (i.estimatedPrice ?? 0), 0),
-    totalSpent: mockShoppingItemsWeek1.filter(i => i.isPurchased).reduce((s, i) => s + (i.price ?? 0), 0),
+    purchasedItems: mockShoppingItemsWeek1.filter((i) => i.isPurchased).length,
+    totalEstimated: mockShoppingItemsWeek1.reduce(
+      (s, i) => s + getItemEstimatedTotal(i.estimatedPrice, i.quantity, i.unitType),
+      0
+    ),
+    totalSpent: mockShoppingItemsWeek1
+      .filter((i) => i.isPurchased)
+      .reduce((s, i) => s + getItemSpentTotal(i.price, i.quantity, i.unitType), 0),
   },
   {
     shoppingListId: 'list-0002',
@@ -385,7 +652,10 @@ export const mockShoppingLists: AppShoppingListSummary[] = [
     notes: 'Reposição da semana atual',
     totalItems: mockShoppingItemsWeek2.length,
     purchasedItems: 0,
-    totalEstimated: mockShoppingItemsWeek2.reduce((s, i) => s + (i.estimatedPrice ?? 0), 0),
+    totalEstimated: mockShoppingItemsWeek2.reduce(
+      (s, i) => s + getItemEstimatedTotal(i.estimatedPrice, i.quantity, i.unitType),
+      0
+    ),
     totalSpent: 0,
   },
 ] satisfies AppShoppingListSummary[];
@@ -452,9 +722,7 @@ const monthlyExpenseSeeds: MonthlyExpenseSeed[] = [
     water: 88,
     internet: 129,
     groceries: 972,
-    extras: [
-      { description: 'Conserto da torneira', value: 160, day: 21, category: 'Manutenção' },
-    ],
+    extras: [{ description: 'Conserto da torneira', value: 160, day: 21, category: 'Manutenção' }],
   },
   {
     monthsAgo: 2,
@@ -463,9 +731,7 @@ const monthlyExpenseSeeds: MonthlyExpenseSeed[] = [
     water: 82,
     internet: 119,
     groceries: 886,
-    extras: [
-      { description: 'Material escolar', value: 242, day: 10, category: 'Família' },
-    ],
+    extras: [{ description: 'Material escolar', value: 242, day: 10, category: 'Família' }],
   },
   {
     monthsAgo: 3,
@@ -486,9 +752,7 @@ const monthlyExpenseSeeds: MonthlyExpenseSeed[] = [
     water: 76,
     internet: 115,
     groceries: 804,
-    extras: [
-      { description: 'Presente de aniversário', value: 140, day: 8, category: 'Família' },
-    ],
+    extras: [{ description: 'Presente de aniversário', value: 140, day: 8, category: 'Família' }],
   },
   {
     monthsAgo: 5,
@@ -497,23 +761,51 @@ const monthlyExpenseSeeds: MonthlyExpenseSeed[] = [
     water: 73,
     internet: 115,
     groceries: 792,
-    extras: [
-      { description: 'Consulta médica', value: 220, day: 19, category: 'Saúde' },
-    ],
+    extras: [{ description: 'Consulta médica', value: 220, day: 19, category: 'Saúde' }],
   },
 ];
 
 export const mockExpenses: MockExpense[] = monthlyExpenseSeeds
-  .flatMap(seed => {
+  .flatMap((seed) => {
     const fixed: MockExpense[] = [
-      { id: '', description: 'Aluguel', value: seed.rent, date: getDateInMonth(seed.monthsAgo, 5), category: 'Fixo' },
-      { id: '', description: 'Conta de luz', value: seed.power, date: getDateInMonth(seed.monthsAgo, 10), category: 'Fixo' },
-      { id: '', description: 'Conta de água', value: seed.water, date: getDateInMonth(seed.monthsAgo, 12), category: 'Fixo' },
-      { id: '', description: 'Internet', value: seed.internet, date: getDateInMonth(seed.monthsAgo, 15), category: 'Fixo' },
-      { id: '', description: 'Compras do mês', value: seed.groceries, date: getDateInMonth(seed.monthsAgo, 18), category: 'Geral' },
+      {
+        id: '',
+        description: 'Aluguel',
+        value: seed.rent,
+        date: getDateInMonth(seed.monthsAgo, 5),
+        category: 'Fixo',
+      },
+      {
+        id: '',
+        description: 'Conta de luz',
+        value: seed.power,
+        date: getDateInMonth(seed.monthsAgo, 10),
+        category: 'Fixo',
+      },
+      {
+        id: '',
+        description: 'Conta de água',
+        value: seed.water,
+        date: getDateInMonth(seed.monthsAgo, 12),
+        category: 'Fixo',
+      },
+      {
+        id: '',
+        description: 'Internet',
+        value: seed.internet,
+        date: getDateInMonth(seed.monthsAgo, 15),
+        category: 'Fixo',
+      },
+      {
+        id: '',
+        description: 'Compras do mês',
+        value: seed.groceries,
+        date: getDateInMonth(seed.monthsAgo, 18),
+        category: 'Geral',
+      },
     ];
 
-    const extras: MockExpense[] = seed.extras.map(extra => ({
+    const extras: MockExpense[] = seed.extras.map((extra) => ({
       id: '',
       description: extra.description,
       value: extra.value,
@@ -533,14 +825,54 @@ export const mockExpenses: MockExpense[] = monthlyExpenseSeeds
 // IDs de mock não são UUIDs reais (convenção do arquivo: 'nest-mock-0001' etc.);
 // os branches mock dos services não passam por safeParse.
 export const mockFinancialCategories = [
-  { categoryId: 'fincat-0000-0000-0000-000000000001', nestId: 'nest-mock-0001', name: 'Moradia', type: 1 },
-  { categoryId: 'fincat-0000-0000-0000-000000000002', nestId: 'nest-mock-0001', name: 'Contas fixas', type: 1 },
-  { categoryId: 'fincat-0000-0000-0000-000000000003', nestId: 'nest-mock-0001', name: 'Mercado', type: 1 },
-  { categoryId: 'fincat-0000-0000-0000-000000000004', nestId: 'nest-mock-0001', name: 'Saúde', type: 1 },
-  { categoryId: 'fincat-0000-0000-0000-000000000005', nestId: 'nest-mock-0001', name: 'Família', type: 1 },
-  { categoryId: 'fincat-0000-0000-0000-000000000006', nestId: 'nest-mock-0001', name: 'Manutenção', type: 1 },
-  { categoryId: 'fincat-0000-0000-0000-000000000007', nestId: 'nest-mock-0001', name: 'Pet', type: 1 },
-  { categoryId: 'fincat-0000-0000-0000-000000000008', nestId: 'nest-mock-0001', name: 'Renda', type: 0 },
+  {
+    categoryId: 'fincat-0000-0000-0000-000000000001',
+    nestId: 'nest-mock-0001',
+    name: 'Moradia',
+    type: 1,
+  },
+  {
+    categoryId: 'fincat-0000-0000-0000-000000000002',
+    nestId: 'nest-mock-0001',
+    name: 'Contas fixas',
+    type: 1,
+  },
+  {
+    categoryId: 'fincat-0000-0000-0000-000000000003',
+    nestId: 'nest-mock-0001',
+    name: 'Mercado',
+    type: 1,
+  },
+  {
+    categoryId: 'fincat-0000-0000-0000-000000000004',
+    nestId: 'nest-mock-0001',
+    name: 'Saúde',
+    type: 1,
+  },
+  {
+    categoryId: 'fincat-0000-0000-0000-000000000005',
+    nestId: 'nest-mock-0001',
+    name: 'Família',
+    type: 1,
+  },
+  {
+    categoryId: 'fincat-0000-0000-0000-000000000006',
+    nestId: 'nest-mock-0001',
+    name: 'Manutenção',
+    type: 1,
+  },
+  {
+    categoryId: 'fincat-0000-0000-0000-000000000007',
+    nestId: 'nest-mock-0001',
+    name: 'Pet',
+    type: 1,
+  },
+  {
+    categoryId: 'fincat-0000-0000-0000-000000000008',
+    nestId: 'nest-mock-0001',
+    name: 'Renda',
+    type: 0,
+  },
 ] satisfies CategoryResponse[];
 
 const FIN_NEST_ID = 'nest-mock-0001';
@@ -552,7 +884,7 @@ let finSeq = 0;
 function makeFinPayment(
   transactionId: string,
   amount: number,
-  dateIso: string,
+  dateIso: string
 ): FinancialTransactionPaymentResponse {
   finSeq += 1;
   return {
@@ -591,7 +923,7 @@ function makeFinTx(seed: FinTxSeed): FinancialTransactionResponse {
   const id = `fintx-${String(finSeq).padStart(4, '0')}`;
   const dateIso = getDateInMonth(seed.monthsAgo, seed.day);
   const dueIso = getDateInMonth(seed.monthsAgo, seed.dueDay ?? seed.day);
-  const category = mockFinancialCategories.find(c => c.categoryId === seed.categoryId)!;
+  const category = mockFinancialCategories.find((c) => c.categoryId === seed.categoryId)!;
   // Quitação total é datada no vencimento; pagamento parcial na data da transação.
   const payments =
     seed.paid === true
@@ -636,32 +968,202 @@ const CAT = {
   renda: 'fincat-0000-0000-0000-000000000008',
 };
 
-export const mockTransactions: FinancialTransactionResponse[] = ([
-  // ── Mês atual: mistura de estados para exercitar todos os badges ────────────
-  { type: 0, description: 'Salário', value: 8500, monthsAgo: 0, day: 1, categoryId: CAT.renda, paid: true },
-  { type: 1, description: 'Aluguel', value: 1850, monthsAgo: 0, day: 5, dueDay: 15, categoryId: CAT.moradia },
-  { type: 1, description: 'Conta de luz', value: 312, monthsAgo: 0, day: 2, dueDay: 5, categoryId: CAT.contas },
-  { type: 1, description: 'Conta de água', value: 90, monthsAgo: 0, day: 12, categoryId: CAT.contas, paid: true },
-  { type: 1, description: 'Internet', value: 129, monthsAgo: 0, day: 3, dueDay: 20, categoryId: CAT.contas },
-  { type: 1, description: 'Compras do mês', value: 740, monthsAgo: 0, day: 8, categoryId: CAT.mercado, paid: 370 },
-  // ── Mês anterior: tudo quitado ───────────────────────────────────────────────
-  { type: 0, description: 'Salário', value: 8500, monthsAgo: 1, day: 1, categoryId: CAT.renda, paid: true },
-  { type: 1, description: 'Aluguel', value: 1850, monthsAgo: 1, day: 5, categoryId: CAT.moradia, paid: true },
-  { type: 1, description: 'Conta de luz', value: 301, monthsAgo: 1, day: 10, categoryId: CAT.contas, paid: true },
-  { type: 1, description: 'Conta de água', value: 88, monthsAgo: 1, day: 12, categoryId: CAT.contas, paid: true },
-  { type: 1, description: 'Internet', value: 129, monthsAgo: 1, day: 15, categoryId: CAT.contas, paid: true },
-  { type: 1, description: 'Compras do mês', value: 972, monthsAgo: 1, day: 18, categoryId: CAT.mercado, paid: true },
-  { type: 1, description: 'Conserto da torneira', value: 160, monthsAgo: 1, day: 21, categoryId: CAT.manutencao, paid: true },
-  // ── Dois meses atrás ─────────────────────────────────────────────────────────
-  { type: 0, description: 'Salário', value: 8500, monthsAgo: 2, day: 1, categoryId: CAT.renda, paid: true },
-  { type: 1, description: 'Aluguel', value: 1800, monthsAgo: 2, day: 5, categoryId: CAT.moradia, paid: true },
-  { type: 1, description: 'Conta de luz', value: 264, monthsAgo: 2, day: 10, categoryId: CAT.contas, paid: true },
-  { type: 1, description: 'Conta de água', value: 82, monthsAgo: 2, day: 12, categoryId: CAT.contas, paid: true },
-  { type: 1, description: 'Internet', value: 119, monthsAgo: 2, day: 15, categoryId: CAT.contas, paid: true },
-  { type: 1, description: 'Compras do mês', value: 886, monthsAgo: 2, day: 18, categoryId: CAT.mercado, paid: true },
-  { type: 1, description: 'Material escolar', value: 242, monthsAgo: 2, day: 10, categoryId: CAT.familia, paid: true },
-  { type: 1, description: 'Petshop', value: 118, monthsAgo: 2, day: 14, categoryId: CAT.pet, paid: true },
-] satisfies FinTxSeed[]).map(makeFinTx);
+export const mockTransactions: FinancialTransactionResponse[] = (
+  [
+    // ── Mês atual: mistura de estados para exercitar todos os badges ────────────
+    {
+      type: 0,
+      description: 'Salário',
+      value: 8500,
+      monthsAgo: 0,
+      day: 1,
+      categoryId: CAT.renda,
+      paid: true,
+    },
+    {
+      type: 1,
+      description: 'Aluguel',
+      value: 1850,
+      monthsAgo: 0,
+      day: 5,
+      dueDay: 15,
+      categoryId: CAT.moradia,
+    },
+    {
+      type: 1,
+      description: 'Conta de luz',
+      value: 312,
+      monthsAgo: 0,
+      day: 2,
+      dueDay: 5,
+      categoryId: CAT.contas,
+    },
+    {
+      type: 1,
+      description: 'Conta de água',
+      value: 90,
+      monthsAgo: 0,
+      day: 12,
+      categoryId: CAT.contas,
+      paid: true,
+    },
+    {
+      type: 1,
+      description: 'Internet',
+      value: 129,
+      monthsAgo: 0,
+      day: 3,
+      dueDay: 20,
+      categoryId: CAT.contas,
+    },
+    {
+      type: 1,
+      description: 'Compras do mês',
+      value: 740,
+      monthsAgo: 0,
+      day: 8,
+      categoryId: CAT.mercado,
+      paid: 370,
+    },
+    // ── Mês anterior: tudo quitado ───────────────────────────────────────────────
+    {
+      type: 0,
+      description: 'Salário',
+      value: 8500,
+      monthsAgo: 1,
+      day: 1,
+      categoryId: CAT.renda,
+      paid: true,
+    },
+    {
+      type: 1,
+      description: 'Aluguel',
+      value: 1850,
+      monthsAgo: 1,
+      day: 5,
+      categoryId: CAT.moradia,
+      paid: true,
+    },
+    {
+      type: 1,
+      description: 'Conta de luz',
+      value: 301,
+      monthsAgo: 1,
+      day: 10,
+      categoryId: CAT.contas,
+      paid: true,
+    },
+    {
+      type: 1,
+      description: 'Conta de água',
+      value: 88,
+      monthsAgo: 1,
+      day: 12,
+      categoryId: CAT.contas,
+      paid: true,
+    },
+    {
+      type: 1,
+      description: 'Internet',
+      value: 129,
+      monthsAgo: 1,
+      day: 15,
+      categoryId: CAT.contas,
+      paid: true,
+    },
+    {
+      type: 1,
+      description: 'Compras do mês',
+      value: 972,
+      monthsAgo: 1,
+      day: 18,
+      categoryId: CAT.mercado,
+      paid: true,
+    },
+    {
+      type: 1,
+      description: 'Conserto da torneira',
+      value: 160,
+      monthsAgo: 1,
+      day: 21,
+      categoryId: CAT.manutencao,
+      paid: true,
+    },
+    // ── Dois meses atrás ─────────────────────────────────────────────────────────
+    {
+      type: 0,
+      description: 'Salário',
+      value: 8500,
+      monthsAgo: 2,
+      day: 1,
+      categoryId: CAT.renda,
+      paid: true,
+    },
+    {
+      type: 1,
+      description: 'Aluguel',
+      value: 1800,
+      monthsAgo: 2,
+      day: 5,
+      categoryId: CAT.moradia,
+      paid: true,
+    },
+    {
+      type: 1,
+      description: 'Conta de luz',
+      value: 264,
+      monthsAgo: 2,
+      day: 10,
+      categoryId: CAT.contas,
+      paid: true,
+    },
+    {
+      type: 1,
+      description: 'Conta de água',
+      value: 82,
+      monthsAgo: 2,
+      day: 12,
+      categoryId: CAT.contas,
+      paid: true,
+    },
+    {
+      type: 1,
+      description: 'Internet',
+      value: 119,
+      monthsAgo: 2,
+      day: 15,
+      categoryId: CAT.contas,
+      paid: true,
+    },
+    {
+      type: 1,
+      description: 'Compras do mês',
+      value: 886,
+      monthsAgo: 2,
+      day: 18,
+      categoryId: CAT.mercado,
+      paid: true,
+    },
+    {
+      type: 1,
+      description: 'Material escolar',
+      value: 242,
+      monthsAgo: 2,
+      day: 10,
+      categoryId: CAT.familia,
+      paid: true,
+    },
+    {
+      type: 1,
+      description: 'Petshop',
+      value: 118,
+      monthsAgo: 2,
+      day: 14,
+      categoryId: CAT.pet,
+      paid: true,
+    },
+  ] satisfies FinTxSeed[]
+).map(makeFinTx);
 
 // ── Metas da família (dashboard) ─────────────────────────────────────────────
 
@@ -753,6 +1255,7 @@ export const mockBankAccounts: BankAccountResponse[] = [
     bankAccountId: '11111111-1111-1111-1111-111111111111',
     name: 'Conta Corrente',
     type: 0,
+    isActive: true,
     balance: 3250.75,
     initialBalance: 1000,
     color: '#3b82f6',
@@ -771,6 +1274,7 @@ export const mockBankAccounts: BankAccountResponse[] = [
     bankAccountId: '22222222-2222-2222-2222-222222222222',
     name: 'Poupança',
     type: 1,
+    isActive: true,
     balance: 12800,
     initialBalance: 12800,
     color: '#10b981',
@@ -789,6 +1293,7 @@ export const mockBankAccounts: BankAccountResponse[] = [
     bankAccountId: '33333333-3333-3333-3333-333333333333',
     name: 'Carteira',
     type: 2,
+    isActive: false,
     balance: 180.5,
     initialBalance: 180.5,
     color: '#f59e0b',
@@ -813,9 +1318,30 @@ export const mockPaymentCardInvoices: Record<string, PaymentCardInvoice> = {
     month: '2026-06',
     total: 537.3,
     items: [
-      { id: 'inv-1', description: 'Mercado Extra', amount: 312.4, date: '2026-06-04', categoryName: 'Mercado', icon: '🛒' },
-      { id: 'inv-2', description: 'Posto Shell', amount: 180.0, date: '2026-06-07', categoryName: 'Transporte', icon: '⛽' },
-      { id: 'inv-3', description: 'Netflix', amount: 44.9, date: '2026-06-10', categoryName: 'Lazer', icon: '🎬' },
+      {
+        id: 'inv-1',
+        description: 'Mercado Extra',
+        amount: 312.4,
+        date: '2026-06-04',
+        categoryName: 'Mercado',
+        icon: '🛒',
+      },
+      {
+        id: 'inv-2',
+        description: 'Posto Shell',
+        amount: 180.0,
+        date: '2026-06-07',
+        categoryName: 'Transporte',
+        icon: '⛽',
+      },
+      {
+        id: 'inv-3',
+        description: 'Netflix',
+        amount: 44.9,
+        date: '2026-06-10',
+        categoryName: 'Lazer',
+        icon: '🎬',
+      },
     ],
   },
 };
@@ -864,9 +1390,44 @@ export const mockCalendarEvents = [
 // ── Itens futuros ─────────────────────────────────────────────────────────────
 
 export const mockFutureItems = [
-  { id: '1', name: 'Sofá novo', priority: Priority.MEDIUM, estimatedCost: 'R$ 2.500', estimatedValue: 2500, status: FutureItemStatus.PLANNED },
-  { id: '2', name: 'Aspirador de pó', priority: Priority.HIGH, estimatedCost: 'R$ 800', estimatedValue: 800, status: FutureItemStatus.PLANNED },
-  { id: '3', name: 'TV 50 polegadas', priority: Priority.LOW, estimatedCost: 'R$ 2.000', estimatedValue: 2000, status: FutureItemStatus.PLANNED },
-  { id: '4', name: 'Geladeira nova', priority: Priority.HIGH, estimatedCost: 'R$ 3.500', estimatedValue: 3500, status: FutureItemStatus.PLANNED },
-  { id: '5', name: 'Mesa de jantar', priority: Priority.MEDIUM, estimatedCost: 'R$ 1.200', estimatedValue: 1200, status: FutureItemStatus.PLANNED },
+  {
+    id: '1',
+    name: 'Sofá novo',
+    priority: Priority.MEDIUM,
+    estimatedCost: 'R$ 2.500',
+    estimatedValue: 2500,
+    status: FutureItemStatus.PLANNED,
+  },
+  {
+    id: '2',
+    name: 'Aspirador de pó',
+    priority: Priority.HIGH,
+    estimatedCost: 'R$ 800',
+    estimatedValue: 800,
+    status: FutureItemStatus.PLANNED,
+  },
+  {
+    id: '3',
+    name: 'TV 50 polegadas',
+    priority: Priority.LOW,
+    estimatedCost: 'R$ 2.000',
+    estimatedValue: 2000,
+    status: FutureItemStatus.PLANNED,
+  },
+  {
+    id: '4',
+    name: 'Geladeira nova',
+    priority: Priority.HIGH,
+    estimatedCost: 'R$ 3.500',
+    estimatedValue: 3500,
+    status: FutureItemStatus.PLANNED,
+  },
+  {
+    id: '5',
+    name: 'Mesa de jantar',
+    priority: Priority.MEDIUM,
+    estimatedCost: 'R$ 1.200',
+    estimatedValue: 1200,
+    status: FutureItemStatus.PLANNED,
+  },
 ] satisfies FutureItem[];

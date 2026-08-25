@@ -31,9 +31,11 @@ import { httpClient } from './api/httpClient';
 type MockExpense = (typeof mockExpenses)[number];
 
 function safeParse<T>(
-  schema: { safeParse: (v: unknown) => { success: boolean; data?: T; error?: { flatten: () => unknown } } },
+  schema: {
+    safeParse: (v: unknown) => { success: boolean; data?: T; error?: { flatten: () => unknown } };
+  },
   raw: unknown,
-  name: string,
+  name: string
 ): T {
   const result = schema.safeParse(raw);
   if (!result.success) {
@@ -47,18 +49,18 @@ function safeParse<T>(
 
 // ── Mock store (mutável para simular mutações em modo mock) ──────────────────
 
-let mockStore: FinancialTransactionResponse[] = mockTransactions.map(t => ({
+let mockStore: FinancialTransactionResponse[] = mockTransactions.map((t) => ({
   ...t,
   payments: [...t.payments],
 }));
 
-const delay = <T,>(value: T, ms = 100): Promise<T> =>
-  new Promise(resolve => setTimeout(() => resolve(value), ms));
+const delay = <T>(value: T, ms = 100): Promise<T> =>
+  new Promise((resolve) => setTimeout(() => resolve(value), ms));
 
 function getPaidSum(t: FinancialTransactionResponse): number {
   return t.payments.reduce(
     (sum, p) => sum + Number(p.amount ?? 0) + Number(p.interest ?? 0) - Number(p.discount ?? 0),
-    0,
+    0
   );
 }
 
@@ -91,21 +93,32 @@ function deriveSourceType(method: number): number {
 
 function applyMockFilter(
   items: FinancialTransactionResponse[],
-  filter?: FinancialTransactionFilter,
+  filter?: FinancialTransactionFilter
 ): FinancialTransactionResponse[] {
   if (!filter) return items;
   if (
     import.meta.env.DEV &&
-    (filter.ids?.length || filter.minValue != null || filter.maxValue != null ||
-      filter.responsibleUserIds?.length || filter.origins?.length || filter.sourceIds?.length)
+    (filter.ids?.length ||
+      filter.minValue != null ||
+      filter.maxValue != null ||
+      filter.responsibleUserIds?.length ||
+      filter.origins?.length ||
+      filter.sourceIds?.length)
   ) {
-    console.warn('[financialService] applyMockFilter: ids/min-maxValue/responsibleUserIds/origins/sourceIds não implementados em modo mock');
+    console.warn(
+      '[financialService] applyMockFilter: ids/min-maxValue/responsibleUserIds/origins/sourceIds não implementados em modo mock'
+    );
   }
-  return items.filter(t => {
+  return items.filter((t) => {
     if (filter.types?.length && !filter.types.includes(t.transactionType)) return false;
-    if (filter.description && !t.description.toLowerCase().includes(filter.description.toLowerCase())) return false;
+    if (
+      filter.description &&
+      !t.description.toLowerCase().includes(filter.description.toLowerCase())
+    )
+      return false;
     if (filter.categoryIds?.length && !filter.categoryIds.includes(t.categoryId)) return false;
-    if (filter.paymentStatuses?.length && !filter.paymentStatuses.includes(t.paymentStatus)) return false;
+    if (filter.paymentStatuses?.length && !filter.paymentStatuses.includes(t.paymentStatus))
+      return false;
     if (filter.isOverdue != null && t.isOverdue !== filter.isOverdue) return false;
     const txDate = String(t.transactionDate).slice(0, 10);
     if (filter.minTransactionDate && txDate < filter.minTransactionDate) return false;
@@ -122,11 +135,11 @@ function applyMockFilter(
 /** Lista transações com filtro. A API retorna um array puro (sem paginação). */
 export async function listTransactions(
   filter?: FinancialTransactionFilter,
-  nestId?: string,
+  nestId?: string
 ): Promise<FinancialTransactionListResponse> {
   if (DATA_MODE === 'mock') {
     const filtered = applyMockFilter(mockStore, filter).sort((a, b) =>
-      String(b.transactionDate).localeCompare(String(a.transactionDate)),
+      String(b.transactionDate).localeCompare(String(a.transactionDate))
     );
     const page = filter?.page ?? 1;
     const pageSize = filter?.pageSize ?? filtered.length;
@@ -137,9 +150,12 @@ export async function listTransactions(
   return safeParse(FinancialTransactionListResponseSchema, raw, 'listTransactions');
 }
 
-export async function getTransactionById(id: string, nestId?: string): Promise<FinancialTransactionResponse> {
+export async function getTransactionById(
+  id: string,
+  nestId?: string
+): Promise<FinancialTransactionResponse> {
   if (DATA_MODE === 'mock') {
-    const found = mockStore.find(t => t.financialTransactionId === id);
+    const found = mockStore.find((t) => t.financialTransactionId === id);
     if (!found) throw new Error(`Transação ${id} não encontrada`);
     // Cópia: nunca devolver referência viva do store
     return delay({ ...found, payments: [...found.payments] });
@@ -152,24 +168,28 @@ export async function getTransactionById(id: string, nestId?: string): Promise<F
 export async function getFinancialDashboard(
   month: number,
   year: number,
-  nestId?: string,
+  nestId?: string
 ): Promise<FinancialTransactionDashboardResponse> {
   if (DATA_MODE === 'mock') {
-    const inMonth = mockStore.filter(t => {
+    const inMonth = mockStore.filter((t) => {
       const d = new Date(String(t.transactionDate));
       return d.getMonth() + 1 === month && d.getFullYear() === year;
     });
     const prevMonthNum = month === 1 ? 12 : month - 1;
     const prevYear = month === 1 ? year - 1 : year;
-    const inPrev = mockStore.filter(t => {
+    const inPrev = mockStore.filter((t) => {
       const d = new Date(String(t.transactionDate));
       return d.getMonth() + 1 === prevMonthNum && d.getFullYear() === prevYear;
     });
 
     const sumIncome = (list: FinancialTransactionResponse[]) =>
-      list.filter(t => t.transactionType === TransactionType.Income).reduce((s, t) => s + Number(t.value), 0);
+      list
+        .filter((t) => t.transactionType === TransactionType.Income)
+        .reduce((s, t) => s + Number(t.value), 0);
     const sumExpenses = (list: FinancialTransactionResponse[]) =>
-      list.filter(t => t.transactionType === TransactionType.Expense).reduce((s, t) => s + Number(t.value), 0);
+      list
+        .filter((t) => t.transactionType === TransactionType.Expense)
+        .reduce((s, t) => s + Number(t.value), 0);
 
     const curIncome = sumIncome(inMonth);
     const curExpenses = sumExpenses(inMonth);
@@ -182,14 +202,14 @@ export async function getFinancialDashboard(
 
     const upcomingBills = inMonth
       .filter(
-        t =>
+        (t) =>
           t.transactionType === TransactionType.Expense &&
           t.paymentStatus !== PaymentStatus.Paid &&
           t.dueDate !== null &&
-          String(t.dueDate).slice(0, 10) <= limitIso,
+          String(t.dueDate).slice(0, 10) <= limitIso
       )
       .sort((a, b) => String(a.dueDate ?? '').localeCompare(String(b.dueDate ?? '')))
-      .map(t => ({
+      .map((t) => ({
         financialTransactionId: t.financialTransactionId,
         description: t.description,
         value: Number(t.value),
@@ -199,21 +219,30 @@ export async function getFinancialDashboard(
 
     const categoryTotals: Record<string, { categoryId: string; totalAmount: number }> = {};
     inMonth
-      .filter(t => t.transactionType === TransactionType.Expense)
-      .forEach(t => {
+      .filter((t) => t.transactionType === TransactionType.Expense)
+      .forEach((t) => {
         const key = t.categoryName || 'Outros';
-        if (!categoryTotals[key]) categoryTotals[key] = { categoryId: t.categoryId, totalAmount: 0 };
+        if (!categoryTotals[key])
+          categoryTotals[key] = { categoryId: t.categoryId, totalAmount: 0 };
         categoryTotals[key].totalAmount += Number(t.value);
       });
     const expensesByCategory = Object.entries(categoryTotals)
       .sort(([, a], [, b]) => b.totalAmount - a.totalAmount)
-      .map(([categoryName, { categoryId, totalAmount }]) => ({ categoryId, categoryName, totalAmount }));
+      .map(([categoryName, { categoryId, totalAmount }]) => ({
+        categoryId,
+        categoryName,
+        totalAmount,
+      }));
 
     const balanceVariationPercent =
       prevExpenses > 0 ? Math.round(((curExpenses - prevExpenses) / prevExpenses) * 100) : 0;
 
     return delay({
-      currentMonth: { totalIncome: curIncome, totalExpenses: curExpenses, balance: curIncome - curExpenses },
+      currentMonth: {
+        totalIncome: curIncome,
+        totalExpenses: curExpenses,
+        balance: curIncome - curExpenses,
+      },
       previousMonth: {
         totalIncome: sumIncome(inPrev),
         totalExpenses: prevExpenses,
@@ -234,10 +263,10 @@ export async function getFinancialDashboard(
 
 export async function createTransaction(
   payload: CreateTransactionRequest,
-  nestId?: string,
+  nestId?: string
 ): Promise<FinancialTransactionResponse> {
   if (DATA_MODE === 'mock') {
-    const category = mockFinancialCategories.find(c => c.categoryId === payload.categoryId);
+    const category = mockFinancialCategories.find((c) => c.categoryId === payload.categoryId);
     const created = recomputeStatus({
       financialTransactionId: crypto.randomUUID(),
       nestId: nestId ?? 'nest-mock-0001',
@@ -267,15 +296,17 @@ export async function createTransaction(
   return safeParse(FinancialTransactionResponseSchema, raw, 'createTransaction');
 }
 
-// Sem endpoint real no back-end (ver docs/superpowers/plans/2026-07-15-financial-backend-sync.md) — só funciona em modo mock.
+// Bloqueado pelo back-end se a transação já tiver pagamentos vinculados (400).
 export async function updateTransaction(
   payload: UpdateTransactionRequest,
-  nestId?: string,
-): Promise<FinancialTransactionResponse> {
+  nestId?: string
+): Promise<void> {
   if (DATA_MODE === 'mock') {
-    const idx = mockStore.findIndex(t => t.financialTransactionId === payload.financialTransactionId);
+    const idx = mockStore.findIndex(
+      (t) => t.financialTransactionId === payload.financialTransactionId
+    );
     if (idx === -1) throw new Error('Transação não encontrada');
-    const category = mockFinancialCategories.find(c => c.categoryId === payload.categoryId);
+    const category = mockFinancialCategories.find((c) => c.categoryId === payload.categoryId);
     const updated = recomputeStatus({
       ...mockStore[idx],
       transactionType: payload.type,
@@ -286,32 +317,44 @@ export async function updateTransaction(
       categoryId: payload.categoryId,
       categoryName: category?.name ?? mockStore[idx].categoryName,
       responsibleUserId: payload.responsibleUserId,
-      sourceId: payload.type === TransactionType.Income ? (payload.sourceId ?? mockStore[idx].sourceId) : null,
+      sourceId:
+        payload.type === TransactionType.Income
+          ? (payload.sourceId ?? mockStore[idx].sourceId)
+          : null,
       observation: payload.observation ?? mockStore[idx].observation,
     });
     mockStore = mockStore.map((t, i) => (i === idx ? updated : t));
-    return delay(updated);
+    await delay(undefined);
+    return;
   }
 
-  // Endpoint planejado — backend ainda vai expor (ver endpoints.ts)
-  const raw = await httpClient.post<unknown>(ENDPOINTS.financial.update, payload, { nestId });
-  return safeParse(FinancialTransactionResponseSchema, raw, 'updateTransaction');
+  await httpClient.put<unknown>(
+    ENDPOINTS.financial.update(payload.financialTransactionId),
+    payload,
+    nestId
+  );
 }
 
-// Sem endpoint real no back-end (ver docs/superpowers/plans/2026-07-15-financial-backend-sync.md) — só funciona em modo mock.
-export async function deleteTransaction(payload: DeleteTransactionRequest, nestId?: string): Promise<void> {
+export async function deleteTransaction(
+  payload: DeleteTransactionRequest,
+  nestId?: string
+): Promise<void> {
   if (DATA_MODE === 'mock') {
-    mockStore = mockStore.filter(t => t.financialTransactionId !== payload.financialTransactionId);
+    mockStore = mockStore.filter(
+      (t) => t.financialTransactionId !== payload.financialTransactionId
+    );
     return delay(undefined);
   }
 
-  // Endpoint planejado — backend ainda vai expor (ver endpoints.ts)
-  await httpClient.post<unknown>(ENDPOINTS.financial.delete, payload, { nestId });
+  await httpClient.del<unknown>(ENDPOINTS.financial.delete(payload.financialTransactionId), nestId);
 }
 
-export async function addPayment(payload: AddPaymentRequest, nestId?: string): Promise<FinancialTransactionResponse> {
+export async function addPayment(
+  payload: AddPaymentRequest,
+  nestId?: string
+): Promise<FinancialTransactionResponse> {
   if (DATA_MODE === 'mock') {
-    const idx = mockStore.findIndex(t => t.financialTransactionId === payload.transactionId);
+    const idx = mockStore.findIndex((t) => t.financialTransactionId === payload.transactionId);
     if (idx === -1) throw new Error('Transação não encontrada');
     const tx = mockStore[idx];
     const payment = {
@@ -339,20 +382,27 @@ export async function addPayment(payload: AddPaymentRequest, nestId?: string): P
   return safeParse(FinancialTransactionResponseSchema, raw, 'addPayment');
 }
 
-export async function removePayment(payload: RemovePaymentRequest, nestId?: string): Promise<FinancialTransactionResponse> {
+export async function removePayment(
+  payload: RemovePaymentRequest,
+  nestId?: string
+): Promise<FinancialTransactionResponse> {
   if (DATA_MODE === 'mock') {
-    const idx = mockStore.findIndex(t => t.financialTransactionId === payload.financialTransactionId);
+    const idx = mockStore.findIndex(
+      (t) => t.financialTransactionId === payload.financialTransactionId
+    );
     if (idx === -1) throw new Error('Transação não encontrada');
     const tx = mockStore[idx];
     const updated = recomputeStatus({
       ...tx,
-      payments: tx.payments.filter(p => p.financialTransactionPaymentId !== payload.paymentId),
+      payments: tx.payments.filter((p) => p.financialTransactionPaymentId !== payload.paymentId),
     });
     mockStore = mockStore.map((t, i) => (i === idx ? updated : t));
     return delay(updated);
   }
 
-  const raw = await httpClient.post<unknown>(ENDPOINTS.financial.removePayment, payload, { nestId });
+  const raw = await httpClient.post<unknown>(ENDPOINTS.financial.removePayment, payload, {
+    nestId,
+  });
   return safeParse(FinancialTransactionResponseSchema, raw, 'removePayment');
 }
 
@@ -387,7 +437,9 @@ export async function getAllExpenses() {
 }
 
 /** @deprecated Use `createTransaction` */
-export async function addExpense(expense: Partial<CreateTransactionRequest> & { description: string; value?: number }) {
+export async function addExpense(
+  expense: Partial<CreateTransactionRequest> & { description: string; value?: number }
+) {
   if (DATA_MODE === 'mock') {
     const mock: MockExpense = {
       id: crypto.randomUUID(),

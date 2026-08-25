@@ -26,6 +26,9 @@ export const ENDPOINTS = {
     meNotifications: '/api/users/me/notification',
     meNests: '/api/users/me/nests',
     usernamePreview: '/api/users/username/preview',
+    avatarOptions: '/api/users/avatar-options',
+    changeAvatarSlug: '/api/users/me/avatar-slug',
+    profilePicture: '/api/users/me/profile-picture',
   },
 
   // Nest (grupo/família)
@@ -33,11 +36,14 @@ export const ENDPOINTS = {
     create: '/api/nests/create',
     update: '/api/nests/update',
     leave: '/api/nests/leave',
+    setDefault: (nestId: string) => `/api/nests/${nestId}/set-default`,
     delete: (nestId: string) => `/api/nests/${nestId}`,
     invites: '/api/nests/invites',
     invite: (email: string) => `/api/nests/invite/${encodeURIComponent(email)}`,
     resendInvite: (inviteId: string) => `/api/nests/resend-invite/${inviteId}`,
-    acceptInvite: (tokenHash: string) => `/api/nests/accept-invite/${encodeURIComponent(tokenHash)}`,
+    acceptInvite: (tokenHash: string) =>
+      `/api/nests/accept-invite/${encodeURIComponent(tokenHash)}`,
+    configuration: '/api/nests/configuration',
     removeMember: (userId: string) => `/api/nests/remove-member/${userId}`,
     members: (nestId: string) => `/api/nests/members/${nestId}`,
   },
@@ -52,17 +58,18 @@ export const ENDPOINTS = {
     // NÃO EXPOSTO no back-end ainda: GetDashboardFinancialCommand existe no handler
     // mas não tem rota no DashboardController. Em modo API isto vai retornar 404.
     dashboard: '/api/financial-transactions/dashboard',
-    // NÃO EXISTE no back-end: não há UpdateTransactionCommand nem DeleteTransactionCommand.
-    // Mantidos apenas para o modo mock (ver financialService.ts) — não usar em modo API.
-    update: '/api/financial-transactions/update',
-    delete: '/api/financial-transactions/delete',
+    update: (id: string) => `/api/financial-transactions/${id}`,
+    delete: (id: string) => `/api/financial-transactions/${id}`,
   },
 
   // Categorias
   categories: {
     create: '/api/categories/create',
     list: '/api/categories/list',
+    listOptions: '/api/categories/list-options',
     getById: '/api/categories/get-by-id',
+    update: (id: string) => `/api/categories/${id}`,
+    delete: (id: string) => `/api/categories/${id}`,
   },
 
   // Contas bancárias
@@ -126,9 +133,13 @@ export const ENDPOINTS = {
     delete: (id: string) => `/api/shopping-category/${id}`,
   },
 
-  // Hub SignalR — Listas de compras
-  shoppingHub: (nestId: string) =>
-    `${(import.meta.env.VITE_API_URL || 'http://localhost:5026').replace(/\/$/, '')}/hubs/shopping-list?nestId=${nestId}`,
+  // Hub SignalR — Listas de compras.
+  // Sem VITE_API_URL a URL fica relativa e passa pelo proxy do dev server
+  // (ver `server.proxy` em vite.config.ts), evitando CORS.
+  shoppingHub: (nestId: string) => {
+    const base = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+    return `${base}/hubs/shopping-list?nestId=${nestId}`;
+  },
 
   // Avisos (Notices)
   notices: {

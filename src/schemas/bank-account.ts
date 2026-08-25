@@ -37,6 +37,7 @@ export const BankAccountResponseSchema = z.object({
   bankAccountId: UuidSchema,
   name: z.string(),
   type: AccountTypeSchema,
+  isActive: z.boolean(),
   balance: MoneySchema,
   initialBalance: MoneySchema,
   color: z.string(),

@@ -20,9 +20,11 @@ const delay = <T>(value: T): Promise<T> =>
   new Promise((resolve) => setTimeout(() => resolve(value), 100));
 
 function safeParse<T>(
-  schema: { safeParse: (v: unknown) => { success: boolean; data?: T; error?: { flatten: () => unknown } } },
+  schema: {
+    safeParse: (v: unknown) => { success: boolean; data?: T; error?: { flatten: () => unknown } };
+  },
   raw: unknown,
-  name: string,
+  name: string
 ): T {
   const result = schema.safeParse(raw);
   if (!result.success) {
@@ -45,7 +47,10 @@ export async function listBankAccounts(nestId?: string): Promise<BankAccountResp
 }
 
 /** Busca uma conta bancária pelo ID */
-export async function getBankAccountById(id: string, nestId?: string): Promise<BankAccountResponse> {
+export async function getBankAccountById(
+  id: string,
+  nestId?: string
+): Promise<BankAccountResponse> {
   if (DATA_MODE === 'mock') {
     const found = mockBankAccounts.find((a) => a.bankAccountId === id) ?? mockBankAccounts[0];
     return delay({ ...found });
@@ -55,7 +60,10 @@ export async function getBankAccountById(id: string, nestId?: string): Promise<B
 }
 
 /** Cria uma nova conta bancária. Retorna o uuid criado. */
-export async function createBankAccount(payload: CreateBankAccountRequest, nestId?: string): Promise<string> {
+export async function createBankAccount(
+  payload: CreateBankAccountRequest,
+  nestId?: string
+): Promise<string> {
   if (DATA_MODE === 'mock') {
     return delay(`account-mock-${Date.now()}`);
   }
@@ -66,7 +74,7 @@ export async function createBankAccount(payload: CreateBankAccountRequest, nestI
 export async function updateBankAccount(
   id: string,
   payload: UpdateBankAccountRequest,
-  nestId?: string,
+  nestId?: string
 ): Promise<void> {
   if (DATA_MODE === 'mock') {
     await delay(null);
@@ -78,7 +86,7 @@ export async function updateBankAccount(
 /** Verifica se a conta pode ser excluída (e quantas transações estão vinculadas) */
 export async function canDeleteBankAccount(
   id: string,
-  nestId?: string,
+  nestId?: string
 ): Promise<CanDeleteBankAccountResponse> {
   if (DATA_MODE === 'mock') {
     const count = mockBankAccountLinkedCounts[id] ?? 0;
@@ -104,14 +112,18 @@ export async function deleteBankAccount(id: string, nestId?: string): Promise<vo
 /** Inativa a conta; cascade automático inativa todos os cartões vinculados. */
 export async function inactivateBankAccount(
   id: string,
-  nestId?: string,
+  nestId?: string
 ): Promise<InactivateBankAccountResponse> {
   if (DATA_MODE === 'mock') {
     const account = mockBankAccounts.find((a) => a.bankAccountId === id);
     const count = account?.paymentCards.length ?? 0;
     return delay({ affectedPaymentCardsCount: count });
   }
-  const raw = await httpClient.patch<unknown>(ENDPOINTS.bankAccounts.inactivate(id), undefined, nestId);
+  const raw = await httpClient.patch<unknown>(
+    ENDPOINTS.bankAccounts.inactivate(id),
+    undefined,
+    nestId
+  );
   return safeParse(InactivateBankAccountResponseSchema, raw, 'inactivateBankAccount');
 }
 

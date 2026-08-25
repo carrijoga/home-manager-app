@@ -39,10 +39,13 @@ export async function addFutureItem(item: Omit<FutureItem, 'id'>): Promise<Futur
   return newItem;
 }
 
-export async function updateFutureItem(id: string, updates: Partial<FutureItem>): Promise<FutureItem> {
+export async function updateFutureItem(
+  id: string,
+  updates: Partial<FutureItem>
+): Promise<FutureItem> {
   if (DATA_MODE === 'mock') {
     return new Promise((resolve) =>
-      setTimeout(() => resolve({ id, ...updates } as FutureItem), 100),
+      setTimeout(() => resolve({ id, ...updates } as FutureItem), 100)
     );
   }
 
@@ -77,6 +80,6 @@ export function groupItemsByPriority(items: FutureItem[]): Record<Priority, Futu
       acc[item.priority].push(item);
       return acc;
     },
-    {} as Record<Priority, FutureItem[]>,
+    {} as Record<Priority, FutureItem[]>
   );
 }

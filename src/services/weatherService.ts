@@ -1,12 +1,12 @@
 import { mockWeather } from '@/mocks/data';
-import { type WeatherQuery,WeatherQuerySchema, WeatherResponseSchema } from '@/schemas/weather';
+import { type WeatherQuery, WeatherQuerySchema, WeatherResponseSchema } from '@/schemas/weather';
 import type { AppWeather } from '@/types';
 
 import { DATA_MODE } from './api/config';
 import { ENDPOINTS } from './api/endpoints';
 import { ApiError, httpClient } from './api/httpClient';
 
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function toRequestBody(query: WeatherQuery): Record<string, unknown> {
   const body: Record<string, unknown> = {};
@@ -59,7 +59,10 @@ export async function getMyWeather(query?: WeatherQuery): Promise<AppWeather> {
   }
 
   try {
-    const raw = await httpClient.post<unknown>(ENDPOINTS.dashboard.weather, toRequestBody(validQuery));
+    const raw = await httpClient.post<unknown>(
+      ENDPOINTS.dashboard.weather,
+      toRequestBody(validQuery)
+    );
     return coerceWeather(raw);
   } catch (error) {
     if (error instanceof ApiError) throw error;

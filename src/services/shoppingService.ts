@@ -3,6 +3,7 @@
  * Dual-mode: DATA_MODE === 'mock' usa dados locais; 'api' usa httpClient.
  */
 
+import { getItemEstimatedTotal, getItemSpentTotal } from '@/components/modules/Shopping/helpers';
 import type {
   CreateShoppingCategoryRequest,
   CreateShoppingItemRequest,
@@ -23,7 +24,12 @@ import {
   ShoppingListSummaryResponseSchema,
   UpdateShoppingItemRequestSchema,
 } from '@/schemas/shopping';
-import type { AppShoppingCategory, AppShoppingItem, AppShoppingList, AppShoppingListSummary } from '@/types';
+import type {
+  AppShoppingCategory,
+  AppShoppingItem,
+  AppShoppingList,
+  AppShoppingListSummary,
+} from '@/types';
 
 import { mockShoppingCategories, mockShoppingListDetails, mockShoppingLists } from '../mocks/data';
 import { DATA_MODE } from './api/config';
@@ -33,9 +39,11 @@ import { ApiError, httpClient } from './api/httpClient';
 // ── Helper: safeParse ─────────────────────────────────────────────────────────
 
 function safeParse<T>(
-  schema: { safeParse: (v: unknown) => { success: boolean; data?: T; error?: { flatten: () => unknown } } },
+  schema: {
+    safeParse: (v: unknown) => { success: boolean; data?: T; error?: { flatten: () => unknown } };
+  },
   raw: unknown,
-  name: string,
+  name: string
 ): T {
   const result = schema.safeParse(raw);
   if (!result.success) {
@@ -50,8 +58,14 @@ function safeParse<T>(
 // ── Helper: validateRequest ───────────────────────────────────────────────────
 
 function validateRequest<T>(
-  schema: { safeParse: (v: unknown) => { success: boolean; data?: T; error?: { issues: Array<{ message: string }> } } },
-  data: unknown,
+  schema: {
+    safeParse: (v: unknown) => {
+      success: boolean;
+      data?: T;
+      error?: { issues: Array<{ message: string }> };
+    };
+  },
+  data: unknown
 ): T {
   const result = schema.safeParse(data);
   if (!result.success) {
@@ -78,7 +92,7 @@ export function mapItem(r: ShoppingItemResponse): AppShoppingItem {
     shoppingListId: r.shoppingListId,
     name: r.name,
     quantity: Number(r.quantity),
-    unitType: r.unitType,
+    unitType: Number(r.unitType),
     shoppingCategoryId: r.shoppingCategoryId ?? null,
     categoryName: r.categoryName ?? null,
     isPurchased: r.isPurchased,
@@ -117,7 +131,7 @@ function mapListSummary(r: ShoppingListSummaryResponse): AppShoppingListSummary 
 
 let _mockLists: AppShoppingListSummary[] = [...mockShoppingLists];
 const _mockDetails: Record<string, AppShoppingList> = Object.fromEntries(
-  Object.entries(mockShoppingListDetails).map(([k, v]) => [k, { ...v, items: [...v.items] }]),
+  Object.entries(mockShoppingListDetails).map(([k, v]) => [k, { ...v, items: [...v.items] }])
 );
 let _mockCategories: AppShoppingCategory[] = [...mockShoppingCategories];
 
@@ -130,14 +144,14 @@ export async function getShoppingCategories(nestId?: string): Promise<AppShoppin
 
   const raw = await httpClient.get<unknown[]>(ENDPOINTS.shoppingCategories.list, nestId);
   const parsed = (Array.isArray(raw) ? raw : []).map((item) =>
-    mapCategory(safeParse(ShoppingCategoryResponseSchema, item, 'getShoppingCategories')),
+    mapCategory(safeParse(ShoppingCategoryResponseSchema, item, 'getShoppingCategories'))
   );
   return parsed;
 }
 
 export async function createShoppingCategory(
   data: CreateShoppingCategoryRequest,
-  nestId?: string,
+  nestId?: string
 ): Promise<AppShoppingCategory> {
   if (DATA_MODE === 'mock') {
     const newCat: AppShoppingCategory = {
@@ -153,7 +167,9 @@ export async function createShoppingCategory(
 
   // Backend requires description (even when empty) despite the OpenAPI spec marking it optional
   const payload = { ...data, description: data.description ?? '' };
-  const newId = await httpClient.post<string>(ENDPOINTS.shoppingCategories.create, payload, { nestId });
+  const newId = await httpClient.post<string>(ENDPOINTS.shoppingCategories.create, payload, {
+    nestId,
+  });
   const allCats = await getShoppingCategories(nestId);
   const found = allCats.find((c) => c.shoppingCategoryId === newId);
   if (!found) throw new Error('Categoria não encontrada após criação');
@@ -173,7 +189,7 @@ export async function deleteShoppingCategory(id: string, nestId?: string): Promi
 
 export async function getShoppingLists(
   params?: { year?: number; month?: number },
-  nestId?: string,
+  nestId?: string
 ): Promise<AppShoppingListSummary[]> {
   if (DATA_MODE === 'mock') {
     return new Promise((resolve) => setTimeout(() => resolve([..._mockLists]), 100));
@@ -187,7 +203,7 @@ export async function getShoppingLists(
 
   const raw = await httpClient.get<unknown[]>(path, nestId);
   return (Array.isArray(raw) ? raw : []).map((item) =>
-    mapListSummary(safeParse(ShoppingListSummaryResponseSchema, item, 'getShoppingLists')),
+    mapListSummary(safeParse(ShoppingListSummaryResponseSchema, item, 'getShoppingLists'))
   );
 }
 
@@ -198,7 +214,7 @@ export async function getShoppingListById(id: string, nestId?: string): Promise<
         const found = _mockDetails[id];
         if (found) resolve({ ...found, items: [...found.items] });
         else reject(new Error(`Lista ${id} não encontrada`));
-      }, 150),
+      }, 150)
     );
   }
 
@@ -208,7 +224,7 @@ export async function getShoppingListById(id: string, nestId?: string): Promise<
 
 export async function createShoppingList(
   data: CreateShoppingListRequest,
-  nestId?: string,
+  nestId?: string
 ): Promise<AppShoppingList> {
   if (DATA_MODE === 'mock') {
     const newId = crypto.randomUUID();
@@ -247,14 +263,21 @@ export async function createShoppingList(
 export async function updateShoppingList(
   id: string,
   data: UpdateShoppingListRequest,
-  nestId?: string,
+  nestId?: string
 ): Promise<void> {
   if (DATA_MODE === 'mock') {
     if (_mockDetails[id]) {
-      _mockDetails[id] = { ..._mockDetails[id], name: data.name, monthYear: data.monthYear, notes: data.notes ?? null };
+      _mockDetails[id] = {
+        ..._mockDetails[id],
+        name: data.name,
+        monthYear: data.monthYear,
+        notes: data.notes ?? null,
+      };
     }
     _mockLists = _mockLists.map((l) =>
-      l.shoppingListId === id ? { ...l, name: data.name, monthYear: data.monthYear, notes: data.notes ?? null } : l,
+      l.shoppingListId === id
+        ? { ...l, name: data.name, monthYear: data.monthYear, notes: data.notes ?? null }
+        : l
     );
     return new Promise((resolve) => setTimeout(resolve, 100));
   }
@@ -292,10 +315,11 @@ export async function unfinishShoppingList(id: string, nestId?: string): Promise
 
 export async function addShoppingItem(
   data: CreateShoppingItemRequest,
-  nestId?: string,
+  nestId?: string
 ): Promise<AppShoppingItem> {
   if (DATA_MODE === 'mock') {
-    const catName = _mockCategories.find((c) => c.shoppingCategoryId === data.shoppingCategoryId)?.name ?? null;
+    const catName =
+      _mockCategories.find((c) => c.shoppingCategoryId === data.shoppingCategoryId)?.name ?? null;
     const newItem: AppShoppingItem = {
       shoppingItemId: crypto.randomUUID(),
       shoppingListId: data.shoppingListId,
@@ -311,7 +335,10 @@ export async function addShoppingItem(
       notes: data.notes ?? null,
     };
     if (_mockDetails[data.shoppingListId]) {
-      _mockDetails[data.shoppingListId].items = [..._mockDetails[data.shoppingListId].items, newItem];
+      _mockDetails[data.shoppingListId].items = [
+        ..._mockDetails[data.shoppingListId].items,
+        newItem,
+      ];
       _recomputeSummary(data.shoppingListId);
     }
     return new Promise((resolve) => setTimeout(() => resolve(newItem), 100));
@@ -328,7 +355,7 @@ export async function addShoppingItem(
 export async function uploadShoppingItems(
   listId: string,
   file: File,
-  nestId?: string,
+  nestId?: string
 ): Promise<void> {
   if (DATA_MODE === 'mock') {
     return new Promise((resolve) => setTimeout(resolve, 100));
@@ -342,15 +369,23 @@ export async function uploadShoppingItems(
 export async function updateShoppingItem(
   id: string,
   data: UpdateShoppingItemRequest,
-  nestId?: string,
+  nestId?: string
 ): Promise<void> {
   if (DATA_MODE === 'mock') {
     for (const listId of Object.keys(_mockDetails)) {
       const idx = _mockDetails[listId].items.findIndex((i) => i.shoppingItemId === id);
       if (idx !== -1) {
-        const catName = _mockCategories.find((c) => c.shoppingCategoryId === data.shoppingCategoryId)?.name ?? null;
-        const updated: AppShoppingItem = { ..._mockDetails[listId].items[idx], ...data, categoryName: catName };
-        _mockDetails[listId].items = _mockDetails[listId].items.map((item, n) => (n === idx ? updated : item));
+        const catName =
+          _mockCategories.find((c) => c.shoppingCategoryId === data.shoppingCategoryId)?.name ??
+          null;
+        const updated: AppShoppingItem = {
+          ..._mockDetails[listId].items[idx],
+          ...data,
+          categoryName: catName,
+        };
+        _mockDetails[listId].items = _mockDetails[listId].items.map((item, n) =>
+          n === idx ? updated : item
+        );
         _recomputeSummary(listId);
         break;
       }
@@ -366,7 +401,9 @@ export async function deleteShoppingItem(id: string, nestId?: string): Promise<v
   if (DATA_MODE === 'mock') {
     for (const listId of Object.keys(_mockDetails)) {
       const before = _mockDetails[listId].items.length;
-      _mockDetails[listId].items = _mockDetails[listId].items.filter((i) => i.shoppingItemId !== id);
+      _mockDetails[listId].items = _mockDetails[listId].items.filter(
+        (i) => i.shoppingItemId !== id
+      );
       if (_mockDetails[listId].items.length !== before) {
         _recomputeSummary(listId);
         break;
@@ -381,7 +418,7 @@ export async function deleteShoppingItem(id: string, nestId?: string): Promise<v
 export async function markItemAsPurchased(
   id: string,
   data: MarkAsPurchasedRequest,
-  nestId?: string,
+  nestId?: string
 ): Promise<void> {
   if (DATA_MODE === 'mock') {
     for (const listId of Object.keys(_mockDetails)) {
@@ -389,8 +426,14 @@ export async function markItemAsPurchased(
       if (idx !== -1) {
         _mockDetails[listId].items = _mockDetails[listId].items.map((item, n) =>
           n === idx
-            ? { ...item, isPurchased: true, price: Number(data.price), purchasedAt: data.purchasedAt }
-            : item,
+            ? {
+                ...item,
+                isPurchased: true,
+                quantity: Number(data.quantity),
+                price: Number(data.price),
+                purchasedAt: data.purchasedAt,
+              }
+            : item
         );
         _recomputeSummary(listId);
         break;
@@ -403,19 +446,27 @@ export async function markItemAsPurchased(
   await httpClient.patch<void>(ENDPOINTS.shoppingItems.markAsPurchased(id), data, nestId);
 }
 
-export async function unmarkItemAsPurchased(listId: string, itemId: string, nestId?: string): Promise<void> {
+export async function unmarkItemAsPurchased(
+  listId: string,
+  itemId: string,
+  nestId?: string
+): Promise<void> {
   if (DATA_MODE === 'mock') {
     const idx = _mockDetails[listId]?.items.findIndex((i) => i.shoppingItemId === itemId) ?? -1;
     if (idx !== -1) {
       _mockDetails[listId].items = _mockDetails[listId].items.map((item, n) =>
-        n === idx ? { ...item, isPurchased: false, price: null, purchasedAt: null } : item,
+        n === idx ? { ...item, isPurchased: false, price: null, purchasedAt: null } : item
       );
       _recomputeSummary(listId);
     }
     return new Promise((resolve) => setTimeout(resolve, 100));
   }
 
-  await httpClient.patch<void>(ENDPOINTS.shoppingItems.unmarkAsPurchased(listId, itemId), undefined, nestId);
+  await httpClient.patch<void>(
+    ENDPOINTS.shoppingItems.unmarkAsPurchased(listId, itemId),
+    undefined,
+    nestId
+  );
 }
 
 // ── Private helper ────────────────────────────────────────────────────────────
@@ -429,8 +480,13 @@ function _recomputeSummary(listId: string): void {
       ...s,
       totalItems: detail.items.length,
       purchasedItems: detail.items.filter((i) => i.isPurchased).length,
-      totalEstimated: detail.items.reduce((acc, i) => acc + (i.estimatedPrice ?? 0), 0),
-      totalSpent: detail.items.filter((i) => i.isPurchased).reduce((acc, i) => acc + (i.price ?? 0), 0),
+      totalEstimated: detail.items.reduce(
+        (acc, i) => acc + getItemEstimatedTotal(i.estimatedPrice, i.quantity, i.unitType),
+        0
+      ),
+      totalSpent: detail.items
+        .filter((i) => i.isPurchased)
+        .reduce((acc, i) => acc + getItemSpentTotal(i.price, i.quantity, i.unitType), 0),
     };
   });
 }

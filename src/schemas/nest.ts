@@ -20,6 +20,8 @@ export const NestMemberSchema = z.object({
   name: z.string(),
   nestId: UuidSchema,
   role: NestRoleSchema,
+  photoUrl: z.string().nullable().optional(),
+  avatarSlug: z.string().nullable().optional(),
 });
 export type NestMember = z.infer<typeof NestMemberSchema>;
 
@@ -49,3 +51,22 @@ export const UpdateNestRequestSchema = z.object({
   members: z.array(UpdateNestMembersSchema).optional(),
 });
 export type UpdateNestRequest = z.infer<typeof UpdateNestRequestSchema>;
+
+// ── NestConfiguration ─────────────────────────────────────────────────────────
+
+export const NestConfigurationResponseSchema = z.object({
+  nestConfigurationId: UuidSchema,
+  nestId: UuidSchema,
+  finishedShoppingListGenerateFinancial: z.boolean(),
+  defaultShoppingExpenseCategoryId: UuidSchema.nullable(),
+});
+export type NestConfigurationResponse = z.infer<typeof NestConfigurationResponseSchema>;
+
+export const UpdateNestConfigurationRequestSchema = z.object({
+  finishedShoppingListGenerateFinancial: z.boolean(),
+  defaultShoppingExpenseCategoryId: UuidSchema.nullable(),
+});
+export type UpdateNestConfigurationRequest = z.infer<
+  typeof UpdateNestConfigurationRequestSchema
+>;
+

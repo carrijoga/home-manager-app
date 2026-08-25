@@ -32,6 +32,14 @@ export const TaskHistoryResponseSchema = z.object({
 });
 export type TaskHistoryResponse = z.infer<typeof TaskHistoryResponseSchema>;
 
+export const TaskPagedResponseSchema = z.object({
+  items: z.array(TaskResponseSchema),
+  totalCount: z.union([z.number(), z.string()]).transform(Number),
+  page: z.union([z.number(), z.string()]).transform(Number),
+  pageSize: z.union([z.number(), z.string()]).transform(Number),
+});
+export type TaskPagedResponse = z.infer<typeof TaskPagedResponseSchema>;
+
 // ── Requests ──────────────────────────────────────────────────────────────────
 
 export interface CreateTaskRequest {

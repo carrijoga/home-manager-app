@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { NestRoleSchema, NotificationTypeSchema } from './enums';
-import { DateTimeSchema,UuidSchema } from './shared';
+import { DateTimeSchema, UuidSchema } from './shared';
 
 export const UserConfigurationResponseSchema = z.object({
   userConfigurationId: UuidSchema,
@@ -56,6 +56,7 @@ export const UserSummaryResponseSchema = z.object({
   email: z.string().email(),
   callbyName: z.string(),
   profilePictureUrl: z.string().nullable().optional(),
+  avatarSlug: z.string().nullable().optional(),
 });
 export type UserSummaryResponse = z.infer<typeof UserSummaryResponseSchema>;
 
@@ -68,10 +69,16 @@ export const UserProfileResponseSchema = z.object({
   username: z.string(),
   email: z.string().email(),
   profilePictureUrl: z.string().nullable().optional(),
+  avatarSlug: z.string().nullable().optional(),
   profile: ProfileResponseSchema.optional(),
   nests: z.array(UserNestResponseSchema).optional(),
 });
 export type UserProfileResponse = z.infer<typeof UserProfileResponseSchema>;
+
+export const ChangeAvatarSlugRequestSchema = z.object({
+  avatarSlug: z.string().min(1, 'Slug do avatar é obrigatório'),
+});
+export type ChangeAvatarSlugRequest = z.infer<typeof ChangeAvatarSlugRequestSchema>;
 
 export const UpdateProfileRequestSchema = z.object({
   firstName: z.string().min(1, 'Nome é obrigatório'),
@@ -81,4 +88,4 @@ export const UpdateProfileRequestSchema = z.object({
 export type UpdateProfileRequest = z.infer<typeof UpdateProfileRequestSchema>;
 
 // Nest schemas moved to src/schemas/nest.ts
-export type { CreateNestRequest, UpdateNestMembers,UpdateNestRequest } from './nest';
+export type { CreateNestRequest, UpdateNestMembers, UpdateNestRequest } from './nest';

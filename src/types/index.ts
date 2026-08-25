@@ -104,6 +104,8 @@ export interface AppUser {
   callmeby: string;
   email: string;
   avatar?: string;
+  avatarSlug?: string | null;
+  profilePictureUrl?: string | null;
   nests?: AppUserNest[];
   notifications?: AppNotification[];
 }
@@ -233,6 +235,8 @@ export interface FutureItem {
   purchase?: FuturePurchase;
 }
 
+import { resolveUserAvatar } from '@/constants/koboyoAvatars';
+
 // ==================== HELPERS ====================
 
 /**
@@ -246,6 +250,7 @@ export function userProfileToAppUser(profile: {
   callbyName: string;
   email: string;
   profilePictureUrl?: string | null;
+  avatarSlug?: string | null;
   nests?: Array<{
     nestId: string;
     name: string;
@@ -269,15 +274,17 @@ export function userProfileToAppUser(profile: {
     name: `${profile.firstName} ${profile.lastName}`.trim(),
     callmeby: profile.callbyName,
     email: profile.email,
-    avatar: profile.profilePictureUrl ?? undefined,
-    nests: (profile.nests ?? []).map(n => ({
+    profilePictureUrl: profile.profilePictureUrl ?? undefined,
+    avatarSlug: profile.avatarSlug ?? undefined,
+    avatar: resolveUserAvatar(profile.profilePictureUrl, profile.avatarSlug),
+    nests: (profile.nests ?? []).map((n) => ({
       nestId: n.nestId,
       name: n.name,
       icon: n.icon,
       isDefault: n.isDefault,
       role: n.role,
     })),
-    notifications: (profile.profile?.notifications ?? []).map(n => ({
+    notifications: (profile.profile?.notifications ?? []).map((n) => ({
       notificationId: n.notificationId,
       title: n.title,
       message: n.message,

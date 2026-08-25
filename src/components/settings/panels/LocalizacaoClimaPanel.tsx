@@ -1,3 +1,4 @@
+import { Compass, MapPin, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -24,7 +25,7 @@ export function LocalizacaoClimaPanel() {
     setRequestingLocation(true);
 
     navigator.geolocation.getCurrentPosition(
-      position => {
+      (position) => {
         saveWeatherPreferences({
           consentGiven: true,
           method: 'gps',
@@ -95,65 +96,120 @@ export function LocalizacaoClimaPanel() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-lg font-semibold">Localização & Clima</h2>
-        <p className="text-sm text-muted-foreground mt-1">
-          Controle como o widget de clima obtém sua localização.
+      {/* Hero Header Banner */}
+      <div className="rounded-3xl border border-border/50 bg-[linear-gradient(135deg,color-mix(in_srgb,var(--primary)_10%,var(--card))_0%,color-mix(in_srgb,var(--secondary)_8%,var(--card))_100%)] p-5 sm:p-6">
+        <p className="text-xs font-semibold uppercase tracking-[1.2px] text-muted-foreground">
+          Serviços de Clima
+        </p>
+        <h2 className="mt-1 text-lg font-semibold text-foreground">Localização & Clima</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Controle como o widget de previsão do tempo obtém sua localização ou defina sua cidade manualmente.
         </p>
       </div>
 
-      <div className="space-y-3">
-        <h3 className="text-sm font-semibold">Localização por GPS</h3>
-        <p className="text-xs text-muted-foreground">
-          Se você negar a permissão, o widget ficará oculto até informar uma cidade manual ou permitir fallback aproximado.
-        </p>
-        <Button type="button" onClick={handleRequestLocation} disabled={requestingLocation}>
-          {requestingLocation ? 'Solicitando localização...' : 'Solicitar novamente localização'}
+      {/* GPS Location Section Card */}
+      <section className="space-y-4 rounded-2xl border border-border/50 bg-card p-5 shadow-2xs">
+        <div>
+          <h3 className="text-sm font-semibold text-foreground">Geolocalização via GPS</h3>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Solicite ao seu navegador para atualizar as coordenadas exatas do seu lar.
+          </p>
+        </div>
+        <Button
+          type="button"
+          onClick={handleRequestLocation}
+          disabled={requestingLocation}
+          className="gap-2 rounded-xl shadow-xs"
+        >
+          <Compass className="size-4" />
+          <span>{requestingLocation ? 'Solicitando localização...' : 'Solicitar localização via GPS'}</span>
         </Button>
-      </div>
+      </section>
 
-      <div className="space-y-3">
-        <h3 className="text-sm font-semibold">Localização aproximada</h3>
-        <div className="flex items-start gap-3">
+      {/* Approximate Location Section Card */}
+      <section className="space-y-3 rounded-2xl border border-border/50 bg-card p-5 shadow-2xs">
+        <div>
+          <h3 className="text-sm font-semibold text-foreground">Localização Aproximada</h3>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Utilizada como alternativa caso o GPS não esteja ativado no navegador.
+          </p>
+        </div>
+        <div className="flex items-start gap-3 pt-1">
           <Checkbox
             id="approximate-location"
             checked={useApproximateLocation}
-            onCheckedChange={checked => handleToggleApproximate(Boolean(checked))}
+            onCheckedChange={(checked) => handleToggleApproximate(Boolean(checked))}
           />
           <div className="space-y-1">
-            <Label htmlFor="approximate-location" className="cursor-pointer">
-              Permitir localização aproximada por IP
+            <Label htmlFor="approximate-location" className="cursor-pointer text-xs font-semibold text-foreground">
+              Permitir estimativa de região via IP
             </Label>
             <p className="text-xs text-muted-foreground">
-              Usa região aproximada quando GPS não estiver disponível. Requer seu consentimento.
+              Usa sua conexão para detectar a cidade mais próxima de forma aproximada.
             </p>
           </div>
         </div>
-      </div>
+      </section>
 
-      <div className="space-y-3">
-        <h3 className="text-sm font-semibold">Cidade manual</h3>
-        <p className="text-xs text-muted-foreground">
-          Informe uma cidade para exibir clima sem usar localização automática.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-3">
-          <Input
-            value={manualCity}
-            onChange={event => setManualCity(event.target.value)}
-            placeholder="Ex.: São Paulo"
-            maxLength={80}
-          />
-          <Button type="button" variant="secondary" onClick={handleSaveManualCity}>
-            Salvar cidade
+      {/* Manual City Section Card */}
+      <section className="space-y-4 rounded-2xl border border-border/50 bg-card p-5 shadow-2xs">
+        <div>
+          <h3 className="text-sm font-semibold text-foreground">Cidade Manual</h3>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Defina um município fixo para consultar o clima sem precisar de localização automática.
+          </p>
+        </div>
+        <div className="space-y-1.5">
+          <Label
+            htmlFor="manual-city-input"
+            className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+          >
+            Nome da Cidade
+          </Label>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Input
+              id="manual-city-input"
+              value={manualCity}
+              onChange={(event) => setManualCity(event.target.value)}
+              placeholder="Ex.: São Paulo, Rio de Janeiro..."
+              maxLength={80}
+              className="bg-muted/30 border-border/40 hover:border-border/80 focus-visible:ring-1 focus-visible:ring-primary/50 transition-colors"
+            />
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleSaveManualCity}
+              className="gap-1.5 rounded-xl shrink-0"
+            >
+              <MapPin className="size-4" />
+              <span>Salvar Cidade</span>
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Reset Preferences Card */}
+      <section className="rounded-2xl border border-border/40 bg-muted/20 p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h4 className="text-xs font-semibold text-foreground">Limpar Dados de Localização</h4>
+            <p className="text-xs text-muted-foreground">
+              Remove todas as preferências salvas referentes a clima e GPS neste dispositivo.
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleClearLocation}
+            className="gap-1.5 rounded-xl text-destructive hover:bg-destructive/10 hover:text-destructive"
+          >
+            <Trash2 className="size-3.5" />
+            <span>Limpar Preferências</span>
           </Button>
         </div>
-      </div>
-
-      <div>
-        <Button type="button" variant="outline" onClick={handleClearLocation}>
-          Limpar preferências de localização
-        </Button>
-      </div>
+      </section>
     </div>
   );
 }
+

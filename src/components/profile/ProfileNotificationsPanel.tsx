@@ -1,10 +1,4 @@
-import {
-  BellRing,
-  CheckCircle2,
-  HelpCircle,
-  Info,
-  ShieldAlert,
-} from 'lucide-react';
+import { BellRing, CheckCircle2, HelpCircle, Info, ShieldAlert } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 import { Badge, Button, Separator } from '@/components/ui';
@@ -20,13 +14,16 @@ type NotificationTypeId = 0 | 1 | 2 | 3;
 
 type NotificationPreferenceKey = 'info' | 'warning' | 'error' | 'success';
 
-const TYPE_CONFIG: Record<NotificationTypeId, {
-  label: string;
-  description: string;
-  icon: React.ElementType;
-  accent: string;
-  background: string;
-}> = {
+const TYPE_CONFIG: Record<
+  NotificationTypeId,
+  {
+    label: string;
+    description: string;
+    icon: React.ElementType;
+    accent: string;
+    background: string;
+  }
+> = {
   0: {
     label: 'Informativa',
     description: 'Mensagens gerais e avisos neutros.',
@@ -68,7 +65,8 @@ export function ProfileNotificationsPanel() {
     const syncPreferences = () => setPreferences(getNotificationPreferences());
 
     window.addEventListener(NOTIFICATION_PREFERENCES_UPDATED_EVENT, syncPreferences);
-    return () => window.removeEventListener(NOTIFICATION_PREFERENCES_UPDATED_EVENT, syncPreferences);
+    return () =>
+      window.removeEventListener(NOTIFICATION_PREFERENCES_UPDATED_EVENT, syncPreferences);
   }, []);
 
   const grouped = useMemo(() => {
@@ -105,22 +103,25 @@ export function ProfileNotificationsPanel() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border p-5 sm:p-6 bg-[linear-gradient(135deg,color-mix(in_srgb,var(--primary)_10%,var(--card))_0%,color-mix(in_srgb,var(--secondary)_8%,var(--card))_100%)]">
+      <div className="rounded-3xl border border-border/50 bg-[linear-gradient(135deg,color-mix(in_srgb,var(--primary)_10%,var(--card))_0%,color-mix(in_srgb,var(--secondary)_8%,var(--card))_100%)] p-5 sm:p-6">
         <div className="flex items-start gap-4">
           <button
             type="button"
             onClick={() => setShowGuidance((value) => !value)}
-            className="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-border bg-card text-foreground transition-transform hover:scale-[1.03]"
+            className="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-border/50 bg-card text-foreground transition-transform hover:scale-[1.03]"
             aria-label="Abrir ajuda rápida sobre notificações"
           >
             <HelpCircle className="size-6" />
           </button>
 
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold uppercase tracking-[1.2px] text-muted-foreground">Leitura rápida</p>
-            <h2 className="mt-1 text-lg font-semibold">Controle como o Ninho te avisa</h2>
+            <p className="text-xs font-semibold uppercase tracking-[1.2px] text-muted-foreground">
+              Alertas
+            </p>
+            <h2 className="mt-1 text-lg font-semibold text-foreground">Controle como o Ninho te avisa</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Ative ou silencie cada tipo de notificação com um toque. A visão abaixo mostra o volume e o estado atual de cada categoria.
+              Ative ou silencie cada tipo de notificação com um toque. A visão abaixo mostra o
+              volume e o estado atual de cada categoria.
             </p>
           </div>
 
@@ -129,7 +130,7 @@ export function ProfileNotificationsPanel() {
             variant="outline"
             size="sm"
             onClick={() => setShowGuidance((value) => !value)}
-            className="shrink-0 rounded-2xl"
+            className="shrink-0 rounded-xl"
           >
             {showGuidance ? 'Ocultar' : 'Ver'} detalhes
           </Button>
@@ -139,31 +140,51 @@ export function ProfileNotificationsPanel() {
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
             <div className="rounded-2xl border bg-card/70 p-4">
               <p className="text-xs uppercase tracking-wider text-muted-foreground">1. Escolha</p>
-              <p className="mt-2 text-sm text-foreground">Veja todos os tipos de alerta em cartões separados.</p>
+              <p className="mt-2 text-sm text-foreground">
+                Veja todos os tipos de alerta em cartões separados.
+              </p>
             </div>
             <div className="rounded-2xl border bg-card/70 p-4">
               <p className="text-xs uppercase tracking-wider text-muted-foreground">2. Ajuste</p>
-              <p className="mt-2 text-sm text-foreground">Use o botão em cada cartão para receber ou silenciar.</p>
+              <p className="mt-2 text-sm text-foreground">
+                Use o botão em cada cartão para receber ou silenciar.
+              </p>
             </div>
             <div className="rounded-2xl border bg-card/70 p-4">
               <p className="text-xs uppercase tracking-wider text-muted-foreground">3. Revise</p>
-              <p className="mt-2 text-sm text-foreground">O resumo rápido mostra o que está ativo e o que ainda precisa atenção.</p>
+              <p className="mt-2 text-sm text-foreground">
+                O resumo rápido mostra o que está ativo e o que ainda precisa atenção.
+              </p>
             </div>
           </div>
         )}
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
-        <SummaryTile label="Total" value={String(totalNotifications)} hint="notificações registradas" />
-        <SummaryTile label="Não lidas" value={String(totalUnread)} hint="ainda precisam de atenção" tone="warning" />
-        <SummaryTile label="Ativas" value={String(totalEnabled)} hint={`${totalDisabled} desativadas`} tone="success" />
+        <SummaryTile
+          label="Total"
+          value={String(totalNotifications)}
+          hint="notificações registradas"
+        />
+        <SummaryTile
+          label="Não lidas"
+          value={String(totalUnread)}
+          hint="ainda precisam de atenção"
+          tone="warning"
+        />
+        <SummaryTile
+          label="Ativas"
+          value={String(totalEnabled)}
+          hint={`${totalDisabled} desativadas`}
+          tone="success"
+        />
       </div>
 
-      <div className="rounded-2xl border p-4 space-y-4">
+      <div className="space-y-4 rounded-2xl border p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="text-sm font-semibold">Distribuição por tipo</h3>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="mt-1 text-xs text-muted-foreground">
               Cada cor representa um tipo de notificação.
             </p>
           </div>
@@ -187,7 +208,7 @@ export function ProfileNotificationsPanel() {
             return (
               <div
                 key={group.type}
-                className="h-full transition-all duration-[length:var(--dur-base)]"
+                className="duration-[length:var(--dur-base)] h-full transition-all"
                 style={{ width, background: config.accent }}
                 title={`${config.label}: ${group.totalCount}`}
               />
@@ -209,12 +230,12 @@ export function ProfileNotificationsPanel() {
                 style={{ background: config.background }}
               >
                 <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-card border border-border">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl border border-border bg-card">
                       <Icon className="size-5" style={{ color: config.accent }} />
                     </div>
                     <div className="min-w-0">
-                      <h4 className="font-semibold text-sm">{config.label}</h4>
+                      <h4 className="text-sm font-semibold">{config.label}</h4>
                       <p className="text-xs text-muted-foreground">{config.description}</p>
                     </div>
                   </div>
@@ -227,11 +248,14 @@ export function ProfileNotificationsPanel() {
                 <div className="mt-4 flex items-center gap-2">
                   <div className="h-2 flex-1 overflow-hidden rounded-full bg-card/80">
                     <div
-                      className="h-full rounded-full transition-all duration-[length:var(--dur-base)]"
-                      style={{ width: `${(group.totalCount / Math.max(totalNotifications, 1)) * 100}%`, background: config.accent }}
+                      className="duration-[length:var(--dur-base)] h-full rounded-full transition-all"
+                      style={{
+                        width: `${(group.totalCount / Math.max(totalNotifications, 1)) * 100}%`,
+                        background: config.accent,
+                      }}
                     />
                   </div>
-                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                  <span className="whitespace-nowrap text-xs text-muted-foreground">
                     {isReceiving ? 'Recebendo' : 'Silenciado'}
                   </span>
                 </div>
@@ -240,7 +264,9 @@ export function ProfileNotificationsPanel() {
                   <div>
                     <p className="text-sm font-medium">Receber este tipo</p>
                     <p className="text-xs text-muted-foreground">
-                      {isReceiving ? 'Você verá esse tipo de aviso no app.' : 'Esse tipo fica oculto até você reativar.'}
+                      {isReceiving
+                        ? 'Você verá esse tipo de aviso no app.'
+                        : 'Esse tipo fica oculto até você reativar.'}
                     </p>
                   </div>
                   <Button
@@ -248,23 +274,43 @@ export function ProfileNotificationsPanel() {
                     size="sm"
                     variant={isReceiving ? 'default' : 'outline'}
                     className={cn('rounded-2xl', !isReceiving && 'border-dashed')}
-                    onClick={() => saveNotificationPreferences({ [group.key]: !isReceiving } as Partial<Record<NotificationPreferenceKey, boolean>>)}
-                    style={isReceiving ? undefined : { borderColor: config.accent, color: config.accent }}
+                    onClick={() =>
+                      saveNotificationPreferences({ [group.key]: !isReceiving } as Partial<
+                        Record<NotificationPreferenceKey, boolean>
+                      >)
+                    }
+                    style={
+                      isReceiving ? undefined : { borderColor: config.accent, color: config.accent }
+                    }
                   >
                     {isReceiving ? 'Ativo' : 'Ativar'}
                   </Button>
                 </div>
 
                 <div className="mt-4 space-y-2">
-                  {latestItems.length > 0 ? latestItems.map((notification) => (
-                    <div key={notification.notificationId} className="flex items-start gap-2 rounded-xl bg-card/70 px-3 py-2">
-                      <span className="mt-1 size-2 rounded-full shrink-0" style={{ background: notification.isRead ? 'var(--muted-foreground)' : config.accent }} />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium truncate">{notification.title}</p>
-                        <p className="text-xs text-muted-foreground line-clamp-2">{notification.message}</p>
+                  {latestItems.length > 0 ? (
+                    latestItems.map((notification) => (
+                      <div
+                        key={notification.notificationId}
+                        className="flex items-start gap-2 rounded-xl bg-card/70 px-3 py-2"
+                      >
+                        <span
+                          className="mt-1 size-2 shrink-0 rounded-full"
+                          style={{
+                            background: notification.isRead
+                              ? 'var(--muted-foreground)'
+                              : config.accent,
+                          }}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium">{notification.title}</p>
+                          <p className="line-clamp-2 text-xs text-muted-foreground">
+                            {notification.message}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  )) : (
+                    ))
+                  ) : (
                     <div className="rounded-xl border border-dashed px-3 py-4 text-sm text-muted-foreground">
                       Nenhuma notificação deste tipo ainda.
                     </div>
@@ -278,10 +324,11 @@ export function ProfileNotificationsPanel() {
 
       <Separator />
 
-      <div className="rounded-2xl border p-4 bg-card/60">
+      <div className="rounded-2xl border bg-card/60 p-4">
         <h3 className="text-sm font-semibold">Leitura rápida</h3>
         <p className="mt-2 text-sm text-muted-foreground">
-          O banner no topo resume como as notificações funcionam e os cartões mostram o estado de cada tipo sem exigir uma lista longa de opções.
+          O banner no topo resume como as notificações funcionam e os cartões mostram o estado de
+          cada tipo sem exigir uma lista longa de opções.
         </p>
       </div>
     </div>
@@ -306,12 +353,18 @@ function SummaryTile({
   };
 
   const valueColor =
-    tone === 'warning' ? 'var(--secondary)' : tone === 'success' ? 'var(--chart-2)' : 'var(--foreground)';
+    tone === 'warning'
+      ? 'var(--secondary)'
+      : tone === 'success'
+        ? 'var(--chart-2)'
+        : 'var(--foreground)';
 
   return (
     <div className={cn('rounded-2xl border p-4', toneStyles[tone])}>
       <p className="text-xs uppercase tracking-wider text-muted-foreground">{label}</p>
-      <p className="mt-2 text-3xl font-semibold" style={{ color: valueColor }}>{value}</p>
+      <p className="mt-2 text-3xl font-semibold" style={{ color: valueColor }}>
+        {value}
+      </p>
       <p className="mt-1 text-sm text-muted-foreground">{hint}</p>
     </div>
   );

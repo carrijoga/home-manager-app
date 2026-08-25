@@ -1,8 +1,14 @@
 import { useState } from 'react';
 
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from '@/components/ui';
 import type { BankAccountResponse } from '@/schemas/bank-account';
 
@@ -14,7 +20,10 @@ export interface InactivateAccountDialogProps {
 }
 
 export function InactivateAccountDialog({
-  open, account, onClose, onConfirm,
+  open,
+  account,
+  onClose,
+  onConfirm,
 }: InactivateAccountDialogProps) {
   const [submitting, setSubmitting] = useState(false);
 
@@ -32,7 +41,12 @@ export function InactivateAccountDialog({
   };
 
   return (
-    <AlertDialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+    <AlertDialog
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) onClose();
+      }}
+    >
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Inativar conta</AlertDialogTitle>
@@ -46,7 +60,10 @@ export function InactivateAccountDialog({
           <AlertDialogCancel disabled={submitting}>Cancelar</AlertDialogCancel>
           <AlertDialogAction
             disabled={submitting}
-            onClick={(e) => { e.preventDefault(); void handleConfirm(); }}
+            onClick={(e) => {
+              e.preventDefault();
+              void handleConfirm();
+            }}
           >
             {submitting ? 'Inativando…' : 'Inativar'}
           </AlertDialogAction>

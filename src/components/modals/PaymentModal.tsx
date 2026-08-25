@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronDown } from 'lucide-react';
+import { CheckCircle2, ChevronDown } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import MoneyInput from '@/components/common/MoneyInput';
@@ -63,8 +63,17 @@ function sourceDomainForMethod(method: number): number {
 const todayIso = () => new Date().toISOString().slice(0, 10);
 
 /** Registrar pagamento — Valor/Data pré-preenchidos, Método e origem exigem escolha explícita. */
-export function PaymentModal({ open, onClose, transaction, currentUserId, nestId, onSubmit }: PaymentModalProps) {
-  const remaining = transaction ? Math.max(Number(transaction.value) - getPaidAmount(transaction), 0) : 0;
+export function PaymentModal({
+  open,
+  onClose,
+  transaction,
+  currentUserId,
+  nestId,
+  onSubmit,
+}: PaymentModalProps) {
+  const remaining = transaction
+    ? Math.max(Number(transaction.value) - getPaidAmount(transaction), 0)
+    : 0;
 
   const [amount, setAmount] = useState<number | null>(null);
   const [paymentDate, setPaymentDate] = useState(todayIso());
@@ -95,31 +104,35 @@ export function PaymentModal({ open, onClose, transaction, currentUserId, nestId
     }
   }, [open, transaction]);
 
-  useEffect(() => () => {
-    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    },
+    []
+  );
 
   useEffect(() => {
     if (!open) return;
-    bankAccountService.listBankAccounts(nestId)
+    bankAccountService
+      .listBankAccounts(nestId)
       .then(setBankAccounts)
       .catch(() => {});
-    paymentCardService.listPaymentCards(nestId)
+    paymentCardService
+      .listPaymentCards(nestId)
       .then(setPaymentCards)
       .catch(() => {});
   }, [open, nestId]);
-
   const sourceDomain = method !== null ? sourceDomainForMethod(method) : null;
-  // BankAccountResponse não expõe isActive (confirmado em src/schemas/bank-account.ts) — lista tudo que o service retorna.
-  const activeBankAccounts = bankAccounts;
+  const activeBankAccounts = bankAccounts.filter((a) => a.isActive);
   // Cartão também precisa bater o tipo com o método — Débito só mostra CardType.Debit,
   // Crédito só mostra CardType.Credit (Pré-pago/Outro não têm método de pagamento aqui).
-  const cardTypeForMethod = method === ApiPaymentMethod.Debit
-    ? CardType.Debit
-    : method === ApiPaymentMethod.Credit
-      ? CardType.Credit
-      : null;
-  const activeCards = paymentCards.filter(c => c.isActive && c.type === cardTypeForMethod);
+  const cardTypeForMethod =
+    method === ApiPaymentMethod.Debit
+      ? CardType.Debit
+      : method === ApiPaymentMethod.Credit
+        ? CardType.Credit
+        : null;
+  const activeCards = paymentCards.filter((c) => c.isActive && c.type === cardTypeForMethod);
 
   const handleMethodChange = (newMethod: number) => {
     const newDomain = sourceDomainForMethod(newMethod);
@@ -156,48 +169,96 @@ export function PaymentModal({ open, onClose, transaction, currentUserId, nestId
   };
 
   return (
-    <Dialog open={open} onOpenChange={o => { if (!o) onClose(); }}>
-      <DialogContent className="sm:max-w-[440px]">
-        <DialogHeader>
-          <DialogTitle>Registrar pagamento</DialogTitle>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) onClose();
+      }}
+    >
+      <DialogContent className="font-ui rounded-3xl border border-border/80 p-6 shadow-lg sm:max-w-[460px]">
+        <DialogHeader className="flex flex-row items-center gap-3 space-y-0 pb-1">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-chart-2/15 text-chart-2">
+            <CheckCircle2 size={20} strokeWidth={2} />
+          </div>
+          <div>
+            <DialogTitle className="font-editorial text-xl font-bold text-foreground">
+              Registrar Pagamento
+            </DialogTitle>
+            <p className="font-ui text-xs text-muted-foreground">
+              Baixa e liquidação de lançamento
+            </p>
+          </div>
         </DialogHeader>
 
-        <p className="font-ui text-sm text-muted-foreground -mt-2">
-          {transaction.description} · restante <b className="text-foreground">{formatCurrency(remaining)}</b>
-        </p>
+        {/* Card do Lançamento & Restante */}
+        <div className="my-1 flex items-center justify-between rounded-2xl border border-border/60 bg-muted/40 p-3.5">
+          <div className="min-w-0 pr-2">
+            <p className="font-ui text-xs font-medium text-muted-foreground">Lançamento</p>
+            <p className="font-ui truncate text-sm font-bold text-foreground">
+              {transaction.description}
+            </p>
+          </div>
+          <div className="shrink-0 text-right">
+            <p className="font-ui text-xs font-medium text-muted-foreground">Restante</p>
+            <p className="font-ui text-sm font-extrabold text-chart-2">
+              {formatCurrency(remaining)}
+            </p>
+          </div>
+        </div>
 
-        <form onSubmit={e => { void handleSubmit(e).catch(() => {}); }} className="space-y-4">
+        <form
+          onSubmit={(e) => {
+            void handleSubmit(e).catch(() => {});
+          }}
+          className="space-y-4 pt-1"
+        >
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label htmlFor="pay-amount">Valor pago</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="pay-amount" className="text-xs font-semibold">
+                Valor a Pagar
+              </Label>
               <MoneyInput id="pay-amount" value={amount} onChange={setAmount} />
             </div>
-            <div className="space-y-1">
-              <Label htmlFor="pay-date">Data</Label>
-              <Input id="pay-date" type="date" value={paymentDate} onChange={e => setPaymentDate(e.target.value)} />
+            <div className="space-y-1.5">
+              <Label htmlFor="pay-date" className="text-xs font-semibold">
+                Data do Pagamento
+              </Label>
+              <Input
+                id="pay-date"
+                type="date"
+                value={paymentDate}
+                onChange={(e) => setPaymentDate(e.target.value)}
+                className="rounded-xl text-xs"
+              />
             </div>
           </div>
 
-          <div className="space-y-1">
-            <Label htmlFor="pay-method">Método</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="pay-method" className="text-xs font-semibold">
+              Método de Pagamento
+            </Label>
             <Select
               value={method !== null ? String(method) : undefined}
-              onValueChange={v => handleMethodChange(Number(v))}
+              onValueChange={(v) => handleMethodChange(Number(v))}
             >
-              <SelectTrigger id="pay-method">
-                <SelectValue placeholder="Selecionar…" />
+              <SelectTrigger id="pay-method" className="rounded-xl text-xs">
+                <SelectValue placeholder="Selecione o método (PIX, Dinheiro, Débito…)" />
               </SelectTrigger>
               <SelectContent>
-                {PAYMENT_METHOD_OPTIONS.map(opt => (
-                  <SelectItem key={opt.value} value={String(opt.value)}>{opt.label}</SelectItem>
+                {PAYMENT_METHOD_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={String(opt.value)} className="text-xs">
+                    {opt.label}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
-          <div className="space-y-1">
-            <Label htmlFor="pay-source">
-              {sourceDomain === FinancialSourceType.CreditCard ? 'Cartão' : 'Conta'}
+          <div className="space-y-1.5">
+            <Label htmlFor="pay-source" className="text-xs font-semibold">
+              {sourceDomain === FinancialSourceType.CreditCard
+                ? 'Cartão de Origem'
+                : 'Conta Bancária de Origem'}
             </Label>
             <SourcePicker
               id="pay-source"
@@ -211,41 +272,63 @@ export function PaymentModal({ open, onClose, transaction, currentUserId, nestId
           </div>
 
           <Collapsible>
-            <CollapsibleTrigger className="group flex items-center gap-1 font-ui text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors">
-              <ChevronDown size={14} strokeWidth={1.5} className="transition-transform group-data-[state=open]:rotate-180" /> Mais detalhes (desconto, juros, observação)
+            <CollapsibleTrigger className="font-ui group flex items-center gap-1.5 pt-1 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground">
+              <ChevronDown
+                size={14}
+                strokeWidth={2}
+                className="transition-transform group-data-[state=open]:rotate-180"
+              />{' '}
+              Mais detalhes (desconto, juros, observação)
             </CollapsibleTrigger>
-            <CollapsibleContent className="pt-3 space-y-3">
+            <CollapsibleContent className="space-y-3 pt-3">
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label htmlFor="pay-discount">Desconto</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="pay-discount" className="text-xs">
+                    Desconto
+                  </Label>
                   <MoneyInput id="pay-discount" value={discount} onChange={setDiscount} />
                 </div>
-                <div className="space-y-1">
-                  <Label htmlFor="pay-interest">Juros</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="pay-interest" className="text-xs">
+                    Juros / Multa
+                  </Label>
                   <MoneyInput id="pay-interest" value={interest} onChange={setInterest} />
                 </div>
               </div>
-              <div className="space-y-1">
-                <Label htmlFor="pay-observation">Observação</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="pay-observation" className="text-xs">
+                  Observação / Comprovante
+                </Label>
                 <Textarea
                   id="pay-observation"
                   rows={2}
                   value={observation}
-                  onChange={e => setObservation(e.target.value)}
-                  placeholder="Opcional"
+                  onChange={(e) => setObservation(e.target.value)}
+                  placeholder="Informações adicionais do pagamento…"
+                  className="rounded-xl text-xs"
                 />
               </div>
             </CollapsibleContent>
           </Collapsible>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose} disabled={status !== 'idle'}>
+          <DialogFooter className="gap-2 pt-2 sm:gap-0">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              disabled={status !== 'idle'}
+              className="rounded-xl text-xs font-semibold"
+            >
               Cancelar
             </Button>
             <Button
               type="submit"
               disabled={status === 'submitting' || (status === 'idle' && !isValid)}
-              className={status === 'success' ? 'bg-chart-2/15 hover:bg-chart-2/15 text-chart-2' : undefined}
+              className={`rounded-xl text-xs font-semibold transition-all ${
+                status === 'success'
+                  ? 'bg-chart-2 text-white hover:bg-chart-2'
+                  : 'bg-primary text-primary-foreground hover:bg-primary/90'
+              }`}
             >
               <AnimatePresence mode="wait" initial={false}>
                 {status === 'success' ? (
@@ -268,11 +351,11 @@ export function PaymentModal({ open, onClose, transaction, currentUserId, nestId
                         animate="checked"
                       />
                     </svg>
-                    Pago!
+                    Pagamento Registrado!
                   </motion.span>
                 ) : (
                   <motion.span key="label">
-                    {status === 'submitting' ? 'Registrando…' : 'Confirmar pagamento'}
+                    {status === 'submitting' ? 'Registrando…' : 'Confirmar Pagamento'}
                   </motion.span>
                 )}
               </AnimatePresence>

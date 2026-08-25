@@ -32,7 +32,13 @@ export interface BankAccountSheetProps {
 
 const DEFAULT_COLOR = '#3b82f6';
 
-export function BankAccountSheet({ open, onClose, account, onCreate, onUpdate }: BankAccountSheetProps) {
+export function BankAccountSheet({
+  open,
+  onClose,
+  account,
+  onCreate,
+  onUpdate,
+}: BankAccountSheetProps) {
   const isEdit = account !== null;
   const isMobile = useIsMobile();
 
@@ -87,60 +93,111 @@ export function BankAccountSheet({ open, onClose, account, onCreate, onUpdate }:
   };
 
   return (
-    <Sheet open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+    <Sheet
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) onClose();
+      }}
+    >
       <SheetContent
         side={isMobile ? 'bottom' : 'right'}
-        className={isMobile
-          ? 'rounded-t-2xl px-4 pb-6 pt-3 max-h-[92dvh] overflow-y-auto focus:outline-none'
-          : 'w-[420px] px-6 pb-6 pt-4 overflow-y-auto focus:outline-none'}
+        className={
+          isMobile
+            ? 'max-h-[92dvh] overflow-y-auto rounded-t-2xl px-5 pb-6 pt-3 focus:outline-none'
+            : 'w-full overflow-y-auto px-7 pb-7 pt-5 focus:outline-none sm:w-[500px] sm:max-w-xl md:w-[540px]'
+        }
       >
-        {isMobile && <div className="w-9 h-1 rounded-full bg-border mx-auto mb-4" aria-hidden />}
+        {isMobile && <div className="mx-auto mb-4 h-1 w-9 rounded-full bg-border" aria-hidden />}
 
-        <form onSubmit={(e) => { void handleSubmit(e).catch(() => {}); }} className="space-y-4">
+        <form
+          onSubmit={(e) => {
+            void handleSubmit(e).catch(() => {});
+          }}
+          className="space-y-4"
+        >
           <SheetTitle className="text-lg font-semibold text-foreground">
             {isEdit ? 'Editar conta' : 'Nova conta'}
           </SheetTitle>
 
           <div className="space-y-1.5">
-            <Label htmlFor="acc-name" className="text-xs text-muted-foreground uppercase tracking-wide">Nome</Label>
-            <Input id="acc-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Conta Corrente"
-              className="bg-muted/30 border-border/40" />
+            <Label
+              htmlFor="acc-name"
+              className="text-xs uppercase tracking-wide text-muted-foreground"
+            >
+              Nome
+            </Label>
+            <Input
+              id="acc-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Ex: Conta Corrente"
+              className="border-border/40 bg-muted/30"
+            />
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="acc-type" className="text-xs text-muted-foreground uppercase tracking-wide">Tipo</Label>
+            <Label
+              htmlFor="acc-type"
+              className="text-xs uppercase tracking-wide text-muted-foreground"
+            >
+              Tipo
+            </Label>
             <Select
               value={String(type)}
               onValueChange={(v) => setType(Number(v))}
               disabled={isEdit}
             >
-              <SelectTrigger id="acc-type" className="bg-muted/30 border-border/40">
+              <SelectTrigger id="acc-type" className="border-border/40 bg-muted/30">
                 <SelectValue placeholder="Selecionar…" />
               </SelectTrigger>
               <SelectContent>
                 {ACCOUNT_TYPE_OPTIONS.map((o) => (
-                  <SelectItem key={o.value} value={String(o.value)}>{o.label}</SelectItem>
+                  <SelectItem key={o.value} value={String(o.value)}>
+                    {o.label}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {isEdit && <p className="text-xs text-muted-foreground">O tipo não pode ser alterado.</p>}
+            {isEdit && (
+              <p className="text-xs text-muted-foreground">O tipo não pode ser alterado.</p>
+            )}
           </div>
 
           {!isEdit && (
             <div className="space-y-1.5">
-              <Label htmlFor="acc-balance" className="text-xs text-muted-foreground uppercase tracking-wide">Saldo inicial (R$)</Label>
-              <Input id="acc-balance" type="number" step="0.01" value={balance}
-                onChange={(e) => setBalance(e.target.value)} placeholder="0,00"
-                className="bg-muted/30 border-border/40" />
+              <Label
+                htmlFor="acc-balance"
+                className="text-xs uppercase tracking-wide text-muted-foreground"
+              >
+                Saldo inicial (R$)
+              </Label>
+              <Input
+                id="acc-balance"
+                type="number"
+                step="0.01"
+                value={balance}
+                onChange={(e) => setBalance(e.target.value)}
+                placeholder="0,00"
+                className="border-border/40 bg-muted/30"
+              />
             </div>
           )}
 
           <div className="space-y-1.5">
-            <Label htmlFor="acc-color" className="text-xs text-muted-foreground uppercase tracking-wide">Cor</Label>
+            <Label
+              htmlFor="acc-color"
+              className="text-xs uppercase tracking-wide text-muted-foreground"
+            >
+              Cor
+            </Label>
             <div className="flex items-center gap-3">
-              <input id="acc-color" type="color" value={color}
+              <input
+                id="acc-color"
+                type="color"
+                value={color}
                 onChange={(e) => setColor(e.target.value)}
-                className="h-10 w-14 rounded-md border border-input bg-background cursor-pointer" />
+                className="h-10 w-14 cursor-pointer rounded-md border border-input bg-background"
+              />
               <span className="text-sm text-muted-foreground">{color}</span>
             </div>
           </div>

@@ -1,8 +1,14 @@
 import { useState } from 'react';
 
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from '@/components/ui';
 import type { BankAccountResponse } from '@/schemas/bank-account';
 
@@ -13,7 +19,12 @@ export interface DeleteAccountDialogProps {
   onConfirm: () => Promise<void>;
 }
 
-export function DeleteAccountDialog({ open, account, onClose, onConfirm }: DeleteAccountDialogProps) {
+export function DeleteAccountDialog({
+  open,
+  account,
+  onClose,
+  onConfirm,
+}: DeleteAccountDialogProps) {
   const [submitting, setSubmitting] = useState(false);
 
   // Este diálogo só é aberto quando canDelete=true (o botão Excluir já vem
@@ -35,7 +46,12 @@ export function DeleteAccountDialog({ open, account, onClose, onConfirm }: Delet
   };
 
   return (
-    <AlertDialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+    <AlertDialog
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) onClose();
+      }}
+    >
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Excluir conta</AlertDialogTitle>
@@ -49,7 +65,10 @@ export function DeleteAccountDialog({ open, account, onClose, onConfirm }: Delet
           <AlertDialogCancel disabled={submitting}>Cancelar</AlertDialogCancel>
           <AlertDialogAction
             disabled={submitting}
-            onClick={(e) => { e.preventDefault(); void handleConfirm(); }}
+            onClick={(e) => {
+              e.preventDefault();
+              void handleConfirm();
+            }}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
             {submitting ? 'Excluindo…' : 'Excluir'}

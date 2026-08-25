@@ -14,22 +14,25 @@ interface AmountHeroProps {
   onDescriptionChange: (v: string) => void;
 }
 
-const EXPENSE_COLOR = '#e07070';
-const INCOME_COLOR = '#6ab085';
-
-export function AmountHero({ type, amount, onAmountChange, description, onDescriptionChange }: AmountHeroProps) {
+export function AmountHero({
+  type,
+  amount,
+  onAmountChange,
+  description,
+  onDescriptionChange,
+}: AmountHeroProps) {
   const reduced = usePrefersReducedMotion();
   const isExpense = type === TransactionType.Expense;
-  const color = isExpense ? EXPENSE_COLOR : INCOME_COLOR;
-  const label = isExpense ? 'Valor da despesa' : 'Valor recebido';
-  const placeholder = isExpense ? 'Ex.: Conta de luz' : 'Ex.: Salário de junho';
+  const color = isExpense ? 'var(--destructive)' : 'var(--chart-2)';
+  const label = isExpense ? 'Valor da despesa' : 'Valor da receita';
+  const placeholder = isExpense ? 'Ex.: Supermercado, Aluguel...' : 'Ex.: Salário, Freelance...';
 
   return (
-    <div className="px-1 py-4 text-center border-b border-border/40">
+    <div className="font-ui border-b border-border/50 px-1 py-3 text-center">
       <motion.p
         animate={{ color }}
         transition={reduced ? { duration: 0 } : { duration: 0.2 }}
-        className="text-[10px] uppercase tracking-widest mb-2 font-semibold"
+        className="mb-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground"
       >
         {label}
       </motion.p>
@@ -37,25 +40,22 @@ export function AmountHero({ type, amount, onAmountChange, description, onDescri
       <motion.div
         animate={{ color }}
         transition={reduced ? { duration: 0 } : { duration: 0.2 }}
-        className="text-5xl font-extrabold tracking-tighter mb-4 [&_input]:text-center [&_input]:text-5xl [&_input]:font-extrabold [&_input]:tracking-tighter [&_input]:border-none [&_input]:bg-transparent [&_input]:shadow-none [&_input]:p-0 [&_input]:h-auto [&_input]:focus-visible:ring-0"
+        className="mb-4 text-4xl font-extrabold tracking-tighter sm:text-5xl [&_input]:h-auto [&_input]:border-none [&_input]:bg-transparent [&_input]:p-0 [&_input]:text-center [&_input]:text-4xl [&_input]:font-extrabold [&_input]:tracking-tighter [&_input]:shadow-none [&_input]:focus-visible:ring-0 [&_input]:sm:text-5xl"
         style={{ color }}
       >
-        <MoneyInput
-          id="tx-amount"
-          value={amount}
-          onChange={onAmountChange}
-          placeholder="R$ 0,00"
-        />
+        <MoneyInput id="tx-amount" value={amount} onChange={onAmountChange} placeholder="R$ 0,00" />
       </motion.div>
 
-      <div className="text-left">
-        <Label htmlFor="tx-description" className="sr-only">Descrição</Label>
+      <div className="space-y-1 text-left">
+        <Label htmlFor="tx-description" className="text-xs font-semibold text-foreground">
+          Descrição
+        </Label>
         <Input
           id="tx-description"
           value={description}
-          onChange={e => onDescriptionChange(e.target.value)}
+          onChange={(e) => onDescriptionChange(e.target.value)}
           placeholder={placeholder}
-          className="bg-muted/30 border-border/40 text-sm"
+          className="rounded-xl border-border/70 bg-muted/40 text-xs focus-visible:ring-2 focus-visible:ring-primary/40"
         />
       </div>
     </div>

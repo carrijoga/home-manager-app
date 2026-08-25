@@ -1,11 +1,10 @@
 import { Check, CreditCard } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { cardGradient } from '@/components/modules/financial/payment-card/gradient';
 import { Button, Popover, PopoverContent, PopoverTrigger } from '@/components/ui';
-import {
-  Command, CommandGroup, CommandItem, CommandList,
-} from '@/components/ui/command';
+import { Command, CommandGroup, CommandItem, CommandList } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
 import type { BankAccountResponse } from '@/schemas/bank-account';
 import { FinancialSourceType } from '@/schemas/enums';
@@ -27,16 +26,26 @@ export interface SourcePickerProps {
  * real para cartões) — origem do Payment, domínio derivado do Método (ADR 0001).
  */
 export function SourcePicker({
-  id, domain, bankAccounts, cards, value, onChange, disabled,
+  id,
+  domain,
+  bankAccounts,
+  cards,
+  value,
+  onChange,
+  disabled,
 }: SourcePickerProps) {
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
   const isCard = domain === FinancialSourceType.CreditCard;
 
-  const selectedAccount = bankAccounts.find(a => a.bankAccountId === value) ?? null;
-  const selectedCard = cards.find(c => c.paymentCardId === value) ?? null;
+  const selectedAccount = bankAccounts.find((a) => a.bankAccountId === value) ?? null;
+  const selectedCard = cards.find((c) => c.paymentCardId === value) ?? null;
 
-  const list = isCard ? cards : bankAccounts;
+  const activeBankAccounts = bankAccounts.filter((a) => a.isActive);
+  const list = isCard ? cards : activeBankAccounts;
   const hasOptions = list.length > 0;
+  const destinationPath = isCard ? '/financial/card' : '/financial/account';
+  const destinationLabel = isCard ? 'Abrir tela de Cartões' : 'Abrir tela de Contas';
 
   const triggerContent = () => {
     if (disabled) {
@@ -45,7 +54,7 @@ export function SourcePicker({
     if (isCard && selectedCard) {
       return (
         <span className="flex items-center gap-2 text-foreground">
-          <CreditCard size={16} strokeWidth={1.5} className="text-muted-foreground shrink-0" />
+          <CreditCard size={16} strokeWidth={1.5} className="shrink-0 text-muted-foreground" />
           {selectedCard.name}
         </span>
       );
@@ -54,7 +63,7 @@ export function SourcePicker({
       return (
         <span className="flex items-center gap-2 text-foreground">
           <span
-            className="h-2.5 w-2.5 rounded-full shrink-0"
+            className="h-2.5 w-2.5 shrink-0 rounded-full"
             style={{ backgroundColor: selectedAccount.color }}
             aria-hidden="true"
           />
@@ -67,11 +76,21 @@ export function SourcePicker({
 
   if (!hasOptions && !disabled) {
     return (
-      <p className="text-xs text-muted-foreground bg-muted/30 border border-border/40 rounded-md px-3 py-2">
-        {isCard
-          ? 'Nenhum cartão ativo compatível com este método — cadastre um na tela de Cartões.'
-          : 'Nenhuma conta bancária cadastrada — crie uma na tela de Contas.'}
-      </p>
+      <div className="space-y-2 rounded-md border border-border/40 bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+        <p>
+          {isCard
+            ? 'Não há cartão ativo compatível com este método de pagamento. Crie ou ative um cartão em Cartões para conseguir concluir este lançamento.'
+            : 'Não há conta bancária cadastrada para usar como origem do pagamento. Crie uma conta em Contas para continuar.'}
+        </p>
+        <Button
+          type="button"
+          variant="link"
+          className="h-auto p-0 text-xs font-semibold text-primary"
+          onClick={() => navigate(destinationPath)}
+        >
+          {destinationLabel}
+        </Button>
+      </div>
     );
   }
 
@@ -84,7 +103,7 @@ export function SourcePicker({
           variant="outline"
           role="combobox"
           disabled={disabled}
-          className="w-full justify-between font-normal bg-muted/30 border-border/40"
+          className="w-full justify-between border-border/40 bg-muted/30 font-normal"
         >
           {triggerContent()}
         </Button>
@@ -94,13 +113,16 @@ export function SourcePicker({
           <CommandList>
             <CommandGroup>
               {isCard
-                ? cards.map(c => {
+                ? cards.map((c) => {
                     const selected = c.paymentCardId === value;
                     return (
                       <CommandItem
                         key={c.paymentCardId}
                         value={c.name}
-                        onSelect={() => { onChange(c.paymentCardId); setOpen(false); }}
+                        onSelect={() => {
+                          onChange(c.paymentCardId);
+                          setOpen(false);
+                        }}
                         className="rounded-md p-0 aria-selected:bg-transparent"
                       >
                         <div
@@ -108,23 +130,26 @@ export function SourcePicker({
                           style={{ background: cardGradient(c.color ?? '') }}
                         >
                           <CreditCard size={16} strokeWidth={1.5} className="shrink-0" />
-                          <span className="flex-1 text-sm font-medium truncate">{c.name}</span>
+                          <span className="flex-1 truncate text-sm font-medium">{c.name}</span>
                           {selected && <Check size={16} className="shrink-0" />}
                         </div>
                       </CommandItem>
                     );
                   })
-                : bankAccounts.map(a => {
+                : activeBankAccounts.map((a) => {
                     const selected = a.bankAccountId === value;
                     return (
                       <CommandItem
                         key={a.bankAccountId}
                         value={a.name}
-                        onSelect={() => { onChange(a.bankAccountId); setOpen(false); }}
+                        onSelect={() => {
+                          onChange(a.bankAccountId);
+                          setOpen(false);
+                        }}
                         className={cn('gap-2', selected && 'bg-accent')}
                       >
                         <span
-                          className="h-2.5 w-2.5 rounded-full shrink-0"
+                          className="h-2.5 w-2.5 shrink-0 rounded-full"
                           style={{ backgroundColor: a.color }}
                           aria-hidden="true"
                         />

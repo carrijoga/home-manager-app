@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import {
@@ -15,12 +15,21 @@ import {
 interface CreateNoteModalProps {
   open: boolean;
   onClose: () => void;
-  onSave: (message: string) => Promise<void>;
+  onSave: (message: string, noteId?: string) => Promise<void>;
+  initialData?: { id?: string; message: string } | null;
 }
 
-export function CreateNoteModal({ open, onClose, onSave }: CreateNoteModalProps) {
+export function CreateNoteModal({ open, onClose, onSave, initialData }: CreateNoteModalProps) {
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const isEditing = Boolean(initialData?.id);
+
+  useEffect(() => {
+    if (open) {
+      setMessage(initialData?.message || '');
+    }
+  }, [open, initialData]);
 
   const handleClose = () => {
     setMessage('');
@@ -34,21 +43,26 @@ export function CreateNoteModal({ open, onClose, onSave }: CreateNoteModalProps)
 
     setIsSubmitting(true);
     try {
-      await onSave(trimmed);
-      toast.success('Recado criado com sucesso!');
+      await onSave(trimmed, initialData?.id);
+      toast.success(isEditing ? 'Recado atualizado com sucesso!' : 'Recado criado com sucesso!');
       handleClose();
     } catch {
-      toast.error('Erro ao criar recado. Tente novamente.');
+      toast.error(isEditing ? 'Erro ao atualizar recado.' : 'Erro ao criar recado.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) handleClose();
+      }}
+    >
       <DialogContent className="sm:max-w-[440px]">
         <DialogHeader>
-          <DialogTitle>Criar recado</DialogTitle>
+          <DialogTitle>{isEditing ? 'Editar recado' : 'Criar recado'}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -69,7 +83,13 @@ export function CreateNoteModal({ open, onClose, onSave }: CreateNoteModalProps)
               Cancelar
             </Button>
             <Button type="submit" disabled={isSubmitting || !message.trim()}>
-              {isSubmitting ? 'Criando...' : 'Criar recado'}
+              {isSubmitting
+                ? isEditing
+                  ? 'Salvando...'
+                  : 'Criando...'
+                : isEditing
+                  ? 'Salvar alterações'
+                  : 'Criar recado'}
             </Button>
           </DialogFooter>
         </form>

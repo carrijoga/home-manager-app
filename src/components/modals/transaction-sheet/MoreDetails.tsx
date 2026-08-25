@@ -15,17 +15,15 @@ export function MoreDetails({ isOpen, onToggle, hint, children }: MoreDetailsPro
   const reduced = usePrefersReducedMotion();
 
   return (
-    <div className="border border-dashed border-border/50 rounded-xl overflow-hidden">
+    <div className="overflow-hidden rounded-xl border border-dashed border-border/50">
       <button
         type="button"
         onClick={onToggle}
-        className="w-full flex items-center justify-between px-3 py-2.5 text-left"
+        className="flex w-full items-center justify-between px-3 py-2.5 text-left"
       >
         <div>
-          <span className="text-sm text-muted-foreground font-medium">Mais detalhes</span>
-          {!isOpen && (
-            <p className="text-[10px] text-muted-foreground/50 mt-0.5">{hint}</p>
-          )}
+          <span className="text-sm font-medium text-muted-foreground">Mais detalhes</span>
+          {!isOpen && <p className="mt-0.5 text-[10px] text-muted-foreground/50">{hint}</p>}
         </div>
         <motion.div
           animate={{ rotate: isOpen ? 180 : 0 }}
@@ -45,9 +43,7 @@ export function MoreDetails({ isOpen, onToggle, hint, children }: MoreDetailsPro
             transition={reduced ? { duration: 0 } : { duration: 0.22, ease: 'easeInOut' }}
             className="overflow-hidden"
           >
-            <div className="px-3 pb-3 pt-1 space-y-3 border-t border-border/30">
-              {children}
-            </div>
+            <div className="space-y-3 border-t border-border/30 px-3 pb-3 pt-1">{children}</div>
           </motion.div>
         )}
       </AnimatePresence>

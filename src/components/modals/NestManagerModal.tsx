@@ -936,6 +936,15 @@ function MembersPanel({ nest }: { nest: AppUserNest }) {
                 </Button>
               </div>
 
+              {invites.length === 0 && !loadingData && (
+                <div className="rounded-xl border border-dashed border-border/60 bg-muted/20 p-4 text-center">
+                  <Mail className="mx-auto size-5 text-muted-foreground/60" />
+                  <p className="mt-1 text-xs text-muted-foreground font-medium">
+                    Nenhum membro foi convidado no momento.
+                  </p>
+                </div>
+              )}
+
               {pendingInvites.length > 0 && (
                 <div className="space-y-2 pt-1">
                   <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">

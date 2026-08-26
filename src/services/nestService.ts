@@ -239,12 +239,7 @@ export async function getNestInvites(nestId: string): Promise<NestInvite[]> {
     return MOCK_INVITES.filter((i) => i.nestId === nestId);
   }
   try {
-    let raw: unknown;
-    try {
-      raw = await httpClient.get<unknown>(ENDPOINTS.nests.invites, nestId);
-    } catch {
-      raw = await httpClient.post<unknown>(ENDPOINTS.nests.invites, undefined, { nestId });
-    }
+    const raw = await httpClient.get<unknown>(ENDPOINTS.nests.invites, nestId);
     const list = extractArray(raw);
     return list.map((item) => normalizeNestInvite(item, nestId));
   } catch (error) {

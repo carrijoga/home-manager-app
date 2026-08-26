@@ -103,45 +103,45 @@ const Navigation: FC<NavigationProps> = ({
     []
   );
 
-  // Função de busca (mock - será implementada com dados reais)
-  const handleSearch = (_query: string) => {
-    // TODO: Implementar busca real em todos os módulos
-    return [];
-  };
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleSearchResultClick = (result: any) => {
-    // TODO: Navegar para o módulo e item específico
-    console.log('Search result clicked:', result);
-  };
+  const [notifications, setNotifications] = useState(mockNotifications);
 
   const handleNotificationClick = (notificationId: string) => {
-    // TODO: Marcar notificação como lida e navegar para o item
-    console.log('Notification clicked:', notificationId);
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n))
+    );
+  };
+
+  const handleMarkAsRead = (notificationId: string) => {
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n))
+    );
   };
 
   const handleMarkAllAsRead = () => {
-    // TODO: Marcar todas notificações como lidas
-    console.log('Mark all as read');
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  };
+
+  const handleClearNotification = (notificationId: string) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
+  };
+
+  const handleClearAll = () => {
+    setNotifications([]);
   };
 
   const handleProfileClick = () => {
-    // TODO: Navegar para página de perfil
     console.log('Profile clicked');
   };
 
   const handleSettingsClick = () => {
-    // TODO: Navegar para página de configurações
     console.log('Settings clicked');
   };
 
   const handleLogoutClick = async () => {
     try {
       await authService.logout();
-      // Limpar estado do usuário, se houver (opcional: useApp()?.setUser(null))
       navigate('/login');
     } catch (error) {
-      // Exibir erro (opcional: toast)
       console.error('Erro ao sair:', error);
     }
   };
@@ -197,15 +197,18 @@ const Navigation: FC<NavigationProps> = ({
 
           {/* Busca Global - Desktop */}
           <div className="mx-4 hidden max-w-md flex-1 md:flex">
-            <GlobalSearch onSearch={handleSearch} onResultClick={handleSearchResultClick} />
+            <GlobalSearch />
           </div>
 
           {/* Notificações e Perfil */}
           <div className="flex items-center gap-2">
             <NotificationsMenu
-              notifications={mockNotifications}
+              notifications={notifications}
               onNotificationClick={handleNotificationClick}
+              onMarkAsRead={handleMarkAsRead}
               onMarkAllAsRead={handleMarkAllAsRead}
+              onClearNotification={handleClearNotification}
+              onClearAll={handleClearAll}
             />
             <ProfileMenu
               user={currentUser}
@@ -233,11 +236,7 @@ const Navigation: FC<NavigationProps> = ({
 
         {/* Busca Global - Mobile */}
         <div className="pb-3 md:hidden">
-          <GlobalSearch
-            onSearch={handleSearch}
-            onResultClick={handleSearchResultClick}
-            placeholder="Buscar..."
-          />
+          <GlobalSearch placeholder="Buscar..." />
         </div>
       </div>
 

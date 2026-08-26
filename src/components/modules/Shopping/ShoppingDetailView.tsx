@@ -24,7 +24,9 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { useSidebar } from '@/components/ui/sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 import type { AppShoppingItem, AppShoppingList } from '@/types';
 
 import { CategorySection } from './CategorySection';
@@ -120,6 +122,7 @@ interface ShoppingDetailViewProps {
 }
 
 export function ShoppingDetailView(props: ShoppingDetailViewProps) {
+  const { state: sidebarState, isMobile } = useSidebar();
   const {
     detailData,
     isLoadingDetail,
@@ -573,7 +576,15 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
 
       {/* ── Sticky footer bar ────────────────────────────────────────────────── */}
       {detailData && !isBulkMode && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-between gap-6 border-t border-border/20 bg-card/90 px-6 py-4 backdrop-blur-md dark:bg-[rgba(28,28,28,0.92)] md:left-[var(--sidebar-width,0px)]">
+        <div
+          className={cn(
+            'fixed bottom-0 left-0 right-0 z-40 flex items-center justify-between gap-6 border-t border-border/20 bg-card/90 px-6 py-4 backdrop-blur-md transition-[left] duration-200 ease-linear dark:bg-[rgba(28,28,28,0.92)]',
+            !isMobile &&
+              (sidebarState === 'collapsed'
+                ? 'md:left-[var(--sidebar-width-icon,3rem)]'
+                : 'md:left-[var(--sidebar-width,16rem)]')
+          )}
+        >
           {/* Left: remaining balance */}
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border/30 bg-background">

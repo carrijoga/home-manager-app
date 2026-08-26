@@ -8,7 +8,7 @@ import { DadosPrivacidadePanel } from '@/components/settings/panels/DadosPrivaci
 import { GeralPanel } from '@/components/settings/panels/GeralPanel';
 import { LocalizacaoClimaPanel } from '@/components/settings/panels/LocalizacaoClimaPanel';
 import { SobrePanel } from '@/components/settings/panels/SobrePanel';
-import { type SettingsSectionId, SettingsNav } from '@/components/settings/SettingsNav';
+import { SettingsNav,type SettingsSectionId } from '@/components/settings/SettingsNav';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui';
 
 interface SettingsModalProps {

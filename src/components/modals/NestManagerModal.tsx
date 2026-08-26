@@ -1219,10 +1219,11 @@ function DeleteNestDialog({
 
 interface NestManagerModalProps {
   open: boolean;
-  onClose: () => void;
+  onClose?: () => void;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function NestManagerModal({ open, onClose }: NestManagerModalProps) {
+export function NestManagerModal({ open, onClose, onOpenChange }: NestManagerModalProps) {
   const { user, activeNestId, setActiveNestId, deleteNest, leaveNest, setDefaultNest } = useApp();
   const nests = user?.nests ?? [];
   const reducedMotion = usePrefersReducedMotion();
@@ -1256,7 +1257,8 @@ export function NestManagerModal({ open, onClose }: NestManagerModalProps) {
     setMode('list');
     setEditingNest(null);
     setEditSection('info');
-    onClose();
+    onClose?.();
+    onOpenChange?.(false);
   };
 
   const handleEdit = (nest: AppUserNest) => {

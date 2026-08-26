@@ -117,6 +117,56 @@ function FinancasGroup({
 }) {
   const dollarRef = React.useRef<DollarSignIconHandle>(null);
   const chevronRef = React.useRef<ChevronRightIconHandle>(null);
+  const { state: sidebarState } = useSidebar();
+  const isCollapsed = sidebarState === 'collapsed';
+
+  if (isCollapsed) {
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <SidebarMenuButton
+            isActive={isFinancasActive}
+            tooltip="Finanças"
+            onMouseEnter={() => dollarRef.current?.startAnimation()}
+            onMouseLeave={() => dollarRef.current?.stopAnimation()}
+            className={cn(
+              'relative cursor-pointer !gap-3 rounded-[24px] px-4 py-3 text-base transition-colors',
+              isFinancasActive
+                ? '!bg-primary/8 font-semibold !text-primary hover:!bg-primary/12'
+                : 'font-normal text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+            )}
+            style={{ zIndex: 1 }}
+          >
+            <DollarSignIcon ref={dollarRef} size={18} />
+            <span>Finanças</span>
+          </SidebarMenuButton>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent side="right" align="start" className="w-48">
+          <DropdownMenuLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Finanças
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          {FINANCAS_SUB_ITEMS.map((item) => {
+            const SubIcon = item.icon;
+            const isActive = currentPath === item.path;
+            return (
+              <DropdownMenuItem
+                key={item.id}
+                onClick={() => handleNavClick(item.path)}
+                className={cn(
+                  'flex cursor-pointer items-center gap-2.5 px-3 py-2 text-sm',
+                  isActive && '!bg-primary/15 font-semibold !text-primary'
+                )}
+              >
+                <SubIcon size={16} />
+                <span>{item.name}</span>
+              </DropdownMenuItem>
+            );
+          })}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  }
 
   return (
     <Collapsible open={financasOpen} onOpenChange={setFinancasOpen}>

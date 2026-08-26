@@ -12,7 +12,6 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/utils';
 import * as authService from '@/services/authService';
 
-import type { Notification } from './NotificationsMenu';
 import NotificationsMenu from './NotificationsMenu';
 import ProfileMenu from './ProfileMenu';
 
@@ -30,7 +29,6 @@ function NavSearchBar({ className, onClick }: SearchBarProps) {
         'group relative flex h-10 w-[220px] max-w-full items-center justify-between rounded-full border border-border bg-card px-4 text-sm text-muted-foreground shadow-none transition-all duration-200 hover:border-primary/50 hover:bg-accent/40 sm:w-[416px]',
         className
       )}
-
     >
       <div className="flex items-center gap-2.5 overflow-hidden">
         <Search
@@ -49,13 +47,6 @@ function NavSearchBar({ className, onClick }: SearchBarProps) {
   );
 }
 
-const TYPE_MAP: Record<number, Notification['type']> = {
-  0: 'notice',
-  1: 'notice',
-  2: 'reminder',
-  3: 'task',
-};
-
 /**
  * TopNavbar — barra de navegação superior fixa.
  *
@@ -63,7 +54,15 @@ const TYPE_MAP: Record<number, Notification['type']> = {
  * Fundo: color-mix(background 80%) + backdrop-blur para sensação de profundidade
  */
 export function TopNavbar({ className }: { className?: string }) {
-  const { user, notifications, markAllAsRead, clearUser } = useApp();
+  const {
+    user,
+    notifications,
+    markAsRead,
+    markAllAsRead,
+    clearNotification,
+    clearAllNotifications,
+    clearUser,
+  } = useApp();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
 
@@ -85,15 +84,6 @@ export function TopNavbar({ className }: { className?: string }) {
   }, []);
 
   if (!user) return null;
-
-  const menuNotifications: Notification[] = notifications.map((n) => ({
-    id: n.notificationId,
-    type: TYPE_MAP[n.type] ?? 'notice',
-    title: n.title,
-    message: n.message,
-    timestamp: new Date(),
-    read: n.isRead,
-  }));
 
   const handleLogout = async () => {
     await authService.logout();
@@ -132,7 +122,13 @@ export function TopNavbar({ className }: { className?: string }) {
           <Search size={18} />
         </button>
 
-        <NotificationsMenu notifications={menuNotifications} onMarkAllAsRead={markAllAsRead} />
+        <NotificationsMenu
+          notifications={notifications}
+          onMarkAsRead={markAsRead}
+          onMarkAllAsRead={markAllAsRead}
+          onClearNotification={clearNotification}
+          onClearAll={clearAllNotifications}
+        />
         <ProfileMenu
           user={user}
           currentTheme={theme}

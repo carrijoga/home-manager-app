@@ -1,8 +1,18 @@
-import { BellRing, CheckCircle2, HelpCircle, Info, ShieldAlert } from 'lucide-react';
+import {
+  BellRing,
+  CheckCircle2,
+  HelpCircle,
+  Info,
+  ShieldAlert,
+  Sparkles,
+  Volume2,
+  VolumeX,
+} from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 import { Badge, Button, Separator } from '@/components/ui';
 import { useApp } from '@/contexts/AppContext';
+import { useToastNotifications } from '@/hooks/use-toast-notifications';
 import {
   getNotificationPreferences,
   NOTIFICATION_PREFERENCES_UPDATED_EVENT,
@@ -11,7 +21,6 @@ import {
 import { cn } from '@/lib/utils';
 
 type NotificationTypeId = 0 | 1 | 2 | 3;
-
 type NotificationPreferenceKey = 'info' | 'warning' | 'error' | 'success';
 
 const TYPE_CONFIG: Record<
@@ -56,6 +65,10 @@ const TYPE_CONFIG: Record<
 
 export function ProfileNotificationsPanel() {
   const { user } = useApp();
+  const { showSuccess, showError, showWarning, showInfo, isSoundEnabled, enableSound, disableSound } =
+    useToastNotifications();
+
+  const [soundActive, setSoundActive] = useState(() => isSoundEnabled());
   const rawNotifications = user?.notifications;
   const notifications = useMemo(() => rawNotifications ?? [], [rawNotifications]);
   const [showGuidance, setShowGuidance] = useState(false);
@@ -63,11 +76,21 @@ export function ProfileNotificationsPanel() {
 
   useEffect(() => {
     const syncPreferences = () => setPreferences(getNotificationPreferences());
-
     window.addEventListener(NOTIFICATION_PREFERENCES_UPDATED_EVENT, syncPreferences);
     return () =>
       window.removeEventListener(NOTIFICATION_PREFERENCES_UPDATED_EVENT, syncPreferences);
   }, []);
+
+  const toggleSound = () => {
+    if (soundActive) {
+      disableSound();
+      setSoundActive(false);
+    } else {
+      enableSound();
+      setSoundActive(true);
+      showSuccess('Efeitos sonoros ativados!');
+    }
+  };
 
   const grouped = useMemo(() => {
     const typePreferenceKey: Record<NotificationTypeId, NotificationPreferenceKey> = {
@@ -98,11 +121,11 @@ export function ProfileNotificationsPanel() {
   const totalUnread = notifications.filter((notification) => !notification.isRead).length;
   const totalEnabled = notifications.filter((notification) => notification.isEnabled).length;
   const totalDisabled = Math.max(0, totalNotifications - totalEnabled);
-
   const maxCount = Math.max(...grouped.map((group) => group.totalCount), 1);
 
   return (
     <div className="space-y-6">
+      {/* Banner Principal */}
       <div className="rounded-3xl border border-border/50 bg-[linear-gradient(135deg,color-mix(in_srgb,var(--primary)_10%,var(--card))_0%,color-mix(in_srgb,var(--secondary)_8%,var(--card))_100%)] p-5 sm:p-6">
         <div className="flex items-start gap-4">
           <button
@@ -116,12 +139,11 @@ export function ProfileNotificationsPanel() {
 
           <div className="min-w-0 flex-1">
             <p className="text-xs font-semibold uppercase tracking-[1.2px] text-muted-foreground">
-              Alertas
+              Alertas & Preferências
             </p>
             <h2 className="mt-1 text-lg font-semibold text-foreground">Controle como o Ninho te avisa</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Ative ou silencie cada tipo de notificação com um toque. A visão abaixo mostra o
-              volume e o estado atual de cada categoria.
+              Ative ou silencie categorias de alerta, configure os sons de notificação e faça testes em tempo real.
             </p>
           </div>
 
@@ -139,53 +161,129 @@ export function ProfileNotificationsPanel() {
         {showGuidance && (
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
             <div className="rounded-2xl border bg-card/70 p-4">
-              <p className="text-xs uppercase tracking-wider text-muted-foreground">1. Escolha</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">1. Escolha</p>
               <p className="mt-2 text-sm text-foreground">
                 Veja todos os tipos de alerta em cartões separados.
               </p>
             </div>
             <div className="rounded-2xl border bg-card/70 p-4">
-              <p className="text-xs uppercase tracking-wider text-muted-foreground">2. Ajuste</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">2. Ajuste</p>
               <p className="mt-2 text-sm text-foreground">
                 Use o botão em cada cartão para receber ou silenciar.
               </p>
             </div>
             <div className="rounded-2xl border bg-card/70 p-4">
-              <p className="text-xs uppercase tracking-wider text-muted-foreground">3. Revise</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">3. Som & Testes</p>
               <p className="mt-2 text-sm text-foreground">
-                O resumo rápido mostra o que está ativo e o que ainda precisa atenção.
+                Ligue o som das notificações ou teste alertas em tempo real.
               </p>
             </div>
           </div>
         )}
       </div>
 
+      {/* Cartões de Resumo Rápidos */}
       <div className="grid gap-3 sm:grid-cols-3">
         <SummaryTile
-          label="Total"
+          label="Total Registradas"
           value={String(totalNotifications)}
-          hint="notificações registradas"
+          hint="histórico de notificações"
         />
         <SummaryTile
-          label="Não lidas"
+          label="Não Lidas"
           value={String(totalUnread)}
-          hint="ainda precisam de atenção"
+          hint="precisam de atenção"
           tone="warning"
         />
         <SummaryTile
-          label="Ativas"
+          label="Categorias Ativas"
           value={String(totalEnabled)}
-          hint={`${totalDisabled} desativadas`}
+          hint={`${totalDisabled} silenciosas`}
           tone="success"
         />
       </div>
 
+      {/* Seção Som & Notificações de Teste */}
+      <div className="rounded-2xl border border-border/60 bg-card/50 p-4 shadow-xs">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              {soundActive ? <Volume2 size={20} /> : <VolumeX size={20} />}
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">Sons de Alerta</h3>
+              <p className="text-xs text-muted-foreground">
+                {soundActive ? 'Efeitos sonoros ativos para toasts e avisos' : 'Sons desativados'}
+              </p>
+            </div>
+          </div>
+
+          <Button
+            type="button"
+            variant={soundActive ? 'default' : 'outline'}
+            size="sm"
+            onClick={toggleSound}
+            className="rounded-xl gap-2"
+          >
+            {soundActive ? <Volume2 size={16} /> : <VolumeX size={16} />}
+            {soundActive ? 'Som Ativado' : 'Ativar Som'}
+          </Button>
+        </div>
+
+        <Separator className="my-4" />
+
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+            <Sparkles size={14} className="text-primary" /> Testar Notificações em Tempo Real
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="rounded-xl text-xs border-emerald-500/30 hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+              onClick={() => showSuccess('Operação realizada com sucesso!')}
+            >
+              Sucesso
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="rounded-xl text-xs border-blue-500/30 hover:bg-blue-500/10 text-blue-600 dark:text-blue-400"
+              onClick={() => showInfo('Você possui 2 novas atualizações no ninho.')}
+            >
+              Informativo
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="rounded-xl text-xs border-amber-500/30 hover:bg-amber-500/10 text-amber-600 dark:text-amber-400"
+              onClick={() => showWarning('Atenção: uma tarefa vence hoje às 18h.')}
+            >
+              Aviso
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="rounded-xl text-xs border-rose-500/30 hover:bg-rose-500/10 text-rose-600 dark:text-rose-400"
+              onClick={() => showError('Falha ao conectar com o servidor.')}
+            >
+              Erro
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Grid de Categorias */}
       <div className="space-y-4 rounded-2xl border p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h3 className="text-sm font-semibold">Distribuição por tipo</h3>
+            <h3 className="text-sm font-semibold">Distribuição por Tipo</h3>
             <p className="mt-1 text-xs text-muted-foreground">
-              Cada cor representa um tipo de notificação.
+              Cada cor representa um tipo de notificação no sistema.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -208,7 +306,7 @@ export function ProfileNotificationsPanel() {
             return (
               <div
                 key={group.type}
-                className="duration-[length:var(--dur-base)] h-full transition-all"
+                className="h-full transition-all duration-300"
                 style={{ width, background: config.accent }}
                 title={`${config.label}: ${group.totalCount}`}
               />
@@ -226,7 +324,7 @@ export function ProfileNotificationsPanel() {
             return (
               <section
                 key={group.type}
-                className="rounded-2xl p-4"
+                className="rounded-2xl p-4 transition-all"
                 style={{ background: config.background }}
               >
                 <div className="flex items-start justify-between gap-4">
@@ -248,14 +346,14 @@ export function ProfileNotificationsPanel() {
                 <div className="mt-4 flex items-center gap-2">
                   <div className="h-2 flex-1 overflow-hidden rounded-full bg-card/80">
                     <div
-                      className="duration-[length:var(--dur-base)] h-full rounded-full transition-all"
+                      className="h-full rounded-full transition-all duration-300"
                       style={{
                         width: `${(group.totalCount / Math.max(totalNotifications, 1)) * 100}%`,
                         background: config.accent,
                       }}
                     />
                   </div>
-                  <span className="whitespace-nowrap text-xs text-muted-foreground">
+                  <span className="whitespace-nowrap text-xs font-medium text-muted-foreground">
                     {isReceiving ? 'Recebendo' : 'Silenciado'}
                   </span>
                 </div>
@@ -311,7 +409,7 @@ export function ProfileNotificationsPanel() {
                       </div>
                     ))
                   ) : (
-                    <div className="rounded-xl border border-dashed px-3 py-4 text-sm text-muted-foreground">
+                    <div className="rounded-xl border border-dashed px-3 py-4 text-xs text-muted-foreground text-center">
                       Nenhuma notificação deste tipo ainda.
                     </div>
                   )}
@@ -320,16 +418,6 @@ export function ProfileNotificationsPanel() {
             );
           })}
         </div>
-      </div>
-
-      <Separator />
-
-      <div className="rounded-2xl border bg-card/60 p-4">
-        <h3 className="text-sm font-semibold">Leitura rápida</h3>
-        <p className="mt-2 text-sm text-muted-foreground">
-          O banner no topo resume como as notificações funcionam e os cartões mostram o estado de
-          cada tipo sem exigir uma lista longa de opções.
-        </p>
       </div>
     </div>
   );
@@ -360,12 +448,12 @@ function SummaryTile({
         : 'var(--foreground)';
 
   return (
-    <div className={cn('rounded-2xl border p-4', toneStyles[tone])}>
+    <div className={cn('rounded-2xl border p-4 shadow-xs', toneStyles[tone])}>
       <p className="text-xs uppercase tracking-wider text-muted-foreground">{label}</p>
-      <p className="mt-2 text-3xl font-semibold" style={{ color: valueColor }}>
+      <p className="mt-2 text-3xl font-bold tracking-tight" style={{ color: valueColor }}>
         {value}
       </p>
-      <p className="mt-1 text-sm text-muted-foreground">{hint}</p>
+      <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
     </div>
   );
 }

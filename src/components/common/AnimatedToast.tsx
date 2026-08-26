@@ -1,12 +1,12 @@
 /**
  * Componente AnimatedToast
  *
- * Sistema de notificações toast com animações suaves.
- * Suporta múltiplos tipos (sucesso, erro, aviso, info) e posições.
+ * Sistema de notificações toast customizado com animações Framer Motion,
+ * suporte a temas do Tailwind CSS, ícones vibrantes e barra de progresso.
  */
 
 import { AnimatePresence, motion } from 'framer-motion';
-import { AlertCircle, CheckCircle, Info, X, XCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Info, X, XCircle } from 'lucide-react';
 import { createContext, ReactNode, useCallback, useContext, useState } from 'react';
 
 import { toastFromRightVariants, toastVariants } from '@/lib/animations';
@@ -60,8 +60,8 @@ interface ToastProviderProps {
 
 export function ToastProvider({
   children,
-  position = 'top-right',
-  maxToasts = 3,
+  position = 'bottom-right',
+  maxToasts = 4,
 }: ToastProviderProps) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
@@ -75,11 +75,10 @@ export function ToastProvider({
       const newToast: Toast = {
         ...toast,
         id,
-        duration: toast.duration || 5000,
+        duration: toast.duration || 4500,
       };
 
       setToasts((prev) => {
-        // Limita o número de toasts
         const updated = [...prev, newToast];
         if (updated.length > maxToasts) {
           return updated.slice(-maxToasts);
@@ -87,7 +86,6 @@ export function ToastProvider({
         return updated;
       });
 
-      // Auto-remove após duration
       if (newToast.duration && newToast.duration > 0) {
         setTimeout(() => {
           removeToast(id);
@@ -127,13 +125,12 @@ function ToastContainer({ toasts, position, onRemove }: ToastContainerProps) {
     'bottom-right': 'bottom-4 right-4',
   };
 
-  // Usa variantes diferentes baseado na posição
   const variants = position.includes('right') ? toastFromRightVariants : toastVariants;
 
   return (
     <div
       className={cn(
-        'pointer-events-none fixed z-[100] flex flex-col gap-2',
+        'pointer-events-none fixed z-[100] flex flex-col gap-2.5 max-w-full px-4 sm:px-0',
         positionClasses[position]
       )}
     >
@@ -165,51 +162,82 @@ interface ToastItemProps {
   onClose: () => void;
 }
 
-function ToastItem({ toast, onClose }: ToastItemProps) {
-  const icons = {
-    success: <CheckCircle className="h-5 w-5" />,
-    error: <XCircle className="h-5 w-5" />,
-    warning: <AlertCircle className="h-5 w-5" />,
-    info: <Info className="h-5 w-5" />,
-  };
+const TYPE_CONFIG = {
+  success: {
+    icon: CheckCircle2,
+    badgeBg: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
+    barBg: 'bg-emerald-500',
+    borderColor: 'border-emerald-500/30',
+  },
+  error: {
+    icon: XCircle,
+    badgeBg: 'bg-destructive/15 text-destructive',
+    barBg: 'bg-destructive',
+    borderColor: 'border-destructive/30',
+  },
+  warning: {
+    icon: AlertTriangle,
+    badgeBg: 'bg-amber-500/15 text-amber-600 dark:text-amber-400',
+    barBg: 'bg-amber-500',
+    borderColor: 'border-amber-500/30',
+  },
+  info: {
+    icon: Info,
+    badgeBg: 'bg-blue-500/15 text-blue-600 dark:text-blue-400',
+    barBg: 'bg-blue-500',
+    borderColor: 'border-blue-500/30',
+  },
+};
 
-  const colorClasses = {
-    success:
-      'bg-natureza-100 dark:bg-natureza-900/30 border-natureza-500 text-natureza-900 dark:text-natureza-100',
-    error: 'bg-red-100 dark:bg-red-900/30 border-red-500 text-red-900 dark:text-red-100',
-    warning:
-      'bg-aviso-100 dark:bg-aviso-900/30 border-aviso-500 text-aviso-900 dark:text-aviso-100',
-    info: 'bg-serenidade-100 dark:bg-serenidade-900/30 border-serenidade-500 text-serenidade-900 dark:text-serenidade-100',
-  };
+function ToastItem({ toast, onClose }: ToastItemProps) {
+  const config = TYPE_CONFIG[toast.type];
+  const IconComponent = config.icon;
+  const duration = toast.duration || 4500;
 
   return (
     <div
       className={cn(
-        'relative flex items-start gap-3 rounded-lg border-l-4 p-4 shadow-lg',
-        'min-w-[320px] max-w-md',
-        'backdrop-blur-sm',
-        colorClasses[toast.type]
+        'relative overflow-hidden flex items-start gap-3 rounded-2xl border p-4 shadow-xl backdrop-blur-xl',
+        'w-[340px] max-w-full bg-popover/95 text-popover-foreground',
+        config.borderColor
       )}
     >
       {/* Ícone */}
-      <div className="mt-0.5 flex-shrink-0">{icons[toast.type]}</div>
+      <div
+        className={cn(
+          'flex size-9 shrink-0 items-center justify-center rounded-xl font-medium',
+          config.badgeBg
+        )}
+      >
+        <IconComponent size={20} />
+      </div>
 
       {/* Conteúdo */}
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold leading-tight">{toast.title}</p>
+      <div className="min-w-0 flex-1 pt-0.5">
+        <p className="text-sm font-semibold leading-tight text-foreground">{toast.title}</p>
         {toast.description && (
-          <p className="mt-1 text-xs leading-tight opacity-90">{toast.description}</p>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{toast.description}</p>
         )}
       </div>
 
       {/* Botão de fechar */}
       <button
         onClick={onClose}
-        className="flex-shrink-0 rounded p-1 transition-colors hover:bg-black/10 dark:hover:bg-white/10"
+        className="shrink-0 rounded-lg p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         aria-label="Fechar notificação"
       >
-        <X className="h-4 w-4" />
+        <X size={16} />
       </button>
+
+      {/* Barra de Progresso de tempo */}
+      {duration > 0 && (
+        <motion.div
+          initial={{ width: '100%' }}
+          animate={{ width: '0%' }}
+          transition={{ duration: duration / 1000, ease: 'linear' }}
+          className={cn('absolute bottom-0 left-0 h-1', config.barBg)}
+        />
+      )}
     </div>
   );
 }
@@ -218,9 +246,6 @@ function ToastItem({ toast, onClose }: ToastItemProps) {
 // HELPERS
 // ============================================================================
 
-/**
- * Funções auxiliares para criar toasts rapidamente
- */
 export const toast = {
   success: (title: string, description?: string, duration?: number) => ({
     type: 'success' as const,
@@ -247,19 +272,3 @@ export const toast = {
     duration,
   }),
 };
-
-/**
- * Exemplo de uso:
- *
- * ```tsx
- * function MyComponent() {
- *   const { addToast } = useToast();
- *
- *   const handleClick = () => {
- *     addToast(toast.success("Tarefa concluída!", "A tarefa foi marcada como concluída."));
- *   };
- *
- *   return <button onClick={handleClick}>Concluir</button>;
- * }
- * ```
- */

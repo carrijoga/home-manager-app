@@ -89,7 +89,7 @@ export function ManageCategoriesDialog({
               {customCats.map((c) => (
                 <div
                   key={c.shoppingCategoryId}
-                  className="bg-muted/50 group flex items-center justify-between rounded-lg px-3 py-2"
+                  className="group flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2"
                 >
                   <span className="text-sm">{c.name}</span>
                   <button

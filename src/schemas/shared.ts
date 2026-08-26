@@ -1,6 +1,12 @@
 import { z } from 'zod';
 
-export const UuidSchema = z.string().uuid();
+// z.string().uuid() valida os bits de versão/variante do RFC 4122 e rejeita
+// UUIDs "nil"/sequenciais (ex: 00000000-0000-0000-0000-000000000001) usados
+// pelo backend para categorias seedadas. Aceita qualquer string no formato
+// 8-4-4-4-12 hex, sem exigir conformidade estrita com uma versão específica.
+export const UuidSchema = z
+  .string()
+  .regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i, 'UUID inválido');
 export const DateTimeSchema = z.string().datetime({ offset: true }).or(z.string());
 export const DateSchema = z.string();
 

@@ -18,7 +18,9 @@ interface CategorySectionProps {
   inlineForm: { qty: string; estimated: number | null; paid: number | null };
   inlineSaving: boolean;
   pendingId: string | null;
-  setInlineForm: React.Dispatch<React.SetStateAction<{ qty: string; estimated: number | null; paid: number | null }>>;
+  setInlineForm: React.Dispatch<
+    React.SetStateAction<{ qty: string; estimated: number | null; paid: number | null }>
+  >;
   setSelectedItemIds: React.Dispatch<React.SetStateAction<Set<string>>>;
   onToggleCollapse: (category: string) => void;
   onOpenMobileSheet: (item: AppShoppingItem) => void;
@@ -59,25 +61,18 @@ export function CategorySection(props: CategorySectionProps) {
   const purchasedCount = items.filter((i) => i.isPurchased).length;
   const unpurchased = items.filter((i) => !i.isPurchased);
   const allGroupSelected =
-    unpurchased.length > 0 &&
-    unpurchased.every((i) => selectedItemIds.has(i.shoppingItemId));
-  const someGroupSelected = unpurchased.some((i) =>
-    selectedItemIds.has(i.shoppingItemId)
-  );
+    unpurchased.length > 0 && unpurchased.every((i) => selectedItemIds.has(i.shoppingItemId));
+  const someGroupSelected = unpurchased.some((i) => selectedItemIds.has(i.shoppingItemId));
 
   return (
-    <div
-      className="overflow-hidden rounded-2xl border border-border bg-card dark:bg-[#1e1e1e]"
-    >
+    <div className="overflow-hidden rounded-2xl border border-border bg-card dark:bg-[#1e1e1e]">
       {/* Category header */}
-      <div className="border-border/50 flex items-center justify-between border-b bg-card px-5 py-3.5 dark:bg-[#242424]">
+      <div className="flex items-center justify-between border-b border-border/50 bg-card px-5 py-3.5 dark:bg-[#242424]">
         <div className="flex items-center gap-3">
           {isBulkMode && unpurchased.length > 0 && (
             <Checkbox
               checked={allGroupSelected}
-              data-state={
-                someGroupSelected && !allGroupSelected ? 'indeterminate' : undefined
-              }
+              data-state={someGroupSelected && !allGroupSelected ? 'indeterminate' : undefined}
               onCheckedChange={(checked) => {
                 setSelectedItemIds((prev) => {
                   const next = new Set(prev);
@@ -135,7 +130,7 @@ export function CategorySection(props: CategorySectionProps) {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, x: -20, scale: 0.98 }}
                     transition={{ duration: 0.2, ease: [0.25, 1, 0.5, 1] }}
-                    className={idx > 0 ? 'border-border/30 border-t' : ''}
+                    className={idx > 0 ? 'border-t border-border/30' : ''}
                   >
                     <ShoppingItemRow
                       item={item}

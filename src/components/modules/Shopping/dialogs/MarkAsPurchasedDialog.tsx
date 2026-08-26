@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { UNIT_TYPE_LABELS } from '@/schemas/enums';
 import type { AppShoppingItem } from '@/types';
 
-import { emptyPurchaseForm, quantityLabel } from '../helpers';
+import { emptyPurchaseForm } from '../helpers';
 import type { PurchaseFormData } from '../types';
 
 interface MarkAsPurchasedDialogProps {
@@ -18,17 +19,24 @@ interface MarkAsPurchasedDialogProps {
   onSubmit: (data: PurchaseFormData) => Promise<void>;
 }
 
-export function MarkAsPurchasedDialog({ open, onClose, item, onSubmit }: MarkAsPurchasedDialogProps) {
-  const [data, setData] = useState<PurchaseFormData>(emptyPurchaseForm(item?.estimatedPrice));
+export function MarkAsPurchasedDialog({
+  open,
+  onClose,
+  item,
+  onSubmit,
+}: MarkAsPurchasedDialogProps) {
+  const [data, setData] = useState<PurchaseFormData>(
+    emptyPurchaseForm(item?.quantity, item?.estimatedPrice)
+  );
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (open) {
-      setData(emptyPurchaseForm(item?.estimatedPrice));
+      setData(emptyPurchaseForm(item?.quantity, item?.estimatedPrice));
       setSaving(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  }, [open, item]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,6 +48,8 @@ export function MarkAsPurchasedDialog({ open, onClose, item, onSubmit }: MarkAsP
       setSaving(false);
     }
   };
+
+  const unitLabel = item ? (UNIT_TYPE_LABELS[item.unitType] ?? 'un') : '';
 
   return (
     <Sheet open={open && !!item} onOpenChange={(v) => !v && onClose()}>
@@ -55,12 +65,26 @@ export function MarkAsPurchasedDialog({ open, onClose, item, onSubmit }: MarkAsP
           {item && (
             <p className="text-xs text-muted-foreground">
               <span className="font-medium text-foreground">{item.name}</span>
-              {' — '}
-              {quantityLabel(item.quantity, item.unitType)}
             </p>
           )}
         </SheetHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="purchase-quantity">
+              Quantidade comprada *{' '}
+              {unitLabel && <span className="text-xs text-muted-foreground">({unitLabel})</span>}
+            </Label>
+            <Input
+              id="purchase-quantity"
+              type="number"
+              min="0.001"
+              step="any"
+              placeholder="1"
+              value={data.quantity}
+              onChange={(e) => setData((d) => ({ ...d, quantity: e.target.value }))}
+              required
+            />
+          </div>
           <div className="space-y-1.5">
             <Label htmlFor="purchase-price">
               Preço pago (R$) <span className="text-xs text-muted-foreground">(opcional)</span>

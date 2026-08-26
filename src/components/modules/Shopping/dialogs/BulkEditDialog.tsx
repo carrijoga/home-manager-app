@@ -3,7 +3,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
-  Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
 } from '@/components/ui/command';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -258,7 +263,7 @@ export function BulkEditDialog({
             />
           </div>
 
-          <div className="bg-muted/30 space-y-1 rounded-xl border border-border px-3 py-2.5">
+          <div className="space-y-1 rounded-xl border border-border bg-muted/30 px-3 py-2.5">
             <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
               Itens afetados
             </p>

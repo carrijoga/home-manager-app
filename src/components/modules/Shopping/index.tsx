@@ -8,6 +8,7 @@ import { ENDPOINTS } from '@/services/api/endpoints';
 
 import { fromISOMonthYear } from './helpers';
 import { useShoppingActions } from './hooks/useShoppingActions';
+import { useShoppingData } from './hooks/useShoppingData';
 import { useShoppingNavigation } from './hooks/useShoppingNavigation';
 import { useShoppingRealtime } from './hooks/useShoppingRealtime';
 import { ShoppingDetailView } from './ShoppingDetailView';
@@ -16,13 +17,32 @@ import { ShoppingListsView } from './ShoppingListsView';
 const Shopping = memo(function Shopping() {
   const { activeNestId } = useApp();
 
-  const nav = useShoppingNavigation();
-  const actions = useShoppingActions(nav.selectedListId, nav.setDetailData);
+  const data = useShoppingData();
 
-  const hubUrl =
-    DATA_MODE !== 'mock' && activeNestId
-      ? ENDPOINTS.shoppingHub(activeNestId)
-      : null;
+  const nav = useShoppingNavigation({
+    remoteShoppingLists: data.shoppingLists,
+    shoppingCategories: data.shoppingCategories,
+    loadShoppingListDetail: data.loadShoppingListDetail,
+  });
+  const actions = useShoppingActions(nav.selectedListId, nav.setDetailData, {
+    shoppingLists: data.shoppingLists,
+    shoppingCategories: data.shoppingCategories,
+    createShoppingList: data.createShoppingList,
+    updateShoppingList: data.updateShoppingList,
+    deleteShoppingList: data.deleteShoppingList,
+    finishShoppingList: data.finishShoppingList,
+    unfinishShoppingList: data.unfinishShoppingList,
+    addShoppingItem: data.addShoppingItem,
+    updateShoppingItem: data.updateShoppingItem,
+    deleteShoppingItem: data.deleteShoppingItem,
+    markItemAsPurchased: data.markItemAsPurchased,
+    unmarkItemAsPurchased: data.unmarkItemAsPurchased,
+    uploadShoppingItems: data.uploadShoppingItems,
+    createShoppingCategory: data.createShoppingCategory,
+    deleteShoppingCategory: data.deleteShoppingCategory,
+  });
+
+  const hubUrl = DATA_MODE !== 'mock' && activeNestId ? ENDPOINTS.shoppingHub(activeNestId) : null;
 
   const { connectionRef, isConnected } = useSignalR(hubUrl);
 
@@ -31,6 +51,7 @@ const Shopping = memo(function Shopping() {
     isConnected,
     viewMode: nav.viewMode,
     selectedListId: nav.selectedListId,
+    shoppingCategories: data.shoppingCategories,
     setDetailData: nav.setDetailData,
     setShoppingLists: nav.setShoppingLists,
     backToLists: nav.backToLists,
@@ -161,8 +182,12 @@ const Shopping = memo(function Shopping() {
           onUploadFile={actions.handleUploadFile}
           onBulkEdit={(patch) => actions.handleBulkEdit(patch, selectedItems)}
           onBulkDelete={() => actions.handleBulkDelete(selectedItems)}
-          onCreateCategory={async (name) => { await actions.createShoppingCategory(name); }}
-          onDeleteCategory={async (id) => { await actions.deleteShoppingCategory(id); }}
+          onCreateCategory={async (name) => {
+            await actions.createShoppingCategory(name);
+          }}
+          onDeleteCategory={async (id) => {
+            await actions.deleteShoppingCategory(id);
+          }}
         />
       )}
     </AnimatePresence>

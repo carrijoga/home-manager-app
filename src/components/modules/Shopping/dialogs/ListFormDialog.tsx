@@ -17,7 +17,13 @@ interface ListFormDialogProps {
   title: string;
 }
 
-export function ListFormDialog({ open, onClose, initialData, onSubmit, title }: ListFormDialogProps) {
+export function ListFormDialog({
+  open,
+  onClose,
+  initialData,
+  onSubmit,
+  title,
+}: ListFormDialogProps) {
   const [data, setData] = useState<ListFormData>(initialData ?? emptyListForm());
   const [saving, setSaving] = useState(false);
 

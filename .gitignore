@@ -42,7 +42,6 @@ build
 # Database migrations (mantidas fora do versionamento)
 migrations/
 
-CLAUDE.md
 .claude
 .playwright-mcp
 .superpowers
@@ -51,3 +50,6 @@ CLAUDE.md
 
 v1.json
 api.json
+
+*storybook.log
+storybook-static

@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import type { Transition, Variants } from "framer-motion";
-import { motion, useAnimation } from "framer-motion";
-import type { HTMLAttributes } from "react";
-import { forwardRef, useCallback, useImperativeHandle, useRef } from "react";
+import type { Transition, Variants } from 'framer-motion';
+import { motion, useAnimation } from 'framer-motion';
+import type { HTMLAttributes } from 'react';
+import { forwardRef, useCallback, useImperativeHandle } from 'react';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 export interface HomeIconHandle {
   startAnimation: () => void;
@@ -35,34 +35,24 @@ const PATH_VARIANTS: Variants = {
 const HomeIcon = forwardRef<HomeIconHandle, HomeIconProps>(
   ({ onMouseEnter, onMouseLeave, className, size = 28, ...props }, ref) => {
     const controls = useAnimation();
-    const isControlledRef = useRef(false);
 
-    useImperativeHandle(ref, () => {
-      isControlledRef.current = true;
-      return {
-        startAnimation: () => controls.start("animate"),
-        stopAnimation: () => controls.start("normal"),
-      };
-    });
+    useImperativeHandle(ref, () => ({
+      startAnimation: () => controls.start('animate'),
+      stopAnimation: () => controls.start('normal'),
+    }));
 
     const handleMouseEnter = useCallback(
       (e: React.MouseEvent<HTMLDivElement>) => {
-        if (isControlledRef.current) {
-          onMouseEnter?.(e);
-        } else {
-          controls.start("animate");
-        }
+        controls.start('animate');
+        onMouseEnter?.(e);
       },
       [controls, onMouseEnter]
     );
 
     const handleMouseLeave = useCallback(
       (e: React.MouseEvent<HTMLDivElement>) => {
-        if (isControlledRef.current) {
-          onMouseLeave?.(e);
-        } else {
-          controls.start("normal");
-        }
+        controls.start('normal');
+        onMouseLeave?.(e);
       },
       [controls, onMouseLeave]
     );
@@ -98,6 +88,6 @@ const HomeIcon = forwardRef<HomeIconHandle, HomeIconProps>(
   }
 );
 
-HomeIcon.displayName = "HomeIcon";
+HomeIcon.displayName = 'HomeIcon';
 
 export { HomeIcon };

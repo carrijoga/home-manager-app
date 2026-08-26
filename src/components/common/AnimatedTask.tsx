@@ -8,16 +8,16 @@
  * - Animação de saída ao mover para concluídas
  */
 
-import { motion } from "framer-motion";
-import { ReactNode } from "react";
+import { motion } from 'framer-motion';
+import { ReactNode } from 'react';
 
 import {
   strikethroughVariants,
   taskCheckboxVariants,
   taskVariants,
   transitions,
-} from "@/lib/animations";
-import { cn } from "@/lib/utils";
+} from '@/lib/animations';
+import { cn } from '@/lib/utils';
 
 interface AnimatedTaskProps {
   children: ReactNode;
@@ -38,7 +38,7 @@ interface AnimatedTaskProps {
  */
 export default function AnimatedTask({
   children,
-  className = "",
+  className = '',
   id,
   completed,
   index = 0,
@@ -51,17 +51,13 @@ export default function AnimatedTask({
       key={id}
       variants={taskVariants}
       initial="initial"
-      animate={completed ? "completed" : "animate"}
+      animate={completed ? 'completed' : 'animate'}
       exit="exit"
       transition={{
         delay: staggerDelay,
       }}
       layout
-      className={cn(
-        "transition-all duration-300",
-        onClick && "cursor-pointer",
-        className
-      )}
+      className={cn('transition-all duration-300', onClick && 'cursor-pointer', className)}
       onClick={onClick}
     >
       {children}
@@ -77,7 +73,7 @@ interface AnimatedCheckboxProps {
   /** Classe CSS adicional */
   className?: string;
   /** Tamanho do checkbox */
-  size?: "sm" | "md" | "lg";
+  size?: 'sm' | 'md' | 'lg';
 }
 
 /**
@@ -86,13 +82,13 @@ interface AnimatedCheckboxProps {
 export function AnimatedCheckbox({
   checked,
   onChange,
-  className = "",
-  size = "md",
+  className = '',
+  size = 'md',
 }: AnimatedCheckboxProps) {
   const sizeClasses = {
-    sm: "w-4 h-4",
-    md: "w-5 h-5",
-    lg: "w-6 h-6",
+    sm: 'w-4 h-4',
+    md: 'w-5 h-5',
+    lg: 'w-6 h-6',
   };
 
   return (
@@ -101,15 +97,15 @@ export function AnimatedCheckbox({
       role="checkbox"
       aria-checked={checked}
       onClick={() => onChange(!checked)}
-      animate={checked ? "checked" : "unchecked"}
+      animate={checked ? 'checked' : 'unchecked'}
       variants={taskCheckboxVariants}
       className={cn(
-        "relative flex items-center justify-center rounded border-2",
-        "transition-colors duration-200",
-        "focus:outline-none focus:ring-2 focus:ring-ninho-500 focus:ring-offset-2",
+        'relative flex items-center justify-center rounded border-2',
+        'transition-colors duration-200',
+        'focus:ring-ninho-500 focus:outline-none focus:ring-2 focus:ring-offset-2',
         checked
-          ? "bg-ninho-500 border-ninho-500 text-white"
-          : "bg-transparent border-gray-300 dark:border-gray-600",
+          ? 'bg-ninho-500 border-ninho-500 text-white'
+          : 'border-gray-300 bg-transparent dark:border-gray-600',
         sizeClasses[size],
         className
       )}
@@ -122,7 +118,7 @@ export function AnimatedCheckbox({
           strokeWidth="3"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="w-3 h-3"
+          className="h-3 w-3"
           initial="unchecked"
           animate="checked"
           variants={{
@@ -131,7 +127,7 @@ export function AnimatedCheckbox({
               pathLength: 1,
               opacity: 1,
               transition: {
-                pathLength: { duration: 0.2, ease: "easeOut" },
+                pathLength: { duration: 0.2, ease: 'easeOut' },
                 opacity: { duration: 0.1 },
               },
             },
@@ -158,30 +154,25 @@ interface AnimatedStrikethroughTextProps {
 export function AnimatedStrikethroughText({
   children,
   completed,
-  className = "",
+  className = '',
 }: AnimatedStrikethroughTextProps) {
   return (
-    <div className={cn("relative", className)}>
-      <span
-        className={cn(
-          "transition-opacity duration-300",
-          completed && "opacity-60"
-        )}
-      >
+    <div className={cn('relative', className)}>
+      <span className={cn('transition-opacity duration-300', completed && 'opacity-60')}>
         {children}
       </span>
 
       {/* Linha de strikethrough animada */}
       <motion.div
-        className="absolute inset-0 flex items-center pointer-events-none"
+        className="pointer-events-none absolute inset-0 flex items-center"
         initial={false}
-        animate={completed ? "checked" : "unchecked"}
+        animate={completed ? 'checked' : 'unchecked'}
       >
         <motion.div
           variants={strikethroughVariants}
           transition={transitions.normal}
           className="h-[2px] bg-current"
-          style={{ transformOrigin: "left center" }}
+          style={{ transformOrigin: 'left center' }}
         />
       </motion.div>
     </div>
@@ -196,8 +187,8 @@ interface TaskContentProps {
 /**
  * Container para conteúdo da tarefa
  */
-export function TaskContent({ children, className = "" }: TaskContentProps) {
-  return <div className={cn("flex-1", className)}>{children}</div>;
+export function TaskContent({ children, className = '' }: TaskContentProps) {
+  return <div className={cn('flex-1', className)}>{children}</div>;
 }
 
 interface TaskActionsProps {
@@ -208,10 +199,6 @@ interface TaskActionsProps {
 /**
  * Container para ações da tarefa (botões, etc.)
  */
-export function TaskActions({ children, className = "" }: TaskActionsProps) {
-  return (
-    <div className={cn("flex items-center gap-2 ml-auto", className)}>
-      {children}
-    </div>
-  );
+export function TaskActions({ children, className = '' }: TaskActionsProps) {
+  return <div className={cn('ml-auto flex items-center gap-2', className)}>{children}</div>;
 }

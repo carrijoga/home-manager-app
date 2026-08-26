@@ -5,12 +5,12 @@ import { z } from 'zod';
  * Os valores comentados são estimativas — confirmar com o backend.
  */
 
-// Tipo da transação financeira: 0 = Despesa, 1 = Receita
+// Tipo da transação financeira (backend: enum TransactionType { Receipt, Expense }): 0 = Receita, 1 = Despesa
 export const TransactionTypeSchema = z.number().int();
 export type TransactionType = z.infer<typeof TransactionTypeSchema>;
 export const TransactionType = {
-  Expense: 0,
-  Income: 1,
+  Income: 0,
+  Expense: 1,
 } as const;
 
 // Método de pagamento: 0 = Dinheiro, 1 = Débito, 2 = Crédito, 3 = PIX, 4 = Boleto, 5 = Outro
@@ -25,22 +25,33 @@ export const ApiPaymentMethod = {
   Other: 5,
 } as const;
 
-// Tipo de conta bancária: 0 = Corrente, 1 = Poupança, 2 = Investimento
+// Tipo de conta bancária: 0 = Corrente, 1 = Poupança, 2 = Dinheiro
 export const AccountTypeSchema = z.number().int();
 export type AccountType = z.infer<typeof AccountTypeSchema>;
 export const AccountType = {
   Checking: 0,
   Savings: 1,
-  Investment: 2,
+  Cash: 2,
 } as const;
 
-// Papel no Nest: 0 = Dono, 1 = Admin, 2 = Membro
+// Papel no Nest: 1 = Owner, 2 = Admin, 3 = Member
 export const NestRoleSchema = z.number().int();
 export type NestRole = z.infer<typeof NestRoleSchema>;
 export const NestRole = {
-  Owner: 0,
-  Admin: 1,
-  Member: 2,
+  Owner: 1,
+  Admin: 2,
+  Member: 3,
+} as const;
+
+// Status de convite de Nest: 1 = Pending, 2 = Accepted, 3 = Cancelled, 4 = Expired, 5 = Rejected
+export const InviteStatusSchema = z.number().int();
+export type InviteStatus = z.infer<typeof InviteStatusSchema>;
+export const InviteStatus = {
+  Pending: 1,
+  Accepted: 2,
+  Cancelled: 3,
+  Expired: 4,
+  Rejected: 5,
 } as const;
 
 // Tipo de notificação: 0 = Info, 1 = Warning, 2 = Error, 3 = Success
@@ -53,12 +64,25 @@ export const NotificationType = {
   Success: 3,
 } as const;
 
-// Tipo de fonte financeira: 0 = Manual, 1 = BankAccount
+// Origem do Payment (FinancialTransactionPayment.SourceType), derivada do PaymentMethod
+// pelo backend — nunca setável livremente pelo frontend. Não confundir com a origem da
+// própria Transaction (FinancialTransaction.SourceId), que não tem SourceType — é sempre
+// BankAccount quando presente (só em Income).
 export const FinancialSourceTypeSchema = z.number().int();
 export type FinancialSourceType = z.infer<typeof FinancialSourceTypeSchema>;
 export const FinancialSourceType = {
-  Manual: 0,
-  BankAccount: 1,
+  BankAccount: 0,
+  CreditCard: 1,
+} as const;
+
+// Status de pagamento da FinancialTransaction — substitui o antigo IsPaid boolean.
+// Nunca setável diretamente via API; resulta do recálculo (soma dos Payments vs. Value).
+export const PaymentStatusSchema = z.number().int();
+export type PaymentStatus = z.infer<typeof PaymentStatusSchema>;
+export const PaymentStatus = {
+  Open: 0,
+  PartiallyPaid: 1,
+  Paid: 2,
 } as const;
 
 // Módulo de origem: 0 = Financial, 1 = Shopping, etc.
@@ -141,4 +165,21 @@ export const CATEGORY_LABELS: Record<number, string> = {
   2: 'Manutenção',
   3: 'Finanças',
   4: 'Outros',
+};
+
+// Tipo de cartão de pagamento: 0 = Crédito, 1 = Débito, 2 = Pré-pago, 3 = Outro
+export const CardType = {
+  Credit: 0,
+  Debit: 1,
+  Prepaid: 2,
+  Other: 3,
+} as const;
+export type CardType = (typeof CardType)[keyof typeof CardType];
+export const CardTypeSchema = z.nativeEnum(CardType);
+
+export const CARD_TYPE_LABELS: Record<CardType, string> = {
+  0: 'Crédito',
+  1: 'Débito',
+  2: 'Pré-pago',
+  3: 'Outro',
 };

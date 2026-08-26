@@ -1,7 +1,7 @@
-import { Calendar } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Calendar } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 export interface CalendarEvent {
   id: string;
@@ -31,23 +31,29 @@ export function UpcomingEvents({ events = [], className }: UpcomingEventsProps) 
   const navigate = useNavigate();
 
   return (
-    <div className={cn(
-      "flex flex-col gap-6 p-6 rounded-3xl h-full bg-card border border-border outline-none", 
-      className
+    <div
+      className={cn(
+        'flex h-full flex-col gap-6 rounded-3xl border border-border bg-card p-6 outline-none',
+        className
       )}
     >
       {/* Section title */}
-      <div className="flex items-center gap-3 shrink-0">
-        <Calendar size={20} className="text-foreground shrink-0" strokeWidth={1.5} aria-hidden="true" />
-        <h3 className="font-editorial font-bold text-foreground text-xl whitespace-nowrap">
+      <div className="flex shrink-0 items-center gap-3">
+        <Calendar
+          size={20}
+          className="shrink-0 text-foreground"
+          strokeWidth={1.5}
+          aria-hidden="true"
+        />
+        <h3 className="font-editorial whitespace-nowrap text-xl font-bold text-foreground">
           Próximos Eventos
         </h3>
       </div>
 
       {/* Event list */}
-      <div className="flex flex-col gap-6 flex-1 pb-2">
+      <div className="flex flex-1 flex-col gap-6 pb-2">
         {events.length === 0 ? (
-          <p className="font-ui text-sm text-muted-foreground/50 leading-relaxed">
+          <p className="font-ui text-sm leading-relaxed text-muted-foreground/50">
             Nenhum compromisso esta semana.
           </p>
         ) : (
@@ -56,25 +62,28 @@ export function UpcomingEvents({ events = [], className }: UpcomingEventsProps) 
               {/* Colored vertical accent — tonal, no border lines */}
               <div
                 className={cn(
-                  "absolute left-0 top-1 bottom-1 w-0.5 rounded-full",
-                  event.isNext ? "bg-primary" : "bg-muted-foreground/30"
+                  'absolute bottom-1 left-0 top-1 w-0.5 rounded-full',
+                  event.isNext ? 'bg-primary' : 'bg-muted-foreground/30'
                 )}
               />
-              <div className="flex flex-col gap-0.5 min-w-0">
+              <div className="flex min-w-0 flex-col gap-0.5">
                 <span
                   className={cn(
-                    "font-ui font-semibold uppercase tracking-[0.6px]",
-                    event.isNext ? "text-primary" : "text-muted-foreground/80"
+                    'font-ui font-semibold uppercase tracking-[0.6px]',
+                    event.isNext ? 'text-primary' : 'text-muted-foreground/80'
                   )}
-                  style={{ fontSize: "var(--text-xs)" }}
+                  style={{ fontSize: 'var(--text-xs)' }}
                 >
                   {event.dateLabel}
                 </span>
-                <span className="font-ui font-semibold text-foreground text-sm truncate">
+                <span className="font-ui truncate text-sm font-semibold text-foreground">
                   {event.title}
                 </span>
                 {event.location && (
-                  <span className="font-ui text-muted-foreground truncate" style={{ fontSize: "var(--text-xs)" }}>
+                  <span
+                    className="font-ui truncate text-muted-foreground"
+                    style={{ fontSize: 'var(--text-xs)' }}
+                  >
                     {event.location}
                   </span>
                 )}
@@ -87,9 +96,13 @@ export function UpcomingEvents({ events = [], className }: UpcomingEventsProps) 
       {/* Ghost border CTA */}
       <button
         type="button"
-        onClick={() => navigate("/calendar")}
-        className="w-full min-h-[44px] px-4 rounded-2xl font-ui font-semibold uppercase tracking-[1.2px] bg-transparent transition-opacity hover:opacity-70 active:scale-[0.98] shrink-0 flex items-center justify-center"
-        style={{ border: "1px solid var(--border)", color: "var(--muted-foreground)", fontSize: "var(--text-xs)" }}
+        onClick={() => navigate('/calendar')}
+        className="font-ui flex min-h-[44px] w-full shrink-0 items-center justify-center rounded-2xl bg-transparent px-4 font-semibold uppercase tracking-[1.2px] transition-opacity hover:opacity-70 active:scale-[0.98]"
+        style={{
+          border: '1px solid var(--border)',
+          color: 'var(--muted-foreground)',
+          fontSize: 'var(--text-xs)',
+        }}
       >
         Abrir Agenda
       </button>

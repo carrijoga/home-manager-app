@@ -51,6 +51,7 @@ export const UpdateShoppingItemRequestSchema = z.object({
 export type UpdateShoppingItemRequest = z.infer<typeof UpdateShoppingItemRequestSchema>;
 
 export const MarkAsPurchasedRequestSchema = z.object({
+  quantity: MoneySchema,
   price: MoneyRequestSchema,
   purchasedAt: DateTimeSchema,
 });

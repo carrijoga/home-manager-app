@@ -4,6 +4,15 @@ import { DateTimeSchema, UuidSchema } from './shared';
 
 // ── Response ──────────────────────────────────────────────────────────────────
 
+export const NoticeReactionResponseSchema = z.object({
+  noticeReactionId: UuidSchema,
+  noticeId: UuidSchema,
+  userId: UuidSchema,
+  emoji: z.string(),
+  createdAt: DateTimeSchema,
+});
+export type NoticeReactionResponse = z.infer<typeof NoticeReactionResponseSchema>;
+
 export const NoticeResponseSchema = z.object({
   noticeId: UuidSchema,
   message: z.string(),
@@ -13,6 +22,7 @@ export const NoticeResponseSchema = z.object({
   isActive: z.boolean(),
   createdBy: UuidSchema,
   createdAt: DateTimeSchema,
+  reactions: z.array(NoticeReactionResponseSchema),
 });
 export type NoticeResponse = z.infer<typeof NoticeResponseSchema>;
 
@@ -30,11 +40,9 @@ export interface CreateNoticeRequest {
   message: string;
   date: string;
   expiresAt?: string | null;
-  color?: string;
 }
 
 export interface UpdateNoticeRequest {
   message: string;
   expiresAt?: string | null;
-  color?: string;
 }

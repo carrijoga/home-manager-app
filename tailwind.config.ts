@@ -1,5 +1,19 @@
 import type { Config } from 'tailwindcss';
 
+/**
+ * Torna um token CSS compatível com o modificador de opacidade do Tailwind (`bg-primary/10`).
+ *
+ * O Tailwind só gera a variante `/N` quando o valor da cor contém o placeholder
+ * `<alpha-value>`. Um valor cru como `var(--primary)` não o contém, então utilitários
+ * como `bg-primary/10` eram descartados silenciosamente na compilação — não geravam
+ * CSS nenhum, e o elemento ficava sem fundo.
+ *
+ * `color-mix` funciona com qualquer formato de cor (hex, oklch, rgba), o que permite
+ * manter os tokens em `index.css` exatamente como estão.
+ */
+const alphaToken = (token: string) =>
+	`color-mix(in srgb, var(${token}) calc(100% * <alpha-value>), transparent)`;
+
 const config: Config = {
 	content: [
 		"./index.html",
@@ -8,6 +22,21 @@ const config: Config = {
 	darkMode: 'class',
 	theme: {
     	extend: {
+    		/**
+    		 * Valores de opacidade fora da escala padrão do Tailwind
+    		 * (que vai de 5 em 5, e pula de 10 para 20).
+    		 *
+    		 * Sem declará-los aqui, utilitárias como `bg-primary/8` não
+    		 * geram CSS nenhum e o elemento fica sem fundo — o mesmo
+    		 * sintoma que `alphaToken` corrigiu para os valores da escala.
+    		 * Usados pelo item ativo da sidebar e pelo hover da lista de
+    		 * compras.
+    		 */
+    		opacity: {
+    			'8':  '0.08',
+    			'12': '0.12',
+    			'15': '0.15',
+    		},
     		animation: {
     			'fade-in': 'fadeIn 0.3s var(--ease-out-quart)',
     			'slide-in': 'slideInRight 0.4s var(--ease-out-quart)',
@@ -84,56 +113,56 @@ const config: Config = {
     			'postit-mint':  '#d2edd8',
     			'postit-sky':   '#c8ddf0',
     			'postit-peach': '#f0d9c0',
-    			/* shadcn/ui bridge — direct oklch values */
-    			background:  'var(--background)',
-    			foreground:  'var(--foreground)',
+    			/* shadcn/ui bridge — tokens CSS envolvidos para suportar `/N` (ver alphaToken) */
+    			background:  alphaToken('--background'),
+    			foreground:  alphaToken('--foreground'),
     			card: {
-    				DEFAULT:    'var(--card)',
-    				foreground: 'var(--card-foreground)',
+    				DEFAULT:    alphaToken('--card'),
+    				foreground: alphaToken('--card-foreground'),
     			},
     			popover: {
-    				DEFAULT:    'var(--popover)',
-    				foreground: 'var(--popover-foreground)',
+    				DEFAULT:    alphaToken('--popover'),
+    				foreground: alphaToken('--popover-foreground'),
     			},
     			primary: {
-    				DEFAULT:    'var(--primary)',
-    				foreground: 'var(--primary-foreground)',
+    				DEFAULT:    alphaToken('--primary'),
+    				foreground: alphaToken('--primary-foreground'),
     			},
     			secondary: {
-    				DEFAULT:    'var(--secondary)',
-    				foreground: 'var(--secondary-foreground)',
+    				DEFAULT:    alphaToken('--secondary'),
+    				foreground: alphaToken('--secondary-foreground'),
     			},
     			muted: {
-    				DEFAULT:    'var(--muted)',
-    				foreground: 'var(--muted-foreground)',
+    				DEFAULT:    alphaToken('--muted'),
+    				foreground: alphaToken('--muted-foreground'),
     			},
     			accent: {
-    				DEFAULT:    'var(--accent)',
-    				foreground: 'var(--accent-foreground)',
+    				DEFAULT:    alphaToken('--accent'),
+    				foreground: alphaToken('--accent-foreground'),
     			},
     			destructive: {
-    				DEFAULT:    'var(--destructive)',
-    				foreground: 'var(--destructive-foreground)',
+    				DEFAULT:    alphaToken('--destructive'),
+    				foreground: alphaToken('--destructive-foreground'),
     			},
-    			border:  'var(--border)',
-    			input:   'var(--input)',
-    			ring:    'var(--ring)',
+    			border:  alphaToken('--border'),
+    			input:   alphaToken('--input'),
+    			ring:    alphaToken('--ring'),
     			chart: {
-    				'1': 'var(--chart-1)',
-    				'2': 'var(--chart-2)',
-    				'3': 'var(--chart-3)',
-    				'4': 'var(--chart-4)',
-    				'5': 'var(--chart-5)',
+    				'1': alphaToken('--chart-1'),
+    				'2': alphaToken('--chart-2'),
+    				'3': alphaToken('--chart-3'),
+    				'4': alphaToken('--chart-4'),
+    				'5': alphaToken('--chart-5'),
     			},
     			sidebar: {
-    				DEFAULT:             'var(--sidebar-background)',
-    				foreground:          'var(--sidebar-foreground)',
-    				primary:             'var(--sidebar-primary)',
-    				'primary-foreground':'var(--sidebar-primary-foreground)',
-    				accent:              'var(--sidebar-accent)',
-    				'accent-foreground': 'var(--sidebar-accent-foreground)',
-    				border:              'var(--sidebar-border)',
-    				ring:                'var(--sidebar-ring)',
+    				DEFAULT:             alphaToken('--sidebar-background'),
+    				foreground:          alphaToken('--sidebar-foreground'),
+    				primary:             alphaToken('--sidebar-primary'),
+    				'primary-foreground':alphaToken('--sidebar-primary-foreground'),
+    				accent:              alphaToken('--sidebar-accent'),
+    				'accent-foreground': alphaToken('--sidebar-accent-foreground'),
+    				border:              alphaToken('--sidebar-border'),
+    				ring:                alphaToken('--sidebar-ring'),
     			},
     		},
     		fontSize: {

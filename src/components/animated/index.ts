@@ -19,24 +19,20 @@
 // TRANSIÇÕES E LAYOUTS
 // ============================================================================
 
-export { default as PageTransition } from "../common/PageTransition";
+export { default as PageTransition } from '../common/PageTransition';
 
 // ============================================================================
 // CARDS E LISTAS
 // ============================================================================
 
-export { default as AnimatedCard } from "../common/AnimatedCard";
-export {
-  AnimatedGrid,
-  AnimatedList,
-  AnimatedListItem,
-} from "../common/AnimatedList";
+export { default as AnimatedCard } from '../common/AnimatedCard';
+export { AnimatedGrid, AnimatedList, AnimatedListItem } from '../common/AnimatedList';
 
 // ============================================================================
 // DIALOGS E MODALS
 // ============================================================================
 
-export { default as AnimatedDialog } from "../common/AnimatedDialog";
+export { default as AnimatedDialog } from '../common/AnimatedDialog';
 export {
   Dialog,
   DialogContent,
@@ -44,52 +40,44 @@ export {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "../common/AnimatedDialog";
+} from '../common/AnimatedDialog';
 
 // ============================================================================
 // POST-ITS
 // ============================================================================
 
-export { default as AnimatedPostIt } from "../common/AnimatedPostIt";
-export {
-  PostItBody,
-  PostItFooter,
-  PostItHeader,
-} from "../common/AnimatedPostIt";
+export { default as AnimatedPostIt } from '../common/AnimatedPostIt';
+export { PostItBody, PostItFooter, PostItHeader } from '../common/AnimatedPostIt';
 
 // ============================================================================
 // TAREFAS
 // ============================================================================
 
-export { default as AnimatedTask } from "../common/AnimatedTask";
+export { default as AnimatedTask } from '../common/AnimatedTask';
 export {
   AnimatedCheckbox,
   AnimatedStrikethroughText,
   TaskActions,
   TaskContent,
-} from "../common/AnimatedTask";
+} from '../common/AnimatedTask';
 
 // ============================================================================
 // BOTÕES
 // ============================================================================
 
-export { default as AnimatedButton } from "../common/AnimatedButton";
+export { default as AnimatedButton } from '../common/AnimatedButton';
 export {
   AnimatedIconButton,
   FloatingActionButton,
   PulsingButton,
   ShakeButton,
-} from "../common/AnimatedButton";
+} from '../common/AnimatedButton';
 
 // ============================================================================
 // TOAST/NOTIFICAÇÕES
 // ============================================================================
 
-export {
-  toast,
-  ToastProvider,
-  useToast,
-} from "../common/AnimatedToast";
+export { toast, ToastProvider, useToast } from '../common/AnimatedToast';
 
 // ============================================================================
 // HOOKS
@@ -99,10 +87,10 @@ export {
   usePrefersReducedMotion,
   useReducedMotionTransition,
   useReducedMotionVariants,
-} from "../../hooks/usePrefersReducedMotion";
+} from '../../hooks/usePrefersReducedMotion';
 
 // ============================================================================
 // CONFIGURAÇÕES E VARIANTES
 // ============================================================================
 
-export * from "../../lib/animations";
+export * from '../../lib/animations';

@@ -20,7 +20,7 @@ export function formatDateBR(date) {
 export function formatCurrency(value) {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
-    currency: 'BRL'
+    currency: 'BRL',
   }).format(value);
 }
 
@@ -94,5 +94,5 @@ export default {
   getCurrentDateISO,
   getCurrentMonthName,
   isPastDate,
-  daysDifference
+  daysDifference,
 };

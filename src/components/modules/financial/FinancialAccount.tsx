@@ -1,0 +1,243 @@
+import { Plus, Wallet } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+import EmptyState from '@/components/common/EmptyState';
+import { BankAccountSheet } from '@/components/modals/BankAccountSheet';
+import { DeleteAccountDialog } from '@/components/modals/DeleteAccountDialog';
+import { InactivateAccountDialog } from '@/components/modals/InactivateAccountDialog';
+import { AccountSkeleton } from '@/components/skeletons/AccountSkeleton';
+import { Button } from '@/components/ui';
+import { useApp } from '@/contexts/AppContext';
+import { useToastNotifications } from '@/hooks/use-toast-notifications';
+import type {
+  BankAccountResponse,
+  CreateBankAccountRequest,
+  UpdateBankAccountRequest,
+} from '@/schemas/bank-account';
+import * as bankAccountService from '@/services/bankAccountService';
+
+import { AccountDetails } from './account/AccountDetails';
+import { AccountList } from './account/AccountList';
+
+export function FinancialAccount() {
+  const { activeNestId } = useApp();
+  const { showSuccess, showError } = useToastNotifications();
+
+  const [accounts, setAccounts] = useState<BankAccountResponse[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [canDeleteSelected, setCanDeleteSelected] = useState(false);
+
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [editingAccount, setEditingAccount] = useState<BankAccountResponse | null>(null);
+
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState<BankAccountResponse | null>(null);
+
+  const [inactivateOpen, setInactivateOpen] = useState(false);
+  const [inactivatingAccount, setInactivatingAccount] = useState<BankAccountResponse | null>(null);
+
+  const nestId = activeNestId ?? undefined;
+
+  // showError retorna função nova a cada render; guardar em ref para que
+  // loadAccounts dependa só de nestId e não entre em loop de flicker.
+  const showErrorRef = useRef(showError);
+  showErrorRef.current = showError;
+
+  const loadAccounts = useCallback(async () => {
+    setLoading(true);
+    try {
+      const list = await bankAccountService.listBankAccounts(nestId);
+      setAccounts(list);
+      setSelectedId((prev) => {
+        if (prev && list.some((a) => a.bankAccountId === prev)) return prev;
+        return list.find((a) => a.isActive)?.bankAccountId ?? list[0]?.bankAccountId ?? null;
+      });
+    } catch {
+      showErrorRef.current('Não foi possível carregar as contas.');
+    } finally {
+      setLoading(false);
+    }
+  }, [nestId]);
+
+  useEffect(() => {
+    void loadAccounts();
+  }, [loadAccounts]);
+
+  const selectedAccount = accounts.find((a) => a.bankAccountId === selectedId) ?? null;
+
+  useEffect(() => {
+    if (!selectedAccount) {
+      setCanDeleteSelected(false);
+      return;
+    }
+    let active = true;
+    bankAccountService
+      .canDeleteBankAccount(selectedAccount.bankAccountId, nestId)
+      .then((res) => {
+        if (active) setCanDeleteSelected(res.canDelete);
+      })
+      .catch(() => {
+        if (active) setCanDeleteSelected(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [selectedAccount, nestId]);
+
+  const handleCreate = async (payload: CreateBankAccountRequest) => {
+    try {
+      await bankAccountService.createBankAccount(payload, nestId);
+      showSuccess('Conta criada!');
+      await loadAccounts();
+    } catch {
+      showError('Não foi possível criar a conta.');
+      throw new Error('create failed');
+    }
+  };
+
+  const handleUpdate = async (id: string, payload: UpdateBankAccountRequest) => {
+    try {
+      await bankAccountService.updateBankAccount(id, payload, nestId);
+      showSuccess('Conta atualizada!');
+      await loadAccounts();
+    } catch {
+      showError('Não foi possível atualizar a conta.');
+      throw new Error('update failed');
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingAccount) return;
+    try {
+      await bankAccountService.deleteBankAccount(deletingAccount.bankAccountId, nestId);
+      showSuccess('Conta excluída.');
+      await loadAccounts();
+    } catch {
+      showError('Não foi possível excluir a conta.');
+      throw new Error('delete failed');
+    }
+  };
+
+  const handleConfirmInactivate = async () => {
+    if (!inactivatingAccount) return;
+    try {
+      const result = await bankAccountService.inactivateBankAccount(
+        inactivatingAccount.bankAccountId,
+        nestId
+      );
+      showSuccess(
+        result.affectedPaymentCardsCount > 0
+          ? `Conta inativada. ${result.affectedPaymentCardsCount} cartão(ões) também foi(ram) inativado(s).`
+          : 'Conta inativada.'
+      );
+      await loadAccounts();
+    } catch {
+      showError('Não foi possível inativar a conta.');
+      throw new Error('inactivate failed');
+    }
+  };
+
+  const handleToggleActive = async (account: BankAccountResponse) => {
+    if (account.isActive) {
+      setInactivatingAccount(account);
+      setInactivateOpen(true);
+      return;
+    }
+
+    try {
+      await bankAccountService.activateBankAccount(account.bankAccountId, nestId);
+      showSuccess('Conta ativada.');
+      await loadAccounts();
+    } catch {
+      showError('Não foi possível ativar a conta.');
+      throw new Error('activate failed');
+    }
+  };
+
+  const canDeleteMap = selectedId ? { [selectedId]: canDeleteSelected } : {};
+
+  const openCreate = () => {
+    setEditingAccount(null);
+    setSheetOpen(true);
+  };
+  const openEdit = (account: BankAccountResponse) => {
+    setEditingAccount(account);
+    setSheetOpen(true);
+  };
+  const openDelete = (account: BankAccountResponse) => {
+    setDeletingAccount(account);
+    setDeleteOpen(true);
+  };
+
+  if (loading) return <AccountSkeleton />;
+
+  return (
+    <div className="flex max-w-full flex-col gap-6 overflow-x-hidden">
+      <div className="flex items-center gap-3">
+        <Wallet size={18} className="text-foreground" strokeWidth={1.5} aria-hidden="true" />
+        <div>
+          <h1 className="font-editorial text-2xl font-bold text-foreground">Contas</h1>
+          <p className="font-ui text-sm text-muted-foreground">Gerencie suas contas bancárias</p>
+        </div>
+      </div>
+
+      {accounts.length === 0 ? (
+        <div className="rounded-3xl border border-border bg-card p-6">
+          <EmptyState
+            icon={Wallet}
+            title="Nenhuma conta ainda"
+            description="Adicione uma conta bancária para acompanhar seus saldos."
+            action={
+              <Button onClick={openCreate} size="sm" className="gap-2 font-semibold">
+                <Plus size={16} strokeWidth={1.5} /> Adicionar conta
+              </Button>
+            }
+          />
+        </div>
+      ) : (
+        <div className="flex flex-col gap-4 lg:flex-row">
+          <div className="shrink-0 lg:w-[240px]">
+            <AccountList
+              accounts={accounts}
+              selectedId={selectedId}
+              canDeleteMap={canDeleteMap}
+              onSelect={setSelectedId}
+              onEdit={openEdit}
+              onToggleActive={handleToggleActive}
+              onDelete={openDelete}
+              onAdd={openCreate}
+            />
+          </div>
+          <div className="flex-1">
+            {selectedAccount && <AccountDetails account={selectedAccount} />}
+          </div>
+        </div>
+      )}
+
+      <BankAccountSheet
+        open={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+        account={editingAccount}
+        onCreate={handleCreate}
+        onUpdate={handleUpdate}
+      />
+
+      <DeleteAccountDialog
+        open={deleteOpen}
+        account={deletingAccount}
+        onClose={() => setDeleteOpen(false)}
+        onConfirm={handleConfirmDelete}
+      />
+
+      <InactivateAccountDialog
+        open={inactivateOpen}
+        account={inactivatingAccount}
+        onClose={() => setInactivateOpen(false)}
+        onConfirm={handleConfirmInactivate}
+      />
+    </div>
+  );
+}
+
+export default FinancialAccount;

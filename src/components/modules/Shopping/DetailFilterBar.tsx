@@ -1,4 +1,12 @@
-import { ArrowUpDown, ChevronLeft, ChevronRight, ListChecks, Plus, Tag, Upload } from 'lucide-react';
+import {
+  ArrowUpDown,
+  ChevronLeft,
+  ChevronRight,
+  ListChecks,
+  Plus,
+  Tag,
+  Upload,
+} from 'lucide-react';
 import React from 'react';
 
 import { Input } from '@/components/ui/input';
@@ -74,7 +82,7 @@ export function DetailFilterBar(props: DetailFilterBarProps) {
           </button>
         </div>
       ) : (
-        <div className="border-border/50 flex flex-col gap-2 border-b pb-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3">
+        <div className="flex flex-col gap-2 border-b border-border/50 pb-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3">
           {/* Sort pills */}
           <div className="flex items-center gap-1.5 sm:gap-2">
             <ArrowUpDown size={12} className="shrink-0 text-muted-foreground" />

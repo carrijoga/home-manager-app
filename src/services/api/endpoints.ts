@@ -21,18 +21,31 @@ export const ENDPOINTS = {
   users: {
     me: '/api/users/me',
     meProfile: '/api/users/me/profile',
-    meWeather: '/api/users/me/weather',
+    meWeather: '/api/dashboard/weather',
     meConfiguration: '/api/users/me/configuration',
     meNotifications: '/api/users/me/notification',
     meNests: '/api/users/me/nests',
     usernamePreview: '/api/users/username/preview',
+    avatarOptions: '/api/users/avatar-options',
+    changeAvatarSlug: '/api/users/me/avatar-slug',
+    profilePicture: '/api/users/me/profile-picture',
   },
 
   // Nest (grupo/família)
   nests: {
     create: '/api/nests/create',
     update: '/api/nests/update',
+    leave: '/api/nests/leave',
+    setDefault: (nestId: string) => `/api/nests/${nestId}/set-default`,
     delete: (nestId: string) => `/api/nests/${nestId}`,
+    invites: '/api/nests/invites',
+    invite: (email: string) => `/api/nests/invite/${encodeURIComponent(email)}`,
+    resendInvite: (inviteId: string) => `/api/nests/resend-invite/${inviteId}`,
+    acceptInvite: (tokenHash: string) =>
+      `/api/nests/accept-invite/${encodeURIComponent(tokenHash)}`,
+    configuration: '/api/nests/configuration',
+    removeMember: (userId: string) => `/api/nests/remove-member/${userId}`,
+    members: (nestId: string) => `/api/nests/members/${nestId}`,
   },
 
   // Transações financeiras
@@ -42,20 +55,47 @@ export const ENDPOINTS = {
     getById: '/api/financial-transactions/get-by-id',
     addPayment: '/api/financial-transactions/add-payment',
     removePayment: '/api/financial-transactions/remove-payment',
+    // NÃO EXPOSTO no back-end ainda: GetDashboardFinancialCommand existe no handler
+    // mas não tem rota no DashboardController. Em modo API isto vai retornar 404.
+    dashboard: '/api/financial-transactions/dashboard',
+    update: (id: string) => `/api/financial-transactions/${id}`,
+    delete: (id: string) => `/api/financial-transactions/${id}`,
   },
 
   // Categorias
   categories: {
     create: '/api/categories/create',
     list: '/api/categories/list',
+    listOptions: '/api/categories/list-options',
     getById: '/api/categories/get-by-id',
+    update: (id: string) => `/api/categories/${id}`,
+    delete: (id: string) => `/api/categories/${id}`,
   },
 
   // Contas bancárias
   bankAccounts: {
+    list: '/api/bank-account',
     create: '/api/bank-account',
     getById: (id: string) => `/api/bank-account/${id}`,
     update: (id: string) => `/api/bank-account/${id}`,
+    delete: (id: string) => `/api/bank-account/${id}`,
+    canDelete: (id: string) => `/api/bank-account/${id}/can-delete`,
+    inactivate: (id: string) => `/api/bank-account/${id}/inactivate`,
+    activate: (id: string) => `/api/bank-account/${id}/activate`,
+  },
+
+  // Cartões de pagamento
+  paymentCards: {
+    create: '/api/payment-cards/create',
+    list: '/api/payment-cards/list',
+    getById: (id: string) => `/api/payment-cards/get-by-id?id=${id}`,
+    updateDetails: (id: string) => `/api/payment-cards/update-details/${id}`,
+    updateCreditSettings: (id: string) => `/api/payment-cards/update-credit-settings/${id}`,
+    inactivate: (id: string) => `/api/payment-cards/inactivate/${id}`,
+    activate: (id: string) => `/api/payment-cards/activate/${id}`,
+    canDelete: (id: string) => `/api/payment-cards/can-delete/${id}`,
+    delete: (id: string) => `/api/payment-cards/delete/${id}`,
+    // Fatura/lançamentos: SEM contrato de API (mock-only), igual future-items.
   },
 
   // Segurança
@@ -81,7 +121,8 @@ export const ENDPOINTS = {
     update: (id: string) => `/api/shopping-item/${id}`,
     delete: (id: string) => `/api/shopping-item/${id}`,
     markAsPurchased: (id: string) => `/api/shopping-item/${id}/purchase`,
-    unmarkAsPurchased: (listId: string, itemId: string) => `/api/shopping-item/${listId}/unpurchase/${itemId}`,
+    unmarkAsPurchased: (listId: string, itemId: string) =>
+      `/api/shopping-item/${listId}/unpurchase/${itemId}`,
     upload: (listId: string) => `/api/shopping-item/${listId}/upload`,
   },
 
@@ -92,9 +133,19 @@ export const ENDPOINTS = {
     delete: (id: string) => `/api/shopping-category/${id}`,
   },
 
-  // Hub SignalR — Listas de compras
-  shoppingHub: (nestId: string) =>
-    `${(import.meta.env.VITE_API_URL || 'http://localhost:5026').replace(/\/$/, '')}/hubs/shopping-list?nestId=${nestId}`,
+  // Hub SignalR — Listas de compras.
+  // Sem VITE_API_URL a URL fica relativa e passa pelo proxy do dev server
+  // (ver `server.proxy` em vite.config.ts), evitando CORS.
+  shoppingHub: (nestId: string) => {
+    const base = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+    return `${base}/hubs/shopping-list?nestId=${nestId}`;
+  },
+
+  // Hub SignalR — Dashboard
+  dashboardHub: (nestId: string) => {
+    const base = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+    return `${base}/hubs/dashboard?nestId=${nestId}`;
+  },
 
   // Avisos (Notices)
   notices: {
@@ -105,6 +156,8 @@ export const ENDPOINTS = {
     delete: (id: string) => `/api/notices/${id}`,
     pin: (id: string) => `/api/notices/${id}/pin`,
     unpin: (id: string) => `/api/notices/${id}/unpin`,
+    reaction: (id: string) => `/api/notices/${id}/reaction`,
+    unreaction: (id: string) => `/api/notices/${id}/unreaction`,
   },
 
   // Tarefas (Tasks)
@@ -120,16 +173,16 @@ export const ENDPOINTS = {
     uncomplete: (id: string) => `/api/tasks/${id}/uncomplete`,
   },
 
-  // Configurações do usuário (mock-only por ora)
+  // Configurações do usuário
   settings: {
     profile: '/api/users/me/profile',
-    username: '/api/users/me/username',
-    notifications: '/api/users/me/notifications',
-    changePassword: '/api/users/me/change-password',
-    logoutOthers: '/api/auth/logout-others',
-    avatar: '/api/users/me/avatar',
-    privacy: '/api/users/me/privacy',
-    data: '/api/users/me/data',
+    configuration: '/api/users/me/configuration',
+  },
+
+  // Dashboard
+  dashboard: {
+    summary: '/api/dashboard',
+    weather: '/api/dashboard/weather',
   },
 
   // Health

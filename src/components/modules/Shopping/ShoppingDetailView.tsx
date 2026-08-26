@@ -1,6 +1,15 @@
 import { formatCurrency } from '@utils/formatters';
 import { motion } from 'framer-motion';
-import { Check, ListChecks, Pencil, Plus, RotateCcw, ShoppingCart, Trash2, Undo2 } from 'lucide-react';
+import {
+  Check,
+  ListChecks,
+  Pencil,
+  Plus,
+  RotateCcw,
+  ShoppingCart,
+  Trash2,
+  Undo2,
+} from 'lucide-react';
 import React from 'react';
 
 import {
@@ -15,7 +24,9 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { useSidebar } from '@/components/ui/sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 import type { AppShoppingItem, AppShoppingList } from '@/types';
 
 import { CategorySection } from './CategorySection';
@@ -26,7 +37,7 @@ import { ItemFormDialog } from './dialogs/ItemFormDialog';
 import { ListFormDialog } from './dialogs/ListFormDialog';
 import { ManageCategoriesDialog } from './dialogs/ManageCategoriesDialog';
 import { MarkAsPurchasedDialog } from './dialogs/MarkAsPurchasedDialog';
-import { quantityLabel } from './helpers';
+import { getItemEstimatedTotal, getItemSpentTotal, quantityLabel } from './helpers';
 import type { BulkEditPatch, ItemFormData, ListFormData, PurchaseFormData } from './types';
 
 interface ShoppingDetailViewProps {
@@ -53,7 +64,9 @@ interface ShoppingDetailViewProps {
   selectedItems: AppShoppingItem[];
   inlineEditingId: string | null;
   inlineForm: { qty: string; estimated: number | null; paid: number | null };
-  setInlineForm: React.Dispatch<React.SetStateAction<{ qty: string; estimated: number | null; paid: number | null }>>;
+  setInlineForm: React.Dispatch<
+    React.SetStateAction<{ qty: string; estimated: number | null; paid: number | null }>
+  >;
   inlineSaving: boolean;
   pendingId: string | null;
   isDeleting: boolean;
@@ -109,6 +122,7 @@ interface ShoppingDetailViewProps {
 }
 
 export function ShoppingDetailView(props: ShoppingDetailViewProps) {
+  const { state: sidebarState, isMobile } = useSidebar();
   const {
     detailData,
     isLoadingDetail,
@@ -192,9 +206,15 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
   const detailTotalItems = detailData?.items.length ?? 0;
   const detailPct =
     detailTotalItems === 0 ? 0 : Math.round((detailPurchasedItems / detailTotalItems) * 100);
-  const totalEstimated = detailData?.items.reduce((s, i) => s + (i.estimatedPrice ?? 0), 0) ?? 0;
+  const totalEstimated =
+    detailData?.items.reduce(
+      (s, i) => s + getItemEstimatedTotal(i.estimatedPrice, i.quantity, i.unitType),
+      0
+    ) ?? 0;
   const totalSpent =
-    detailData?.items.filter((i) => i.isPurchased).reduce((s, i) => s + (i.price ?? 0), 0) ?? 0;
+    detailData?.items
+      .filter((i) => i.isPurchased)
+      .reduce((s, i) => s + getItemSpentTotal(i.price, i.quantity, i.unitType), 0) ?? 0;
   const remaining = Math.max(0, totalEstimated - totalSpent);
 
   return (
@@ -262,7 +282,7 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
               {[...Array(2)].map((_, j) => (
                 <div
                   key={j}
-                  className="border-border/30 flex items-center gap-4 border-t px-6 py-4"
+                  className="flex items-center gap-4 border-t border-border/30 px-6 py-4"
                 >
                   <Skeleton className="h-6 w-6 rounded-lg" />
                   <Skeleton className="h-4 flex-1" />
@@ -347,7 +367,17 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
               <p className="text-xs text-muted-foreground">
                 {quantityLabel(selectedItem.quantity, selectedItem.unitType)}
                 {selectedItem.estimatedPrice != null && (
-                  <> · estimado {formatCurrency(selectedItem.estimatedPrice)}</>
+                  <>
+                    {' '}
+                    · estimado{' '}
+                    {formatCurrency(
+                      getItemEstimatedTotal(
+                        selectedItem.estimatedPrice,
+                        selectedItem.quantity,
+                        selectedItem.unitType
+                      )
+                    )}
+                  </>
                 )}
               </p>
               {selectedItem.notes && (
@@ -386,7 +416,7 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
                   </button>
 
                   <button
-                    className="border-destructive/30 hover:bg-destructive/10 flex w-full items-center justify-center gap-2 rounded-2xl border py-3 text-sm font-medium text-destructive transition-colors"
+                    className="flex w-full items-center justify-center gap-2 rounded-2xl border border-destructive/30 py-3 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
                     onClick={() => {
                       onDeleteItem(selectedItem);
                       setShowMobileEditSheet(false);
@@ -427,7 +457,7 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
             <Button
               variant="outline"
               size="sm"
-              className="border-primary/40 bg-primary/10 hover:bg-primary/15 flex-1 gap-1.5 text-xs text-primary hover:text-primary"
+              className="flex-1 gap-1.5 border-primary/40 bg-primary/10 text-xs text-primary hover:bg-primary/15 hover:text-primary"
               onClick={() => setShowBulkEdit(true)}
             >
               <Pencil size={13} />
@@ -436,7 +466,7 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
             <Button
               variant="outline"
               size="sm"
-              className="hover:bg-destructive/10 border-destructive/30 flex-1 gap-1.5 text-xs text-destructive hover:text-destructive"
+              className="flex-1 gap-1.5 border-destructive/30 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
               onClick={() => setShowBulkDelete(true)}
             >
               <Trash2 size={13} />
@@ -471,7 +501,7 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={onBulkDelete}
-              className="hover:bg-destructive/90 bg-destructive text-destructive-foreground"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Excluir
             </AlertDialogAction>
@@ -536,7 +566,7 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
             <AlertDialogAction
               onClick={onDeleteList}
               disabled={isDeleting}
-              className="hover:bg-destructive/90 bg-destructive text-destructive-foreground"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {isDeleting ? 'Excluindo...' : 'Excluir'}
             </AlertDialogAction>
@@ -546,10 +576,18 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
 
       {/* ── Sticky footer bar ────────────────────────────────────────────────── */}
       {detailData && !isBulkMode && (
-        <div className="border-border/20 bg-card/90 fixed bottom-0 left-0 right-0 z-40 flex items-center justify-between gap-6 border-t px-6 py-4 backdrop-blur-md dark:bg-[rgba(28,28,28,0.92)] md:left-[var(--sidebar-width,0px)]">
+        <div
+          className={cn(
+            'fixed bottom-0 left-0 right-0 z-40 flex items-center justify-between gap-6 border-t border-border/20 bg-card/90 px-6 py-4 backdrop-blur-md transition-[left] duration-200 ease-linear dark:bg-[rgba(28,28,28,0.92)]',
+            !isMobile &&
+              (sidebarState === 'collapsed'
+                ? 'md:left-[var(--sidebar-width-icon,3rem)]'
+                : 'md:left-[var(--sidebar-width,16rem)]')
+          )}
+        >
           {/* Left: remaining balance */}
           <div className="flex items-center gap-3">
-            <div className="border-border/30 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border bg-background">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border/30 bg-background">
               <ShoppingCart size={16} className="text-muted-foreground" />
             </div>
             <div>

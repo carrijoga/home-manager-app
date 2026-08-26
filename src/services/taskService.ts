@@ -3,11 +3,11 @@
  * Suporta API real e modo mock (DATA_MODE === 'mock').
  */
 
-import { CATEGORY_LABELS,PRIORITY_LABELS } from '@/schemas/enums';
+import { CATEGORY_LABELS, PRIORITY_LABELS } from '@/schemas/enums';
 import type { CreateQuickTaskRequest, CreateTaskRequest, UpdateTaskRequest } from '@/schemas/tasks';
-import { TaskHistoryResponseSchema,TaskResponseSchema } from '@/schemas/tasks';
-import type { PaginatedResponse,Task } from '@/types';
-import { ApiCategory,ApiPriority } from '@/types';
+import { TaskHistoryResponseSchema, TaskPagedResponseSchema, TaskResponseSchema } from '@/schemas/tasks';
+import type { PaginatedResponse, Task } from '@/types';
+import { ApiCategory, ApiPriority } from '@/types';
 
 import { mockTasks } from '../mocks/data';
 import { DATA_MODE } from './api/config';
@@ -69,18 +69,54 @@ const _mockState = [...mockTasks];
 
 // ── API ───────────────────────────────────────────────────────────────────────
 
-export async function getActiveTasks(nestId?: string): Promise<Task[]> {
+export async function getActiveTasks(
+  pageOrNestId?: number | string,
+  pageSize = 10,
+  nestId?: string
+): Promise<PaginatedResponse<Task>> {
+  let page = 1;
+  let targetNestId = nestId;
+
+  if (typeof pageOrNestId === 'number') {
+    page = pageOrNestId;
+  } else if (typeof pageOrNestId === 'string') {
+    targetNestId = pageOrNestId;
+  }
+
   if (DATA_MODE === 'mock') {
-    return new Promise(resolve =>
-      setTimeout(() => resolve(
-        _mockState
-          .filter(t => !t.isCompleted)
-          .sort((a, b) => a.priority - b.priority)
-      ), 100)
+    const active = _mockState
+      .filter((t) => !t.isCompleted)
+      .sort((a, b) => a.priority - b.priority);
+    const start = (page - 1) * pageSize;
+    return new Promise((resolve) =>
+      setTimeout(
+        () =>
+          resolve({
+            items: active.slice(start, start + pageSize),
+            totalCount: active.length,
+            page,
+            pageSize,
+          }),
+        100
+      )
     );
   }
-  const data = await httpClient.get<unknown[]>(ENDPOINTS.tasks.list, nestId);
-  return (Array.isArray(data) ? data : []).map(apiToTask);
+  const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+  const data = await httpClient.get<unknown>(`${ENDPOINTS.tasks.list}?${params}`, targetNestId);
+  const parsed = TaskPagedResponseSchema.safeParse(data);
+  if (parsed.success) {
+    return {
+      items: parsed.data.items.map(apiToTask),
+      totalCount: parsed.data.totalCount,
+      page: parsed.data.page,
+      pageSize: parsed.data.pageSize,
+    };
+  }
+  if (Array.isArray(data)) {
+    const items = data.map(apiToTask);
+    return { items, totalCount: items.length, page, pageSize };
+  }
+  return { items: [], totalCount: 0, page, pageSize };
 }
 
 export async function createTask(payload: CreateTaskRequest, nestId?: string): Promise<Task> {
@@ -105,7 +141,7 @@ export async function createTask(payload: CreateTaskRequest, nestId?: string): P
       createdAt: now,
     };
     _mockState.unshift(task);
-    return new Promise(resolve => setTimeout(() => resolve(task), 100));
+    return new Promise((resolve) => setTimeout(() => resolve(task), 100));
   }
   const id = await httpClient.post<string>(ENDPOINTS.tasks.create, payload, { nestId });
   return getTaskById(id, nestId);
@@ -113,11 +149,14 @@ export async function createTask(payload: CreateTaskRequest, nestId?: string): P
 
 export async function createQuickTask(title: string, nestId?: string): Promise<Task> {
   if (DATA_MODE === 'mock') {
-    return createTask({
-      title,
-      priority: ApiPriority.Baixa,
-      category: ApiCategory.Geral,
-    }, nestId);
+    return createTask(
+      {
+        title,
+        priority: ApiPriority.Baixa,
+        category: ApiCategory.Geral,
+      },
+      nestId
+    );
   }
   const payload: CreateQuickTaskRequest = { title };
   const id = await httpClient.post<string>(ENDPOINTS.tasks.createQuick, payload, { nestId });
@@ -126,18 +165,22 @@ export async function createQuickTask(title: string, nestId?: string): Promise<T
 
 export async function getTaskById(id: string, nestId?: string): Promise<Task> {
   if (DATA_MODE === 'mock') {
-    const task = _mockState.find(t => t.taskId === id);
+    const task = _mockState.find((t) => t.taskId === id);
     return new Promise((resolve, reject) =>
-      setTimeout(() => task ? resolve({ ...task }) : reject(new Error('Task not found')), 100)
+      setTimeout(() => (task ? resolve({ ...task }) : reject(new Error('Task not found'))), 100)
     );
   }
   const data = await httpClient.get<unknown>(ENDPOINTS.tasks.getById(id), nestId);
   return apiToTask(data);
 }
 
-export async function updateTask(id: string, payload: UpdateTaskRequest, nestId?: string): Promise<void> {
+export async function updateTask(
+  id: string,
+  payload: UpdateTaskRequest,
+  nestId?: string
+): Promise<void> {
   if (DATA_MODE === 'mock') {
-    const idx = _mockState.findIndex(t => t.taskId === id);
+    const idx = _mockState.findIndex((t) => t.taskId === id);
     if (idx >= 0) {
       _mockState[idx] = {
         ..._mockState[idx],
@@ -152,30 +195,30 @@ export async function updateTask(id: string, payload: UpdateTaskRequest, nestId?
         categoryLabel: CATEGORY_LABELS[payload.category ?? ApiCategory.Geral],
       };
     }
-    return new Promise(resolve => setTimeout(resolve, 100));
+    return new Promise((resolve) => setTimeout(resolve, 100));
   }
   await httpClient.put<void>(ENDPOINTS.tasks.update(id), payload, nestId);
 }
 
 export async function deleteTask(id: string, nestId?: string): Promise<void> {
   if (DATA_MODE === 'mock') {
-    const idx = _mockState.findIndex(t => t.taskId === id);
+    const idx = _mockState.findIndex((t) => t.taskId === id);
     if (idx >= 0) _mockState.splice(idx, 1);
-    return new Promise(resolve => setTimeout(resolve, 100));
+    return new Promise((resolve) => setTimeout(resolve, 100));
   }
   await httpClient.del<void>(ENDPOINTS.tasks.delete(id), nestId);
 }
 
 export async function completeTask(id: string, nestId?: string): Promise<Task> {
   if (DATA_MODE === 'mock') {
-    const task = _mockState.find(t => t.taskId === id);
+    const task = _mockState.find((t) => t.taskId === id);
     if (task) {
       task.isCompleted = true;
       task.completedAt = new Date().toISOString();
       task.isOverdue = false;
     }
     return new Promise((resolve, reject) =>
-      setTimeout(() => task ? resolve({ ...task }) : reject(new Error('Task not found')), 100)
+      setTimeout(() => (task ? resolve({ ...task }) : reject(new Error('Task not found'))), 100)
     );
   }
   await httpClient.patch<void>(ENDPOINTS.tasks.complete(id), undefined, nestId);
@@ -184,32 +227,44 @@ export async function completeTask(id: string, nestId?: string): Promise<Task> {
 
 export async function uncompleteTask(id: string, nestId?: string): Promise<Task> {
   if (DATA_MODE === 'mock') {
-    const task = _mockState.find(t => t.taskId === id);
+    const task = _mockState.find((t) => t.taskId === id);
     if (task) {
       task.isCompleted = false;
       task.completedAt = null;
     }
     return new Promise((resolve, reject) =>
-      setTimeout(() => task ? resolve({ ...task }) : reject(new Error('Task not found')), 100)
+      setTimeout(() => (task ? resolve({ ...task }) : reject(new Error('Task not found'))), 100)
     );
   }
   await httpClient.patch<void>(ENDPOINTS.tasks.uncomplete(id), undefined, nestId);
   return getTaskById(id, nestId);
 }
 
-export async function getTaskHistory(page = 1, pageSize = 20, nestId?: string): Promise<PaginatedResponse<Task>> {
+export async function getTaskHistory(
+  page = 1,
+  pageSize = 20,
+  nestId?: string
+): Promise<PaginatedResponse<Task>> {
   if (DATA_MODE === 'mock') {
     const completed = _mockState
-      .filter(t => t.isCompleted)
-      .sort((a, b) => new Date(b.completedAt ?? b.createdAt).getTime() - new Date(a.completedAt ?? a.createdAt).getTime());
+      .filter((t) => t.isCompleted)
+      .sort(
+        (a, b) =>
+          new Date(b.completedAt ?? b.createdAt).getTime() -
+          new Date(a.completedAt ?? a.createdAt).getTime()
+      );
     const start = (page - 1) * pageSize;
-    return new Promise(resolve =>
-      setTimeout(() => resolve({
-        items: completed.slice(start, start + pageSize),
-        totalCount: completed.length,
-        page,
-        pageSize,
-      }), 100)
+    return new Promise((resolve) =>
+      setTimeout(
+        () =>
+          resolve({
+            items: completed.slice(start, start + pageSize),
+            totalCount: completed.length,
+            page,
+            pageSize,
+          }),
+        100
+      )
     );
   }
   const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });

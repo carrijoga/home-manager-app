@@ -1,20 +1,22 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as authService from "@services/authService";
-import { useEffect, useRef,useState } from "react";
-import { useForm } from "react-hook-form";
-import { Link, useNavigate } from "react-router-dom";
-import { toast } from "sonner";
-import { z } from "zod";
+import { zodResolver } from '@hookform/resolvers/zod';
+import { motion } from 'framer-motion';
+import { ArrowRight, Lock, Mail, ShieldCheck, User } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import { z } from 'zod';
 
-import Logo from "@/components/common/Logo";
-import { EyeIcon, EyeOffIcon } from "@/components/ui";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Spinner } from "@/components/ui/spinner";
-import { RegisterRequestSchema } from "@/schemas/auth";
-import { register as registerRequest } from "@/services/authService";
+import Logo from '@/components/common/Logo';
+import ThemeToggle from '@/components/common/ThemeToggle';
+import { EyeIcon, EyeOffIcon } from '@/components/ui';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Spinner } from '@/components/ui/spinner';
+import { RegisterRequestSchema } from '@/schemas/auth';
+import * as authService from '@/services/authService';
 
 const RegisterFormSchema = RegisterRequestSchema.extend({
   confirmPassword: z.string().min(1, 'Confirme a senha'),
@@ -22,17 +24,18 @@ const RegisterFormSchema = RegisterRequestSchema.extend({
   message: 'As senhas não coincidem',
   path: ['confirmPassword'],
 });
+
 type RegisterForm = z.infer<typeof RegisterFormSchema>;
 
 function Register() {
-    const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     authService.checkSession().then((isAuthenticated) => {
       if (isAuthenticated) {
-        navigate("/dashboard");
+        navigate('/dashboard');
       }
     });
   }, [navigate]);
@@ -46,7 +49,14 @@ function Register() {
   } = useForm<RegisterForm>({
     resolver: zodResolver(RegisterFormSchema),
     mode: 'onChange',
-    defaultValues: { firstName: '', lastName: '', username: '', email: '', password: '', confirmPassword: '' },
+    defaultValues: {
+      firstName: '',
+      lastName: '',
+      username: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+    },
   });
 
   const firstName = watch('firstName');
@@ -55,7 +65,7 @@ function Register() {
   const [isUsernameLoading, setIsUsernameLoading] = useState(false);
   const [usernameManuallyEdited, setUsernameManuallyEdited] = useState(false);
   const debounceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastGeneratedRef = useRef<string>("");
+  const lastGeneratedRef = useRef<string>('');
   const isGeneratingRef = useRef<boolean>(false);
 
   useEffect(() => {
@@ -86,17 +96,27 @@ function Register() {
       if (!usernameManuallyEdited) setValue('username', '', { shouldValidate: false });
     }
 
-    return () => { if (debounceTimeout.current) clearTimeout(debounceTimeout.current); };
+    return () => {
+      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+    };
   }, [firstName, lastName, usernameManuallyEdited, setValue]);
 
   const onSubmit = async (data: RegisterForm) => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { confirmPassword: _, ...payload } = data;
     try {
-      const response = await registerRequest(payload);
+      const response = await authService.register(payload);
       const message = response?.message || 'Conta criada com sucesso!';
       toast.success(message);
-      setTimeout(() => navigate('/login', { replace: true }), 1200);
+
+      const searchInviteToken = new URLSearchParams(window.location.search).get('inviteToken');
+      const pendingInviteToken =
+        searchInviteToken || sessionStorage.getItem('pending_invite_token');
+      const loginUrl = pendingInviteToken
+        ? `/login?inviteToken=${encodeURIComponent(pendingInviteToken)}`
+        : '/login';
+
+      setTimeout(() => navigate(loginUrl, { replace: true }), 1200);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Não foi possível finalizar o registro.';
       toast.error(message);
@@ -104,185 +124,219 @@ function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-2xl p-6 sm:p-10 shadow-2xl bg-card border-border">
-        <div className="flex flex-col lg:flex-row gap-10">
-          <div className="flex-1 flex flex-col items-center text-center space-y-4">
-            <div className="w-24 h-24 flex items-center justify-center rounded-3xl bg-muted transition-transform hover:scale-105">
-              <Logo size="large" showText={false} />
-            </div>
-            <div>
-              <p className="text-sm uppercase tracking-[0.35em] text-primary font-semibold">
-                Registrar
-              </p>
-              <h1 className="text-3xl font-bold text-foreground">
-                Crie sua conta no Ninho
+    <div className="relative flex min-h-screen w-full flex-col justify-between bg-background text-foreground antialiased selection:bg-primary/20">
+      {/* Top Header */}
+      <header className="flex w-full items-center justify-between px-6 py-6 sm:px-10">
+        <Logo size="default" showText={true} />
+        <ThemeToggle />
+      </header>
+
+      {/* Main Form Container */}
+      <main className="flex w-full flex-1 items-center justify-center px-4 py-8">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          className="w-full max-w-sm sm:max-w-md"
+        >
+          <Card className="border border-border/60 bg-card p-6 shadow-sm sm:p-8">
+            {/* Header Text */}
+            <div className="mb-6 space-y-1.5 text-center">
+              <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                Criar sua conta
               </h1>
-            </div>
-            <p className="text-sm text-muted-foreground max-w-sm">
-              Preencha todos os campos para criar sua conta e começar a
-              organizar seu lar.
-            </p>
-          </div>
-
-          <form onSubmit={handleSubmit(onSubmit)} className="flex-1 space-y-3" noValidate>
-            <div className="grid sm:grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label htmlFor="firstName" className="text-sm font-medium text-foreground">
-                  Nome
-                </Label>
-                <Input
-                  id="firstName"
-                  placeholder="John"
-                  {...register('firstName')}
-                  className="h-10 bg-input text-foreground transition-all duration-200 focus:ring-2 focus:ring-ring border-border"
-                />
-                {errors.firstName && (
-                  <p className="text-xs text-destructive animate-in fade-in slide-in-from-top-1 duration-200">{errors.firstName.message}</p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName" className="text-sm font-medium text-foreground">
-                  Sobrenome
-                </Label>
-                <Input
-                  id="lastName"
-                  placeholder="Doe"
-                  {...register('lastName')}
-                  className="h-10 bg-input text-foreground transition-all duration-200 focus:ring-2 focus:ring-ring border-border"
-                />
-                {errors.lastName && (
-                  <p className="text-xs text-destructive animate-in fade-in slide-in-from-top-1 duration-200">{errors.lastName.message}</p>
-                )}
-              </div>
+              <p className="text-sm text-muted-foreground">
+                Comece a organizar seu lar com o Ninho
+              </p>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="username" className="text-sm font-medium text-foreground">
-                Nome de usuário
-              </Label>
-              <div className="relative">
-                <Input
-                  id="username"
-                  placeholder="nome.de.usuario"
-                  {...register('username', {
-                    onChange: () => setUsernameManuallyEdited(true),
-                  })}
-                  className="h-10 bg-input text-foreground transition-all duration-200 focus:ring-2 focus:ring-ring border-border pr-8"
-                />
-                {isUsernameLoading && (
-                  <span className="absolute right-2 top-1/2 -translate-y-1/2"><Spinner className="w-4 h-4" /></span>
-                )}
-              </div>
-              {errors.username && (
-                <p className="text-xs text-destructive animate-in fade-in slide-in-from-top-1 duration-200">{errors.username.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium text-foreground">
-                Email
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="john.doe@example.com"
-                autoComplete="email"
-                {...register('email')}
-                className="h-10 bg-input text-foreground transition-all duration-200 focus:ring-2 focus:ring-ring border-border"
-              />
-              {errors.email && (
-                <p className="text-xs text-destructive animate-in fade-in slide-in-from-top-1 duration-200">{errors.email.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium text-foreground">
-                Senha
-              </Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Mínimo de 6 caracteres"
-                  autoComplete="new-password"
-                  {...register('password')}
-                  className="h-11 bg-input text-foreground transition-all duration-200 focus:ring-2 focus:ring-ring border-border pr-10"
-                />
-                <button
-                  type="button"
-                  tabIndex={-1}
-                  aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
-                  onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-primary focus:outline-none"
-                >
-                  {showPassword ? <EyeOffIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
-                </button>
-              </div>
-              {errors.password ? (
-                <p className="text-xs text-destructive animate-in fade-in slide-in-from-top-1 duration-200">{errors.password.message}</p>
-              ) : (
-                <p className="text-xs text-muted-foreground">Use uma senha segura com no mínimo 6 caracteres.</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword" className="text-sm font-medium text-foreground">
-                Confirmar Senha
-              </Label>
-              <div className="relative">
-                <Input
-                  id="confirmPassword"
-                  type={showConfirmPassword ? "text" : "password"}
-                  placeholder="Digite a senha novamente"
-                  autoComplete="new-password"
-                  {...register('confirmPassword')}
-                  className={`h-10 bg-input text-foreground transition-all duration-200 focus:ring-2 border-border pr-10 ${
-                    errors.confirmPassword ? "border-destructive focus:ring-destructive" : "focus:ring-ring"
-                  }`}
-                />
-                <button
-                  type="button"
-                  tabIndex={-1}
-                  aria-label={showConfirmPassword ? "Ocultar senha" : "Mostrar senha"}
-                  onClick={() => setShowConfirmPassword((v) => !v)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-primary focus:outline-none"
-                >
-                  {showConfirmPassword ? <EyeOffIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
-                </button>
-              </div>
-              {errors.confirmPassword && (
-                <p className="text-xs text-destructive animate-in fade-in slide-in-from-top-1 duration-200">{errors.confirmPassword.message}</p>
-              )}
-            </div>
-
-            <Button
-              type="submit"
-              disabled={!isValid || isSubmitting}
-              className="w-full h-12 text-base font-semibold bg-primary text-primary-foreground hover:opacity-90 transition-all duration-200 hover:shadow-lg hover:scale-[1.02]"
-            >
-              {isSubmitting ? (
-                <div className="flex items-center justify-center gap-2">
-                  <Spinner className="w-4 h-4" />
-                  Registrando...
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+              {/* First Name & Last Name Grid */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="firstName" className="text-xs font-medium text-foreground">
+                    Nome
+                  </Label>
+                  <Input
+                    id="firstName"
+                    placeholder="João"
+                    {...register('firstName')}
+                    className="h-10 border-border/80 bg-background text-sm text-foreground focus:ring-1 focus:ring-primary"
+                  />
+                  {errors.firstName && (
+                    <p className="text-xs text-destructive">{errors.firstName.message}</p>
+                  )}
                 </div>
-              ) : (
-                "Criar conta"
-              )}
-            </Button>
 
-            <p className="text-center text-sm text-muted-foreground">
-              Já possui cadastro?{" "}
-              <Link
-                to="/login"
-                className="font-semibold text-primary hover:underline transition-colors"
+                <div className="space-y-1.5">
+                  <Label htmlFor="lastName" className="text-xs font-medium text-foreground">
+                    Sobrenome
+                  </Label>
+                  <Input
+                    id="lastName"
+                    placeholder="Silva"
+                    {...register('lastName')}
+                    className="h-10 border-border/80 bg-background text-sm text-foreground focus:ring-1 focus:ring-primary"
+                  />
+                  {errors.lastName && (
+                    <p className="text-xs text-destructive">{errors.lastName.message}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Username Field */}
+              <div className="space-y-1.5">
+                <Label htmlFor="username" className="text-xs font-medium text-foreground">
+                  Nome de usuário
+                </Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="username"
+                    placeholder="joao.silva"
+                    {...register('username', {
+                      onChange: () => setUsernameManuallyEdited(true),
+                    })}
+                    className="h-10 border-border/80 bg-background pl-9 pr-9 text-sm text-foreground focus:ring-1 focus:ring-primary"
+                  />
+                  {isUsernameLoading && (
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <Spinner className="h-3.5 w-3.5" />
+                    </span>
+                  )}
+                </div>
+                {errors.username && (
+                  <p className="text-xs text-destructive">{errors.username.message}</p>
+                )}
+              </div>
+
+              {/* Email Field */}
+              <div className="space-y-1.5">
+                <Label htmlFor="email" className="text-xs font-medium text-foreground">
+                  E-mail
+                </Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="joao@exemplo.com"
+                    autoComplete="email"
+                    {...register('email')}
+                    className="h-10 border-border/80 bg-background pl-9 text-sm text-foreground focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+                {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
+              </div>
+
+              {/* Password Field */}
+              <div className="space-y-1.5">
+                <Label htmlFor="password" className="text-xs font-medium text-foreground">
+                  Senha
+                </Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Mínimo de 6 caracteres"
+                    autoComplete="new-password"
+                    {...register('password')}
+                    className="h-10 border-border/80 bg-background pl-9 pr-9 text-sm text-foreground focus:ring-1 focus:ring-primary"
+                  />
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 text-muted-foreground hover:text-foreground"
+                  >
+                    {showPassword ? (
+                      <EyeOffIcon className="h-4 w-4" />
+                    ) : (
+                      <EyeIcon className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+                {errors.password && (
+                  <p className="text-xs text-destructive">{errors.password.message}</p>
+                )}
+              </div>
+
+              {/* Confirm Password Field */}
+              <div className="space-y-1.5">
+                <Label htmlFor="confirmPassword" className="text-xs font-medium text-foreground">
+                  Confirmar Senha
+                </Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    placeholder="Repita a senha"
+                    autoComplete="new-password"
+                    {...register('confirmPassword')}
+                    className="h-10 border-border/80 bg-background pl-9 pr-9 text-sm text-foreground focus:ring-1 focus:ring-primary"
+                  />
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    aria-label={showConfirmPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                    onClick={() => setShowConfirmPassword((v) => !v)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 text-muted-foreground hover:text-foreground"
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOffIcon className="h-4 w-4" />
+                    ) : (
+                      <EyeIcon className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+                {errors.confirmPassword && (
+                  <p className="text-xs text-destructive">{errors.confirmPassword.message}</p>
+                )}
+              </div>
+
+              {/* Submit CTA Button */}
+              <Button
+                type="submit"
+                disabled={!isValid || isSubmitting}
+                className="mt-2 h-11 w-full bg-primary text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
               >
-                Voltar para o login
-              </Link>
-            </p>
-          </form>
+                {isSubmitting ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <Spinner className="h-4 w-4" />
+                    <span>Criando conta...</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center gap-1.5">
+                    <span>Criar conta</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </div>
+                )}
+              </Button>
+            </form>
+
+            {/* Back to Login Link */}
+            <div className="mt-6 text-center text-xs text-muted-foreground">
+              <p>
+                Já possui uma conta?{' '}
+                <Link to="/login" className="font-semibold text-primary hover:underline">
+                  Entrar
+                </Link>
+              </p>
+            </div>
+          </Card>
+        </motion.div>
+      </main>
+
+      {/* Minimal Footer */}
+      <footer className="w-full py-4 text-center text-[11px] text-muted-foreground">
+        <div className="flex items-center justify-center gap-1.5">
+          <ShieldCheck className="h-3.5 w-3.5" />
+          <span>Ambiente seguro • Ninho Home</span>
         </div>
-      </Card>
+      </footer>
     </div>
   );
 }

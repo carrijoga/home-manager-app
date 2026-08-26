@@ -1,4 +1,4 @@
-import { Check, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Check, Pencil, Plus, Star, Trash2 } from 'lucide-react';
 import * as React from 'react';
 import { toast } from 'sonner';
 
@@ -32,7 +32,7 @@ interface NestManagerSheetProps {
 }
 
 export function NestManagerSheet({ open, onClose }: NestManagerSheetProps) {
-  const { user, activeNestId, refreshNests } = useApp();
+  const { user, activeNestId, refreshNests, setDefaultNest } = useApp();
   const nests = user?.nests ?? [];
 
   const [createOpen, setCreateOpen] = React.useState(false);
@@ -45,6 +45,15 @@ export function NestManagerSheet({ open, onClose }: NestManagerSheetProps) {
   const handleEditNest = (nest: AppUserNest) => {
     setEditingNest(nest);
     setEditOpen(true);
+  };
+
+  const handleSetDefault = async (nestId: string) => {
+    try {
+      await setDefaultNest(nestId);
+      toast.success('Ninho definido como principal!');
+    } catch {
+      toast.error('Erro ao definir ninho principal.');
+    }
   };
 
   const handleDeleteClick = (nest: AppUserNest) => {
@@ -70,18 +79,21 @@ export function NestManagerSheet({ open, onClose }: NestManagerSheetProps) {
 
   return (
     <>
-      <Sheet open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
-        <SheetContent side="right" className="flex flex-col w-full sm:max-w-sm p-0">
-          <SheetHeader className="px-6 pt-6 pb-4 border-b">
+      <Sheet
+        open={open}
+        onOpenChange={(v) => {
+          if (!v) onClose();
+        }}
+      >
+        <SheetContent side="right" className="flex w-full flex-col p-0 sm:max-w-sm">
+          <SheetHeader className="border-b px-6 pb-4 pt-6">
             <SheetTitle>Gerenciar ninhos 🪺</SheetTitle>
-            <SheetDescription>
-              Troque, edite ou remova os seus ninhos.
-            </SheetDescription>
+            <SheetDescription>Troque, edite ou remova os seus ninhos.</SheetDescription>
           </SheetHeader>
 
-          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-1">
+          <div className="flex-1 space-y-1 overflow-y-auto px-4 py-3">
             {nests.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">
+              <p className="py-8 text-center text-sm text-muted-foreground">
                 Nenhum ninho encontrado.
               </p>
             ) : (
@@ -91,18 +103,29 @@ export function NestManagerSheet({ open, onClose }: NestManagerSheetProps) {
                 return (
                   <div
                     key={nest.nestId}
-                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-muted transition-colors"
+                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-muted"
                   >
                     <div className="flex size-8 shrink-0 items-center justify-center rounded-md border bg-background">
                       <NestIcon className="size-4" />
                     </div>
-                    <span className="flex-1 truncate text-sm font-medium">
-                      {nest.name}
-                    </span>
-                    {isActive && (
-                       <Check className="size-3.5 shrink-0 text-primary" />
+                    <span className="flex-1 truncate text-sm font-medium">{nest.name}</span>
+                    {nest.isDefault ? (
+                      <Star className="size-3.5 shrink-0 text-amber-500 fill-amber-500" />
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="size-7 text-muted-foreground hover:text-amber-500"
+                        title="Definir como ninho principal"
+                        aria-label="Definir como ninho principal"
+                        onClick={() => handleSetDefault(nest.nestId)}
+                      >
+                        <Star className="size-3.5" />
+                      </Button>
                     )}
-                    <div className="flex items-center gap-1 shrink-0">
+                    {isActive && <Check className="size-3.5 shrink-0 text-primary" />}
+                    <div className="flex shrink-0 items-center gap-1">
                       <Button
                         type="button"
                         variant="ghost"
@@ -131,13 +154,9 @@ export function NestManagerSheet({ open, onClose }: NestManagerSheetProps) {
             )}
           </div>
 
-          <SheetFooter className="px-4 py-4 border-t">
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => setCreateOpen(true)}
-            >
-              <Plus className="size-4 mr-2" />
+          <SheetFooter className="border-t px-4 py-4">
+            <Button variant="outline" className="w-full" onClick={() => setCreateOpen(true)}>
+              <Plus className="mr-2 size-4" />
               Novo ninho
             </Button>
           </SheetFooter>
@@ -145,17 +164,19 @@ export function NestManagerSheet({ open, onClose }: NestManagerSheetProps) {
       </Sheet>
 
       {/* Modals mounted outside Sheet to avoid Radix nested portal focus-trap conflict */}
-      <CreateNestModal
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-      />
+      <CreateNestModal open={createOpen} onClose={() => setCreateOpen(false)} />
       <CreateNestModal
         open={editOpen}
         onClose={() => setEditOpen(false)}
         mode="edit"
         nest={editingNest ?? undefined}
       />
-      <AlertDialog open={deleteConfirmOpen} onOpenChange={(v) => { if (!v) setDeleteConfirmOpen(false); }}>
+      <AlertDialog
+        open={deleteConfirmOpen}
+        onOpenChange={(v) => {
+          if (!v) setDeleteConfirmOpen(false);
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Remover ninho</AlertDialogTitle>

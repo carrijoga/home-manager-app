@@ -1,4 +1,3 @@
-
 /**
  * Componente de Logo do Ninho
  * Renderiza o ícone do ninho com o texto
@@ -7,7 +6,7 @@ const Logo = ({ size = 'default', showText = true }) => {
   const sizes = {
     small: { icon: 32, text: 'text-xl', tagline: 'text-xs' },
     default: { icon: 48, text: 'text-3xl', tagline: 'text-sm' },
-    large: { icon: 64, text: 'text-4xl', tagline: 'text-base' }
+    large: { icon: 64, text: 'text-4xl', tagline: 'text-base' },
   };
 
   const { icon, text, tagline } = sizes[size] || sizes.default;
@@ -41,8 +40,22 @@ const Logo = ({ size = 'default', showText = true }) => {
           <ellipse cx="31" cy="30" rx="1.2" ry="1.8" fill="#FFF9E6" opacity="0.7" />
 
           {/* Detalhe de folha/ramo */}
-          <path d="M 15 28 Q 12 26 14 24" stroke="#52B788" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-          <ellipse cx="13" cy="25" rx="2" ry="3" fill="#52B788" opacity="0.6" transform="rotate(-20 13 25)" />
+          <path
+            d="M 15 28 Q 12 26 14 24"
+            stroke="#52B788"
+            strokeWidth="1.5"
+            fill="none"
+            strokeLinecap="round"
+          />
+          <ellipse
+            cx="13"
+            cy="25"
+            rx="2"
+            ry="3"
+            fill="#52B788"
+            opacity="0.6"
+            transform="rotate(-20 13 25)"
+          />
         </svg>
       </div>
 
@@ -52,7 +65,9 @@ const Logo = ({ size = 'default', showText = true }) => {
           <span className={`${text} font-bold text-primary transition-colors duration-300`}>
             Ninho
           </span>
-          <span className={`${tagline} text-muted-foreground italic -mt-1 transition-colors duration-300`}>
+          <span
+            className={`${tagline} -mt-1 italic text-muted-foreground transition-colors duration-300`}
+          >
             Seu lar, organizado
           </span>
         </div>

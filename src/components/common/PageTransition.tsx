@@ -5,17 +5,17 @@
  * ao entrar e sair usando Framer Motion.
  */
 
-import { AnimatePresence,motion } from "framer-motion";
-import { ReactNode, useEffect, useState } from "react";
+import { AnimatePresence, motion } from 'framer-motion';
+import { ReactNode, useEffect, useState } from 'react';
 
-import { getTransition, transitions } from "@/lib/animations";
+import { getTransition, transitions } from '@/lib/animations';
 
 interface PageTransitionProps {
   children: ReactNode;
   /** Chave única para a página/módulo (dispara re-animação quando muda) */
   pageKey?: string;
   /** Variante de animação customizada (opcional) */
-  variant?: "fade" | "slide" | "scale";
+  variant?: 'fade' | 'slide' | 'scale';
   /** Classe CSS adicional */
   className?: string;
 }
@@ -26,22 +26,22 @@ interface PageTransitionProps {
 export default function PageTransition({
   children,
   pageKey,
-  variant = "fade",
-  className = "",
+  variant = 'fade',
+  className = '',
 }: PageTransitionProps) {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
   useEffect(() => {
     // Detecta preferência de movimento reduzido
-    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     setPrefersReducedMotion(mediaQuery.matches);
 
     const handleChange = (e: MediaQueryListEvent) => {
       setPrefersReducedMotion(e.matches);
     };
 
-    mediaQuery.addEventListener("change", handleChange);
-    return () => mediaQuery.removeEventListener("change", handleChange);
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
 
   // Variantes de animação baseadas no tipo
@@ -56,7 +56,7 @@ export default function PageTransition({
     }
 
     switch (variant) {
-      case "slide":
+      case 'slide':
         return {
           initial: { opacity: 0, x: -20 },
           animate: {
@@ -70,7 +70,7 @@ export default function PageTransition({
             transition: getTransition(transitions.fast, prefersReducedMotion),
           },
         };
-      case "scale":
+      case 'scale':
         return {
           initial: { opacity: 0, scale: 0.95 },
           animate: {
@@ -84,7 +84,7 @@ export default function PageTransition({
             transition: getTransition(transitions.fast, prefersReducedMotion),
           },
         };
-      case "fade":
+      case 'fade':
       default:
         return {
           initial: { opacity: 0, y: 20 },

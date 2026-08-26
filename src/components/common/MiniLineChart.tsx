@@ -1,6 +1,6 @@
-import { Line, LineChart, ResponsiveContainer } from "recharts";
+import { Line, LineChart, ResponsiveContainer } from 'recharts';
 
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface DataPoint {
   value: number;
@@ -18,7 +18,7 @@ interface MiniLineChartProps {
  */
 const MiniLineChart = ({
   data,
-  color = "#6366f1", // indigo-500 por padrão
+  color = '#6366f1', // indigo-500 por padrão
   height = 40,
 }: MiniLineChartProps) => {
   const { theme } = useTheme();
@@ -36,7 +36,7 @@ const MiniLineChart = ({
   }
 
   // Ajusta a cor para modo escuro
-  const lineColor = theme === "dark" ? adjustColorForDarkMode(color) : color;
+  const lineColor = theme === 'dark' ? adjustColorForDarkMode(color) : color;
 
   return (
     <ResponsiveContainer width="100%" height={height}>
@@ -59,12 +59,12 @@ const MiniLineChart = ({
  */
 function adjustColorForDarkMode(color: string): string {
   const colorMap: { [key: string]: string } = {
-    "#6366f1": "#818cf8", // indigo-500 → indigo-400
-    "#10b981": "#34d399", // emerald-500 → emerald-400
-    "#06b6d4": "#22d3ee", // cyan-500 → cyan-400
-    "#a855f7": "#c084fc", // purple-500 → purple-400
-    "#f59e0b": "#fbbf24", // amber-500 → amber-400
-    "#ef4444": "#f87171", // red-500 → red-400
+    '#6366f1': '#818cf8', // indigo-500 → indigo-400
+    '#10b981': '#34d399', // emerald-500 → emerald-400
+    '#06b6d4': '#22d3ee', // cyan-500 → cyan-400
+    '#a855f7': '#c084fc', // purple-500 → purple-400
+    '#f59e0b': '#fbbf24', // amber-500 → amber-400
+    '#ef4444': '#f87171', // red-500 → red-400
   };
 
   return colorMap[color.toLowerCase()] || color;

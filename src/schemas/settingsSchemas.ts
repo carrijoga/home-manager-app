@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+// ── Schemas de UI (validação de formulários, não espelham a API diretamente) ──
+
 export const updateProfileSchema = z.object({
   name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
   email: z.string().email('Email inválido'),
@@ -24,15 +26,19 @@ export const changePasswordSchema = z
   });
 export type ChangePasswordData = z.infer<typeof changePasswordSchema>;
 
-export const updateNotificationsSchema = z.object({
-  tasks: z.boolean(),
-  financial: z.boolean(),
-  shopping: z.boolean(),
-  notices: z.boolean(),
-});
-export type UpdateNotificationsData = z.infer<typeof updateNotificationsSchema>;
+// ── Contrato da API — PUT /api/users/me/configuration ─────────────────────────
 
-export const updatePrivacySchema = z.object({
-  anonymousDataSharing: z.boolean(),
+export const UpdateUserConfigurationRequestSchema = z.object({
+  userId: z.string().uuid().optional(),
+  theme: z.number().int().optional(),
+  language: z.number().int().optional(),
+  city: z.string().nullable().optional(),
+  allowLocationByIp: z.boolean().optional(),
+  allowLocationByGps: z.boolean().optional(),
+  notifyInformative: z.boolean().optional(),
+  notifyWarning: z.boolean().optional(),
+  notifyError: z.boolean().optional(),
+  notifySuccess: z.boolean().optional(),
+  shareDataForAnalytics: z.boolean().optional(),
 });
-export type UpdatePrivacyData = z.infer<typeof updatePrivacySchema>;
+export type UpdateUserConfigurationRequest = z.infer<typeof UpdateUserConfigurationRequestSchema>;

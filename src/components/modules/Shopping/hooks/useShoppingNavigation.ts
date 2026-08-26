@@ -1,16 +1,24 @@
 // src/components/modules/Shopping/hooks/useShoppingNavigation.ts
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { useApp } from '@/contexts/AppContext';
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
 import { useDebounce } from '@/hooks/useDebounce';
-import type { AppShoppingList } from '@/types';
+import type { AppShoppingCategory, AppShoppingList, AppShoppingListSummary } from '@/types';
 
 import { addMonths, currentMonthValue } from '../helpers';
 import type { ViewMode } from '../types';
 
-export function useShoppingNavigation() {
-  const { shoppingLists: remoteShoppingLists, shoppingCategories, loadShoppingListDetail } = useApp();
+interface ShoppingNavigationDeps {
+  remoteShoppingLists: AppShoppingListSummary[];
+  shoppingCategories: AppShoppingCategory[];
+  loadShoppingListDetail: (id: string) => Promise<AppShoppingList>;
+}
+
+export function useShoppingNavigation({
+  remoteShoppingLists,
+  shoppingCategories,
+  loadShoppingListDetail,
+}: ShoppingNavigationDeps) {
   const [shoppingLists, setShoppingLists] = useState(remoteShoppingLists);
   const { showError } = useToastNotifications();
 
@@ -56,7 +64,9 @@ export function useShoppingNavigation() {
   const categoriesInDetail = useMemo((): string[] => {
     if (!detailData) return [];
     const set = new Set<string>();
-    detailData.items.forEach((i) => { if (i.categoryName) set.add(i.categoryName); });
+    detailData.items.forEach((i) => {
+      if (i.categoryName) set.add(i.categoryName);
+    });
     return Array.from(set).sort((a, b) => {
       if (a === 'Sem categoria') return 1;
       if (b === 'Sem categoria') return -1;
@@ -178,18 +188,40 @@ export function useShoppingNavigation() {
 
   return {
     // state
-    viewMode, selectedListId, detailData, setDetailData, isLoadingDetail,
-    filterMonth, monthNavDir, categoryFilter, setCategoryFilter,
-    sortOrder, setSortOrder, searchTerm, setSearchTerm,
-    debouncedSearch, isSearchPending, collapsedCategories,
-    shoppingLists, setShoppingLists, uniqueCategories,
+    viewMode,
+    selectedListId,
+    detailData,
+    setDetailData,
+    isLoadingDetail,
+    filterMonth,
+    monthNavDir,
+    categoryFilter,
+    setCategoryFilter,
+    sortOrder,
+    setSortOrder,
+    searchTerm,
+    setSearchTerm,
+    debouncedSearch,
+    isSearchPending,
+    collapsedCategories,
+    shoppingLists,
+    setShoppingLists,
+    uniqueCategories,
     // refs
     categoryScrollRef,
     // computed
-    filteredLists, categoriesInDetail, groupedItemEntries,
+    filteredLists,
+    categoriesInDetail,
+    groupedItemEntries,
     // actions
-    openListDetail, backToLists, toggleCategoryCollapse,
-    scrollCategories, handleCategoryPointerDown, handleCategoryPointerMove, handleCategoryPointerUp,
-    navigateMonth, resetMonthToToday,
+    openListDetail,
+    backToLists,
+    toggleCategoryCollapse,
+    scrollCategories,
+    handleCategoryPointerDown,
+    handleCategoryPointerMove,
+    handleCategoryPointerUp,
+    navigateMonth,
+    resetMonthToToday,
   };
 }

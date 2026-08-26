@@ -3,7 +3,10 @@
  * Gerencia refresh automático de token (401) via cookie HttpOnly.
  */
 
-const BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5026').replace(/\/$/, '');
+// Vazio por padrão: as requisições ficam relativas à origem atual e são
+// encaminhadas pelo proxy do dev server (ver `server.proxy` em vite.config.ts).
+// Defina VITE_API_URL apenas para apontar direto a uma API externa.
+const BASE_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
 const TIMEOUT_MS = 10_000;
 
 // ── Erro tipado ───────────────────────────────────────────────────────────────
@@ -18,20 +21,64 @@ export class ApiError extends Error {
   }
 }
 
+// ── Armazenamento de Tokens (Bearer Token & Refresh) ─────────────────────────
+
+const ACCESS_TOKEN_KEY = 'ninho_access_token';
+const REFRESH_TOKEN_KEY = 'ninho_refresh_token';
+
+export const tokenStorage = {
+  getAccessToken: (): string | null => localStorage.getItem(ACCESS_TOKEN_KEY),
+  getRefreshToken: (): string | null => localStorage.getItem(REFRESH_TOKEN_KEY),
+  setTokens: (accessToken?: string, refreshToken?: string): void => {
+    if (accessToken) localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+    if (refreshToken) localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+  },
+  clearTokens: (): void => {
+    localStorage.removeItem(ACCESS_TOKEN_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
+  },
+};
+
 // ── Refresh singleton (evita múltiplas chamadas paralelas) ────────────────────
 
 let refreshPromise: Promise<void> | null = null;
 
 async function doRefresh(): Promise<void> {
+  const refreshToken = tokenStorage.getRefreshToken();
+  const accessToken = tokenStorage.getAccessToken();
+
+  const refreshHeaders: Record<string, string> = {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+  };
+
+  if (refreshToken) {
+    refreshHeaders['Authorization'] = `Bearer ${refreshToken}`;
+  } else if (accessToken) {
+    refreshHeaders['Authorization'] = `Bearer ${accessToken}`;
+  }
+
   const response = await fetch(`${BASE_URL}/api/auth/refresh`, {
     method: 'POST',
     credentials: 'include',
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    headers: refreshHeaders,
+    body: JSON.stringify({
+      refreshToken: refreshToken ?? '',
+      accessToken: accessToken ?? '',
+    }),
     signal: AbortSignal.timeout(TIMEOUT_MS),
   });
 
   if (!response.ok) {
+    tokenStorage.clearTokens();
     throw new ApiError('Sessão expirada. Faça login novamente.', response.status);
+  }
+
+  const data = await response.json().catch(() => null);
+  const newAccessToken = data?.accessToken || data?.token || data?.access_token;
+  const newRefreshToken = data?.refreshToken || data?.refresh_token;
+  if (newAccessToken || newRefreshToken) {
+    tokenStorage.setTokens(newAccessToken, newRefreshToken);
   }
 }
 
@@ -54,11 +101,19 @@ interface RequestOptions {
   skipRefresh?: boolean;
 }
 
-function buildHeaders(body: BodyInit | undefined, headers: Record<string, string>): Record<string, string> {
+function buildHeaders(
+  body: BodyInit | undefined,
+  headers: Record<string, string>
+): Record<string, string> {
   const baseHeaders: Record<string, string> = {
     Accept: 'application/json',
     ...headers,
   };
+
+  const accessToken = tokenStorage.getAccessToken();
+  if (accessToken && !baseHeaders['Authorization']) {
+    baseHeaders['Authorization'] = `Bearer ${accessToken}`;
+  }
 
   if (typeof body === 'string') {
     return {
@@ -87,22 +142,61 @@ async function baseRequest<T>(path: string, options: RequestOptions = {}): Promi
     try {
       await refreshOnce();
     } catch {
+      tokenStorage.clearTokens();
       window.dispatchEvent(new CustomEvent('auth:session-expired'));
       throw new ApiError('Sessão expirada. Faça login novamente.', 401);
     }
 
+    const retryHeaders = buildHeaders(body, headers);
     const retryResponse = await fetch(`${BASE_URL}${path}`, {
       method,
       body,
       credentials: 'include',
-      headers: requestHeaders,
+      headers: retryHeaders,
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
+
+    if (retryResponse.status === 401) {
+      tokenStorage.clearTokens();
+      window.dispatchEvent(new CustomEvent('auth:session-expired'));
+    }
 
     return parseResponse<T>(retryResponse);
   }
 
   return parseResponse<T>(response);
+}
+
+function extractErrorMessage(data: unknown): string {
+  if (!data) return 'Erro ao comunicar com o servidor.';
+  if (typeof data === 'string') return data;
+  if (typeof data === 'object') {
+    const obj = data as Record<string, unknown>;
+    if (typeof obj.message === 'string' && obj.message) {
+      return obj.message;
+    }
+    if (obj.errors && typeof obj.errors === 'object') {
+      const errorEntries = Object.entries(obj.errors as Record<string, unknown>);
+      const messages: string[] = [];
+      for (const [, fieldErrors] of errorEntries) {
+        if (Array.isArray(fieldErrors)) {
+          messages.push(...fieldErrors.map(String));
+        } else if (typeof fieldErrors === 'string') {
+          messages.push(fieldErrors);
+        }
+      }
+      if (messages.length > 0) {
+        return messages.join(' ');
+      }
+    }
+    if (typeof obj.detail === 'string' && obj.detail) {
+      return obj.detail;
+    }
+    if (typeof obj.title === 'string' && obj.title) {
+      return obj.title;
+    }
+  }
+  return 'Erro ao comunicar com o servidor.';
 }
 
 async function parseResponse<T>(response: Response): Promise<T> {
@@ -118,21 +212,25 @@ async function parseResponse<T>(response: Response): Promise<T> {
   }
 
   if (!response.ok) {
-    const message =
-      (data as { message?: string } | null)?.message ??
-      (typeof data === 'string' ? data : 'Erro ao comunicar com o servidor.');
+    const message = extractErrorMessage(data);
     throw new ApiError(message, response.status);
   }
 
   return data as T;
 }
 
+
 // ── Nest header helper ───────────────────────────────────────────────────────
 
-const NEST_HEADER_EXCLUDED_PREFIXES = ['/api/auth', '/api/users', '/api/admin', '/api/nests/create'];
+const NEST_HEADER_EXCLUDED_PREFIXES = [
+  '/api/auth',
+  '/api/users',
+  '/api/admin',
+  '/api/nests/create',
+];
 
 function shouldIncludeNestHeader(path: string): boolean {
-  return !NEST_HEADER_EXCLUDED_PREFIXES.some(prefix => path.startsWith(prefix));
+  return !NEST_HEADER_EXCLUDED_PREFIXES.some((prefix) => path.startsWith(prefix));
 }
 
 function buildNestHeaders(path: string, nestId?: string): Record<string, string> {
@@ -146,10 +244,18 @@ function buildNestHeaders(path: string, nestId?: string): Record<string, string>
 
 export const httpClient = {
   get<T>(path: string, nestId?: string, headers?: Record<string, string>): Promise<T> {
-    return baseRequest<T>(path, { method: 'GET', headers: { ...buildNestHeaders(path, nestId), ...headers }, skipRefresh: false });
+    return baseRequest<T>(path, {
+      method: 'GET',
+      headers: { ...buildNestHeaders(path, nestId), ...headers },
+      skipRefresh: false,
+    });
   },
 
-  post<T>(path: string, body?: unknown, options?: Pick<RequestOptions, 'skipRefresh' | 'headers'> & { nestId?: string }): Promise<T> {
+  post<T>(
+    path: string,
+    body?: unknown,
+    options?: Pick<RequestOptions, 'skipRefresh' | 'headers'> & { nestId?: string }
+  ): Promise<T> {
     return baseRequest<T>(path, {
       method: 'POST',
       body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -158,7 +264,11 @@ export const httpClient = {
     });
   },
 
-  postForm<T>(path: string, body: FormData, options?: Pick<RequestOptions, 'skipRefresh' | 'headers'> & { nestId?: string }): Promise<T> {
+  postForm<T>(
+    path: string,
+    body: FormData,
+    options?: Pick<RequestOptions, 'skipRefresh' | 'headers'> & { nestId?: string }
+  ): Promise<T> {
     return baseRequest<T>(path, {
       method: 'POST',
       body,

@@ -14,7 +14,7 @@ import {
   Label,
   Separator,
 } from '@/components/ui';
-import { type ChangePasswordData,changePasswordSchema } from '@/schemas/settingsSchemas';
+import { type ChangePasswordData, changePasswordSchema } from '@/schemas/settingsSchemas';
 import * as settingsService from '@/services/settingsService';
 
 export function SegurancaPanel() {
@@ -56,69 +56,108 @@ export function SegurancaPanel() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border p-5 sm:p-6 bg-[linear-gradient(135deg,color-mix(in_srgb,var(--primary)_10%,var(--card))_0%,color-mix(in_srgb,var(--destructive)_8%,var(--card))_100%)]">
-        <p className="text-xs font-semibold uppercase tracking-[1.2px] text-muted-foreground">Segurança</p>
-        <h2 className="mt-1 text-lg font-semibold">Proteção da sua conta</h2>
-        <p className="text-sm text-muted-foreground mt-1">
-          Gerencie sua senha e acesso ao Ninho.
+      <div className="rounded-3xl border border-border/50 bg-[linear-gradient(135deg,color-mix(in_srgb,var(--primary)_10%,var(--card))_0%,color-mix(in_srgb,var(--destructive)_8%,var(--card))_100%)] p-5 sm:p-6">
+        <p className="text-xs font-semibold uppercase tracking-[1.2px] text-muted-foreground">
+          Segurança
         </p>
+        <h2 className="mt-1 text-lg font-semibold text-foreground">Proteção da sua conta</h2>
+        <p className="mt-1 text-sm text-muted-foreground">Gerencie sua senha e acesso ao Ninho.</p>
       </div>
 
-      <section className="space-y-4 rounded-2xl border p-4">
-        <h3 className="text-sm font-semibold">Senha</h3>
+      <section className="space-y-4 rounded-2xl border border-border/50 bg-card p-5 shadow-2xs">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-semibold text-foreground">Senha de Acesso</h3>
+            <p className="text-xs text-muted-foreground">
+              Altere sua senha periodicamente para manter a conta segura.
+            </p>
+          </div>
+        </div>
 
         <Collapsible open={passwordOpen} onOpenChange={setPasswordOpen}>
           <CollapsibleTrigger asChild>
-            <Button variant="outline" size="sm" className="flex items-center gap-2 rounded-2xl">
-              Alterar Senha
-              <ChevronDown className={`size-4 transition-transform ${passwordOpen ? 'rotate-180' : ''}`} />
+            <Button variant="outline" size="sm" className="flex items-center gap-2 rounded-xl">
+              <span>{passwordOpen ? 'Fechar Formulário' : 'Alterar Senha'}</span>
+              <ChevronDown
+                className={`size-4 transition-transform duration-200 ${passwordOpen ? 'rotate-180' : ''}`}
+              />
             </Button>
           </CollapsibleTrigger>
-          <CollapsibleContent className="mt-3">
-            <form onSubmit={handleSubmit(onPasswordSubmit)} className="space-y-3 rounded-2xl border p-4 bg-card/60">
-              <div className="space-y-1">
-                <Label htmlFor="currentPassword">Senha atual</Label>
+          <CollapsibleContent className="mt-4">
+            <form
+              onSubmit={handleSubmit(onPasswordSubmit)}
+              className="space-y-4 rounded-xl border border-border/50 bg-muted/20 p-4"
+            >
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="currentPassword"
+                  className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                >
+                  Senha atual
+                </Label>
                 <Input
                   id="currentPassword"
                   type="password"
+                  className="bg-muted/30 border-border/40 hover:border-border/80 focus-visible:ring-1 focus-visible:ring-primary/50 transition-colors"
                   {...register('currentPassword')}
                 />
                 {errors.currentPassword && (
-                  <p className="text-xs text-destructive">{errors.currentPassword.message}</p>
+                  <p className="text-xs font-medium text-destructive">
+                    {errors.currentPassword.message}
+                  </p>
                 )}
               </div>
-              <div className="space-y-1">
-                <Label htmlFor="newPassword">Nova senha</Label>
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="newPassword"
+                  className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                >
+                  Nova senha
+                </Label>
                 <Input
                   id="newPassword"
                   type="password"
+                  className="bg-muted/30 border-border/40 hover:border-border/80 focus-visible:ring-1 focus-visible:ring-primary/50 transition-colors"
                   {...register('newPassword')}
                 />
                 {errors.newPassword && (
-                  <p className="text-xs text-destructive">{errors.newPassword.message}</p>
+                  <p className="text-xs font-medium text-destructive">
+                    {errors.newPassword.message}
+                  </p>
                 )}
               </div>
-              <div className="space-y-1">
-                <Label htmlFor="confirmPassword">Confirmar nova senha</Label>
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="confirmPassword"
+                  className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                >
+                  Confirmar nova senha
+                </Label>
                 <Input
                   id="confirmPassword"
                   type="password"
+                  className="bg-muted/30 border-border/40 hover:border-border/80 focus-visible:ring-1 focus-visible:ring-primary/50 transition-colors"
                   {...register('confirmPassword')}
                 />
                 {errors.confirmPassword && (
-                  <p className="text-xs text-destructive">{errors.confirmPassword.message}</p>
+                  <p className="text-xs font-medium text-destructive">
+                    {errors.confirmPassword.message}
+                  </p>
                 )}
               </div>
-              <div className="flex gap-2">
-                <Button type="submit" size="sm" className="rounded-2xl" disabled={isSubmitting}>
-                  {isSubmitting ? 'Salvando...' : 'Salvar senha'}
+              <div className="flex gap-2 pt-1">
+                <Button type="submit" size="sm" className="rounded-xl" disabled={isSubmitting}>
+                  {isSubmitting ? 'Salvando...' : 'Salvar nova senha'}
                 </Button>
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="rounded-2xl"
-                  onClick={() => { reset(); setPasswordOpen(false); }}
+                  className="rounded-xl"
+                  onClick={() => {
+                    reset();
+                    setPasswordOpen(false);
+                  }}
                 >
                   Cancelar
                 </Button>
@@ -127,26 +166,29 @@ export function SegurancaPanel() {
           </CollapsibleContent>
         </Collapsible>
 
-        <Button
-          variant="destructive"
-          size="sm"
-          className="rounded-2xl"
-          onClick={handleLogoutOthers}
-          disabled={isLoggingOut}
-        >
-          {isLoggingOut ? 'Saindo...' : 'Logout de outros dispositivos'}
-        </Button>
+        <div className="pt-2 border-t border-border/40">
+          <Button
+            variant="destructive"
+            size="sm"
+            className="rounded-xl"
+            onClick={handleLogoutOthers}
+            disabled={isLoggingOut}
+          >
+            {isLoggingOut ? 'Saindo...' : 'Logout de outros dispositivos'}
+          </Button>
+        </div>
       </section>
 
       <Separator />
 
-      <section className="space-y-2 rounded-2xl border p-4 bg-card/60">
-        <h3 className="text-sm font-semibold">Avançado / Social Login</h3>
-        <div className="rounded-xl border border-dashed p-4 flex items-center gap-2">
-          <p className="text-sm text-muted-foreground">Em breve</p>
-          <Badge variant="secondary">Em breve</Badge>
+      <section className="space-y-3 rounded-2xl border border-border/50 bg-card/60 p-5 shadow-2xs">
+        <h3 className="text-sm font-semibold text-foreground">Avançado / Social Login</h3>
+        <div className="flex items-center gap-2 rounded-xl border border-dashed border-border/60 p-4">
+          <p className="text-xs text-muted-foreground">Autenticação social via Google/Apple em breve.</p>
+          <Badge variant="secondary" className="rounded-md text-[10px]">Em breve</Badge>
         </div>
       </section>
     </div>
   );
 }
+

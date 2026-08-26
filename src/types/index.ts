@@ -29,6 +29,19 @@ export enum ApiCategory {
   Outros = 4,
 }
 
+/** Status de tarefa no board (client-side — o backend usa isCompleted) */
+export enum TaskStatus {
+  AFazer = 0,
+  EmAndamento = 1,
+  Concluido = 2,
+}
+
+export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
+  [TaskStatus.AFazer]: 'A Fazer',
+  [TaskStatus.EmAndamento]: 'Em Andamento',
+  [TaskStatus.Concluido]: 'Concluído',
+};
+
 /** IDs dos módulos da aplicação */
 export enum ModuleId {
   DASHBOARD = 'dashboard',
@@ -91,6 +104,8 @@ export interface AppUser {
   callmeby: string;
   email: string;
   avatar?: string;
+  avatarSlug?: string | null;
+  profilePictureUrl?: string | null;
   nests?: AppUserNest[];
   notifications?: AppNotification[];
 }
@@ -134,6 +149,8 @@ export interface Task {
   category: ApiCategory;
   categoryLabel: string;
   date: string;
+  /** Status no board Kanban — derivado de isCompleted na ausência de campo da API */
+  status?: TaskStatus;
   isCompleted: boolean;
   completedAt?: string | null;
   isOverdue: boolean;
@@ -218,6 +235,8 @@ export interface FutureItem {
   purchase?: FuturePurchase;
 }
 
+import { resolveUserAvatar } from '@/constants/koboyoAvatars';
+
 // ==================== HELPERS ====================
 
 /**
@@ -231,6 +250,7 @@ export function userProfileToAppUser(profile: {
   callbyName: string;
   email: string;
   profilePictureUrl?: string | null;
+  avatarSlug?: string | null;
   nests?: Array<{
     nestId: string;
     name: string;
@@ -254,15 +274,17 @@ export function userProfileToAppUser(profile: {
     name: `${profile.firstName} ${profile.lastName}`.trim(),
     callmeby: profile.callbyName,
     email: profile.email,
-    avatar: profile.profilePictureUrl ?? undefined,
-    nests: (profile.nests ?? []).map(n => ({
+    profilePictureUrl: profile.profilePictureUrl ?? undefined,
+    avatarSlug: profile.avatarSlug ?? undefined,
+    avatar: resolveUserAvatar(profile.profilePictureUrl, profile.avatarSlug),
+    nests: (profile.nests ?? []).map((n) => ({
       nestId: n.nestId,
       name: n.name,
       icon: n.icon,
       isDefault: n.isDefault,
       role: n.role,
     })),
-    notifications: (profile.profile?.notifications ?? []).map(n => ({
+    notifications: (profile.profile?.notifications ?? []).map((n) => ({
       notificationId: n.notificationId,
       title: n.title,
       message: n.message,

@@ -1,17 +1,17 @@
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function toAvatarSrc(avatar: any, mime = "image/png"): Promise<string | undefined> {
+export async function toAvatarSrc(avatar: any, mime = 'image/png'): Promise<string | undefined> {
   if (!avatar) return undefined;
 
   // If it's already a usable URL or data URL
-  if (typeof avatar === "string") {
+  if (typeof avatar === 'string') {
     const s = avatar.trim();
-    if (s.startsWith("http") || s.startsWith("/")) return s;
-    if (s.startsWith("data:")) return s;
+    if (s.startsWith('http') || s.startsWith('/')) return s;
+    if (s.startsWith('data:')) return s;
 
     // Base64-only string (common when server returns base64 payload without prefix)
     const base64Pattern = /^[A-Za-z0-9+/=\s]+$/;
-    if (base64Pattern.test(s) && s.replace(/\s/g, "").length > 20) {
-      return `data:${mime};base64,${s.replace(/\s/g, "")}`;
+    if (base64Pattern.test(s) && s.replace(/\s/g, '').length > 20) {
+      return `data:${mime};base64,${s.replace(/\s/g, '')}`;
     }
 
     // JSON stringified array of bytes

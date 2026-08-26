@@ -8,7 +8,7 @@ Shared utility functions and configuration modules. Organized by concern.
 | ---------------------------- | --------------------------------------------------------------------------------------------------- |
 | `animations.ts`              | Framer Motion variants for consistent motion across the app. Import and use in animated components. |
 | `avatarUtils.ts`             | Avatar name → initial color mapping and utilities. Used by `ProfileMenu`, user cards.               |
-| `nestIcons.ts`               | Maps nest IDs to icon identifiers. Used by sidebar, nest selector.                                  |
+| `nestIcons.tsx`              | Maps nest IDs to icon identifiers and renders React components. Used by sidebar, nest selector.    |
 | `notificationPreferences.ts` | Reads/writes notification preferences from localStorage.                                            |
 | `weatherPreferences.ts`      | Reads/writes weather display preferences from localStorage.                                         |
 | `utils.ts`                   | Generic Tailwind/UI utilities (e.g., `cn()` for classname merging).                                 |
@@ -43,7 +43,7 @@ import { getAvatarColor } from '@/lib/avatarUtils';
 import { getNestIcon } from '@/lib/nestIcons';
 
 const color = getAvatarColor('John Doe'); // Returns consistent color based on name
-const icon = getNestIcon(nestId); // Returns icon identifier
+const icon = getNestIcon(nestId); // Returns icon component
 ```
 
 ## Preference utilities (notificationPreferences, weatherPreferences)
@@ -66,5 +66,5 @@ Used by Settings modal panels and preference UI.
 
 1. If it's a **Framer Motion variant** → add to `animations.ts`
 2. If it's a **localStorage preference** → create new file or extend existing preference module
-3. If it's a **mapping utility** → add to the relevant `*Utils.ts` file
+3. If it's a **mapping utility** → add to the relevant `*Utils.ts` or `*Icons.tsx` file
 4. If it's a **generic helper** → consider if it belongs in `utils.ts` or a new focused module

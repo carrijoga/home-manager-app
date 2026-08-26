@@ -5,11 +5,11 @@
  * Pode ser usado em listas com efeito stagger.
  */
 
-import { motion } from "framer-motion";
-import { ReactNode } from "react";
+import { motion } from 'framer-motion';
+import { ReactNode } from 'react';
 
-import { cardVariants } from "@/lib/animations";
-import { cn } from "@/lib/utils";
+import { cardVariants } from '@/lib/animations';
+import { cn } from '@/lib/utils';
 
 interface AnimatedCardProps {
   children: ReactNode;
@@ -32,7 +32,7 @@ interface AnimatedCardProps {
  */
 export default function AnimatedCard({
   children,
-  className = "",
+  className = '',
   index = 0,
   enableHover = true,
   enableTap = true,
@@ -48,16 +48,13 @@ export default function AnimatedCard({
       initial="initial"
       animate="animate"
       exit="exit"
-      whileHover={enableHover ? "hover" : undefined}
-      whileTap={enableTap ? "tap" : undefined}
+      whileHover={enableHover ? 'hover' : undefined}
+      whileTap={enableTap ? 'tap' : undefined}
       transition={{
         delay: staggerDelay,
       }}
       onClick={onClick}
-      className={cn(
-        onClick && "cursor-pointer",
-        className
-      )}
+      className={cn(onClick && 'cursor-pointer', className)}
     >
       {children}
     </motion.div>

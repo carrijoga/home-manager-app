@@ -7,10 +7,10 @@ import ThemeToggle from './ThemeToggle';
  */
 const Header = ({ useLogo = true }) => {
   const { theme, isDark } = useTheme();
-  
+
   return (
-    <header className="bg-white dark:bg-slate-800 shadow-md border-b border-gray-100 dark:border-slate-700 transition-colors duration-300">
-      <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+    <header className="border-b border-gray-100 bg-white shadow-md transition-colors duration-300 dark:border-slate-700 dark:bg-slate-800">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
         <div className="flex items-center gap-4">
           {useLogo ? (
             <Logo size="default" showText={true} />
@@ -18,7 +18,7 @@ const Header = ({ useLogo = true }) => {
             <h1 className="text-3xl font-bold text-indigo-500 dark:text-indigo-400">🪺 Ninho</h1>
           )}
           {/* Debug info */}
-          <span className="text-xs bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-2 py-1 rounded">
+          <span className="rounded bg-gray-200 px-2 py-1 text-xs text-gray-800 dark:bg-gray-700 dark:text-gray-200">
             Theme: {theme} | isDark: {isDark ? 'true' : 'false'}
           </span>
         </div>

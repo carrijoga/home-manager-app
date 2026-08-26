@@ -1,6 +1,8 @@
-import type React from 'react';
 import * as signalR from '@microsoft/signalr';
+import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
+
+import { tokenStorage } from '@/services/api/httpClient';
 
 export interface SignalRHandle {
   connectionRef: React.MutableRefObject<signalR.HubConnection | null>;
@@ -15,10 +17,13 @@ export function useSignalR(url: string | null): SignalRHandle {
     if (!url) return;
 
     const connection = new signalR.HubConnectionBuilder()
-      .withUrl(url, { withCredentials: true })
+      .withUrl(url, {
+        accessTokenFactory: () => tokenStorage.getAccessToken() ?? '',
+        withCredentials: true,
+      })
       .withAutomaticReconnect()
       .configureLogging(
-        import.meta.env.DEV ? signalR.LogLevel.Information : signalR.LogLevel.Warning,
+        import.meta.env.DEV ? signalR.LogLevel.Information : signalR.LogLevel.Warning
       )
       .build();
 
@@ -28,7 +33,8 @@ export function useSignalR(url: string | null): SignalRHandle {
     connection.onreconnecting(() => setIsConnected(false));
     connection.onclose(() => setIsConnected(false));
 
-    connection.start()
+    connection
+      .start()
       .then(() => setIsConnected(true))
       .catch((err) => {
         if (import.meta.env.DEV) {

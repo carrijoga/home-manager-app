@@ -1,6 +1,17 @@
 import { formatCurrency } from '@utils/formatters';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Flame, MoreVertical, Pencil, Plus, RotateCcw, ShoppingCart, Sparkles, Trash2 } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Flame,
+  MoreVertical,
+  Pencil,
+  Plus,
+  RotateCcw,
+  ShoppingCart,
+  Sparkles,
+  Trash2,
+} from 'lucide-react';
 
 import {
   AlertDialog,
@@ -12,6 +23,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import type { AppShoppingListSummary } from '@/types';
 
@@ -242,51 +259,54 @@ export function ShoppingListsView(props: ShoppingListsViewProps) {
                     >
                       <Icon size={20} />
                     </div>
-                    <div className="relative" onClick={(e) => e.stopPropagation()}>
-                      <button className="peer rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
-                        <MoreVertical size={16} />
-                      </button>
-                      <div className="absolute right-0 top-full z-20 mt-1 hidden w-36 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-lg focus-within:flex peer-focus:flex">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          onClick={(e) => e.stopPropagation()}
+                          className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                          aria-label="Ações da lista"
+                        >
+                          <MoreVertical size={16} />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
                         {isComplete ? (
-                          <button
-                            className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-accent"
-                            onClick={(e) => {
-                              e.stopPropagation();
+                          <DropdownMenuItem
+                            className="gap-2"
+                            onClick={() => {
                               onUnfinishList(list.shoppingListId);
                               onOpenList(list.shoppingListId);
                             }}
                           >
                             <RotateCcw size={13} />
                             Reabrir
-                          </button>
+                          </DropdownMenuItem>
                         ) : (
                           <>
-                            <button
-                              className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-accent"
-                              onClick={(e) => {
-                                e.stopPropagation();
+                            <DropdownMenuItem
+                              className="gap-2"
+                              onClick={() => {
                                 setEditingListId(list.shoppingListId);
                                 setShowEditList(true);
                               }}
                             >
                               <Pencil size={13} />
                               Editar
-                            </button>
-                            <button
-                              className="hover:bg-destructive/10 flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-destructive transition-colors"
-                              onClick={(e) => {
-                                e.stopPropagation();
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="gap-2 text-destructive focus:text-destructive"
+                              onClick={() => {
                                 setEditingListId(list.shoppingListId);
                                 setShowDeleteAlert(true);
                               }}
                             >
                               <Trash2 size={13} />
                               Excluir
-                            </button>
+                            </DropdownMenuItem>
                           </>
                         )}
-                      </div>
-                    </div>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
 
                   {/* Name + status badge */}

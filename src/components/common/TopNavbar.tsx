@@ -1,80 +1,51 @@
-import { Search } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Search } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-import { ProfileModal } from "@/components/modals/ProfileModal";
-import { SettingsModal } from "@/components/modals/SettingsModal";
-import { SidebarTrigger } from "@/components/ui/sidebar";
-import { useApp } from "@/contexts/AppContext";
-import { useTheme } from "@/contexts/ThemeContext";
-import { cn } from "@/lib/utils";
-import * as authService from "@/services/authService";
+import { GlobalSearchModal } from '@/components/modals/GlobalSearchModal';
+import { NestManagerModal } from '@/components/modals/NestManagerModal';
+import { ProfileModal } from '@/components/modals/ProfileModal';
+import { SettingsModal } from '@/components/modals/SettingsModal';
+import { SidebarTrigger } from '@/components/ui/sidebar';
+import { useApp } from '@/contexts/AppContext';
+import { useTheme } from '@/contexts/ThemeContext';
+import { cn } from '@/lib/utils';
+import * as authService from '@/services/authService';
 
-import type { Notification } from "./NotificationsMenu";
-import NotificationsMenu from "./NotificationsMenu";
-import ProfileMenu from "./ProfileMenu";
+import NotificationsMenu from './NotificationsMenu';
+import ProfileMenu from './ProfileMenu';
 
 interface SearchBarProps {
   className?: string;
+  onClick?: () => void;
 }
 
-function NavSearchBar({ className }: SearchBarProps) {
-  const [active, setActive] = useState(false);
-  const [query, setQuery] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  // Atalho Ctrl/Cmd + K
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
-        e.preventDefault();
-        inputRef.current?.focus();
-      }
-      if (e.key === "Escape") {
-        inputRef.current?.blur();
-        setActive(false);
-      }
-    };
-    document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
-  }, []);
-
+function NavSearchBar({ className, onClick }: SearchBarProps) {
   return (
-    <div className={cn("relative h-10 w-[220px] sm:w-[416px] max-w-full", className)}>
-      {/* Ícone de lupa */}
-      <Search
-        size={16}
-        className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-[length:var(--dur-fast)]"
-        style={{ color: active ? "var(--primary)" : "var(--muted-foreground)" }}
-      />
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'group relative flex h-10 w-[220px] max-w-full items-center justify-between rounded-full border border-border bg-card px-4 text-sm text-muted-foreground shadow-none transition-all duration-200 hover:border-primary/50 hover:bg-accent/40 sm:w-[416px]',
+        className
+      )}
+    >
+      <div className="flex items-center gap-2.5 overflow-hidden">
+        <Search
+          size={16}
+          className="shrink-0 text-muted-foreground transition-colors group-hover:text-primary"
+        />
+        <span className="truncate text-sm font-normal text-muted-foreground group-hover:text-foreground">
+          Buscar no Ninho…
+        </span>
+      </div>
 
-      <input
-        ref={inputRef}
-        type="text"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        onFocus={() => setActive(true)}
-        onBlur={() => setActive(false)}
-        aria-label="Buscar no Ninho"
-        placeholder="Buscar no Ninho… ⌘K"
-        className={cn(
-          "w-full h-full pl-11 pr-4 rounded-full text-sm font-normal text-foreground placeholder:text-muted-foreground outline-none transition-all duration-[length:var(--dur-fast)]",
-          "bg-card",
-          active
-            ? "border border-primary/50 shadow-[0px_0px_15px_0px_color-mix(in_srgb,var(--primary)_15%,transparent)]"
-            : "border border-border shadow-none"
-        )}
-      />
-    </div>
+      <kbd className="hidden shrink-0 items-center gap-0.5 rounded border border-border bg-muted/60 px-2 py-0.5 text-[10px] font-medium text-muted-foreground shadow-xs sm:flex">
+        ⌘K
+      </kbd>
+    </button>
   );
 }
-
-const TYPE_MAP: Record<number, Notification["type"]> = {
-  0: "notice",
-  1: "notice",
-  2: "reminder",
-  3: "task",
-};
 
 /**
  * TopNavbar — barra de navegação superior fixa.
@@ -83,52 +54,80 @@ const TYPE_MAP: Record<number, Notification["type"]> = {
  * Fundo: color-mix(background 80%) + backdrop-blur para sensação de profundidade
  */
 export function TopNavbar({ className }: { className?: string }) {
-  const { user, notifications, markAllAsRead } = useApp();
+  const {
+    user,
+    notifications,
+    markAsRead,
+    markAllAsRead,
+    clearNotification,
+    clearAllNotifications,
+    clearUser,
+  } = useApp();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
+
+  const [searchOpen, setSearchOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [nestManagerOpen, setNestManagerOpen] = useState(false);
+
+  // Atalho global Cmd/Ctrl + K
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setSearchOpen((prev) => !prev);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   if (!user) return null;
 
-  const menuNotifications: Notification[] = notifications.map((n) => ({
-    id: n.notificationId,
-    type: TYPE_MAP[n.type] ?? "notice",
-    title: n.title,
-    message: n.message,
-    timestamp: new Date(),
-    read: n.isRead,
-  }));
-
   const handleLogout = async () => {
     await authService.logout();
-    navigate("/login");
+    clearUser();
+    navigate('/login');
   };
 
   return (
     <header
       className={cn(
-        "sticky top-0 z-50 flex items-center justify-between px-6 md:px-12 py-3 w-full",
-        "border-b border-border",
-        "text-foreground",
+        'sticky top-0 z-50 flex w-full items-center justify-between px-4 py-3 sm:px-6 md:px-12',
+        'border-b border-border',
+        'text-foreground',
         className
       )}
       style={{
-        background: "color-mix(in srgb, var(--background) 80%, transparent)",
-        backdropFilter: "blur(6px)",
+        background: 'color-mix(in srgb, var(--background) 80%, transparent)',
+        backdropFilter: 'blur(6px)',
       }}
     >
-      {/* Esquerda: trigger da sidebar (mobile) + search */}
+      {/* Esquerda: trigger da sidebar + search */}
       <div className="flex items-center gap-3">
-        <SidebarTrigger className="-ml-1 md:hidden" />
-        <NavSearchBar className="hidden sm:block" />
+        <SidebarTrigger className="-ml-1" />
+        <NavSearchBar onClick={() => setSearchOpen(true)} className="hidden sm:flex" />
       </div>
 
-      {/* Direita: sino + perfil */}
-      <div className="flex items-center gap-3">
+      {/* Direita: busca mobile + sino + perfil */}
+      <div className="flex items-center gap-2 sm:gap-3">
+        {/* Botão de Busca Mobile */}
+        <button
+          type="button"
+          onClick={() => setSearchOpen(true)}
+          className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground transition-colors hover:bg-accent hover:text-foreground sm:hidden"
+          aria-label="Buscar no Ninho"
+        >
+          <Search size={18} />
+        </button>
+
         <NotificationsMenu
-          notifications={menuNotifications}
+          notifications={notifications}
+          onMarkAsRead={markAsRead}
           onMarkAllAsRead={markAllAsRead}
+          onClearNotification={clearNotification}
+          onClearAll={clearAllNotifications}
         />
         <ProfileMenu
           user={user}
@@ -138,8 +137,22 @@ export function TopNavbar({ className }: { className?: string }) {
           onSettingsClick={() => setSettingsOpen(true)}
           onLogoutClick={handleLogout}
         />
+
+        {/* Modais Globais */}
+        <GlobalSearchModal
+          open={searchOpen}
+          onOpenChange={setSearchOpen}
+          onOpenProfile={() => setProfileOpen(true)}
+          onOpenSettings={() => setSettingsOpen(true)}
+          onOpenNestManager={() => setNestManagerOpen(true)}
+        />
         <ProfileModal open={profileOpen} onOpenChange={setProfileOpen} />
         <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
+        <NestManagerModal
+          open={nestManagerOpen}
+          onClose={() => setNestManagerOpen(false)}
+          onOpenChange={setNestManagerOpen}
+        />
       </div>
     </header>
   );

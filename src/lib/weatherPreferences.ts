@@ -33,15 +33,18 @@ export function getWeatherPreferences(): WeatherPreferences {
       consentGiven: Boolean(parsed.consentGiven),
       useApproximateLocation: Boolean(parsed.useApproximateLocation),
       manualCity: typeof parsed.manualCity === 'string' ? parsed.manualCity : '',
-      method: parsed.method === 'gps' || parsed.method === 'ip' || parsed.method === 'manual' ? parsed.method : null,
+      method:
+        parsed.method === 'gps' || parsed.method === 'ip' || parsed.method === 'manual'
+          ? parsed.method
+          : null,
       coords:
         parsed.coords &&
         typeof parsed.coords.latitude === 'number' &&
         typeof parsed.coords.longitude === 'number'
           ? {
-            latitude: parsed.coords.latitude,
-            longitude: parsed.coords.longitude,
-          }
+              latitude: parsed.coords.latitude,
+              longitude: parsed.coords.longitude,
+            }
           : null,
     };
   } catch {

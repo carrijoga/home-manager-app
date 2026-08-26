@@ -4,7 +4,7 @@
  */
 
 import type { CreateNoticeRequest, UpdateNoticeRequest } from '@/schemas/notices';
-import { NoticeHistoryResponseSchema,NoticeResponseSchema } from '@/schemas/notices';
+import { NoticeHistoryResponseSchema, NoticeResponseSchema } from '@/schemas/notices';
 import type { Notice, PaginatedResponse } from '@/types';
 import { ApiPriority } from '@/types';
 
@@ -33,9 +33,17 @@ function apiToNotice(raw: unknown): Notice {
   if (parsed.success) {
     const r = raw as Record<string, unknown>;
     return {
-      ...parsed.data as Notice,
+      noticeId: parsed.data.noticeId,
+      message: parsed.data.message,
+      date: parsed.data.date,
+      isPinned: parsed.data.isPinned,
+      priority: ApiPriority.Baixa,
+      expiresAt: parsed.data.expiresAt,
+      isActive: parsed.data.isActive,
+      createdBy: parsed.data.createdBy,
+      createdAt: parsed.data.createdAt,
       color: (r.color as string) ?? undefined,
-      reactions: normalizeReactions(r.reactions),
+      reactions: normalizeReactions(parsed.data.reactions),
     };
   }
   // fallback permissivo
@@ -63,11 +71,19 @@ const _mockState = [...mockNotices];
 
 export async function getActiveNotices(nestId?: string): Promise<Notice[]> {
   if (DATA_MODE === 'mock') {
-    return new Promise(resolve =>
-      setTimeout(() => resolve(_mockState.filter(n => n.isActive).sort((a, b) => {
-        if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      })), 100)
+    return new Promise((resolve) =>
+      setTimeout(
+        () =>
+          resolve(
+            _mockState
+              .filter((n) => n.isActive)
+              .sort((a, b) => {
+                if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
+                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+              })
+          ),
+        100
+      )
     );
   }
   const data = await httpClient.get<unknown[]>(ENDPOINTS.notices.list, nestId);
@@ -88,71 +104,101 @@ export async function createNotice(payload: CreateNoticeRequest, nestId?: string
       createdBy: 'user-mock-0001',
       createdAt: now,
       authorName: 'Você',
-      color: payload.color,
     };
     _mockState.unshift(notice);
-    return new Promise(resolve => setTimeout(() => resolve(notice), 100));
+    return new Promise((resolve) => setTimeout(() => resolve(notice), 100));
   }
   const id = await httpClient.post<string>(ENDPOINTS.notices.create, payload, { nestId });
   // Busca o aviso criado pelo ID retornado
   const data = await httpClient.get<unknown>(ENDPOINTS.notices.list, nestId);
   const list = Array.isArray(data) ? data : [];
   const created = list.find((n: unknown) => (n as Record<string, unknown>).noticeId === id);
-  return created ? apiToNotice(created) : { noticeId: id, message: payload.message, date: payload.date ?? new Date().toISOString(), isPinned: false, priority: ApiPriority.Baixa, expiresAt: payload.expiresAt ?? null, isActive: true, createdBy: '', createdAt: new Date().toISOString() };
+  return created
+    ? apiToNotice(created)
+    : {
+        noticeId: id,
+        message: payload.message,
+        date: payload.date ?? new Date().toISOString(),
+        isPinned: false,
+        priority: ApiPriority.Baixa,
+        expiresAt: payload.expiresAt ?? null,
+        isActive: true,
+        createdBy: '',
+        createdAt: new Date().toISOString(),
+      };
 }
 
-export async function updateNotice(id: string, payload: UpdateNoticeRequest, nestId?: string): Promise<void> {
+export async function updateNotice(
+  id: string,
+  payload: UpdateNoticeRequest,
+  nestId?: string
+): Promise<void> {
   if (DATA_MODE === 'mock') {
-    const idx = _mockState.findIndex(n => n.noticeId === id);
+    const idx = _mockState.findIndex((n) => n.noticeId === id);
     if (idx >= 0) {
-      _mockState[idx] = { ..._mockState[idx], message: payload.message, expiresAt: payload.expiresAt ?? _mockState[idx].expiresAt };
+      _mockState[idx] = {
+        ..._mockState[idx],
+        message: payload.message,
+        expiresAt: payload.expiresAt ?? _mockState[idx].expiresAt,
+      };
     }
-    return new Promise(resolve => setTimeout(resolve, 100));
+    return new Promise((resolve) => setTimeout(resolve, 100));
   }
   await httpClient.put<void>(ENDPOINTS.notices.update(id), payload, nestId);
 }
 
 export async function deleteNotice(id: string, nestId?: string): Promise<void> {
   if (DATA_MODE === 'mock') {
-    const idx = _mockState.findIndex(n => n.noticeId === id);
+    const idx = _mockState.findIndex((n) => n.noticeId === id);
     if (idx >= 0) _mockState.splice(idx, 1);
-    return new Promise(resolve => setTimeout(resolve, 100));
+    return new Promise((resolve) => setTimeout(resolve, 100));
   }
   await httpClient.del<void>(ENDPOINTS.notices.delete(id), nestId);
 }
 
 export async function pinNotice(id: string, nestId?: string): Promise<void> {
   if (DATA_MODE === 'mock') {
-    const notice = _mockState.find(n => n.noticeId === id);
-    if (notice) { notice.isPinned = true; notice.expiresAt = null; }
-    return new Promise(resolve => setTimeout(resolve, 100));
+    const notice = _mockState.find((n) => n.noticeId === id);
+    if (notice) {
+      notice.isPinned = true;
+      notice.expiresAt = null;
+    }
+    return new Promise((resolve) => setTimeout(resolve, 100));
   }
   await httpClient.patch<void>(ENDPOINTS.notices.pin(id), undefined, nestId);
 }
 
 export async function unpinNotice(id: string, nestId?: string): Promise<void> {
   if (DATA_MODE === 'mock') {
-    const notice = _mockState.find(n => n.noticeId === id);
+    const notice = _mockState.find((n) => n.noticeId === id);
     if (notice) {
       notice.isPinned = false;
       notice.expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
     }
-    return new Promise(resolve => setTimeout(resolve, 100));
+    return new Promise((resolve) => setTimeout(resolve, 100));
   }
   await httpClient.patch<void>(ENDPOINTS.notices.unpin(id), undefined, nestId);
 }
 
-export async function getNoticeHistory(page = 1, pageSize = 20, nestId?: string): Promise<PaginatedResponse<Notice>> {
+export async function getNoticeHistory(
+  page = 1,
+  pageSize = 20,
+  nestId?: string
+): Promise<PaginatedResponse<Notice>> {
   if (DATA_MODE === 'mock') {
-    const expired = _mockState.filter(n => !n.isActive);
+    const expired = _mockState.filter((n) => !n.isActive);
     const start = (page - 1) * pageSize;
-    return new Promise(resolve =>
-      setTimeout(() => resolve({
-        items: expired.slice(start, start + pageSize),
-        totalCount: expired.length,
-        page,
-        pageSize,
-      }), 100)
+    return new Promise((resolve) =>
+      setTimeout(
+        () =>
+          resolve({
+            items: expired.slice(start, start + pageSize),
+            totalCount: expired.length,
+            page,
+            pageSize,
+          }),
+        100
+      )
     );
   }
   const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
@@ -162,6 +208,38 @@ export async function getNoticeHistory(page = 1, pageSize = 20, nestId?: string)
     return { ...parsed.data, items: parsed.data.items.map(apiToNotice) };
   }
   return { items: [], totalCount: 0, page, pageSize };
+}
+
+export async function reactToNotice(id: string, reaction: string, nestId?: string): Promise<void> {
+  if (DATA_MODE === 'mock') {
+    const notice = _mockState.find((n) => n.noticeId === id);
+    if (notice) {
+      const reactions = notice.reactions ?? [];
+      const existing = reactions.find((r) => r.emoji === reaction);
+      if (existing) existing.count += 1;
+      else reactions.push({ emoji: reaction, count: 1 });
+      notice.reactions = reactions;
+    }
+    return new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  await httpClient.patch<void>(ENDPOINTS.notices.reaction(id), { reaction }, nestId);
+}
+
+export async function unreactToNotice(
+  id: string,
+  reactionId: string,
+  nestId?: string
+): Promise<void> {
+  if (DATA_MODE === 'mock') {
+    const notice = _mockState.find((n) => n.noticeId === id);
+    if (notice?.reactions) {
+      notice.reactions = notice.reactions
+        .map((r) => ({ ...r, count: r.count - 1 }))
+        .filter((r) => r.count > 0);
+    }
+    return new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  await httpClient.patch<void>(ENDPOINTS.notices.unreaction(id), { reactionId }, nestId);
 }
 
 // Compat alias mantido para o AppContext legado

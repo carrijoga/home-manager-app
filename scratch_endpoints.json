@@ -1,0 +1,746 @@
+[
+  {
+    "path": "/health",
+    "method": "GET",
+    "summary": "Returns the health status of the API",
+    "tags": [
+      "Health"
+    ]
+  },
+  {
+    "path": "/api/users/username/preview",
+    "method": "POST",
+    "summary": "Generates a username preview based on the specified first and last names.",
+    "tags": [
+      "User"
+    ]
+  },
+  {
+    "path": "/api/users/me",
+    "method": "GET",
+    "summary": "Retrieves a summary of the currently authenticated user.",
+    "tags": [
+      "User"
+    ]
+  },
+  {
+    "path": "/api/users/me",
+    "method": "PUT",
+    "summary": "Updates the profile information of the currently authenticated user",
+    "tags": [
+      "User"
+    ]
+  },
+  {
+    "path": "/api/users/me/profile",
+    "method": "GET",
+    "summary": "Retrieves all the profile information for the currently authenticated user.",
+    "tags": [
+      "User"
+    ]
+  },
+  {
+    "path": "/api/users/me/configuration",
+    "method": "GET",
+    "summary": "Retrieves the configuration settings for the currently authenticated user.",
+    "tags": [
+      "User"
+    ]
+  },
+  {
+    "path": "/api/users/me/configuration",
+    "method": "PUT",
+    "summary": "",
+    "tags": [
+      "User"
+    ]
+  },
+  {
+    "path": "/api/users/me/notification",
+    "method": "GET",
+    "summary": "Retrieves the list of notifications for the currently authenticated user.",
+    "tags": [
+      "User"
+    ]
+  },
+  {
+    "path": "/api/users/me/nests",
+    "method": "GET",
+    "summary": "Retrieves the list of nests associated with the currently authenticated user.",
+    "tags": [
+      "User"
+    ]
+  },
+  {
+    "path": "/api/tasks",
+    "method": "GET",
+    "summary": "Lists all active (pending) tasks for the current nest",
+    "tags": [
+      "Task"
+    ]
+  },
+  {
+    "path": "/api/tasks",
+    "method": "POST",
+    "summary": "Creates a new task with full details",
+    "tags": [
+      "Task"
+    ]
+  },
+  {
+    "path": "/api/tasks/history",
+    "method": "GET",
+    "summary": "Lists completed tasks (history) with pagination",
+    "tags": [
+      "Task"
+    ]
+  },
+  {
+    "path": "/api/tasks/{id}",
+    "method": "GET",
+    "summary": "Gets a task by ID",
+    "tags": [
+      "Task"
+    ]
+  },
+  {
+    "path": "/api/tasks/{id}",
+    "method": "PUT",
+    "summary": "Updates an existing task",
+    "tags": [
+      "Task"
+    ]
+  },
+  {
+    "path": "/api/tasks/{id}",
+    "method": "DELETE",
+    "summary": "Deletes a task",
+    "tags": [
+      "Task"
+    ]
+  },
+  {
+    "path": "/api/tasks/quick",
+    "method": "POST",
+    "summary": "Creates a task quickly with only a title. Priority defaults to Baixa, Category to Geral.",
+    "tags": [
+      "Task"
+    ]
+  },
+  {
+    "path": "/api/tasks/{id}/complete",
+    "method": "PATCH",
+    "summary": "Marks a task as completed",
+    "tags": [
+      "Task"
+    ]
+  },
+  {
+    "path": "/api/shopping-category",
+    "method": "GET",
+    "summary": "Lists all shopping categories (defaults + custom for the current nest)",
+    "tags": [
+      "ShoppingCategory"
+    ]
+  },
+  {
+    "path": "/api/shopping-category",
+    "method": "POST",
+    "summary": "Creates a custom shopping category for the current nest",
+    "tags": [
+      "ShoppingCategory"
+    ]
+  },
+  {
+    "path": "/api/shopping-category/{id}",
+    "method": "DELETE",
+    "summary": "Deletes a custom shopping category (default categories cannot be deleted)",
+    "tags": [
+      "ShoppingCategory"
+    ]
+  },
+  {
+    "path": "/api/shopping-item",
+    "method": "POST",
+    "summary": "Adds a new item to a shopping list",
+    "tags": [
+      "ShoppingItem"
+    ]
+  },
+  {
+    "path": "/api/shopping-item/{listId}/upload",
+    "method": "POST",
+    "summary": "Uploads a file containing shopping items to the specified list.",
+    "tags": [
+      "ShoppingItem"
+    ]
+  },
+  {
+    "path": "/api/shopping-item/{id}",
+    "method": "PUT",
+    "summary": "Updates an existing shopping item",
+    "tags": [
+      "ShoppingItem"
+    ]
+  },
+  {
+    "path": "/api/shopping-item/{id}",
+    "method": "DELETE",
+    "summary": "Deletes a shopping item",
+    "tags": [
+      "ShoppingItem"
+    ]
+  },
+  {
+    "path": "/api/shopping-item/{id}/purchase",
+    "method": "PATCH",
+    "summary": "Marks a shopping item as purchased with the actual price paid",
+    "tags": [
+      "ShoppingItem"
+    ]
+  },
+  {
+    "path": "/api/shopping-item/{ShoppingListId}/unpurchase/{ShoppingItemId}",
+    "method": "PATCH",
+    "summary": "Unmarks a shopping item as purchased, resetting price and purchase date",
+    "tags": [
+      "ShoppingItem"
+    ]
+  },
+  {
+    "path": "/api/shopping-list",
+    "method": "GET",
+    "summary": "Lists shopping lists for the current nest, optionally filtered by month/year",
+    "tags": [
+      "ShoppingList"
+    ]
+  },
+  {
+    "path": "/api/shopping-list",
+    "method": "POST",
+    "summary": "Creates a new shopping list",
+    "tags": [
+      "ShoppingList"
+    ]
+  },
+  {
+    "path": "/api/shopping-list/{id}",
+    "method": "GET",
+    "summary": "Gets a shopping list by ID, including all its items",
+    "tags": [
+      "ShoppingList"
+    ]
+  },
+  {
+    "path": "/api/shopping-list/{id}",
+    "method": "PUT",
+    "summary": "Updates an existing shopping list",
+    "tags": [
+      "ShoppingList"
+    ]
+  },
+  {
+    "path": "/api/shopping-list/{id}",
+    "method": "DELETE",
+    "summary": "Deletes a shopping list and all its items",
+    "tags": [
+      "ShoppingList"
+    ]
+  },
+  {
+    "path": "/api/shopping-list/{shoppingListId}/finish",
+    "method": "PATCH",
+    "summary": "Marks a shopping list as finished",
+    "tags": [
+      "ShoppingList"
+    ]
+  },
+  {
+    "path": "/api/shopping-list/{shoppingListId}/unfinished",
+    "method": "PATCH",
+    "summary": "Marks a shopping list as unfinished",
+    "tags": [
+      "ShoppingList"
+    ]
+  },
+  {
+    "path": "/api/payment-cards/create",
+    "method": "POST",
+    "summary": "Creates a new payment card. The required fields depend on CardType.",
+    "tags": [
+      "PaymentCard"
+    ]
+  },
+  {
+    "path": "/api/payment-cards/get-by-id",
+    "method": "GET",
+    "summary": "Gets a payment card by its unique identifier",
+    "tags": [
+      "PaymentCard"
+    ]
+  },
+  {
+    "path": "/api/payment-cards/list",
+    "method": "GET",
+    "summary": "Lists all payment cards for the current nest",
+    "tags": [
+      "PaymentCard"
+    ]
+  },
+  {
+    "path": "/api/payment-cards/update-details/{id}",
+    "method": "PUT",
+    "summary": "Updates a payment card's name and color (all card types)",
+    "tags": [
+      "PaymentCard"
+    ]
+  },
+  {
+    "path": "/api/payment-cards/update-credit-settings/{id}",
+    "method": "PUT",
+    "summary": "Updates a credit card's limit and billing-cycle days (Credit cards only)",
+    "tags": [
+      "PaymentCard"
+    ]
+  },
+  {
+    "path": "/api/payment-cards/inactivate/{id}",
+    "method": "DELETE",
+    "summary": "Inactivates a payment card",
+    "tags": [
+      "PaymentCard"
+    ]
+  },
+  {
+    "path": "/api/payment-cards/activate/{id}",
+    "method": "PATCH",
+    "summary": "Activates a previously inactivated payment card",
+    "tags": [
+      "PaymentCard"
+    ]
+  },
+  {
+    "path": "/api/payment-cards/can-delete/{id}",
+    "method": "GET",
+    "summary": "Checks whether a payment card can be deleted",
+    "tags": [
+      "PaymentCard"
+    ]
+  },
+  {
+    "path": "/api/payment-cards/delete/{id}",
+    "method": "DELETE",
+    "summary": "Deletes a payment card",
+    "tags": [
+      "PaymentCard"
+    ]
+  },
+  {
+    "path": "/api/notices",
+    "method": "GET",
+    "summary": "Lists all active notices for the current nest (pinned or not expired)",
+    "tags": [
+      "Notice"
+    ]
+  },
+  {
+    "path": "/api/notices",
+    "method": "POST",
+    "summary": "Creates a new notice. Expires automatically after 24h unless pinned.",
+    "tags": [
+      "Notice"
+    ]
+  },
+  {
+    "path": "/api/notices/history",
+    "method": "GET",
+    "summary": "Lists expired notices (history) with pagination",
+    "tags": [
+      "Notice"
+    ]
+  },
+  {
+    "path": "/api/notices/{id}",
+    "method": "PUT",
+    "summary": "Updates a notice. Only the author can update it.",
+    "tags": [
+      "Notice"
+    ]
+  },
+  {
+    "path": "/api/notices/{id}",
+    "method": "DELETE",
+    "summary": "Deletes a notice. Only the author can delete it.",
+    "tags": [
+      "Notice"
+    ]
+  },
+  {
+    "path": "/api/notices/{id}/pin",
+    "method": "PATCH",
+    "summary": "Pins a notice so it never expires.",
+    "tags": [
+      "Notice"
+    ]
+  },
+  {
+    "path": "/api/notices/{id}/unpin",
+    "method": "PATCH",
+    "summary": "Unpins a notice, resetting its expiration to 24h from now.",
+    "tags": [
+      "Notice"
+    ]
+  },
+  {
+    "path": "/api/notices/{id}/reaction",
+    "method": "PATCH",
+    "summary": "Adds a reaction to the specified notice for the current user.",
+    "tags": [
+      "Notice"
+    ]
+  },
+  {
+    "path": "/api/notices/{id}/unreaction",
+    "method": "PATCH",
+    "summary": "Removes a user's reaction from the specified notice.",
+    "tags": [
+      "Notice"
+    ]
+  },
+  {
+    "path": "/api/nests/create",
+    "method": "POST",
+    "summary": "Creates a new nest for the authenticated user using the specified details.",
+    "tags": [
+      "Nest"
+    ]
+  },
+  {
+    "path": "/api/nests/update",
+    "method": "PUT",
+    "summary": "Updates the details of an existing nest for the authenticated user.",
+    "tags": [
+      "Nest"
+    ]
+  },
+  {
+    "path": "/api/nests/leave",
+    "method": "POST",
+    "summary": "Processes a request for the current user to leave their assigned nest.",
+    "tags": [
+      "Nest"
+    ]
+  },
+  {
+    "path": "/api/nests/{nestId}",
+    "method": "DELETE",
+    "summary": "Deletes a specified nest with the given ID for the authenticated user.",
+    "tags": [
+      "Nest"
+    ]
+  },
+  {
+    "path": "/api/nests/invites",
+    "method": "GET",
+    "summary": "Retrieves all invites associated with the current nest.",
+    "tags": [
+      "Nest"
+    ]
+  },
+  {
+    "path": "/api/nests/invite/{email}",
+    "method": "POST",
+    "summary": "Sends an invitation to join the current nest to the specified email address.",
+    "tags": [
+      "Nest"
+    ]
+  },
+  {
+    "path": "/api/nests/resend-invite/{inviteId}",
+    "method": "POST",
+    "summary": "Resends an existing invitation to join the current nest using the specified invite ID.",
+    "tags": [
+      "Nest"
+    ]
+  },
+  {
+    "path": "/api/nests/accept-invite/{tokenHash}",
+    "method": "POST",
+    "summary": "Accepts an invitation to join a nest using the specified token hash.",
+    "tags": [
+      "Nest"
+    ]
+  },
+  {
+    "path": "/api/nests/remove-member/{userId}",
+    "method": "POST",
+    "summary": "Removes a member from the current nest.",
+    "tags": [
+      "Nest"
+    ]
+  },
+  {
+    "path": "/api/nests/members/{nestId}",
+    "method": "POST",
+    "summary": "Lists all members of the specified nest.",
+    "tags": [
+      "Nest"
+    ]
+  },
+  {
+    "path": "/api/financial-transactions/create",
+    "method": "POST",
+    "summary": "Creates a new financial transaction",
+    "tags": [
+      "FinancialTransaction"
+    ]
+  },
+  {
+    "path": "/api/financial-transactions/add-payment",
+    "method": "POST",
+    "summary": "Registers a payment for an existing financial transaction",
+    "tags": [
+      "FinancialTransaction"
+    ]
+  },
+  {
+    "path": "/api/financial-transactions/{id}",
+    "method": "PUT",
+    "summary": "Updates an existing financial transaction that has no linked payments",
+    "tags": [
+      "FinancialTransaction"
+    ]
+  },
+  {
+    "path": "/api/financial-transactions/{id}",
+    "method": "DELETE",
+    "summary": "Deletes a financial transaction and any linked payments",
+    "tags": [
+      "FinancialTransaction"
+    ]
+  },
+  {
+    "path": "/api/financial-transactions/remove-payment",
+    "method": "POST",
+    "summary": "Removes a payment from an existing financial transaction",
+    "tags": [
+      "FinancialTransaction"
+    ]
+  },
+  {
+    "path": "/api/financial-transactions/get-by-id",
+    "method": "GET",
+    "summary": "Gets a financial transaction by its unique identifier",
+    "tags": [
+      "FinancialTransaction"
+    ]
+  },
+  {
+    "path": "/api/financial-transactions/list",
+    "method": "POST",
+    "summary": "Lists financial transactions based on the provided filter criteria",
+    "tags": [
+      "FinancialTransaction"
+    ]
+  },
+  {
+    "path": "/api/financial-transactions/dashboard",
+    "method": "GET",
+    "summary": "Returns the financial dashboard for the current month",
+    "tags": [
+      "FinancialTransaction"
+    ]
+  },
+  {
+    "path": "/api/dashboard",
+    "method": "GET",
+    "summary": "Gets the dashboard information",
+    "tags": [
+      "Dashboard"
+    ]
+  },
+  {
+    "path": "/api/dashboard/weather",
+    "method": "POST",
+    "summary": "Gets the weather information",
+    "tags": [
+      "Dashboard"
+    ]
+  },
+  {
+    "path": "/api/categories/create",
+    "method": "POST",
+    "summary": "Creates a new category",
+    "tags": [
+      "Category"
+    ]
+  },
+  {
+    "path": "/api/categories/get-by-id",
+    "method": "GET",
+    "summary": "Gets a category by its unique identifier",
+    "tags": [
+      "Category"
+    ]
+  },
+  {
+    "path": "/api/categories/list",
+    "method": "POST",
+    "summary": "Lists categories based on the provided filter criteria",
+    "tags": [
+      "Category"
+    ]
+  },
+  {
+    "path": "/api/bank-account",
+    "method": "GET",
+    "summary": "Lists all bank accounts for the current nest",
+    "tags": [
+      "BankAccount"
+    ]
+  },
+  {
+    "path": "/api/bank-account",
+    "method": "POST",
+    "summary": "Creates a new bank account",
+    "tags": [
+      "BankAccount"
+    ]
+  },
+  {
+    "path": "/api/bank-account/{id}",
+    "method": "GET",
+    "summary": "Gets a bank account by its unique identifier",
+    "tags": [
+      "BankAccount"
+    ]
+  },
+  {
+    "path": "/api/bank-account/{id}",
+    "method": "PUT",
+    "summary": "Updates an existing bank account",
+    "tags": [
+      "BankAccount"
+    ]
+  },
+  {
+    "path": "/api/bank-account/{id}",
+    "method": "DELETE",
+    "summary": "Deletes a bank account",
+    "tags": [
+      "BankAccount"
+    ]
+  },
+  {
+    "path": "/api/bank-account/{id}/can-delete",
+    "method": "GET",
+    "summary": "Checks whether a bank account can be deleted",
+    "tags": [
+      "BankAccount"
+    ]
+  },
+  {
+    "path": "/api/bank-account/{id}/inactivate",
+    "method": "PATCH",
+    "summary": "Inactivates a bank account, cascading to all linked payment cards",
+    "tags": [
+      "BankAccount"
+    ]
+  },
+  {
+    "path": "/api/bank-account/{id}/activate",
+    "method": "PATCH",
+    "summary": "Activates a previously inactivated bank account",
+    "tags": [
+      "BankAccount"
+    ]
+  },
+  {
+    "path": "/api/auth/register",
+    "method": "POST",
+    "summary": "Registers a new user account",
+    "tags": [
+      "Auth"
+    ]
+  },
+  {
+    "path": "/api/auth/login",
+    "method": "POST",
+    "summary": "Authenticates a user with credentials and returns an access token",
+    "tags": [
+      "Auth"
+    ]
+  },
+  {
+    "path": "/api/auth/google",
+    "method": "GET",
+    "summary": "Initiates Google OAuth authentication",
+    "tags": [
+      "Auth"
+    ]
+  },
+  {
+    "path": "/api/auth/google/callback",
+    "method": "GET",
+    "summary": "Handles the Google OAuth callback after authentication",
+    "tags": [
+      "Auth"
+    ]
+  },
+  {
+    "path": "/api/auth/refresh",
+    "method": "POST",
+    "summary": "Refreshes the authentication token using the refresh token stored in cookies",
+    "tags": [
+      "Auth"
+    ]
+  },
+  {
+    "path": "/api/auth/logout",
+    "method": "POST",
+    "summary": "Logs out the currently authenticated user and invalidates the session",
+    "tags": [
+      "Auth"
+    ]
+  },
+  {
+    "path": "/api/attachments",
+    "method": "POST",
+    "summary": "Uploads an attachment and associates it with an owner entity",
+    "tags": [
+      "Attachment"
+    ]
+  },
+  {
+    "path": "/api/attachments",
+    "method": "DELETE",
+    "summary": "Removes an attachment by its unique identifier",
+    "tags": [
+      "Attachment"
+    ]
+  },
+  {
+    "path": "/api/admin/users",
+    "method": "GET",
+    "summary": "Gets the total number of registered users",
+    "tags": [
+      "Admin"
+    ]
+  },
+  {
+    "path": "/api/recovery-password/request",
+    "method": "POST",
+    "summary": "Initiates the password recovery process for a user based on the provided recovery command.",
+    "tags": [
+      "Security"
+    ]
+  },
+  {
+    "path": "/api/recovery-password/reset",
+    "method": "POST",
+    "summary": "Resets the user's password using the provided reset token and new password.",
+    "tags": [
+      "Security"
+    ]
+  }
+]

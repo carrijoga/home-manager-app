@@ -1,9 +1,9 @@
-import Autoplay from "embla-carousel-autoplay";
-import useEmblaCarousel from "embla-carousel-react";
-import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import Autoplay from 'embla-carousel-autoplay';
+import useEmblaCarousel from 'embla-carousel-react';
+import { ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 /**
  * Componente de Carrossel para Métricas do Dashboard
@@ -34,7 +34,7 @@ export default function CarouselMetrics({
   const [emblaRef, emblaApi] = useEmblaCarousel(
     {
       loop: true,
-      align: "start",
+      align: 'start',
       skipSnaps: false,
       dragFree: false,
     },
@@ -72,16 +72,15 @@ export default function CarouselMetrics({
     if (!emblaApi) return;
 
     setScrollSnaps(emblaApi.scrollSnapList());
-    emblaApi.on("select", onSelect);
-    emblaApi.on("reInit", onSelect);
+    emblaApi.on('select', onSelect);
+    emblaApi.on('reInit', onSelect);
     onSelect();
 
     return () => {
-      emblaApi.off("select", onSelect);
-      emblaApi.off("reInit", onSelect);
+      emblaApi.off('select', onSelect);
+      emblaApi.off('reInit', onSelect);
     };
   }, [emblaApi, onSelect]);
-
 
   // Estado para saber se está tocando
   const [isPlaying, setIsPlaying] = useState(true);
@@ -121,17 +120,17 @@ export default function CarouselMetrics({
   // Navegação por teclado
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "ArrowLeft") {
+      if (e.key === 'ArrowLeft') {
         e.preventDefault();
         scrollPrev();
-      } else if (e.key === "ArrowRight") {
+      } else if (e.key === 'ArrowRight') {
         e.preventDefault();
         scrollNext();
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [scrollPrev, scrollNext]);
 
   if (!children || children.length === 0) {
@@ -140,17 +139,17 @@ export default function CarouselMetrics({
 
   return (
     <div
-      className={cn("relative max-w-full", className)}
+      className={cn('relative max-w-full', className)}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
       {/* Viewport do Carrossel */}
       <div className="overflow-hidden" ref={emblaRef}>
-        <div className="flex -ml-4 items-stretch">
+        <div className="-ml-4 flex items-stretch">
           {children.map((child, index) => (
             <div
               key={index}
-              className="flex-[0_0_100%] min-w-0 pl-4 md:flex-[0_0_50%] lg:flex-[0_0_25%] flex"
+              className="flex min-w-0 flex-[0_0_100%] pl-4 md:flex-[0_0_50%] lg:flex-[0_0_25%]"
             >
               <div className="w-full">{child}</div>
             </div>
@@ -163,20 +162,20 @@ export default function CarouselMetrics({
         <button
           onClick={scrollPrev}
           className={cn(
-            "absolute left-2 top-1/2 -translate-y-1/2",
-            "z-10 p-2 rounded-full",
-            "bg-background/90",
-            "border border-border",
-            "shadow-lg",
-            "hover:bg-background",
-            "hover:scale-110",
-            "transition-all duration-[length:var(--dur-base)]",
-            "focus:outline-none focus:ring-2 focus:ring-ring focus:opacity-100",
-            isHovered ? "opacity-100" : "opacity-0"
+            'absolute left-2 top-1/2 -translate-y-1/2',
+            'z-10 rounded-full p-2',
+            'bg-background/90',
+            'border border-border',
+            'shadow-lg',
+            'hover:bg-background',
+            'hover:scale-110',
+            'duration-[length:var(--dur-base)] transition-all',
+            'focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring',
+            isHovered ? 'opacity-100' : 'opacity-0'
           )}
           aria-label="Anterior"
         >
-          <ChevronLeft className="w-5 h-5 text-foreground" />
+          <ChevronLeft className="h-5 w-5 text-foreground" />
         </button>
       )}
 
@@ -184,38 +183,36 @@ export default function CarouselMetrics({
         <button
           onClick={scrollNext}
           className={cn(
-            "absolute right-2 top-1/2 -translate-y-1/2",
-            "z-10 p-2 rounded-full",
-            "bg-background/90",
-            "border border-border",
-            "shadow-lg",
-            "hover:bg-background",
-            "hover:scale-110",
-            "transition-all duration-[length:var(--dur-base)]",
-            "focus:outline-none focus:ring-2 focus:ring-ring focus:opacity-100",
-            isHovered ? "opacity-100" : "opacity-0"
+            'absolute right-2 top-1/2 -translate-y-1/2',
+            'z-10 rounded-full p-2',
+            'bg-background/90',
+            'border border-border',
+            'shadow-lg',
+            'hover:bg-background',
+            'hover:scale-110',
+            'duration-[length:var(--dur-base)] transition-all',
+            'focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring',
+            isHovered ? 'opacity-100' : 'opacity-0'
           )}
           aria-label="Próximo"
         >
-          <ChevronRight className="w-5 h-5 text-foreground" />
+          <ChevronRight className="h-5 w-5 text-foreground" />
         </button>
       )}
 
       {/* Indicadores de Página (Dots) */}
-      <div className="flex justify-center gap-2 mt-4">
+      <div className="mt-4 flex justify-center gap-2">
         {scrollSnaps.map((_, index) => (
           <button
             key={index}
             onClick={() => scrollTo(index)}
             className={cn(
-              "w-2 h-2 rounded-full transition-all duration-[length:var(--dur-base)]",
-              "focus:outline-none focus:ring-2 focus:ring-ring",
-              index === selectedIndex
-                ? "bg-primary w-8"
-                : "bg-border hover:bg-muted-foreground"
+              'duration-[length:var(--dur-base)] h-2 w-2 rounded-full transition-all',
+              'focus:outline-none focus:ring-2 focus:ring-ring',
+              index === selectedIndex ? 'w-8 bg-primary' : 'bg-border hover:bg-muted-foreground'
             )}
             aria-label={`Ir para slide ${index + 1}`}
-            aria-current={index === selectedIndex ? "true" : "false"}
+            aria-current={index === selectedIndex ? 'true' : 'false'}
           />
         ))}
 
@@ -223,19 +220,19 @@ export default function CarouselMetrics({
           <button
             onClick={handlePlayPauseClick}
             className={cn(
-              "flex items-center justify-center w-6 h-6 rounded-full",
-              "transition-all duration-[length:var(--dur-base)]",
-              "focus:outline-none focus:ring-2 focus:ring-ring",
+              'flex h-6 w-6 items-center justify-center rounded-full',
+              'duration-[length:var(--dur-base)] transition-all',
+              'focus:outline-none focus:ring-2 focus:ring-ring',
               isPlaying
-                ? "bg-primary/20 hover:bg-primary/30"
-                : "bg-border hover:bg-muted-foreground/30"
+                ? 'bg-primary/20 hover:bg-primary/30'
+                : 'bg-border hover:bg-muted-foreground/30'
             )}
-            aria-label={isPlaying ? "Pausar" : "Reproduzir"}
+            aria-label={isPlaying ? 'Pausar' : 'Reproduzir'}
           >
             {isPlaying ? (
-              <Pause className="w-3 h-3 text-foreground" />
+              <Pause className="h-3 w-3 text-foreground" />
             ) : (
-              <Play className="w-3 h-3 text-foreground" />
+              <Play className="h-3 w-3 text-foreground" />
             )}
           </button>
         )}

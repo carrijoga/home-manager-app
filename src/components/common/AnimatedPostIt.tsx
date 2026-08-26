@@ -5,11 +5,11 @@
  * rotação aleatória, hover e arrasto.
  */
 
-import { motion } from "framer-motion";
-import { ReactNode, useEffect,useState } from "react";
+import { motion } from 'framer-motion';
+import { ReactNode, useEffect, useState } from 'react';
 
-import { getRandomRotation,postItVariants } from "@/lib/animations";
-import { cn } from "@/lib/utils";
+import { getRandomRotation, postItVariants } from '@/lib/animations';
+import { cn } from '@/lib/utils';
 
 interface AnimatedPostItProps {
   children: ReactNode;
@@ -24,7 +24,7 @@ interface AnimatedPostItProps {
   /** Callback ao arrastar */
   onDragEnd?: (id: string, x: number, y: number) => void;
   /** Cor do post-it */
-  color?: "yellow" | "pink" | "blue" | "green" | "purple";
+  color?: 'yellow' | 'pink' | 'blue' | 'green' | 'purple';
 }
 
 /**
@@ -32,12 +32,12 @@ interface AnimatedPostItProps {
  */
 export default function AnimatedPostIt({
   children,
-  className = "",
+  className = '',
   id,
   index = 0,
   draggable = false,
   onDragEnd,
-  color = "yellow",
+  color = 'yellow',
 }: AnimatedPostItProps) {
   const [rotation, setRotation] = useState(0);
 
@@ -48,11 +48,11 @@ export default function AnimatedPostIt({
 
   // Cores disponíveis para post-its
   const colorClasses = {
-     yellow: "bg-honey-100 dark:bg-honey-900/30 border-honey-300 dark:border-honey-700",
-     pink: "bg-pink-100 dark:bg-pink-900/30 border-pink-300 dark:border-pink-700",
-     blue: "bg-sky-100 dark:bg-sky-900/30 border-sky-300 dark:border-sky-700",
-     green: "bg-sage-100 dark:bg-sage-900/30 border-sage-300 dark:border-sage-700",
-     purple: "bg-purple-100 dark:bg-purple-900/30 border-purple-300 dark:border-purple-700",
+    yellow: 'bg-honey-100 dark:bg-honey-900/30 border-honey-300 dark:border-honey-700',
+    pink: 'bg-pink-100 dark:bg-pink-900/30 border-pink-300 dark:border-pink-700',
+    blue: 'bg-sky-100 dark:bg-sky-900/30 border-sky-300 dark:border-sky-700',
+    green: 'bg-sage-100 dark:bg-sage-900/30 border-sage-300 dark:border-sage-700',
+    purple: 'bg-purple-100 dark:bg-purple-900/30 border-purple-300 dark:border-purple-700',
   };
 
   // Delay para stagger
@@ -66,7 +66,7 @@ export default function AnimatedPostIt({
       animate="animate"
       exit="exit"
       whileHover="hover"
-      whileDrag={draggable ? "drag" : undefined}
+      whileDrag={draggable ? 'drag' : undefined}
       drag={draggable}
       dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
       dragElastic={0.1}
@@ -79,15 +79,15 @@ export default function AnimatedPostIt({
         delay: staggerDelay,
       }}
       className={cn(
-        "relative p-4 shadow-md border-2",
-        "transition-shadow duration-200",
-        "hover:shadow-xl",
+        'relative border-2 p-4 shadow-md',
+        'transition-shadow duration-200',
+        'hover:shadow-xl',
         colorClasses[color],
-        draggable && "cursor-grab active:cursor-grabbing",
+        draggable && 'cursor-grab active:cursor-grabbing',
         className
       )}
       style={{
-        transformOrigin: "center center",
+        transformOrigin: 'center center',
       }}
     >
       {children}
@@ -103,9 +103,9 @@ interface PostItHeaderProps {
 /**
  * Cabeçalho do post-it (título)
  */
-export function PostItHeader({ children, className = "" }: PostItHeaderProps) {
+export function PostItHeader({ children, className = '' }: PostItHeaderProps) {
   return (
-    <div className={cn("font-medium mb-2 text-gray-900 dark:text-gray-100", className)}>
+    <div className={cn('mb-2 font-medium text-gray-900 dark:text-gray-100', className)}>
       {children}
     </div>
   );
@@ -119,11 +119,9 @@ interface PostItBodyProps {
 /**
  * Corpo do post-it (conteúdo)
  */
-export function PostItBody({ children, className = "" }: PostItBodyProps) {
+export function PostItBody({ children, className = '' }: PostItBodyProps) {
   return (
-    <div className={cn("text-sm text-gray-700 dark:text-gray-300", className)}>
-      {children}
-    </div>
+    <div className={cn('text-sm text-gray-700 dark:text-gray-300', className)}>{children}</div>
   );
 }
 
@@ -135,9 +133,14 @@ interface PostItFooterProps {
 /**
  * Rodapé do post-it (ações, data, etc.)
  */
-export function PostItFooter({ children, className = "" }: PostItFooterProps) {
+export function PostItFooter({ children, className = '' }: PostItFooterProps) {
   return (
-    <div className={cn("mt-3 pt-2 border-t border-gray-300 dark:border-gray-600 text-xs text-gray-600 dark:text-gray-400", className)}>
+    <div
+      className={cn(
+        'mt-3 border-t border-gray-300 pt-2 text-xs text-gray-600 dark:border-gray-600 dark:text-gray-400',
+        className
+      )}
+    >
       {children}
     </div>
   );

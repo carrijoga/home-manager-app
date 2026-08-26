@@ -1,4 +1,4 @@
-import { type NumberFormatValues,NumericFormat } from 'react-number-format';
+import { type NumberFormatValues, NumericFormat } from 'react-number-format';
 
 import Input from './Input';
 
@@ -11,7 +11,14 @@ interface MoneyInputProps {
   id?: string;
 }
 
-export default function MoneyInput({ value, onChange, placeholder = '0,00', className, disabled, id }: MoneyInputProps) {
+export default function MoneyInput({
+  value,
+  onChange,
+  placeholder = '0,00',
+  className,
+  disabled,
+  id,
+}: MoneyInputProps) {
   return (
     <NumericFormat
       id={id}

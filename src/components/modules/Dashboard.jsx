@@ -4,12 +4,15 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { useApp } from '@/contexts/AppContext';
+import { useDashboardRealtime } from '@/hooks/useDashboardRealtime';
+import { useSignalR } from '@/hooks/useSignalR';
 import {
   getWeatherPreferences,
   saveWeatherPreferences,
   WEATHER_PREFERENCES_UPDATED_EVENT,
 } from '@/lib/weatherPreferences';
 import { DATA_MODE } from '@/services/api/config';
+import { ENDPOINTS } from '@/services/api/endpoints';
 import * as calendarService from '@/services/calendarService';
 import * as dashboardService from '@/services/dashboardService';
 import * as goalsService from '@/services/goalsService';
@@ -268,6 +271,17 @@ const Dashboard = () => {
       isMounted = false;
     };
   }, [activeNestId]);
+
+  // ── Dashboard Realtime (SignalR) ─────────────────────────────────────────
+  const hubUrl =
+    DATA_MODE !== 'mock' && activeNestId ? ENDPOINTS.dashboardHub(activeNestId) : null;
+  const { connectionRef, isConnected } = useSignalR(hubUrl);
+
+  useDashboardRealtime({
+    connectionRef,
+    isConnected,
+    setApiDashboard,
+  });
 
   const handleRefreshDashboard = useCallback(async () => {
     setIsRefreshing(true);

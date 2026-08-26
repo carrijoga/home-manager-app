@@ -2,6 +2,8 @@ import * as signalR from '@microsoft/signalr';
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
 
+import { tokenStorage } from '@/services/api/httpClient';
+
 export interface SignalRHandle {
   connectionRef: React.MutableRefObject<signalR.HubConnection | null>;
   isConnected: boolean;
@@ -15,7 +17,10 @@ export function useSignalR(url: string | null): SignalRHandle {
     if (!url) return;
 
     const connection = new signalR.HubConnectionBuilder()
-      .withUrl(url, { withCredentials: true })
+      .withUrl(url, {
+        accessTokenFactory: () => tokenStorage.getAccessToken() ?? '',
+        withCredentials: true,
+      })
       .withAutomaticReconnect()
       .configureLogging(
         import.meta.env.DEV ? signalR.LogLevel.Information : signalR.LogLevel.Warning

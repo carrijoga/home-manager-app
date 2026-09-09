@@ -2,6 +2,7 @@ import { ChevronLeft, ChevronRight, History } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
 import { Button, Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui';
+import { PRIORITY_LABELS } from '@/schemas/enums';
 import * as noticeService from '@/services/noticeService';
 import type { Notice } from '@/types';
 
@@ -86,17 +87,45 @@ export function NoticeHistoryModal({ open, onClose, nestId }: NoticeHistoryModal
               {history.map((item) => (
                 <div
                   key={item.noticeId}
-                  className="flex flex-col gap-1.5 rounded-xl border border-border/50 bg-muted/40 p-3.5"
+                  className="flex flex-col gap-2 rounded-xl border border-border/50 bg-muted/40 p-3.5"
                 >
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span className="font-semibold text-foreground">
-                      {item.authorName || 'Autor desconhecido'}
-                    </span>
-                    <span>{formatHistoryDate(item.createdAt)}</span>
+                    <div className="flex items-center gap-2">
+                      {item.authorAvatar ? (
+                        <img
+                          src={item.authorAvatar}
+                          alt={item.authorName || 'Autor'}
+                          className="h-5 w-5 rounded-full object-cover"
+                        />
+                      ) : null}
+                      <span className="font-semibold text-foreground">
+                        {item.authorName || 'Autor desconhecido'}
+                      </span>
+                      <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase font-bold text-muted-foreground">
+                        {PRIORITY_LABELS[item.priority ?? 3]}
+                      </span>
+                    </div>
+                    <span>{formatHistoryDate(item.createdAt || item.date)}</span>
                   </div>
+
                   <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
                     {item.message}
                   </p>
+
+                  {item.reactions && item.reactions.length > 0 && (
+                    <div className="flex items-center gap-1.5 pt-1">
+                      {item.reactions.map((r, i) => (
+                        <span
+                          key={r.reactionId || i}
+                          className="inline-flex items-center gap-1 rounded-full bg-background/80 px-2 py-0.5 text-xs text-muted-foreground border border-border/40"
+                          title={r.userName}
+                        >
+                          <span>{r.emoji}</span>
+                          {r.userName && <span className="text-[10px]">{r.userName}</span>}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

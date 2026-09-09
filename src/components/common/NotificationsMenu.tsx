@@ -3,8 +3,8 @@ import {
   AlertTriangle,
   BellOff,
   Check,
-  CheckCircle2,
   CheckCheck,
+  CheckCircle2,
   Clock,
   Info,
   Sparkles,
@@ -381,9 +381,11 @@ const NotificationsMenu: React.FC<NotificationsMenuProps> = ({
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            onMarkAsRead
-                              ? onMarkAsRead(notification.id)
-                              : onNotificationClick?.(notification.id);
+                            if (onMarkAsRead) {
+                              onMarkAsRead(notification.id);
+                            } else {
+                              onNotificationClick?.(notification.id);
+                            }
                           }}
                           className="flex size-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
                           title="Marcar como lida"

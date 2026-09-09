@@ -1,4 +1,5 @@
 import {
+  HelpCircle,
   LogOut,
   Monitor,
   Moon,
@@ -7,6 +8,8 @@ import {
   User as UserIcon,
 } from 'lucide-react';
 import React from 'react';
+
+import { useOnboarding } from '@/contexts/OnboardingContext';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -43,6 +46,8 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
   onSettingsClick,
   onLogoutClick,
 }) => {
+  const { openInitialModal } = useOnboarding();
+
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -94,6 +99,11 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
         <DropdownMenuItem onClick={onSettingsClick} className="cursor-pointer">
           <Settings className="mr-2 h-4 w-4" />
           <span>Configurações</span>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem onClick={openInitialModal} className="cursor-pointer">
+          <HelpCircle className="mr-2 h-4 w-4" />
+          <span>Guia do Ninho</span>
         </DropdownMenuItem>
 
         <DropdownMenuSub>

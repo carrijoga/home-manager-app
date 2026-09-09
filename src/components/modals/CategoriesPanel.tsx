@@ -167,12 +167,17 @@ export function CategoriesPanel({ nest }: CategoriesPanelProps) {
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="text-base font-semibold">Categorias do Ninho</h3>
+          <h3 className="text-sm font-semibold text-foreground">Categorias do Ninho</h3>
           <p className="text-xs text-muted-foreground">
             Gerencie as categorias de despesas e receitas utilizadas pela sua família.
           </p>
         </div>
-        <Button type="button" size="sm" onClick={handleStartCreate} className="gap-1.5 self-start sm:self-auto">
+        <Button
+          type="button"
+          size="sm"
+          onClick={handleStartCreate}
+          className="h-9 rounded-xl px-3.5 gap-1.5 self-start sm:self-auto font-medium shadow-xs"
+        >
           <Plus className="size-4" />
           Nova Categoria
         </Button>
@@ -181,14 +186,14 @@ export function CategoriesPanel({ nest }: CategoriesPanelProps) {
       {/* Categorias List & Filtros */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <div className="flex gap-1.5 rounded-lg bg-muted p-1">
+          <div className="flex gap-1 rounded-xl border border-border/50 bg-muted/40 p-1">
             <button
               type="button"
               onClick={() => setFilter('all')}
               className={cn(
-                'rounded-md px-3 py-1 text-xs font-medium transition-colors',
+                'rounded-lg px-3 py-1 text-xs font-medium transition-all',
                 filter === 'all'
-                  ? 'bg-background text-foreground shadow-xs'
+                  ? 'bg-background font-semibold text-foreground shadow-xs border border-border/30'
                   : 'text-muted-foreground hover:text-foreground'
               )}
             >
@@ -198,9 +203,9 @@ export function CategoriesPanel({ nest }: CategoriesPanelProps) {
               type="button"
               onClick={() => setFilter('expense')}
               className={cn(
-                'rounded-md px-3 py-1 text-xs font-medium transition-colors',
+                'rounded-lg px-3 py-1 text-xs font-medium transition-all',
                 filter === 'expense'
-                  ? 'bg-background text-foreground shadow-xs'
+                  ? 'bg-background font-semibold text-foreground shadow-xs border border-border/30'
                   : 'text-muted-foreground hover:text-foreground'
               )}
             >
@@ -210,9 +215,9 @@ export function CategoriesPanel({ nest }: CategoriesPanelProps) {
               type="button"
               onClick={() => setFilter('income')}
               className={cn(
-                'rounded-md px-3 py-1 text-xs font-medium transition-colors',
+                'rounded-lg px-3 py-1 text-xs font-medium transition-all',
                 filter === 'income'
-                  ? 'bg-background text-foreground shadow-xs'
+                  ? 'bg-background font-semibold text-foreground shadow-xs border border-border/30'
                   : 'text-muted-foreground hover:text-foreground'
               )}
             >
@@ -222,14 +227,14 @@ export function CategoriesPanel({ nest }: CategoriesPanelProps) {
         </div>
 
         {loading ? (
-          <div className="flex h-32 items-center justify-center">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <div className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-              Carregando categorias...
-            </div>
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-16 animate-pulse rounded-xl bg-muted/50" />
+            ))}
           </div>
         ) : filteredCategories.length === 0 ? (
-          <div className="rounded-lg border border-dashed p-8 text-center text-xs text-muted-foreground">
+          <div className="rounded-xl border border-dashed border-border/60 p-8 text-center text-xs text-muted-foreground">
+            <Tag className="mx-auto size-6 text-muted-foreground/50 mb-2" />
             Nenhuma categoria encontrada neste filtro.
           </div>
         ) : (
@@ -239,47 +244,51 @@ export function CategoriesPanel({ nest }: CategoriesPanelProps) {
               return (
                 <div
                   key={cat.categoryId}
-                  className="group flex items-center justify-between rounded-lg border bg-card p-3 transition-colors hover:bg-muted/40"
+                  className="group flex items-center justify-between rounded-xl border border-border/50 bg-card/70 p-3 sm:p-3.5 transition-colors hover:bg-accent/40 shadow-2xs"
                 >
-                  <div className="flex min-w-0 items-center gap-2.5 overflow-hidden">
+                  <div className="flex min-w-0 items-center gap-3 overflow-hidden">
                     <div
                       className={cn(
-                        'flex size-8 shrink-0 items-center justify-center rounded-md border',
+                        'flex size-9 shrink-0 items-center justify-center rounded-xl border shadow-2xs',
                         isExpense
-                          ? 'border-rose-500/20 bg-rose-500/10 text-rose-600 dark:text-rose-400'
-                          : 'border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                          ? 'border-rose-500/25 bg-rose-500/10 text-rose-600 dark:text-rose-400'
+                          : 'border-emerald-500/25 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
                       )}
                     >
                       <Tag className="size-4" />
                     </div>
                     <div className="min-w-0 flex-1 truncate">
-                      <p className="truncate text-sm font-medium text-foreground">{cat.name}</p>
-                      {cat.description && (
+                      <p className="truncate text-sm font-semibold text-foreground">{cat.name}</p>
+                      {cat.description ? (
                         <p className="truncate text-xs text-muted-foreground">{cat.description}</p>
+                      ) : (
+                        <p className="truncate text-[11px] text-muted-foreground/60">
+                          {isExpense ? 'Despesa' : 'Receita'}
+                        </p>
                       )}
                     </div>
                   </div>
 
-                  <div className="flex shrink-0 items-center gap-1.5">
+                  <div className="flex shrink-0 items-center gap-1.5 ml-2">
                     <Badge
                       variant="outline"
                       className={cn(
-                        'text-[10px] font-semibold',
+                        'text-[10px] font-semibold h-5 px-2 rounded-md',
                         isExpense
-                          ? 'border-rose-500/30 text-rose-600 dark:text-rose-400'
-                          : 'border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
+                          ? 'border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400'
+                          : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
                       )}
                     >
                       {isExpense ? 'Despesa' : 'Receita'}
                     </Badge>
 
-                    {/* Action buttons (hover/focus) */}
-                    <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+                    {/* Action buttons (visible on mobile, subtle hover on desktop) */}
+                    <div className="flex items-center gap-0.5 opacity-100 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100 sm:focus-within:opacity-100">
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="size-7 text-muted-foreground hover:text-foreground"
+                        className="size-7.5 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
                         aria-label="Editar categoria"
                         onClick={() => handleStartEdit(cat)}
                       >
@@ -289,7 +298,7 @@ export function CategoriesPanel({ nest }: CategoriesPanelProps) {
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="size-7 text-muted-foreground hover:text-destructive"
+                        className="size-7.5 rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                         aria-label="Excluir categoria"
                         onClick={() => setDeletingCategory(cat)}
                       >
@@ -306,15 +315,17 @@ export function CategoriesPanel({ nest }: CategoriesPanelProps) {
 
       {/* Modal limpa de Criação e Edição */}
       <Dialog open={isFormOpen} onOpenChange={(v) => !v && handleCloseForm()}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md rounded-2xl border border-border/60">
           <DialogHeader>
-            <div className="flex items-center gap-2 text-primary">
-              <Tag className="size-5" />
+            <div className="flex items-center gap-2.5 text-primary">
+              <div className="flex size-8 items-center justify-center rounded-xl bg-primary/10 border border-primary/20">
+                <Tag className="size-4" />
+              </div>
               <DialogTitle className="text-base font-semibold">
                 {editingCategory ? 'Editar Categoria' : 'Nova Categoria'}
               </DialogTitle>
             </div>
-            <DialogDescription className="text-xs text-muted-foreground">
+            <DialogDescription className="text-xs text-muted-foreground pt-1">
               {editingCategory
                 ? `Altere as informações da categoria "${editingCategory.name}".`
                 : 'Cadastre uma nova categoria de despesa ou receita para o ninho.'}
@@ -334,7 +345,7 @@ export function CategoriesPanel({ nest }: CategoriesPanelProps) {
                 onChange={(e) => setName(e.target.value)}
                 autoFocus
                 required
-                className="bg-muted/30 border-border/40 hover:border-border/80 focus-visible:ring-1 focus-visible:ring-primary/50 transition-colors"
+                className="h-10 rounded-xl bg-muted/30 border-border/40 hover:border-border/80 focus-visible:ring-1 focus-visible:ring-primary/50 transition-colors"
               />
             </div>
 
@@ -348,9 +359,9 @@ export function CategoriesPanel({ nest }: CategoriesPanelProps) {
                   type="button"
                   onClick={() => setType(TransactionType.Expense)}
                   className={cn(
-                    'flex-1 rounded-md border py-2 text-xs font-medium transition-colors',
+                    'flex-1 rounded-xl border py-2 text-xs font-medium transition-colors',
                     type === TransactionType.Expense
-                      ? 'border-rose-500/40 bg-rose-500/10 text-rose-600 dark:text-rose-400 font-semibold'
+                      ? 'border-rose-500/40 bg-rose-500/10 text-rose-600 dark:text-rose-400 font-semibold shadow-2xs'
                       : 'border-border/50 text-muted-foreground hover:bg-muted/50'
                   )}
                 >
@@ -360,9 +371,9 @@ export function CategoriesPanel({ nest }: CategoriesPanelProps) {
                   type="button"
                   onClick={() => setType(TransactionType.Income)}
                   className={cn(
-                    'flex-1 rounded-md border py-2 text-xs font-medium transition-colors',
+                    'flex-1 rounded-xl border py-2 text-xs font-medium transition-colors',
                     type === TransactionType.Income
-                      ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold'
+                      ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold shadow-2xs'
                       : 'border-border/50 text-muted-foreground hover:bg-muted/50'
                   )}
                 >
@@ -382,15 +393,27 @@ export function CategoriesPanel({ nest }: CategoriesPanelProps) {
                 rows={2}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="bg-muted/30 border-border/40 hover:border-border/80 focus-visible:ring-1 focus-visible:ring-primary/50 transition-colors resize-none"
+                className="rounded-xl bg-muted/30 border-border/40 hover:border-border/80 focus-visible:ring-1 focus-visible:ring-primary/50 transition-colors resize-none"
               />
             </div>
 
-            <DialogFooter className="pt-2">
-              <Button type="button" variant="outline" size="sm" onClick={handleCloseForm} disabled={saving}>
+            <DialogFooter className="pt-2 gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleCloseForm}
+                disabled={saving}
+                className="h-9 rounded-xl border-border/60"
+              >
                 Cancelar
               </Button>
-              <Button type="submit" size="sm" disabled={saving || !name.trim()}>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={saving || !name.trim()}
+                className="h-9 rounded-xl font-medium shadow-xs"
+              >
                 {saving ? 'Salvar...' : editingCategory ? 'Salvar Alterações' : 'Cadastrar Categoria'}
               </Button>
             </DialogFooter>
@@ -400,21 +423,23 @@ export function CategoriesPanel({ nest }: CategoriesPanelProps) {
 
       {/* Modal de Exclusão */}
       <AlertDialog open={deletingCategory !== null} onOpenChange={(o) => !o && setDeletingCategory(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-2xl border border-border/60">
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir categoria?</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-base font-semibold">Excluir categoria?</AlertDialogTitle>
+            <AlertDialogDescription className="text-xs text-muted-foreground">
               Tem certeza que deseja excluir a categoria{' '}
               <strong className="text-foreground">&quot;{deletingCategory?.name}&quot;</strong>? Esta ação
               não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel disabled={isDeleting} className="h-9 rounded-xl border-border/60">
+              Cancelar
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteCategory}
               disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="h-9 rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90 font-medium"
             >
               {isDeleting ? 'Excluindo...' : 'Excluir'}
             </AlertDialogAction>

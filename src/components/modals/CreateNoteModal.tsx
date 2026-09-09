@@ -9,18 +9,25 @@ import {
   DialogHeader,
   DialogTitle,
   Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   Textarea,
 } from '@/components/ui';
+import { ApiPriority } from '@/types';
 
 interface CreateNoteModalProps {
   open: boolean;
   onClose: () => void;
-  onSave: (message: string, noteId?: string) => Promise<void>;
-  initialData?: { id?: string; message: string } | null;
+  onSave: (message: string, noteId?: string, priority?: ApiPriority) => Promise<void>;
+  initialData?: { id?: string; message: string; priority?: ApiPriority } | null;
 }
 
 export function CreateNoteModal({ open, onClose, onSave, initialData }: CreateNoteModalProps) {
   const [message, setMessage] = useState('');
+  const [priority, setPriority] = useState<ApiPriority>(ApiPriority.Baixa);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isEditing = Boolean(initialData?.id);
@@ -28,11 +35,13 @@ export function CreateNoteModal({ open, onClose, onSave, initialData }: CreateNo
   useEffect(() => {
     if (open) {
       setMessage(initialData?.message || '');
+      setPriority(initialData?.priority ?? ApiPriority.Baixa);
     }
   }, [open, initialData]);
 
   const handleClose = () => {
     setMessage('');
+    setPriority(ApiPriority.Baixa);
     onClose();
   };
 
@@ -43,7 +52,7 @@ export function CreateNoteModal({ open, onClose, onSave, initialData }: CreateNo
 
     setIsSubmitting(true);
     try {
-      await onSave(trimmed, initialData?.id);
+      await onSave(trimmed, initialData?.id, priority);
       toast.success(isEditing ? 'Recado atualizado com sucesso!' : 'Recado criado com sucesso!');
       handleClose();
     } catch {
@@ -76,6 +85,24 @@ export function CreateNoteModal({ open, onClose, onSave, initialData }: CreateNo
               onChange={(e) => setMessage(e.target.value)}
               autoFocus
             />
+          </div>
+
+          <div className="space-y-1">
+            <Label htmlFor="note-priority">Prioridade</Label>
+            <Select
+              value={String(priority)}
+              onValueChange={(val) => setPriority(Number(val) as ApiPriority)}
+            >
+              <SelectTrigger id="note-priority">
+                <SelectValue placeholder="Selecione a prioridade" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={String(ApiPriority.Urgente)}>🔴 Urgente</SelectItem>
+                <SelectItem value={String(ApiPriority.Alta)}>🟠 Alta</SelectItem>
+                <SelectItem value={String(ApiPriority.Media)}>🟡 Média</SelectItem>
+                <SelectItem value={String(ApiPriority.Baixa)}>🟢 Baixa</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <DialogFooter>

@@ -5,9 +5,10 @@ import {
   AlertTriangle,
   ArrowLeft,
   Clock,
+  Copy,
   HelpCircle,
-  Home,
   Info,
+  KeyRound,
   LogOut,
   Mail,
   MoreHorizontal,
@@ -63,7 +64,7 @@ import { NestConfigurationPanel } from './NestConfigurationPanel';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type Mode = 'list' | 'create' | 'edit';
+type Mode = 'list' | 'create' | 'edit' | 'join_code';
 type EditSection = 'info' | 'members' | 'categories' | 'permissions';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -77,10 +78,42 @@ function inviteStatusLabel(status: number): string {
   return 'Desconhecido';
 }
 
-function inviteStatusVariant(status: number): 'default' | 'secondary' | 'destructive' | 'outline' {
-  if (status === InviteStatus.Pending) return 'default';
-  if (status === InviteStatus.Accepted) return 'secondary';
-  return 'outline';
+function renderInviteStatusBadge(status: number) {
+  if (status === InviteStatus.Accepted) {
+    return (
+      <Badge
+        variant="outline"
+        className="h-5 border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-semibold"
+      >
+        Aceito
+      </Badge>
+    );
+  }
+  if (status === InviteStatus.Pending) {
+    return (
+      <Badge
+        variant="outline"
+        className="h-5 border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-semibold"
+      >
+        Pendente
+      </Badge>
+    );
+  }
+  if (status === InviteStatus.Rejected || status === InviteStatus.Cancelled) {
+    return (
+      <Badge
+        variant="outline"
+        className="h-5 border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400 text-[10px] font-semibold"
+      >
+        {inviteStatusLabel(status)}
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant="outline" className="h-5 text-[10px] font-medium text-muted-foreground">
+      {inviteStatusLabel(status)}
+    </Badge>
+  );
 }
 
 function formatDate(iso: string): string {
@@ -121,19 +154,19 @@ function IconPicker({ value, onChange }: IconPickerProps) {
   }, [rawIconsList, search]);
 
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-3">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Ícone do Ninho
         </Label>
-        <div className="flex items-center gap-1 rounded-lg border border-border/40 bg-muted/50 p-0.5 text-xs">
+        <div className="flex items-center gap-1 rounded-xl border border-border/50 bg-muted/40 p-1 text-xs">
           <button
             type="button"
             onClick={() => setCategory('koboyo')}
             className={cn(
-              'rounded-md px-2.5 py-1 text-xs transition-all font-medium',
+              'rounded-lg px-3 py-1 text-xs transition-all font-medium',
               category === 'koboyo'
-                ? 'bg-background font-semibold text-foreground shadow-xs'
+                ? 'bg-background font-semibold text-foreground shadow-xs border border-border/30'
                 : 'text-muted-foreground hover:text-foreground'
             )}
           >
@@ -143,9 +176,9 @@ function IconPicker({ value, onChange }: IconPickerProps) {
             type="button"
             onClick={() => setCategory('classic')}
             className={cn(
-              'rounded-md px-2.5 py-1 text-xs transition-all font-medium',
+              'rounded-lg px-3 py-1 text-xs transition-all font-medium',
               category === 'classic'
-                ? 'bg-background font-semibold text-foreground shadow-xs'
+                ? 'bg-background font-semibold text-foreground shadow-xs border border-border/30'
                 : 'text-muted-foreground hover:text-foreground'
             )}
           >
@@ -156,19 +189,19 @@ function IconPicker({ value, onChange }: IconPickerProps) {
 
       {/* Search Input for Icons */}
       <div className="relative">
-        <Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+        <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground/70" />
         <Input
           type="text"
           placeholder="Buscar ícone..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="h-8 bg-muted/30 pl-8 text-xs border-border/40 hover:border-border/80 focus-visible:ring-1"
+          className="h-9 rounded-xl bg-muted/30 pl-9 text-xs border-border/40 hover:border-border/80 focus-visible:ring-1 focus-visible:ring-primary/50"
         />
         {search && (
           <button
             type="button"
             onClick={() => setSearch('')}
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
           >
             <X className="size-3" />
           </button>
@@ -176,7 +209,7 @@ function IconPicker({ value, onChange }: IconPickerProps) {
       </div>
 
       {/* Icons Grid */}
-      <div className="max-h-48 overflow-y-auto rounded-xl border border-border/50 bg-card/50 p-2">
+      <div className="max-h-52 overflow-y-auto rounded-xl border border-border/50 bg-card/60 p-2.5 scrollbar-hide">
         {filteredList.length === 0 ? (
           <p className="py-6 text-center text-xs text-muted-foreground">Nenhum ícone encontrado.</p>
         ) : (
@@ -191,17 +224,21 @@ function IconPicker({ value, onChange }: IconPickerProps) {
                   title={label}
                   onClick={() => onChange(name)}
                   className={cn(
-                    'flex flex-col items-center gap-1 rounded-lg p-1.5 text-xs transition-all hover:scale-105',
+                    'group flex flex-col items-center gap-1.5 rounded-xl p-2 text-xs transition-all duration-150',
                     isSelected
-                      ? 'bg-primary/10 font-semibold text-primary ring-2 ring-primary border-primary/30 shadow-xs'
-                      : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground'
+                      ? 'bg-primary/12 font-semibold text-primary ring-2 ring-primary border border-primary/40 shadow-xs'
+                      : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground active:scale-95'
                   )}
                 >
-                  <div className={cn(
-                    'flex size-7 items-center justify-center rounded-md border p-0.5 transition-colors',
-                    isSelected ? 'border-primary/40 bg-background text-primary' : 'border-border/30 bg-background'
-                  )}>
-                    <IconComp className="size-4" />
+                  <div
+                    className={cn(
+                      'flex size-8 items-center justify-center rounded-lg border p-0.5 transition-colors',
+                      isSelected
+                        ? 'border-primary/40 bg-background text-primary shadow-xs'
+                        : 'border-border/40 bg-background/80 group-hover:border-border'
+                    )}
+                  >
+                    <IconComp className="size-4.5" />
                   </div>
                   <span className="w-full truncate text-center text-[10px] leading-tight">
                     {label}
@@ -223,6 +260,7 @@ function NestListPanel({
   activeNestId,
   onEdit,
   onCreate,
+  onJoinByCode,
   onSetActive,
   onLeave,
   onSetDefault,
@@ -231,6 +269,7 @@ function NestListPanel({
   activeNestId: string | null;
   onEdit: (nest: AppUserNest) => void;
   onCreate: () => void;
+  onJoinByCode: () => void;
   onSetActive: (nestId: string) => void;
   onLeave: (nest: AppUserNest) => void;
   onSetDefault: (nestId: string) => void;
@@ -240,28 +279,28 @@ function NestListPanel({
   return (
     <div className="flex h-full flex-col justify-between space-y-4">
       <div className="space-y-3 overflow-y-auto pr-1">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between pb-1">
           <div>
             <h3 className="text-sm font-semibold text-foreground">Seus Ninhos</h3>
             <p className="text-xs text-muted-foreground">
-              Selecione o ninho ativo para gerenciar suas tarefas e finanças.
+              Selecione o ninho ativo para gerenciar sua rotina, tarefas e finanças.
             </p>
           </div>
-          <Badge variant="outline" className="text-xs bg-muted/40">
+          <Badge variant="outline" className="text-[11px] font-medium bg-muted/40 rounded-lg px-2 py-0.5">
             {nests.length} {nests.length === 1 ? 'ninho' : 'ninhos'}
           </Badge>
         </div>
 
         {nests.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/60 py-12 text-center">
-            <div className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary mb-3">
-              <Home className="size-6" />
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/70 py-12 text-center bg-card/40">
+            <div className="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-terracotta-500/20 via-honey-500/20 to-terracotta-500/10 border border-terracotta-500/30 text-2xl mb-3 shadow-xs">
+              🪺
             </div>
-            <p className="text-sm font-medium">Nenhum ninho encontrado</p>
+            <p className="text-sm font-semibold text-foreground">Nenhum ninho encontrado</p>
             <p className="mt-1 text-xs text-muted-foreground max-w-[240px]">
-              Crie seu primeiro ninho para começar a organizar sua rotina doméstica.
+              Crie seu primeiro ninho para começar a organizar sua rotina doméstica com a família.
             </p>
-            <Button size="sm" className="mt-4" onClick={onCreate}>
+            <Button size="sm" className="mt-4 rounded-xl shadow-xs" onClick={onCreate}>
               <Plus className="mr-1.5 size-4" /> Criar Ninho
             </Button>
           </div>
@@ -275,10 +314,10 @@ function NestListPanel({
               const content = (
                 <div
                   className={cn(
-                    'group relative flex items-center justify-between gap-3 rounded-xl border p-3.5 transition-all duration-200',
+                    'group relative flex items-center justify-between gap-3.5 rounded-xl border p-3.5 sm:p-4 transition-all duration-200',
                     isActive
-                      ? 'border-primary/40 bg-primary/5 shadow-xs ring-1 ring-primary/20'
-                      : 'border-border/40 bg-card hover:border-border/80 hover:bg-accent/30'
+                      ? 'border-primary/45 bg-primary/7 shadow-xs ring-1 ring-primary/25'
+                      : 'border-border/50 bg-card/75 hover:border-border/90 hover:bg-accent/40 shadow-2xs hover:shadow-xs'
                   )}
                 >
                   <button
@@ -288,45 +327,38 @@ function NestListPanel({
                   >
                     <div
                       className={cn(
-                        'flex size-10 shrink-0 items-center justify-center rounded-xl border shadow-2xs transition-colors',
+                        'flex size-11 shrink-0 items-center justify-center rounded-xl border shadow-2xs transition-colors',
                         isActive
-                          ? 'border-primary/40 bg-background text-primary'
+                          ? 'border-primary/40 bg-background text-primary ring-1 ring-primary/20'
                           : 'border-border/50 bg-muted/40 text-muted-foreground group-hover:text-foreground'
                       )}
                     >
-                      <Icon className="size-5" />
+                      <Icon className="size-5.5" />
                     </div>
 
                     <div className="min-w-0 flex-1 space-y-1">
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-1.5">
                         <span className="truncate text-sm font-semibold text-foreground">
                           {nest.name}
                         </span>
+
                         {nest.isDefault && (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <span className="inline-flex items-center">
-                                  <Star className="size-3.5 text-amber-500 fill-amber-500/20" />
-                                </span>
-                              </TooltipTrigger>
-                              <TooltipContent>Ninho Principal</TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
+                          <span className="inline-flex items-center gap-1 rounded-md border border-amber-500/25 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+                            <Star className="size-3 fill-amber-500 text-amber-500" />
+                            Principal
+                          </span>
                         )}
+
                         {isActive && (
-                          <Badge
-                            variant="outline"
-                            className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 text-[10px] font-semibold gap-1 py-0 px-2"
-                          >
+                          <span className="inline-flex items-center gap-1.5 rounded-md border border-emerald-500/25 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
                             <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
                             Ativo
-                          </Badge>
+                          </span>
                         )}
                       </div>
 
                       <div className="flex items-center gap-2 text-xs">
-                        <RoleBadge role={nest.role} className="h-5 px-2 text-[10px]" />
+                        <RoleBadge role={nest.role} className="h-4 px-1.5 text-[9px] py-0 font-medium" />
                       </div>
                     </div>
                   </button>
@@ -351,35 +383,51 @@ function NestListPanel({
                               <Star className="size-4 text-muted-foreground/60 hover:text-amber-500" />
                             </Button>
                           </TooltipTrigger>
-                          <TooltipContent>Definir como ninho principal</TooltipContent>
+                          <TooltipContent>Definir como principal</TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
                     )}
+
                     {canManage && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="size-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
-                        onClick={() => onEdit(nest)}
-                        title="Editar ninho"
-                        aria-label="Editar ninho"
-                      >
-                        <MoreHorizontal className="size-4" />
-                      </Button>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="size-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
+                              onClick={() => onEdit(nest)}
+                              title="Configurar ninho"
+                              aria-label="Configurar ninho"
+                            >
+                              <MoreHorizontal className="size-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Configurações</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     )}
+
                     {isActive && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="size-8 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                        onClick={() => onLeave(nest)}
-                        title="Sair do ninho"
-                        aria-label="Sair do ninho"
-                      >
-                        <LogOut className="size-4" />
-                      </Button>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="size-8 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => onLeave(nest)}
+                              title="Sair do ninho"
+                              aria-label="Sair do ninho"
+                            >
+                              <LogOut className="size-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Sair do ninho</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     )}
                   </div>
                 </div>
@@ -404,14 +452,22 @@ function NestListPanel({
         )}
       </div>
 
-      <div className="pt-2">
+      {/* Action Footer Bar */}
+      <div className="pt-2 flex flex-col sm:flex-row gap-2.5">
         <Button
-          variant="outline"
-          className="w-full justify-center border-dashed border-border/70 bg-muted/20 hover:bg-muted/60 hover:border-primary/50 transition-colors"
+          className="flex-1 justify-center rounded-xl h-10 shadow-xs font-medium"
           onClick={onCreate}
         >
-          <Plus className="mr-2 size-4 text-primary" />
+          <Plus className="mr-1.5 size-4" />
           Criar Novo Ninho
+        </Button>
+        <Button
+          variant="outline"
+          className="flex-1 justify-center rounded-xl h-10 font-medium border-border/60 hover:bg-accent/60 transition-colors"
+          onClick={onJoinByCode}
+        >
+          <KeyRound className="mr-1.5 size-4 text-primary" />
+          Entrar por Código
         </Button>
       </div>
     </div>
@@ -452,19 +508,19 @@ function CreateNestForm({ onSuccess, onCancel }: { onSuccess: () => void; onCanc
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-1">
       {/* Live Preview Card */}
-      <div className="rounded-xl border border-primary/20 bg-primary/5 p-3.5">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-          Pré-visualização
+      <div className="rounded-xl border border-primary/25 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4 shadow-2xs">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/80 mb-2.5">
+          Pré-visualização do Espaço
         </p>
-        <div className="flex items-center gap-3">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-primary/30 bg-background text-primary shadow-xs">
-            <PreviewIcon className="size-5" />
+        <div className="flex items-center gap-3.5">
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-primary/30 bg-background text-primary shadow-xs">
+            <PreviewIcon className="size-5.5" />
           </div>
-          <div>
-            <p className="text-sm font-semibold text-foreground">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-foreground">
               {nameValue.trim() ? nameValue : 'Nome do Ninho'}
             </p>
-            <p className="text-xs text-muted-foreground">Seu novo espaço de organização</p>
+            <p className="text-xs text-muted-foreground">Seu novo espaço de organização familiar</p>
           </div>
         </div>
       </div>
@@ -477,7 +533,7 @@ function CreateNestForm({ onSuccess, onCancel }: { onSuccess: () => void; onCanc
         <Input
           id="create-name"
           placeholder="Ex: Casa Principal, Apartamento 102"
-          className="bg-muted/30 border-border/40 hover:border-border/80 focus-visible:ring-1 focus-visible:ring-primary/50 transition-colors"
+          className="h-10 rounded-xl bg-muted/30 border-border/40 hover:border-border/80 focus-visible:ring-1 focus-visible:ring-primary/50 transition-colors"
           {...register('name')}
         />
         {errors.name && <p className="text-xs font-medium text-destructive">{errors.name.message}</p>}
@@ -490,9 +546,9 @@ function CreateNestForm({ onSuccess, onCancel }: { onSuccess: () => void; onCanc
         </Label>
         <Textarea
           id="create-desc"
-          placeholder="Ex: Nossa casa em São Paulo para controle de tarefas e finanças"
+          placeholder="Ex: Nossa casa para controle de tarefas e finanças da família"
           rows={2}
-          className="bg-muted/30 border-border/40 hover:border-border/80 focus-visible:ring-1 focus-visible:ring-primary/50 transition-colors resize-none"
+          className="rounded-xl bg-muted/30 border-border/40 hover:border-border/80 focus-visible:ring-1 focus-visible:ring-primary/50 transition-colors resize-none"
           {...register('description')}
         />
       </div>
@@ -501,17 +557,17 @@ function CreateNestForm({ onSuccess, onCancel }: { onSuccess: () => void; onCanc
       <IconPicker value={selectedIcon} onChange={(icon) => setValue('icon', icon)} />
 
       {/* Actions */}
-      <div className="flex items-center gap-2 pt-3">
+      <div className="flex items-center gap-2.5 pt-3">
         <Button
           type="button"
           variant="outline"
-          className="flex-1"
+          className="flex-1 rounded-xl h-10 border-border/60 hover:bg-accent/60 font-medium"
           onClick={onCancel}
           disabled={isSubmitting}
         >
           Cancelar
         </Button>
-        <Button type="submit" className="flex-1" disabled={isSubmitting}>
+        <Button type="submit" className="flex-1 rounded-xl h-10 font-medium shadow-xs" disabled={isSubmitting}>
           {isSubmitting ? (
             <span className="flex items-center gap-2">
               <RefreshCw className="size-4 animate-spin" /> Criando...
@@ -519,6 +575,79 @@ function CreateNestForm({ onSuccess, onCancel }: { onSuccess: () => void; onCanc
           ) : (
             'Criar Ninho'
           )}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+// ── Join By Code Form ─────────────────────────────────────────────────────────
+
+function JoinByCodeForm({ onSuccess, onCancel }: { onSuccess: () => void; onCancel: () => void }) {
+  const { refreshNests } = useApp();
+  const [code, setCode] = React.useState('');
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanCode = code.trim();
+    if (!cleanCode) return;
+    setIsSubmitting(true);
+    try {
+      await nestService.joinNestByCode(cleanCode);
+      await refreshNests();
+      toast.success('Você entrou no ninho com sucesso!');
+      onSuccess();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao entrar no ninho por código.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4 pt-1">
+      <div className="rounded-xl border border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-5 text-center shadow-2xs">
+        <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-primary/10 border border-primary/20 text-primary mb-3 shadow-2xs">
+          <KeyRound className="size-6" />
+        </div>
+        <h4 className="text-sm font-semibold text-foreground">Entrar em um Ninho por Código</h4>
+        <p className="mt-1 text-xs text-muted-foreground max-w-[280px] mx-auto">
+          Digite o código curto do convite fornecido por um membro da sua família.
+        </p>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label htmlFor="join-code" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Código de Convite
+        </Label>
+        <Input
+          id="join-code"
+          placeholder="Ex: ABC123"
+          value={code}
+          onChange={(e) => setCode(e.target.value.toUpperCase())}
+          className="h-12 text-center font-mono text-lg uppercase tracking-widest bg-muted/30 border-border/40 rounded-xl"
+          maxLength={20}
+          required
+        />
+      </div>
+
+      <div className="flex items-center gap-2.5 pt-2">
+        <Button
+          type="button"
+          variant="outline"
+          className="flex-1 rounded-xl h-10 border-border/60 hover:bg-accent/60 font-medium"
+          onClick={onCancel}
+          disabled={isSubmitting}
+        >
+          Cancelar
+        </Button>
+        <Button
+          type="submit"
+          className="flex-1 rounded-xl h-10 font-medium shadow-xs"
+          disabled={isSubmitting || !code.trim()}
+        >
+          {isSubmitting ? <RefreshCw className="size-4 animate-spin" /> : 'Entrar no Ninho'}
         </Button>
       </div>
     </form>
@@ -571,21 +700,21 @@ function InfoPanel({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-1">
       {/* Header Preview */}
-      <div className="flex items-center justify-between rounded-xl border border-border/40 bg-muted/20 p-3.5">
-        <div className="flex items-center gap-3">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-border/50 bg-background text-primary shadow-2xs">
-            <PreviewIcon className="size-5" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-primary/25 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4 shadow-2xs">
+        <div className="flex items-center gap-3.5">
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-primary/30 bg-background text-primary shadow-xs">
+            <PreviewIcon className="size-5.5" />
           </div>
           <div>
             <p className="text-sm font-semibold text-foreground">{nameVal || nest.name}</p>
             <div className="flex items-center gap-1.5 text-xs pt-0.5">
-              <RoleBadge role={nest.role} className="h-5 px-2 text-[10px]" />
+              <RoleBadge role={nest.role} className="h-4 px-1.5 text-[9px] py-0 font-medium" />
             </div>
           </div>
         </div>
         <div className="flex items-center gap-2">
           {nest.isDefault ? (
-            <Badge variant="outline" className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30 text-xs font-semibold gap-1 py-1 px-2.5">
+            <Badge variant="outline" className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30 text-xs font-semibold gap-1.5 py-1 px-3 rounded-lg">
               <Star className="size-3.5 fill-amber-500 text-amber-500" />
               Ninho Principal
             </Badge>
@@ -594,7 +723,7 @@ function InfoPanel({
               type="button"
               variant="outline"
               size="sm"
-              className="h-7 gap-1 text-xs text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/10"
+              className="h-8 rounded-lg gap-1.5 text-xs text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/10"
               onClick={() => onSetDefault(nest.nestId)}
             >
               <Star className="size-3.5 text-amber-500" />
@@ -626,7 +755,7 @@ function InfoPanel({
           {...register('name')}
           disabled={!isOwner}
           className={cn(
-            'bg-muted/30 border-border/40 hover:border-border/80 focus-visible:ring-1 focus-visible:ring-primary/50 transition-colors',
+            'h-10 rounded-xl bg-muted/30 border-border/40 hover:border-border/80 focus-visible:ring-1 focus-visible:ring-primary/50 transition-colors',
             !isOwner && 'opacity-60 cursor-not-allowed bg-muted/60'
           )}
         />
@@ -641,7 +770,7 @@ function InfoPanel({
         <Textarea
           id="edit-desc"
           rows={2}
-          className="bg-muted/30 border-border/40 hover:border-border/80 focus-visible:ring-1 focus-visible:ring-primary/50 transition-colors resize-none"
+          className="rounded-xl bg-muted/30 border-border/40 hover:border-border/80 focus-visible:ring-1 focus-visible:ring-primary/50 transition-colors resize-none"
           {...register('description')}
         />
       </div>
@@ -656,7 +785,7 @@ function InfoPanel({
             type="button"
             variant="ghost"
             size="sm"
-            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+            className="rounded-xl text-destructive hover:bg-destructive/10 hover:text-destructive"
             onClick={onDelete}
           >
             <Trash2 className="mr-1.5 size-4" />
@@ -666,10 +795,10 @@ function InfoPanel({
           <div />
         )}
         <div className="flex items-center gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={onBack}>
+          <Button type="button" variant="outline" size="sm" className="rounded-xl h-9 px-3.5" onClick={onBack}>
             Voltar
           </Button>
-          <Button type="submit" size="sm" disabled={isSaving}>
+          <Button type="submit" size="sm" className="rounded-xl h-9 px-4 shadow-xs" disabled={isSaving}>
             {isSaving ? 'Salvando...' : 'Salvar alterações'}
           </Button>
         </div>
@@ -690,9 +819,42 @@ function MembersPanel({ nest }: { nest: AppUserNest }) {
   const [removingMember, setRemovingMember] = React.useState<string | null>(null);
   const [memberToRemove, setMemberToRemove] = React.useState<NestMember | null>(null);
 
+  const [nestCode, setNestCode] = React.useState<string | null>(null);
+  const [loadingCode, setLoadingCode] = React.useState(false);
+  const [regeneratingCode, setRegeneratingCode] = React.useState(false);
+
   const isOwner = nest.role === NestRole.Owner;
   const isAdmin = nest.role === NestRole.Admin;
   const canInvite = isOwner || isAdmin;
+
+  const fetchNestCode = React.useCallback(async () => {
+    setLoadingCode(true);
+    try {
+      const code = await nestService.getNestCode(nest.nestId);
+      setNestCode(code);
+    } catch {
+      toast.error('Erro ao carregar código do ninho.');
+    } finally {
+      setLoadingCode(false);
+    }
+  }, [nest.nestId]);
+
+  const handleRegenerateCode = async () => {
+    setRegeneratingCode(true);
+    try {
+      const newCode = await nestService.regenerateNestCode(nest.nestId);
+      setNestCode(newCode);
+      toast.success('Novo código gerado com sucesso!');
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Erro ao regenerar código.');
+    } finally {
+      setRegeneratingCode(false);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchNestCode();
+  }, [fetchNestCode]);
 
   React.useEffect(() => {
     let mounted = true;
@@ -849,25 +1011,34 @@ function MembersPanel({ nest }: { nest: AppUserNest }) {
               {members.map((member) => {
                 const isSelf = member.userId === user?.id;
                 const displayName = member.name || 'Membro';
-                const initial = displayName.replace(/\(Você\)/i, '').trim().charAt(0).toUpperCase() || 'M';
+                const cleanedName = displayName.replace(/\(você\)|\(voce\)/gi, '').trim();
+                const nameParts = cleanedName.split(/\s+/).filter(Boolean);
+                const initial =
+                  nameParts.length >= 2
+                    ? `${nameParts[0].charAt(0)}${nameParts[nameParts.length - 1].charAt(0)}`.toUpperCase()
+                    : cleanedName.slice(0, 2).toUpperCase() || 'MB';
                 const avatarSrc = resolveUserAvatar(member.photoUrl, member.avatarSlug);
 
                 return (
                   <div
                     key={member.userId}
-                    className="flex items-center justify-between gap-3 rounded-xl border border-border/40 bg-card p-3 transition-colors hover:bg-accent/30"
+                    className="flex items-center justify-between gap-3 rounded-xl border border-border/50 bg-card/70 p-3 sm:p-3.5 transition-colors hover:bg-accent/40 shadow-2xs"
                   >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <Avatar className="size-9 shrink-0 border border-slate-200 bg-white p-0.5 shadow-2xs">
+                    <div className="flex items-center gap-3.5 min-w-0">
+                      <Avatar className="size-10.5 shrink-0 rounded-full border-2 border-primary/25 bg-white shadow-xs p-0.5">
                         {avatarSrc && (
-                          <AvatarImage src={avatarSrc} alt={displayName} className="size-full object-contain" />
+                          <AvatarImage
+                            src={avatarSrc}
+                            alt={displayName}
+                            className="size-full object-contain filter contrast-125 dark:brightness-105"
+                          />
                         )}
-                        <AvatarFallback className="bg-primary/10 font-semibold text-primary text-xs">
+                        <AvatarFallback className="bg-primary/20 font-bold text-primary text-xs">
                           {initial}
                         </AvatarFallback>
                       </Avatar>
                       <div className="min-w-0">
-                        <span className="truncate text-sm font-medium text-foreground block">
+                        <span className="truncate text-sm font-semibold text-foreground block">
                           {displayName}
                           {isSelf && !displayName.toLowerCase().includes('(você)') && !displayName.toLowerCase().includes('(voce)') && (
                             <span className="ml-1.5 text-xs text-muted-foreground font-normal">(você)</span>
@@ -877,19 +1048,19 @@ function MembersPanel({ nest }: { nest: AppUserNest }) {
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
-                      <RoleBadge role={member.role} className="h-6 px-2 text-xs" />
+                      <RoleBadge role={member.role} className="h-5 px-2 text-[10px] py-0 font-medium" />
                       {isOwner && !isSelf && member.role !== NestRole.Owner && (
                         <Button
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="size-7 rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                          className="size-8 rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                           disabled={!!removingMember}
                           onClick={() => setMemberToRemove(member)}
                           title="Remover membro"
                           aria-label="Remover membro"
                         >
-                          <UserMinus className="size-3.5" />
+                          <UserMinus className="size-4" />
                         </Button>
                       )}
                     </div>
@@ -900,14 +1071,97 @@ function MembersPanel({ nest }: { nest: AppUserNest }) {
           )}
         </div>
 
+        {/* Nest Shareable Code Card */}
+        <Separator className="bg-border/60" />
+        <div className="rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-5 space-y-4 shadow-2xs">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-3">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary border border-primary/25 shadow-xs">
+                <KeyRound className="size-4.5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Código de Convite do Ninho</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Código permanente para novos familiares entrarem neste ninho.
+                </p>
+              </div>
+            </div>
+            {canInvite && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleRegenerateCode}
+                disabled={regeneratingCode || loadingCode}
+                className="h-8.5 rounded-xl px-3 text-xs text-muted-foreground hover:text-foreground shrink-0"
+                title="Regenerar código do ninho (invalida o anterior)"
+              >
+                <RefreshCw className={cn('mr-1.5 size-3.5', regeneratingCode && 'animate-spin')} />
+                <span className="hidden sm:inline">Gerar novo código</span>
+                <span className="sm:hidden">Novo código</span>
+              </Button>
+            )}
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3.5 rounded-xl border border-border/60 bg-card/95 p-3.5 sm:p-4 shadow-sm">
+            <div className="flex items-center gap-2.5 min-w-0 px-1">
+              {loadingCode ? (
+                <div className="h-8 w-32 animate-pulse rounded-lg bg-muted" />
+              ) : (
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-lg sm:text-xl font-bold tracking-widest text-foreground">
+                    {nestCode || '---'}
+                  </span>
+                  <Badge variant="outline" className="text-[10px] font-semibold uppercase tracking-wider py-0.5 px-2 bg-muted/50 border-border/60 text-muted-foreground">
+                    Ativo
+                  </Badge>
+                </div>
+              )}
+            </div>
+            <div className="flex items-center gap-2.5 shrink-0">
+              <Button
+                type="button"
+                variant="outline"
+                size="default"
+                className="flex-1 sm:flex-none h-10 px-4 rounded-xl gap-2 text-xs sm:text-sm border-border/70 font-medium hover:bg-accent/70 shadow-2xs"
+                disabled={!nestCode}
+                onClick={() => {
+                  if (nestCode) {
+                    navigator.clipboard.writeText(nestCode);
+                    toast.success(`Código ${nestCode} copiado!`);
+                  }
+                }}
+              >
+                <Copy className="size-4" />
+                Copiar
+              </Button>
+              <Button
+                type="button"
+                size="default"
+                className="flex-1 sm:flex-none h-10 px-5 rounded-xl gap-2 text-xs sm:text-sm font-semibold shadow-xs"
+                disabled={!nestCode}
+                onClick={() => {
+                  if (nestCode) {
+                    const link = `${window.location.origin}/invite?code=${nestCode}`;
+                    navigator.clipboard.writeText(link);
+                    toast.success('Link de convite copiado!');
+                  }
+                }}
+              >
+                Copiar Link
+              </Button>
+            </div>
+          </div>
+        </div>
+
         {/* Invite section */}
         {canInvite && (
           <>
             <Separator className="bg-border/60" />
             <div className="space-y-3">
               <div>
-                <h3 className="text-sm font-semibold text-foreground">Convidar Novo Membro</h3>
-                <p className="text-xs text-muted-foreground">Envie um convite por e-mail para participar deste ninho.</p>
+                <h3 className="text-sm font-semibold text-foreground">Convidar por E-mail</h3>
+                <p className="text-xs text-muted-foreground">Envie um convite direto por e-mail para participar deste ninho.</p>
               </div>
 
               <div className="flex gap-2">
@@ -918,13 +1172,13 @@ function MembersPanel({ nest }: { nest: AppUserNest }) {
                   onChange={(e) => setInviteEmail(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleInvite())}
                   disabled={inviting}
-                  className="bg-muted/30 border-border/40 hover:border-border/80 focus-visible:ring-1 focus-visible:ring-primary/50 transition-colors"
+                  className="h-10 rounded-xl bg-muted/30 border-border/40 hover:border-border/80 focus-visible:ring-1 focus-visible:ring-primary/50 transition-colors"
                 />
                 <Button
                   type="button"
                   onClick={handleInvite}
                   disabled={inviting || !inviteEmail.trim()}
-                  className="shrink-0"
+                  className="h-10 rounded-xl px-4 shrink-0 font-medium shadow-xs"
                 >
                   {inviting ? (
                     <RefreshCw className="size-4 animate-spin" />
@@ -961,9 +1215,7 @@ function MembersPanel({ nest }: { nest: AppUserNest }) {
                           <span className="truncate text-foreground font-medium">{invite.email}</span>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
-                          <Badge variant={inviteStatusVariant(invite.status)} className="text-[10px] h-5">
-                            {inviteStatusLabel(invite.status)}
-                          </Badge>
+                          {renderInviteStatusBadge(invite.status)}
                           <Button
                             type="button"
                             variant="ghost"
@@ -998,9 +1250,7 @@ function MembersPanel({ nest }: { nest: AppUserNest }) {
                           <span className="truncate">{invite.email}</span>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
-                          <Badge variant={inviteStatusVariant(invite.status)} className="text-[10px] h-5">
-                            {inviteStatusLabel(invite.status)}
-                          </Badge>
+                          {renderInviteStatusBadge(invite.status)}
                           <span className="text-[10px] opacity-75">
                             {formatDate(invite.createdAtUtc)}
                           </span>
@@ -1335,34 +1585,41 @@ export function NestManagerModal({ open, onClose, onOpenChange }: NestManagerMod
           </VisuallyHidden.Root>
 
           {/* Mobile Header */}
-          <div className="flex shrink-0 items-center justify-between border-b border-border/50 bg-background/95 backdrop-blur-xs px-4 py-3 md:hidden">
+          <div className="flex shrink-0 items-center justify-between border-b border-border/40 bg-background/95 backdrop-blur-md px-4 py-3 md:hidden">
             <div className="flex items-center gap-2">
-              {isEditMode || mode === 'create' ? (
+              {isEditMode || mode === 'create' || mode === 'join_code' ? (
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="size-8 rounded-full"
+                  className="size-8 rounded-lg text-muted-foreground hover:text-foreground active:scale-95"
                   onClick={handleBackToList}
+                  aria-label="Voltar aos ninhos"
                 >
                   <ArrowLeft className="size-4" />
                 </Button>
-              ) : null}
-              <span className="text-base font-semibold">
+              ) : (
+                <div className="flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-terracotta-500 via-terracotta-600 to-honey-500 text-xs text-white shadow-xs">
+                  🪺
+                </div>
+              )}
+              <span className="text-base font-semibold text-foreground">
                 {isEditMode
                   ? editingNest.name
                   : mode === 'create'
-                    ? 'Novo ninho'
-                    : 'Gerenciar Ninhos'}
+                    ? 'Novo Ninho'
+                    : mode === 'join_code'
+                      ? 'Entrar por Código'
+                      : 'Gerenciar Ninhos'}
               </span>
             </div>
             <button
               type="button"
               onClick={handleClose}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
+              className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground active:scale-95"
+              aria-label="Fechar"
             >
               <X className="size-4" />
-              <span className="sr-only">Fechar</span>
             </button>
           </div>
 
@@ -1371,19 +1628,19 @@ export function NestManagerModal({ open, onClose, onOpenChange }: NestManagerMod
             <>
               {/* Desktop Sidebar Navigation for Edit Mode */}
               <nav className="hidden w-64 shrink-0 flex-col justify-between border-r border-border/50 bg-muted/20 p-4 md:flex">
-                <div className="space-y-3">
+                <div className="space-y-3.5">
                   {/* Brand / Nest Identity Header */}
-                  <div className="rounded-xl border border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-3">
+                  <div className="rounded-xl border border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-3.5 shadow-2xs">
                     <div className="flex items-center gap-3">
                       {EditIcon && (
                         <div className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-primary/30 bg-background text-primary shadow-xs">
-                          <EditIcon className="size-5" />
+                          <EditIcon className="size-4.5" />
                         </div>
                       )}
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-semibold text-foreground">{editingNest.name}</p>
                         <div className="flex items-center gap-1 text-xs pt-0.5">
-                          <RoleBadge role={editingNest.role} className="h-4 px-1.5 text-[9px] py-0" />
+                          <RoleBadge role={editingNest.role} className="h-4 px-1.5 text-[9px] py-0 font-medium" />
                         </div>
                       </div>
                     </div>
@@ -1392,14 +1649,14 @@ export function NestManagerModal({ open, onClose, onOpenChange }: NestManagerMod
                   <button
                     type="button"
                     onClick={handleBackToList}
-                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+                    className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
                   >
                     <ArrowLeft className="size-3.5" /> Voltar aos ninhos
                   </button>
 
                   <Separator className="bg-border/60" />
 
-                  <p className="px-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  <p className="px-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60">
                     Menu do Ninho
                   </p>
                   <div className="space-y-1">
@@ -1409,9 +1666,9 @@ export function NestManagerModal({ open, onClose, onOpenChange }: NestManagerMod
                         type="button"
                         onClick={() => setEditSection(id)}
                         className={cn(
-                          'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-all',
+                          'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-all duration-150',
                           editSection === id
-                            ? 'bg-primary/10 text-primary border border-primary/20 shadow-2xs font-semibold'
+                            ? 'bg-primary/12 text-primary font-semibold shadow-xs'
                             : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
                         )}
                       >
@@ -1422,26 +1679,26 @@ export function NestManagerModal({ open, onClose, onOpenChange }: NestManagerMod
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-border/40 text-[11px] text-muted-foreground text-center">
-                  Organizando seu lar 🪺
+                <div className="pt-3 border-t border-border/40 text-[11px] text-muted-foreground/60 text-center">
+                  Seu lar, organizado 🪺
                 </div>
               </nav>
 
               {/* Mobile horizontal tab bar */}
-              <nav className="flex shrink-0 border-b border-border/50 bg-background md:hidden">
+              <nav className="flex shrink-0 border-b border-border/40 bg-muted/20 px-2 py-1.5 gap-1.5 overflow-x-auto scrollbar-hide md:hidden">
                 {EDIT_SECTIONS.map(({ id, label, icon: Icon }) => (
                   <button
                     key={id}
                     type="button"
                     onClick={() => setEditSection(id)}
                     className={cn(
-                      'flex flex-1 flex-col items-center gap-1 py-2.5 text-xs transition-colors',
+                      'flex flex-1 items-center justify-center gap-1.5 rounded-lg py-1.5 px-2.5 text-xs transition-colors whitespace-nowrap',
                       editSection === id
-                        ? 'border-b-2 border-primary font-semibold text-primary'
-                        : 'border-b-2 border-transparent text-muted-foreground hover:text-foreground'
+                        ? 'bg-background font-semibold text-primary shadow-xs border border-border/40'
+                        : 'text-muted-foreground hover:text-foreground'
                     )}
                   >
-                    <Icon className="size-4" />
+                    <Icon className="size-3.5" />
                     <span>{label}</span>
                   </button>
                 ))}
@@ -1462,7 +1719,8 @@ export function NestManagerModal({ open, onClose, onOpenChange }: NestManagerMod
                   <button
                     type="button"
                     onClick={handleClose}
-                    className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
+                    className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground active:scale-95"
+                    aria-label="Fechar"
                   >
                     <X className="size-4" />
                   </button>
@@ -1521,17 +1779,17 @@ export function NestManagerModal({ open, onClose, onOpenChange }: NestManagerMod
               <nav className="hidden w-64 shrink-0 flex-col justify-between border-r border-border/50 bg-muted/20 p-4 md:flex">
                 <div className="space-y-4">
                   {/* App Brand Header */}
-                  <div className="flex items-center gap-3 rounded-xl border border-border/40 bg-card p-3 shadow-2xs">
-                    <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary font-bold text-lg border border-primary/20">
+                  <div className="flex items-center gap-3 rounded-xl border border-border/40 bg-card/80 p-3 shadow-2xs">
+                    <div className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-terracotta-500 via-terracotta-600 to-honey-500 text-white font-bold text-base shadow-xs ring-1 ring-white/20">
                       🪺
                     </div>
                     <div>
-                      <h3 className="text-sm font-semibold text-foreground">Ninhos</h3>
-                      <p className="text-xs text-muted-foreground">Gestão de Lares</p>
+                      <h3 className="font-editorial text-sm font-bold text-foreground">Ninho</h3>
+                      <p className="text-[11px] text-muted-foreground/60">Gestão de Lares</p>
                     </div>
                   </div>
 
-                  <p className="px-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  <p className="px-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/50">
                     Menu Principal
                   </p>
 
@@ -1540,9 +1798,9 @@ export function NestManagerModal({ open, onClose, onOpenChange }: NestManagerMod
                       type="button"
                       onClick={() => setMode('list')}
                       className={cn(
-                        'flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-all',
+                        'flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-all duration-150',
                         mode === 'list'
-                          ? 'bg-primary/10 text-primary border border-primary/20 shadow-2xs font-semibold'
+                          ? 'bg-primary/12 text-primary font-semibold shadow-xs'
                           : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
                       )}
                     >
@@ -1550,7 +1808,7 @@ export function NestManagerModal({ open, onClose, onOpenChange }: NestManagerMod
                         <Users className="size-4 shrink-0" />
                         <span>Meus Ninhos</span>
                       </div>
-                      <Badge variant="secondary" className="text-[10px] h-5 px-1.5 font-normal">
+                      <Badge variant="secondary" className="text-[10px] h-5 px-1.5 font-semibold bg-primary/10 text-primary border-primary/20">
                         {nests.length}
                       </Badge>
                     </button>
@@ -1559,20 +1817,34 @@ export function NestManagerModal({ open, onClose, onOpenChange }: NestManagerMod
                       type="button"
                       onClick={() => setMode('create')}
                       className={cn(
-                        'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-all',
+                        'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-all duration-150',
                         mode === 'create'
-                          ? 'bg-primary/10 text-primary border border-primary/20 shadow-2xs font-semibold'
+                          ? 'bg-primary/12 text-primary font-semibold shadow-xs'
                           : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
                       )}
                     >
                       <Plus className="size-4 shrink-0" />
                       <span>Novo Ninho</span>
                     </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setMode('join_code')}
+                      className={cn(
+                        'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-all duration-150',
+                        mode === 'join_code'
+                          ? 'bg-primary/12 text-primary font-semibold shadow-xs'
+                          : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
+                      )}
+                    >
+                      <KeyRound className="size-4 shrink-0" />
+                      <span>Entrar por Código</span>
+                    </button>
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-border/40 text-[11px] text-muted-foreground text-center">
-                  Ninho v2.0 • PWA
+                <div className="pt-3 border-t border-border/40 text-[11px] text-muted-foreground/60 text-center">
+                  Seu lar, organizado 🪺
                 </div>
               </nav>
 
@@ -1582,18 +1854,25 @@ export function NestManagerModal({ open, onClose, onOpenChange }: NestManagerMod
                 <div className="mb-6 hidden items-center justify-between pb-3 border-b border-border/40 md:flex">
                   <div>
                     <h2 className="text-base font-semibold text-foreground">
-                      {mode === 'create' ? 'Criar Novo Ninho' : 'Gerenciar Ninhos'}
+                      {mode === 'create'
+                        ? 'Criar Novo Ninho'
+                        : mode === 'join_code'
+                          ? 'Entrar por Código'
+                          : 'Gerenciar Ninhos'}
                     </h2>
                     <p className="text-xs text-muted-foreground">
                       {mode === 'create'
                         ? 'Cadastre um novo espaço para gerenciar com sua família ou equipe'
-                        : 'Troque de ninho ativo ou edite suas preferências'}
+                        : mode === 'join_code'
+                          ? 'Resgate um convite digitando o código curto do ninho'
+                          : 'Troque de ninho ativo ou edite suas preferências'}
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={handleClose}
-                    className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
+                    className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground active:scale-95"
+                    aria-label="Fechar"
                   >
                     <X className="size-4" />
                   </button>
@@ -1607,6 +1886,7 @@ export function NestManagerModal({ open, onClose, onOpenChange }: NestManagerMod
                         activeNestId={activeNestId}
                         onEdit={handleEdit}
                         onCreate={() => setMode('create')}
+                        onJoinByCode={() => setMode('join_code')}
                         onSetActive={(id) => setActiveNestId(id)}
                         onLeave={(nest) => {
                           fetchMemberCount(nest.nestId);
@@ -1617,6 +1897,12 @@ export function NestManagerModal({ open, onClose, onOpenChange }: NestManagerMod
                     )}
                     {mode === 'create' && (
                       <CreateNestForm
+                        onSuccess={() => setMode('list')}
+                        onCancel={() => setMode('list')}
+                      />
+                    )}
+                    {mode === 'join_code' && (
+                      <JoinByCodeForm
                         onSuccess={() => setMode('list')}
                         onCancel={() => setMode('list')}
                       />
@@ -1638,6 +1924,7 @@ export function NestManagerModal({ open, onClose, onOpenChange }: NestManagerMod
                           activeNestId={activeNestId}
                           onEdit={handleEdit}
                           onCreate={() => setMode('create')}
+                          onJoinByCode={() => setMode('join_code')}
                           onSetActive={(id) => setActiveNestId(id)}
                           onLeave={(nest) => {
                             fetchMemberCount(nest.nestId);
@@ -1648,6 +1935,12 @@ export function NestManagerModal({ open, onClose, onOpenChange }: NestManagerMod
                       )}
                       {mode === 'create' && (
                         <CreateNestForm
+                          onSuccess={() => setMode('list')}
+                          onCancel={() => setMode('list')}
+                        />
+                      )}
+                      {mode === 'join_code' && (
+                        <JoinByCodeForm
                           onSuccess={() => setMode('list')}
                           onCancel={() => setMode('list')}
                         />

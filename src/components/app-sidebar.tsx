@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Check, Settings2, Star } from 'lucide-react';
+import { Check, ChevronDown, HelpCircle, MessageSquarePlus, Settings2, Star, X } from 'lucide-react';
 import * as React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -9,12 +9,7 @@ import { SettingsModal } from '@/components/modals/SettingsModal';
 import { CalendarDaysIcon } from '@/components/ui/animated-icons/calendar-days';
 import { CartIcon } from '@/components/ui/animated-icons/cart';
 import { CheckIcon } from '@/components/ui/animated-icons/check';
-import {
-  ChevronRightIcon,
-  type ChevronRightIconHandle,
-} from '@/components/ui/animated-icons/chevron-right';
 import { ChevronsUpDownIcon } from '@/components/ui/animated-icons/chevrons-up-down';
-import { CircleHelpIcon } from '@/components/ui/animated-icons/circle-help';
 import { CreditCardIcon } from '@/components/ui/animated-icons/credit-card';
 import {
   DollarSignIcon,
@@ -22,7 +17,6 @@ import {
 } from '@/components/ui/animated-icons/dollar-sign';
 import { HomeIcon } from '@/components/ui/animated-icons/home';
 import { RefreshCWIcon } from '@/components/ui/animated-icons/refresh-cw';
-import { SendIcon } from '@/components/ui/animated-icons/send';
 import { TrendingUpIcon } from '@/components/ui/animated-icons/trending-up';
 import { UserIcon } from '@/components/ui/animated-icons/user';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -40,15 +34,14 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
   useSidebar,
 } from '@/components/ui/sidebar';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useApp } from '@/contexts/AppContext';
 import { getIconComponent } from '@/lib/nestIcons';
 import { cn } from '@/lib/utils';
@@ -86,191 +79,16 @@ const FINANCAS_SUB_ITEMS: FinancasSubItem[] = [
     icon: RefreshCWIcon,
     path: '/financial/recurrences',
   },
-  { id: 'financial-conta', name: 'Conta', icon: UserIcon, path: '/financial/account' },
-  { id: 'financial-cartao', name: 'Cartão', icon: CreditCardIcon, path: '/financial/card' },
+  { id: 'financial-conta', name: 'Contas', icon: UserIcon, path: '/financial/account' },
+  { id: 'financial-cartao', name: 'Cartões', icon: CreditCardIcon, path: '/financial/card' },
 ];
 
-const TOP_MODULES: Module[] = [
+const MAIN_MODULES: Module[] = [
   { id: 'dashboard', name: 'Início', icon: HomeIcon, path: '/dashboard' },
   { id: 'tasks', name: 'Tarefas', icon: CheckIcon, path: '/tasks' },
   { id: 'shopping', name: 'Lista de Compras', icon: CartIcon, path: '/shopping' },
-];
-
-const BOTTOM_MODULES: Module[] = [
   { id: 'calendar', name: 'Agenda', icon: CalendarDaysIcon, path: '/calendar' },
 ];
-
-// Sub-components that own their icon refs so hover triggers animations
-
-function FinancasGroup({
-  isFinancasActive,
-  financasOpen,
-  setFinancasOpen,
-  handleNavClick,
-  currentPath,
-}: {
-  isFinancasActive: boolean;
-  financasOpen: boolean;
-  setFinancasOpen: (open: boolean) => void;
-  handleNavClick: (path: string) => void;
-  currentPath: string;
-}) {
-  const dollarRef = React.useRef<DollarSignIconHandle>(null);
-  const chevronRef = React.useRef<ChevronRightIconHandle>(null);
-  const { state: sidebarState } = useSidebar();
-  const isCollapsed = sidebarState === 'collapsed';
-
-  if (isCollapsed) {
-    return (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <SidebarMenuButton
-            isActive={isFinancasActive}
-            tooltip="Finanças"
-            onMouseEnter={() => dollarRef.current?.startAnimation()}
-            onMouseLeave={() => dollarRef.current?.stopAnimation()}
-            className={cn(
-              'relative cursor-pointer !gap-3 rounded-[24px] px-4 py-3 text-base transition-colors',
-              isFinancasActive
-                ? '!bg-primary/8 font-semibold !text-primary hover:!bg-primary/12'
-                : 'font-normal text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
-            )}
-            style={{ zIndex: 1 }}
-          >
-            <DollarSignIcon ref={dollarRef} size={18} />
-            <span>Finanças</span>
-          </SidebarMenuButton>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent side="right" align="start" className="w-48">
-          <DropdownMenuLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Finanças
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          {FINANCAS_SUB_ITEMS.map((item) => {
-            const SubIcon = item.icon;
-            const isActive = currentPath === item.path;
-            return (
-              <DropdownMenuItem
-                key={item.id}
-                onClick={() => handleNavClick(item.path)}
-                className={cn(
-                  'flex cursor-pointer items-center gap-2.5 px-3 py-2 text-sm',
-                  isActive && '!bg-primary/15 font-semibold !text-primary'
-                )}
-              >
-                <SubIcon size={16} />
-                <span>{item.name}</span>
-              </DropdownMenuItem>
-            );
-          })}
-        </DropdownMenuContent>
-      </DropdownMenu>
-    );
-  }
-
-  return (
-    <Collapsible open={financasOpen} onOpenChange={setFinancasOpen}>
-      <CollapsibleTrigger asChild>
-        <SidebarMenuButton
-          isActive={false}
-          tooltip="Finanças"
-          onClick={() => handleNavClick('/financial')}
-          onMouseEnter={() => {
-            dollarRef.current?.startAnimation();
-            chevronRef.current?.startAnimation();
-          }}
-          onMouseLeave={() => {
-            dollarRef.current?.stopAnimation();
-            chevronRef.current?.stopAnimation();
-          }}
-          className={cn(
-            'relative cursor-pointer !gap-3 rounded-[24px] px-4 py-3 text-base transition-colors',
-            isFinancasActive
-              ? '!bg-primary/8 font-semibold !text-primary hover:!bg-primary/12'
-              : 'font-normal text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
-          )}
-          style={{ zIndex: 1 }}
-        >
-          <DollarSignIcon ref={dollarRef} size={18} />
-          <span>Finanças</span>
-          <motion.div
-            className="ml-auto"
-            animate={{ rotate: financasOpen ? 90 : 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            <ChevronRightIcon ref={chevronRef} size={16} />
-          </motion.div>
-        </SidebarMenuButton>
-      </CollapsibleTrigger>
-      <CollapsibleContent>
-        <SidebarMenuSub>
-          {FINANCAS_SUB_ITEMS.map((item) => (
-            <FinancasSubItemRow
-              key={item.id}
-              item={item}
-              isActive={currentPath === item.path}
-              handleNavClick={handleNavClick}
-            />
-          ))}
-        </SidebarMenuSub>
-      </CollapsibleContent>
-    </Collapsible>
-  );
-}
-
-function FinancasSubItemRow({
-  item,
-  isActive,
-  handleNavClick,
-}: {
-  item: { id: string; name: string; icon: AnimatedIconComponent; path: string };
-  isActive: boolean;
-  handleNavClick: (path: string) => void;
-}) {
-  const SubIcon = item.icon;
-  const iconRef = React.useRef<AnimatedIconHandle>(null);
-
-  return (
-    <SidebarMenuSubItem>
-      <SidebarMenuSubButton
-        onClick={() => handleNavClick(item.path)}
-        onMouseEnter={() => iconRef.current?.startAnimation()}
-        onMouseLeave={() => iconRef.current?.stopAnimation()}
-        isActive={isActive}
-        className={cn('cursor-pointer', isActive && '!bg-primary/15 font-semibold !text-primary')}
-      >
-        <SubIcon ref={iconRef} size={14} />
-        <span>{item.name}</span>
-      </SidebarMenuSubButton>
-    </SidebarMenuSubItem>
-  );
-}
-
-function FooterIconButton({
-  tooltip,
-  Icon,
-  label,
-}: {
-  tooltip: string;
-  Icon: AnimatedIconComponent;
-  label: string;
-}) {
-  const iconRef = React.useRef<AnimatedIconHandle>(null);
-
-  return (
-    <SidebarMenuItem>
-      <SidebarMenuButton
-        tooltip={tooltip}
-        onMouseEnter={() => iconRef.current?.startAnimation()}
-        onMouseLeave={() => iconRef.current?.stopAnimation()}
-        className="!gap-3 rounded-[24px] px-4 py-3 text-base font-normal text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-      >
-        <Icon ref={iconRef} size={18} />
-        <span>{label}</span>
-      </SidebarMenuButton>
-    </SidebarMenuItem>
-  );
-}
 
 interface AppSidebarProps {
   user?: AppUser;
@@ -284,12 +102,15 @@ export function AppSidebar({ user }: AppSidebarProps) {
   const [settingsOpen, setSettingsOpen] = React.useState(false);
   const { isMobile, setOpenMobile, state: sidebarState } = useSidebar();
 
+  const isCollapsed = sidebarState === 'collapsed';
   const isFinancasActive = location.pathname.startsWith('/financial');
   const [financasOpen, setFinancasOpen] = React.useState(isFinancasActive);
 
   // Sync Finanças open state with route
   React.useEffect(() => {
-    setFinancasOpen(isFinancasActive);
+    if (isFinancasActive) {
+      setFinancasOpen(true);
+    }
   }, [isFinancasActive]);
 
   const nests = user?.nests ?? [];
@@ -299,212 +120,541 @@ export function AppSidebar({ user }: AppSidebarProps) {
     nests[0] ??
     null;
 
+  const ActiveNestIcon = activeNest ? getIconComponent(activeNest.icon) : null;
+
   const isActive = (path: string) => location.pathname === path;
 
   const handleNavClick = (path: string) => {
     navigate(path);
-    if (isMobile) setOpenMobile(false);
-  };
-
-  const isCollapsed = sidebarState === 'collapsed';
-
-  const NavItem = ({ module }: { module: Module }) => {
-    const Icon = module.icon;
-    const iconRef = React.useRef<AnimatedIconHandle>(null);
-    const active = isActive(module.path);
-    return (
-      <SidebarMenuItem className="relative">
-        {active && (
-          <motion.div
-            layoutId="sidebar-active-pill"
-            className="absolute inset-0 rounded-[24px] bg-sidebar-accent"
-            transition={{ type: 'spring', stiffness: 380, damping: 38 }}
-            style={{ zIndex: 0 }}
-          />
-        )}
-        <SidebarMenuButton
-          isActive={active}
-          tooltip={module.name}
-          onClick={() => handleNavClick(module.path)}
-          onMouseEnter={() => iconRef.current?.startAnimation()}
-          onMouseLeave={() => iconRef.current?.stopAnimation()}
-          className={cn(
-            'relative !gap-3 rounded-[24px] px-4 py-3 text-base transition-colors',
-            active
-              ? '!bg-transparent font-semibold !text-primary'
-              : 'font-normal text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
-          )}
-          style={{ zIndex: 1 }}
-        >
-          <Icon ref={iconRef} size={18} />
-          <span>{module.name}</span>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-    );
+    if (isMobile) {
+      setOpenMobile(false);
+    }
   };
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar select-none">
       <NestManagerModal open={manageNestsOpen} onClose={() => setManageNestsOpen(false)} />
       <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
 
-      {/* Header — App Branding */}
-      <SidebarHeader className="py-6">
+      {/* ── HEADER: BRANDING & MOBILE CLOSE ── */}
+      <SidebarHeader className={cn('px-3 pt-4 pb-2 transition-all', isCollapsed && 'px-2 pt-3')}>
         {isCollapsed ? (
-          <div className="flex items-center justify-center px-2">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-terracotta-500 to-honey-400 text-base text-white">
+          <div className="flex items-center justify-center py-1">
+            <div className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-terracotta-500/20 via-honey-500/20 to-terracotta-500/10 border border-terracotta-500/30 text-lg shadow-sm">
               🪺
             </div>
           </div>
         ) : (
-          <div className="flex items-center gap-3 px-4">
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-terracotta-500 to-honey-400 text-lg text-white">
-              🪺
+          <div className="flex items-center justify-between gap-2 px-1">
+            <div className="flex items-center gap-3">
+              <div className="flex size-9.5 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-terracotta-500 via-terracotta-600 to-honey-500 text-lg text-white shadow-md shadow-terracotta-500/20 ring-1 ring-white/20">
+                🪺
+              </div>
+              <div className="flex flex-col">
+                <span className="font-editorial text-lg font-bold leading-tight tracking-tight text-sidebar-foreground">
+                  Ninho
+                </span>
+                <span className="text-[11px] font-medium tracking-wide text-sidebar-foreground/50">
+                  Seu lar, organizado
+                </span>
+              </div>
             </div>
-            <div className="flex flex-col gap-0">
-              <span className="font-editorial text-xl font-bold leading-6 tracking-tight text-primary">
-                Ninho
-              </span>
-              <span
-                className="font-normal tracking-wide text-sidebar-foreground/60"
-                style={{ fontSize: 'var(--text-xs)' }}
+
+            {/* Mobile Close Button */}
+            {isMobile && (
+              <button
+                type="button"
+                onClick={() => setOpenMobile(false)}
+                className="flex size-8 items-center justify-center rounded-lg text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground active:scale-95"
+                aria-label="Fechar menu"
               >
-                Seu lar, organizado
-              </span>
-            </div>
+                <X size={18} />
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* ── NEST SWITCHER (TOP POSITIONED) ── */}
+        {nests.length > 0 && (
+          <div className={cn('mt-3', isCollapsed ? 'flex justify-center' : 'w-full')}>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                {isCollapsed ? (
+                  <button
+                    type="button"
+                    className="group relative flex size-9 items-center justify-center rounded-xl border border-sidebar-border/60 bg-sidebar-accent/40 text-sidebar-foreground transition-colors hover:border-sidebar-border hover:bg-sidebar-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+                    aria-label={activeNest?.name ?? 'Ninho'}
+                  >
+                    <div className="flex size-6 items-center justify-center rounded-lg bg-primary/10 text-xs font-semibold text-primary">
+                      {ActiveNestIcon ? (
+                        <ActiveNestIcon className="size-3.5" />
+                      ) : activeNest?.name ? (
+                        activeNest.name.slice(0, 2).toUpperCase()
+                      ) : (
+                        '🪺'
+                      )}
+                    </div>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="group flex w-full items-center gap-2.5 rounded-xl border border-sidebar-border/60 bg-sidebar-accent/35 p-2 text-left transition-all duration-150 hover:border-sidebar-border hover:bg-sidebar-accent/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+                  >
+                    <div className="flex size-7.5 shrink-0 items-center justify-center rounded-lg border border-primary/25 bg-primary/10 text-xs font-semibold text-primary">
+                      {ActiveNestIcon ? (
+                        <ActiveNestIcon className="size-3.5" />
+                      ) : activeNest?.name ? (
+                        activeNest.name.slice(0, 2).toUpperCase()
+                      ) : (
+                        '🪺'
+                      )}
+                    </div>
+
+                    <div className="flex min-w-0 flex-1 flex-col">
+                      <div className="flex items-center gap-1.5">
+                        <span className="truncate text-xs font-semibold text-sidebar-foreground">
+                          {activeNest?.name ?? 'Meu Ninho'}
+                        </span>
+                        {activeNest && (
+                          <RoleBadge
+                            role={activeNest.role}
+                            className="h-3.5 px-1 text-[8px] py-0 shrink-0 font-medium"
+                          />
+                        )}
+                      </div>
+                      <span className="truncate text-[10px] text-sidebar-foreground/45">
+                        Grupo Familiar
+                      </span>
+                    </div>
+
+                    <ChevronsUpDownIcon
+                      size={14}
+                      className="shrink-0 text-sidebar-foreground/40 transition-colors group-hover:text-sidebar-foreground/75"
+                    />
+                  </button>
+                )}
+              </DropdownMenuTrigger>
+
+              <DropdownMenuContent
+                className="w-[280px] sm:w-[310px] rounded-2xl border border-border/60 bg-popover/95 p-1.5 shadow-2xl backdrop-blur-xl"
+                align={isCollapsed ? 'start' : 'start'}
+                side={isCollapsed ? 'right' : 'bottom'}
+                sideOffset={6}
+              >
+                <DropdownMenuLabel className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60">
+                  Ninhos da Família
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator className="my-1 bg-border/40" />
+
+                <div className="space-y-1">
+                  {nests.map((nest) => {
+                    const NestIcon = getIconComponent(nest.icon);
+                    const isCurrent = activeNest?.nestId === nest.nestId;
+                    return (
+                      <DropdownMenuItem
+                        key={nest.nestId}
+                        onClick={() => setActiveNestId(nest.nestId)}
+                        className={cn(
+                          'group flex cursor-pointer items-center justify-between gap-3 rounded-xl p-2.5 transition-all duration-150',
+                          isCurrent
+                            ? 'bg-primary/10 border border-primary/25 shadow-xs'
+                            : 'hover:bg-accent/60 border border-transparent'
+                        )}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                          <div
+                            className={cn(
+                              'flex size-8 shrink-0 items-center justify-center rounded-lg border transition-colors',
+                              isCurrent
+                                ? 'border-primary/40 bg-background text-primary shadow-xs'
+                                : 'border-border/60 bg-background/80 text-muted-foreground group-hover:text-foreground'
+                            )}
+                          >
+                            <NestIcon className="size-4" />
+                          </div>
+
+                          <div className="flex flex-col min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5">
+                              <span className="truncate text-xs font-semibold text-foreground">
+                                {nest.name}
+                              </span>
+                              {nest.isDefault && (
+                                <Star className="size-3 shrink-0 fill-amber-500 text-amber-500" />
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <RoleBadge role={nest.role} className="h-3.5 px-1 text-[8px] py-0 font-medium" />
+                              <span className="text-[10px] text-muted-foreground/50">Grupo Familiar</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {isCurrent && (
+                          <div className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+                            <Check className="size-3 text-primary stroke-[3]" />
+                          </div>
+                        )}
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </div>
+
+                <DropdownMenuSeparator className="my-1.5 bg-border/40" />
+                <DropdownMenuItem
+                  className="group flex cursor-pointer items-center gap-2.5 rounded-xl px-2.5 py-2 text-xs font-medium text-foreground transition-colors hover:bg-accent/60"
+                  onClick={() => setManageNestsOpen(true)}
+                >
+                  <div className="flex size-7 items-center justify-center rounded-lg border border-border/50 bg-background/80 text-muted-foreground transition-colors group-hover:border-primary/40 group-hover:text-primary">
+                    <Settings2 className="size-3.5" />
+                  </div>
+                  <span className="font-medium">Gerenciar ninhos</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         )}
       </SidebarHeader>
 
-      <SidebarContent>
-        <SidebarGroup>
+      {/* ── NAVIGATION CONTENT ── */}
+      <SidebarContent className="px-2 py-1 scrollbar-hide">
+        {/* GRUPO PRINCIPAL */}
+        <SidebarGroup className="py-1">
+          {!isCollapsed && (
+            <SidebarGroupLabel className="px-3 pb-1.5 pt-2 text-[10px] font-bold uppercase tracking-wider text-sidebar-foreground/40">
+              Principal
+            </SidebarGroupLabel>
+          )}
           <SidebarGroupContent>
-            <SidebarMenu className="gap-2">
-              {/* Top modules: Início, Tarefas, Lista de Compras */}
-              {TOP_MODULES.map((m) => (
-                <NavItem key={m.id} module={m} />
-              ))}
+            <SidebarMenu className="gap-1">
+              {MAIN_MODULES.map((module) => {
+                const active = isActive(module.path);
+                const Icon = module.icon;
+                const iconRef = React.useRef<AnimatedIconHandle>(null);
 
-              {/* Finanças — collapsible group */}
-              <SidebarMenuItem className="relative">
-                <FinancasGroup
-                  isFinancasActive={isFinancasActive}
-                  financasOpen={financasOpen}
-                  setFinancasOpen={setFinancasOpen}
-                  handleNavClick={handleNavClick}
-                  currentPath={location.pathname}
-                />
-              </SidebarMenuItem>
+                return (
+                  <SidebarMenuItem key={module.id} className="relative">
+                    <SidebarMenuButton
+                      isActive={active}
+                      tooltip={module.name}
+                      onClick={() => handleNavClick(module.path)}
+                      onMouseEnter={() => iconRef.current?.startAnimation()}
+                      onMouseLeave={() => iconRef.current?.stopAnimation()}
+                      className={cn(
+                        'group relative flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-150',
+                        isMobile ? 'h-11 text-[15px]' : 'h-10 text-sm',
+                        active
+                          ? 'bg-primary/12 font-semibold text-primary shadow-xs'
+                          : 'text-sidebar-foreground/75 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'
+                      )}
+                    >
+                      {active && (
+                        <span
+                          className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-primary"
+                          aria-hidden="true"
+                        />
+                      )}
+                      <Icon
+                        ref={iconRef}
+                        size={18}
+                        className={cn(
+                          'shrink-0 transition-colors',
+                          active
+                            ? 'text-primary'
+                            : 'text-sidebar-foreground/60 group-hover:text-sidebar-foreground'
+                        )}
+                      />
+                      {!isCollapsed && <span className="truncate">{module.name}</span>}
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
 
-              {/* Bottom modules: Agenda */}
-              {BOTTOM_MODULES.map((m) => (
-                <NavItem key={m.id} module={m} />
-              ))}
+        {/* GRUPO FINANCEIRO */}
+        <SidebarGroup className="py-1">
+          {!isCollapsed && (
+            <SidebarGroupLabel className="px-3 pb-1.5 pt-2 text-[10px] font-bold uppercase tracking-wider text-sidebar-foreground/40">
+              Financeiro
+            </SidebarGroupLabel>
+          )}
+          <SidebarGroupContent>
+            <SidebarMenu className="gap-1">
+              <FinancasMenu
+                isFinancasActive={isFinancasActive}
+                financasOpen={financasOpen}
+                setFinancasOpen={setFinancasOpen}
+                handleNavClick={handleNavClick}
+                currentPath={location.pathname}
+                isCollapsed={isCollapsed}
+                isMobile={isMobile}
+              />
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter>
-        <SidebarMenu>
-          {/* Support */}
-          <FooterIconButton tooltip="Suporte" Icon={CircleHelpIcon} label="Suporte" />
-
-          {/* Feedback */}
-          <FooterIconButton tooltip="Feedback" Icon={SendIcon} label="Feedback" />
-
-          {/* Divider */}
-          <div className="mx-4 my-1 h-px bg-sidebar-border" />
-
-          {/* Nest switcher */}
-          {nests.length > 0 && (
-            <SidebarMenuItem>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <SidebarMenuButton
-                    size="lg"
-                    className="bg-sidebar-background rounded-[24px] shadow-sm data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-                  >
-                    <div className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-secondary-foreground">
-                      {activeNest?.name
-                        ? activeNest.name
-                            .split(' ')
-                            .map((w: string) => w[0])
-                            .join('')
-                            .toUpperCase()
-                            .slice(0, 2)
-                        : '🪺'}
-                    </div>
-                    <div className="grid flex-1 text-left text-sm leading-tight min-w-0">
-                      <div className="flex items-center justify-between gap-1.5 min-w-0">
-                        <span className="truncate font-semibold text-sidebar-foreground">
-                          {activeNest?.name ?? 'Nenhum ninho'}
-                        </span>
-                        {activeNest && (
-                          <RoleBadge role={activeNest.role} className="h-4 px-1.5 text-[9px] py-0 shrink-0" />
-                        )}
-                      </div>
-                      <span
-                        className="truncate uppercase tracking-widest text-sidebar-foreground/50"
-                        style={{ fontSize: 'var(--text-xs)' }}
-                      >
-                        Grupo Familiar
-                      </span>
-                    </div>
-                    <ChevronsUpDownIcon size={16} className="ml-auto shrink-0" />
-                  </SidebarMenuButton>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-                  align="start"
-                  side="top"
-                  sideOffset={4}
-                >
-                  <DropdownMenuLabel className="text-xs text-muted-foreground">
-                    Ninhos
-                  </DropdownMenuLabel>
-                  {nests.map((nest) => {
-                    const NestIcon = getIconComponent(nest.icon);
-                    return (
-                      <DropdownMenuItem
-                        key={nest.nestId}
-                        onClick={() => setActiveNestId(nest.nestId)}
-                        className="flex items-center justify-between gap-2 p-2"
-                      >
-                        <div className="flex items-center gap-2 min-w-0">
-                          <div className="flex size-6 items-center justify-center rounded-sm border shrink-0">
-                            <NestIcon className="size-3.5" />
-                          </div>
-                          <span className="truncate">{nest.name}</span>
-                          {nest.isDefault && (
-                            <Star className="size-3 text-amber-500 fill-amber-500/20 shrink-0" />
-                          )}
-                        </div>
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          <RoleBadge role={nest.role} className="h-4 px-1.5 text-[9px] py-0" />
-                          {activeNest?.nestId === nest.nestId && (
-                            <Check className="size-3.5 text-primary shrink-0" />
-                          )}
-                        </div>
-                      </DropdownMenuItem>
-                    );
-                  })}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className="gap-2 p-2 text-terracotta-500 dark:text-honey-400"
-                    onClick={() => setManageNestsOpen(true)}
-                  >
-                    <div className="flex size-6 items-center justify-center rounded-sm border">
-                      <Settings2 className="size-3.5" />
-                    </div>
-                    Gerenciar ninhos
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </SidebarMenuItem>
+      {/* ── FOOTER: UTILITIES & SAFE AREA ── */}
+      <SidebarFooter
+        className={cn(
+          'px-2 py-2 border-t border-sidebar-border/40',
+          isMobile && 'pb-[max(1rem,env(safe-area-inset-bottom))]'
+        )}
+      >
+        <SidebarMenu className="gap-1">
+          {isCollapsed ? (
+            <>
+              <FooterTooltipButton
+                label="Suporte"
+                icon={HelpCircle}
+                onClick={() => {}}
+              />
+              <FooterTooltipButton
+                label="Feedback"
+                icon={MessageSquarePlus}
+                onClick={() => {}}
+              />
+            </>
+          ) : (
+            <div className="flex items-center gap-1 px-1">
+              <button
+                type="button"
+                onClick={() => {}}
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-medium text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent/60 hover:text-sidebar-foreground active:scale-95"
+              >
+                <HelpCircle size={14} />
+                <span>Suporte</span>
+              </button>
+              <div className="h-3 w-px bg-sidebar-border/50" />
+              <button
+                type="button"
+                onClick={() => {}}
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-medium text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent/60 hover:text-sidebar-foreground active:scale-95"
+              >
+                <MessageSquarePlus size={14} />
+                <span>Feedback</span>
+              </button>
+            </div>
           )}
         </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+ * FINANÇAS SUBMENU COMPONENT
+ * ───────────────────────────────────────────────────────────────────────────── */
+
+interface FinancasMenuProps {
+  isFinancasActive: boolean;
+  financasOpen: boolean;
+  setFinancasOpen: (open: boolean) => void;
+  handleNavClick: (path: string) => void;
+  currentPath: string;
+  isCollapsed: boolean;
+  isMobile: boolean;
+}
+
+function FinancasMenu({
+  isFinancasActive,
+  financasOpen,
+  setFinancasOpen,
+  handleNavClick,
+  currentPath,
+  isCollapsed,
+  isMobile,
+}: FinancasMenuProps) {
+  const dollarRef = React.useRef<DollarSignIconHandle>(null);
+
+  // Desktop collapsed mode -> Floating Dropdown
+  if (isCollapsed) {
+    return (
+      <SidebarMenuItem>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <SidebarMenuButton
+              isActive={isFinancasActive}
+              tooltip="Finanças"
+              onMouseEnter={() => dollarRef.current?.startAnimation()}
+              onMouseLeave={() => dollarRef.current?.stopAnimation()}
+              className={cn(
+                'group relative flex size-9 items-center justify-center rounded-xl transition-colors',
+                isFinancasActive
+                  ? 'bg-primary/12 text-primary font-semibold'
+                  : 'text-sidebar-foreground/75 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'
+              )}
+            >
+              {isFinancasActive && (
+                <span
+                  className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-primary"
+                  aria-hidden="true"
+                />
+              )}
+              <DollarSignIcon ref={dollarRef} size={18} />
+            </SidebarMenuButton>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            side="right"
+            align="start"
+            sideOffset={8}
+            className="w-48 rounded-xl border border-sidebar-border bg-popover/95 p-1 shadow-xl backdrop-blur-md"
+          >
+            <DropdownMenuLabel className="px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Módulo Financeiro
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator className="my-1 bg-border/40" />
+            {FINANCAS_SUB_ITEMS.map((item) => {
+              const SubIcon = item.icon;
+              const isActive = currentPath === item.path;
+              return (
+                <DropdownMenuItem
+                  key={item.id}
+                  onClick={() => handleNavClick(item.path)}
+                  className={cn(
+                    'flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-xs transition-colors',
+                    isActive
+                      ? 'bg-primary/15 font-semibold text-primary'
+                      : 'text-foreground hover:bg-accent/60'
+                  )}
+                >
+                  <SubIcon size={14} className="shrink-0" />
+                  <span>{item.name}</span>
+                </DropdownMenuItem>
+              );
+            })}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </SidebarMenuItem>
+    );
+  }
+
+  // Expanded mode -> Collapsible Accordion with vertical connector line
+  return (
+    <SidebarMenuItem className="relative">
+      <Collapsible open={financasOpen} onOpenChange={setFinancasOpen}>
+        <div className="relative flex items-center">
+          <SidebarMenuButton
+            isActive={isFinancasActive}
+            onClick={() => handleNavClick('/financial')}
+            onMouseEnter={() => dollarRef.current?.startAnimation()}
+            onMouseLeave={() => dollarRef.current?.stopAnimation()}
+            className={cn(
+              'group relative flex flex-1 items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-150',
+              isMobile ? 'h-11 text-[15px]' : 'h-10 text-sm',
+              isFinancasActive
+                ? 'bg-primary/12 font-semibold text-primary shadow-xs'
+                : 'text-sidebar-foreground/75 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'
+            )}
+          >
+            {isFinancasActive && (
+              <span
+                className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-primary"
+                aria-hidden="true"
+              />
+            )}
+            <DollarSignIcon
+              ref={dollarRef}
+              size={18}
+              className={cn(
+                'shrink-0 transition-colors',
+                isFinancasActive
+                  ? 'text-primary'
+                  : 'text-sidebar-foreground/60 group-hover:text-sidebar-foreground'
+              )}
+            />
+            <span className="truncate">Finanças</span>
+          </SidebarMenuButton>
+
+          {/* Toggle button specifically for collapsing without navigating */}
+          <CollapsibleTrigger asChild>
+            <button
+              type="button"
+              className="absolute right-2 flex size-6 items-center justify-center rounded-md text-sidebar-foreground/45 transition-colors hover:bg-sidebar-accent/80 hover:text-sidebar-foreground"
+              aria-label={financasOpen ? 'Recolher Finanças' : 'Expandir Finanças'}
+            >
+              <motion.div
+                animate={{ rotate: financasOpen ? 180 : 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <ChevronDown size={14} />
+              </motion.div>
+            </button>
+          </CollapsibleTrigger>
+        </div>
+
+        <CollapsibleContent>
+          <div className="relative ml-5 border-l border-sidebar-border/50 pl-2.5 my-1 space-y-0.5">
+            {FINANCAS_SUB_ITEMS.map((item) => {
+              const SubIcon = item.icon;
+              const subIconRef = React.useRef<AnimatedIconHandle>(null);
+              const isActive = currentPath === item.path;
+
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => handleNavClick(item.path)}
+                  onMouseEnter={() => subIconRef.current?.startAnimation()}
+                  onMouseLeave={() => subIconRef.current?.stopAnimation()}
+                  className={cn(
+                    'group relative flex w-full items-center gap-2.5 rounded-lg px-2.5 transition-colors text-left',
+                    isMobile ? 'h-9 text-[13.5px]' : 'h-8 text-xs font-medium',
+                    isActive
+                      ? 'bg-primary/15 font-semibold text-primary'
+                      : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+                  )}
+                >
+                  <SubIcon
+                    ref={subIconRef}
+                    size={14}
+                    className={cn(
+                      'shrink-0 transition-colors',
+                      isActive ? 'text-primary' : 'text-sidebar-foreground/50 group-hover:text-sidebar-foreground'
+                    )}
+                  />
+                  <span className="truncate">{item.name}</span>
+                </button>
+              );
+            })}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+    </SidebarMenuItem>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+ * FOOTER TOOLTIP BUTTON (FOR COLLAPSED DESKTOP)
+ * ───────────────────────────────────────────────────────────────────────────── */
+
+function FooterTooltipButton({
+  label,
+  icon: Icon,
+  onClick,
+}: {
+  label: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  onClick: () => void;
+}) {
+  return (
+    <SidebarMenuItem>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            onClick={onClick}
+            className="flex size-9 w-full items-center justify-center rounded-xl text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent/60 hover:text-sidebar-foreground focus-visible:outline-none"
+            aria-label={label}
+          >
+            <Icon size={16} />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="right" sideOffset={8}>
+          {label}
+        </TooltipContent>
+      </Tooltip>
+    </SidebarMenuItem>
   );
 }

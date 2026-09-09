@@ -12,6 +12,8 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/utils';
 import * as authService from '@/services/authService';
 
+import { TourHelpButton } from '@/components/onboarding';
+
 import NotificationsMenu from './NotificationsMenu';
 import ProfileMenu from './ProfileMenu';
 
@@ -121,6 +123,8 @@ export function TopNavbar({ className }: { className?: string }) {
         >
           <Search size={18} />
         </button>
+
+        <TourHelpButton />
 
         <NotificationsMenu
           notifications={notifications}

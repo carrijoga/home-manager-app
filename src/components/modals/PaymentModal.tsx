@@ -75,6 +75,7 @@ export function PaymentModal({
     ? Math.max(Number(transaction.value) - getPaidAmount(transaction), 0)
     : 0;
 
+  const [baseAmount, setBaseAmount] = useState<number>(0);
   const [amount, setAmount] = useState<number | null>(null);
   const [paymentDate, setPaymentDate] = useState(todayIso());
   const [method, setMethod] = useState<number | null>(null);
@@ -90,7 +91,9 @@ export function PaymentModal({
 
   useEffect(() => {
     if (!open || !transaction) return;
-    setAmount(Math.max(Number(transaction.value) - getPaidAmount(transaction), 0));
+    const rem = Math.max(Number(transaction.value) - getPaidAmount(transaction), 0);
+    setBaseAmount(rem);
+    setAmount(rem);
     setPaymentDate(todayIso());
     setMethod(null);
     setSourceId('');
@@ -133,6 +136,31 @@ export function PaymentModal({
         ? CardType.Credit
         : null;
   const activeCards = paymentCards.filter((c) => c.isActive && c.type === cardTypeForMethod);
+
+  const calcNetAmount = (base: number, disc: number | null, intr: number | null): number => {
+    const d = disc ?? 0;
+    const i = intr ?? 0;
+    return Math.max(0, Math.round((base - d + i) * 100) / 100);
+  };
+
+  const handleAmountChange = (newAmount: number | null) => {
+    setAmount(newAmount);
+    if (newAmount !== null) {
+      const d = discount ?? 0;
+      const i = interest ?? 0;
+      setBaseAmount(Math.round((newAmount + d - i) * 100) / 100);
+    }
+  };
+
+  const handleDiscountChange = (newDiscount: number | null) => {
+    setDiscount(newDiscount);
+    setAmount(calcNetAmount(baseAmount, newDiscount, interest));
+  };
+
+  const handleInterestChange = (newInterest: number | null) => {
+    setInterest(newInterest);
+    setAmount(calcNetAmount(baseAmount, discount, newInterest));
+  };
 
   const handleMethodChange = (newMethod: number) => {
     const newDomain = sourceDomainForMethod(newMethod);
@@ -217,7 +245,7 @@ export function PaymentModal({
               <Label htmlFor="pay-amount" className="text-xs font-semibold">
                 Valor a Pagar
               </Label>
-              <MoneyInput id="pay-amount" value={amount} onChange={setAmount} />
+              <MoneyInput id="pay-amount" value={amount} onChange={handleAmountChange} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="pay-date" className="text-xs font-semibold">
@@ -286,13 +314,13 @@ export function PaymentModal({
                   <Label htmlFor="pay-discount" className="text-xs">
                     Desconto
                   </Label>
-                  <MoneyInput id="pay-discount" value={discount} onChange={setDiscount} />
+                  <MoneyInput id="pay-discount" value={discount} onChange={handleDiscountChange} />
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="pay-interest" className="text-xs">
                     Juros / Multa
                   </Label>
-                  <MoneyInput id="pay-interest" value={interest} onChange={setInterest} />
+                  <MoneyInput id="pay-interest" value={interest} onChange={handleInterestChange} />
                 </div>
               </div>
               <div className="space-y-1.5">

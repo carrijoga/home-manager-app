@@ -24,7 +24,7 @@ import type {
 } from '@/types';
 import { ApiCategory, ApiPriority, FutureItemStatus, Priority } from '@/types';
 
-const MOCK_USER_ID = 'user-mock-0001';
+export const MOCK_USER_ID = 'user-mock-0001';
 
 export const mockWeather = {
   city: 'São Paulo',
@@ -91,10 +91,27 @@ export const mockNotices: Notice[] = [
     createdBy: MOCK_USER_ID,
     createdAt: new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString(),
     authorName: 'João',
+    authorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
     color: 'yellow',
     reactions: [
-      { emoji: '👍', count: 3 },
-      { emoji: '❤️', count: 1 },
+      {
+        reactionId: 'r-1',
+        noticeId: 'notice-mock-0001',
+        userId: 'user-mock-0002',
+        userName: 'Maria',
+        userAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+        emoji: '👍',
+        createdAt: new Date(now.getTime() - 1 * 60 * 60 * 1000).toISOString(),
+      },
+      {
+        reactionId: 'r-2',
+        noticeId: 'notice-mock-0001',
+        userId: 'user-mock-0003',
+        userName: 'Pedro',
+        userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+        emoji: '❤️',
+        createdAt: new Date(now.getTime() - 30 * 60 * 1000).toISOString(),
+      },
     ],
   },
   {
@@ -108,10 +125,18 @@ export const mockNotices: Notice[] = [
     createdBy: 'user-mock-0002',
     createdAt: new Date(now.getTime() - 1 * 60 * 60 * 1000).toISOString(),
     authorName: 'Maria',
+    authorAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
     color: 'pink',
     reactions: [
-      { emoji: '👏', count: 2 },
-      { emoji: '❤️', count: 1 },
+      {
+        reactionId: 'r-3',
+        noticeId: 'notice-mock-0002',
+        userId: MOCK_USER_ID,
+        userName: 'Você',
+        userAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+        emoji: '👏',
+        createdAt: new Date(now.getTime() - 45 * 60 * 1000).toISOString(),
+      },
     ],
   },
   {
@@ -125,8 +150,9 @@ export const mockNotices: Notice[] = [
     createdBy: 'user-mock-0003',
     createdAt: new Date(now.getTime() - 30 * 60 * 1000).toISOString(),
     authorName: 'Pedro',
+    authorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
     color: 'green',
-    reactions: [{ emoji: '✅', count: 4 }],
+    reactions: [],
   },
   {
     noticeId: 'notice-mock-0004',
@@ -139,9 +165,11 @@ export const mockNotices: Notice[] = [
     createdBy: MOCK_USER_ID,
     createdAt: now.toISOString(),
     authorName: 'Você',
+    authorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
     color: 'blue',
+    reactions: [],
   },
-  // ── Histórico (expirados / inativos) ──────────────────────────────────────
+  // ── Histórico (expirados / inativos ou dias passados não pinados) ────────
   {
     noticeId: 'notice-mock-0005',
     message: 'Conta de luz paga com sucesso! Vencimento era dia 10.',
@@ -153,7 +181,9 @@ export const mockNotices: Notice[] = [
     createdBy: 'user-mock-0001',
     createdAt: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString(),
     authorName: 'João',
+    authorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
     color: 'orange',
+    reactions: [],
   },
   {
     noticeId: 'notice-mock-0006',
@@ -166,7 +196,9 @@ export const mockNotices: Notice[] = [
     createdBy: 'user-mock-0002',
     createdAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
     authorName: 'Maria',
+    authorAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
     color: 'green',
+    reactions: [],
   },
   {
     noticeId: 'notice-mock-0007',
@@ -179,7 +211,9 @@ export const mockNotices: Notice[] = [
     createdBy: 'user-mock-0003',
     createdAt: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(),
     authorName: 'Pedro',
+    authorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
     color: 'blue',
+    reactions: [],
   },
 ];
 
@@ -465,6 +499,7 @@ const mockShoppingItemsWeek1: AppShoppingItem[] = [
     shoppingCategoryId: 'cat-0001-0000-0000-000000000001',
     categoryName: 'Alimentos',
     isPurchased: true,
+    status: 1,
     price: 34,
     estimatedPrice: 32,
     purchasedAt: toIsoDateTimeDaysAgo(26),
@@ -479,6 +514,7 @@ const mockShoppingItemsWeek1: AppShoppingItem[] = [
     shoppingCategoryId: 'cat-0001-0000-0000-000000000001',
     categoryName: 'Alimentos',
     isPurchased: true,
+    status: 1,
     price: 19,
     estimatedPrice: 18,
     purchasedAt: toIsoDateTimeDaysAgo(26),
@@ -493,6 +529,7 @@ const mockShoppingItemsWeek1: AppShoppingItem[] = [
     shoppingCategoryId: 'cat-0001-0000-0000-000000000001',
     categoryName: 'Alimentos',
     isPurchased: false,
+    status: 3,
     price: null,
     estimatedPrice: 12,
     purchasedAt: null,
@@ -507,6 +544,7 @@ const mockShoppingItemsWeek1: AppShoppingItem[] = [
     shoppingCategoryId: 'cat-0001-0000-0000-000000000001',
     categoryName: 'Alimentos',
     isPurchased: false,
+    status: 3,
     price: null,
     estimatedPrice: 24,
     purchasedAt: null,
@@ -521,6 +559,7 @@ const mockShoppingItemsWeek1: AppShoppingItem[] = [
     shoppingCategoryId: 'cat-0001-0000-0000-000000000002',
     categoryName: 'Limpeza',
     isPurchased: true,
+    status: 1,
     price: 11,
     estimatedPrice: 10,
     purchasedAt: toIsoDateTimeDaysAgo(26),
@@ -535,6 +574,7 @@ const mockShoppingItemsWeek1: AppShoppingItem[] = [
     shoppingCategoryId: 'cat-0001-0000-0000-000000000002',
     categoryName: 'Limpeza',
     isPurchased: false,
+    status: 3,
     price: null,
     estimatedPrice: 25,
     purchasedAt: null,
@@ -549,6 +589,7 @@ const mockShoppingItemsWeek1: AppShoppingItem[] = [
     shoppingCategoryId: 'cat-0001-0000-0000-000000000002',
     categoryName: 'Limpeza',
     isPurchased: false,
+    status: 3,
     price: null,
     estimatedPrice: 39,
     purchasedAt: null,
@@ -563,6 +604,7 @@ const mockShoppingItemsWeek1: AppShoppingItem[] = [
     shoppingCategoryId: 'cat-0001-0000-0000-000000000003',
     categoryName: 'Higiene',
     isPurchased: false,
+    status: 3,
     price: null,
     estimatedPrice: 21,
     purchasedAt: null,
@@ -580,6 +622,7 @@ const mockShoppingItemsWeek2: AppShoppingItem[] = [
     shoppingCategoryId: 'cat-0001-0000-0000-000000000001',
     categoryName: 'Alimentos',
     isPurchased: false,
+    status: 0,
     price: null,
     estimatedPrice: 5,
     purchasedAt: null,
@@ -594,6 +637,7 @@ const mockShoppingItemsWeek2: AppShoppingItem[] = [
     shoppingCategoryId: 'cat-0001-0000-0000-000000000001',
     categoryName: 'Alimentos',
     isPurchased: false,
+    status: 0,
     price: null,
     estimatedPrice: 14,
     purchasedAt: null,
@@ -608,6 +652,7 @@ const mockShoppingItemsWeek2: AppShoppingItem[] = [
     shoppingCategoryId: 'cat-0001-0000-0000-000000000001',
     categoryName: 'Alimentos',
     isPurchased: false,
+    status: 0,
     price: null,
     estimatedPrice: 20,
     purchasedAt: null,
@@ -622,6 +667,7 @@ const mockShoppingItemsWeek2: AppShoppingItem[] = [
     shoppingCategoryId: 'cat-0001-0000-0000-000000000002',
     categoryName: 'Limpeza',
     isPurchased: false,
+    status: 0,
     price: null,
     estimatedPrice: 8,
     purchasedAt: null,
@@ -635,6 +681,10 @@ export const mockShoppingLists: AppShoppingListSummary[] = [
     name: `Fechamento de ${getMonthLabel(1)}`,
     monthYear: getMonthStartIso(1),
     notes: 'Lista fechada do mês anterior',
+    finished: true,
+    finishedAt: getMonthStartIso(1),
+    finishedBy: 'user-0001',
+    isFinished: true,
     totalItems: mockShoppingItemsWeek1.length,
     purchasedItems: mockShoppingItemsWeek1.filter((i) => i.isPurchased).length,
     totalEstimated: mockShoppingItemsWeek1.reduce(
@@ -650,6 +700,10 @@ export const mockShoppingLists: AppShoppingListSummary[] = [
     name: `Planejamento de ${getMonthLabel(0)}`,
     monthYear: getMonthStartIso(0),
     notes: 'Reposição da semana atual',
+    finished: false,
+    finishedAt: null,
+    finishedBy: null,
+    isFinished: false,
     totalItems: mockShoppingItemsWeek2.length,
     purchasedItems: 0,
     totalEstimated: mockShoppingItemsWeek2.reduce(
@@ -666,6 +720,9 @@ export const mockShoppingListDetails: Record<string, AppShoppingList> = {
     name: `Fechamento de ${getMonthLabel(1)}`,
     monthYear: getMonthStartIso(1),
     notes: 'Lista fechada do mês anterior',
+    finished: true,
+    finishedAt: getMonthStartIso(1),
+    finishedBy: 'user-0001',
     items: mockShoppingItemsWeek1,
   } satisfies AppShoppingList,
   'list-0002': {
@@ -673,6 +730,9 @@ export const mockShoppingListDetails: Record<string, AppShoppingList> = {
     name: `Planejamento de ${getMonthLabel(0)}`,
     monthYear: getMonthStartIso(0),
     notes: 'Reposição da semana atual',
+    finished: false,
+    finishedAt: null,
+    finishedBy: null,
     items: mockShoppingItemsWeek2,
   } satisfies AppShoppingList,
 };
@@ -916,6 +976,10 @@ interface FinTxSeed {
   categoryId: string;
   /** true = quitada; número = valor pago parcial */
   paid?: boolean | number;
+  shoppingListId?: string | null;
+  observation?: string | null;
+  origin?: number;
+  originName?: string;
 }
 
 function makeFinTx(seed: FinTxSeed): FinancialTransactionResponse {
@@ -946,14 +1010,15 @@ function makeFinTx(seed: FinTxSeed): FinancialTransactionResponse {
     responsibleUserName: FIN_JOAO.name,
     categoryId: category.categoryId,
     categoryName: category.name,
-    origin: 0,
-    originName: 'Financeiro',
-    observation: null,
+    origin: seed.origin ?? (seed.shoppingListId ? 2 : 0),
+    originName: seed.originName ?? (seed.shoppingListId ? 'Lista de Compras' : 'Financeiro'),
+    observation: seed.observation ?? (seed.shoppingListId ? 'Gerado a partir da lista de compras' : null),
     // Income: aponta pra Conta Corrente mock; Expense: sempre null (fonte só via payments).
     sourceId: seed.type === 0 ? '11111111-1111-1111-1111-111111111111' : null,
     payments,
     paymentStatus,
     isOverdue: !isPaid && dueIso < toIsoDate(now),
+    shoppingListId: seed.shoppingListId ?? null,
   };
 }
 
@@ -1024,6 +1089,7 @@ export const mockTransactions: FinancialTransactionResponse[] = (
       day: 8,
       categoryId: CAT.mercado,
       paid: 370,
+      shoppingListId: 'list-0001',
     },
     // ── Mês anterior: tudo quitado ───────────────────────────────────────────────
     {

@@ -2,12 +2,18 @@ import type { Decorator, Preview } from '@storybook/react-vite';
 import { useEffect } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 
+import { initialize, mswLoader } from 'msw-storybook-addon';
+
 import { Toaster } from '@/components/ui/sonner';
 import { AppProvider } from '@/contexts/AppContext';
 import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
 
+import { mswHandlers } from './msw-handlers';
+
 import '../src/index.css';
 import '../src/animations.css';
+
+initialize({ onUnhandledRequest: 'bypass' });
 
 /**
  * Aplica o tema escolhido na toolbar via o próprio ThemeContext.
@@ -69,6 +75,7 @@ const preview: Preview = {
   // Aplicados de fora para dentro: o tema (e o Toaster) envolve os
   // providers de aplicação.
   decorators: [withTheme, withAppProviders],
+  loaders: [mswLoader],
   globalTypes: {
     theme: {
       description: 'Tema da aplicação',
@@ -89,6 +96,9 @@ const preview: Preview = {
     // O ThemeProvider controla o fundo via tokens; o addon de backgrounds
     // brigaria com ele.
     backgrounds: { disable: true },
+    msw: {
+      handlers: mswHandlers,
+    },
     controls: {
       matchers: {
         color: /(background|color)$/i,

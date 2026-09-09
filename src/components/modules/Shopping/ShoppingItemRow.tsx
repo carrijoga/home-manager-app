@@ -2,15 +2,16 @@ import MoneyInput from '@components/common/MoneyInput';
 import { formatCurrency } from '@utils/formatters';
 import {
   Check,
+  EyeOff,
   FileText,
   Minus,
   Pencil,
   Plus,
-  RotateCcw,
   Tag,
   Trash2,
   TrendingDown,
   TrendingUp,
+  X,
 } from 'lucide-react';
 import React from 'react';
 
@@ -25,7 +26,6 @@ import {
   getItemSpentTotal,
   getSavingsInfo,
   quantityLabel,
-  unitPriceLabel,
 } from './helpers';
 
 interface ShoppingItemRowProps {
@@ -44,6 +44,8 @@ interface ShoppingItemRowProps {
   onToggleSelection: (id: string) => void;
   onMarkAsPurchased: (item: AppShoppingItem) => void;
   onUnmark: (item: AppShoppingItem) => void;
+  onIgnore?: (item: AppShoppingItem) => void;
+  onUnignore?: (item: AppShoppingItem) => void;
   onOpenInlineEdit: (item: AppShoppingItem) => void;
   onCancelInlineEdit: () => void;
   onSaveInlineEdit: (item: AppShoppingItem) => void;
@@ -63,7 +65,10 @@ export function ShoppingItemRow(props: ShoppingItemRowProps) {
     setInlineForm,
     onOpenMobileSheet,
     onToggleSelection,
+    onMarkAsPurchased,
     onUnmark,
+    onIgnore,
+    onUnignore,
     onOpenInlineEdit,
     onCancelInlineEdit,
     onSaveInlineEdit,
@@ -75,13 +80,12 @@ export function ShoppingItemRow(props: ShoppingItemRowProps) {
   /* ── Editing state (desktop inline) ── */
   if (isEditing) {
     return (
-      <div className="relative border-l-2 border-[#adc6ff] bg-[rgba(173,198,255,0.04)] px-5 py-5">
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[rgba(173,198,255,0.04)] to-transparent" />
-        <div className="relative flex flex-wrap items-center gap-4">
-          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-[#adc6ff]">
-            <Check size={13} style={{ color: '#0e0e0e' }} strokeWidth={3} />
+      <div className="relative border-l-2 border-primary bg-primary/5 px-4 py-4 sm:px-5 sm:py-5">
+        <div className="relative flex flex-wrap items-center gap-3 sm:gap-4">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+            <Check size={16} strokeWidth={3} />
           </div>
-          <span className="min-w-0 flex-1 text-sm font-medium text-foreground">{item.name}</span>
+          <span className="min-w-0 flex-1 text-sm font-semibold text-foreground">{item.name}</span>
 
           {/* Qty stepper */}
           <div className="flex flex-col gap-1">
@@ -95,13 +99,13 @@ export function ShoppingItemRow(props: ShoppingItemRowProps) {
                 onClick={() =>
                   setInlineForm((f) => ({
                     ...f,
-                    qty: String(Math.max(0, parseFloat(f.qty || '1') - 1)),
+                    qty: String(Math.max(0.1, parseFloat(f.qty || '1') - 1)),
                   }))
                 }
               >
                 <Minus size={12} />
               </button>
-              <span className="w-16 text-center text-sm text-foreground">
+              <span className="w-16 text-center text-sm font-semibold text-foreground">
                 {inlineForm.qty} {UNIT_TYPE_LABELS[item.unitType] ?? 'un'}
               </span>
               <button
@@ -127,38 +131,23 @@ export function ShoppingItemRow(props: ShoppingItemRowProps) {
             <MoneyInput
               value={inlineForm.estimated}
               onChange={(v) => setInlineForm((f) => ({ ...f, estimated: v }))}
-              className="h-9 w-28 rounded-xl bg-background text-sm"
-            />
-          </div>
-
-          {/* Paid price */}
-          <div className="flex flex-col gap-1">
-            <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
-              Pago (R$)
-            </span>
-            <MoneyInput
-              value={inlineForm.paid}
-              onChange={(v) => setInlineForm((f) => ({ ...f, paid: v }))}
-              className="h-9 w-28 rounded-xl bg-background text-sm"
+              className="h-9 w-28 rounded-xl bg-background text-sm font-medium"
             />
           </div>
 
           {/* Actions */}
-          <div className="ml-auto flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <button
-              type="button"
+              className="rounded-xl border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
               onClick={onCancelInlineEdit}
-              className="px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
               disabled={inlineSaving}
             >
               Cancelar
             </button>
             <button
-              type="button"
+              className="rounded-xl bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground shadow-sm hover:bg-primary/90"
               onClick={() => onSaveInlineEdit(item)}
               disabled={inlineSaving}
-              className="rounded-2xl px-6 py-2 text-sm font-semibold transition-colors disabled:opacity-50"
-              style={{ background: '#adc6ff', color: '#0e0e0e' }}
             >
               {inlineSaving ? 'Salvando...' : 'Salvar'}
             </button>
@@ -173,27 +162,27 @@ export function ShoppingItemRow(props: ShoppingItemRowProps) {
     return (
       <div
         className={cn(
-          'flex items-center gap-4 px-5 py-4 transition-colors duration-200',
-          isSelected ? 'bg-[rgba(120,160,255,0.06)]' : ''
+          'flex items-center gap-3.5 px-4 py-3.5 transition-colors cursor-pointer',
+          isSelected ? 'bg-primary/10' : 'hover:bg-accent/20'
         )}
+        onClick={() => onToggleSelection(item.shoppingItemId)}
       >
         <Checkbox
           checked={isSelected}
           onCheckedChange={() => onToggleSelection(item.shoppingItemId)}
-          className="shrink-0"
+          className="shrink-0 rounded-lg h-5 w-5"
         />
-        <div className="h-6 w-6 shrink-0 rounded-lg border border-border/60" />
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span className="truncate text-sm font-medium text-foreground">{item.name}</span>
+          <span className="truncate text-sm font-semibold text-foreground">{item.name}</span>
           {item.notes && (
-            <span className="truncate text-xs text-muted-foreground/80">{item.notes}</span>
+            <span className="truncate text-xs text-muted-foreground">{item.notes}</span>
           )}
         </div>
-        <span className="text-sm font-medium text-muted-foreground">
+        <span className="text-xs font-semibold text-muted-foreground">
           {quantityLabel(item.quantity, item.unitType)}
         </span>
         {item.estimatedPrice != null && (
-          <span className="text-sm font-medium text-muted-foreground">
+          <span className="text-xs font-semibold text-muted-foreground">
             {formatCurrency(
               getItemEstimatedTotal(item.estimatedPrice, item.quantity, item.unitType)
             )}
@@ -203,150 +192,126 @@ export function ShoppingItemRow(props: ShoppingItemRowProps) {
     );
   }
 
-  /* ── Normal / Purchased state ── */
+  const isPurchased = item.status === 1 || item.isPurchased;
+  const isIgnored = item.status === 2;
+  const isNotPurchased = item.status === 3;
+  const isPendingStatus = !isPurchased && !isIgnored && !isNotPurchased;
+
+  /* ── Normal Item State (Mobile-First Touch Target) ── */
   return (
     <div
       className={cn(
-        'flex items-center gap-4 px-5 py-3.5 transition-colors duration-150',
-        item.isPurchased
-          ? 'opacity-75 hover:opacity-100'
-          : 'cursor-pointer hover:bg-accent/30 active:bg-accent/50'
+        'group flex items-center gap-3.5 px-4 py-3 transition-colors cursor-pointer active:bg-accent/40',
+        isPurchased && 'opacity-85 hover:opacity-100 bg-muted/20',
+        isIgnored && 'opacity-60 hover:opacity-80 bg-muted/30',
+        isNotPurchased && 'opacity-60 hover:opacity-80',
+        isPendingStatus && 'hover:bg-accent/25'
       )}
       onClick={() => {
-        if (isFinished) return;
+        if (isFinished && !isIgnored && !isNotPurchased) return;
         onOpenMobileSheet(item);
       }}
     >
-      {/* Checkbox button */}
+      {/* Botão de Checkbox Mobile Grande (Toque Fácil com uma só mão) */}
       <button
+        type="button"
         onClick={(e) => {
           e.stopPropagation();
-          if (!isFinished) {
-            if (item.isPurchased) onUnmark(item);
-          }
+          if (isFinished) return;
+          if (isPurchased) onUnmark(item);
+          else if (isIgnored) onUnignore?.(item);
+          else onMarkAsPurchased(item);
         }}
         disabled={isFinished || isPending}
         className={cn(
-          'flex h-6 w-6 shrink-0 items-center justify-center rounded-lg transition-all',
-          item.isPurchased
-            ? 'bg-[#78dc77] text-[#131313] hover:opacity-80'
-            : 'border border-border/80 bg-background/50 hover:border-foreground/40'
+          'flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-all active:scale-90',
+          isPurchased && 'bg-emerald-500 text-white shadow-sm hover:bg-emerald-600',
+          isIgnored && 'border border-border/80 bg-muted text-muted-foreground hover:bg-accent',
+          isNotPurchased && 'border border-destructive/40 bg-destructive/10 text-destructive',
+          isPendingStatus && 'border-2 border-border/90 bg-card hover:border-primary hover:bg-primary/5 dark:bg-[#181818]'
         )}
+        title={
+          isPurchased
+            ? 'Desfazer compra'
+            : isIgnored
+              ? 'Voltar para pendente'
+              : isNotPurchased
+                ? 'Não comprado'
+                : 'Marcar como comprado'
+        }
       >
         {isPending ? (
           <Spinner size="sm" />
-        ) : item.isPurchased ? (
-          <Check size={13} strokeWidth={3} />
+        ) : isPurchased ? (
+          <Check size={16} strokeWidth={3} />
+        ) : isIgnored ? (
+          <EyeOff size={14} />
+        ) : isNotPurchased ? (
+          <X size={14} strokeWidth={2.5} />
         ) : null}
       </button>
 
-      {/* Item info (Name, category, notes, unit price breakdown) */}
+      {/* Item info (Nome, Categoria, Notas, Quantidade) */}
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5">
           <span
             className={cn(
-              'truncate text-sm font-medium transition-colors',
-              item.isPurchased ? 'text-muted-foreground line-through' : 'text-foreground'
+              'truncate text-sm font-semibold transition-colors',
+              isPurchased || isIgnored || isNotPurchased
+                ? 'text-muted-foreground line-through'
+                : 'text-foreground'
             )}
           >
             {item.name}
           </span>
+
+          {isIgnored && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+              <EyeOff size={9} />
+              Ignorado
+            </span>
+          )}
+          {isNotPurchased && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-destructive/10 px-1.5 py-0.5 text-[10px] font-medium text-destructive">
+              <X size={9} strokeWidth={2.5} />
+              Não comprado
+            </span>
+          )}
+        </div>
+
+        {/* Quantidade, Categoria e Notas */}
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
+          <span className="inline-flex items-center rounded-md bg-muted/60 px-1.5 py-0.2 text-[11px] font-bold text-foreground/90">
+            {quantityLabel(item.quantity, item.unitType)}
+          </span>
+
           {item.categoryName && (
-            <span className="hidden items-center gap-1 rounded-md border border-border/50 bg-accent/40 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground sm:inline-flex">
-              <Tag size={9} />
+            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
+              <Tag size={10} />
               {item.categoryName}
             </span>
           )}
-        </div>
 
-        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-xs text-muted-foreground">
-          {/* Quantity & Unit Price Breakdown */}
-          <span className="text-[12px] font-medium text-foreground/80">
-            {quantityLabel(item.quantity, item.unitType)}
-            {item.quantity > 1 && item.price != null && (
-              <span className="ml-1 text-[11px] font-normal text-muted-foreground">
-                ({unitPriceLabel(item.price, item.unitType)})
-              </span>
-            )}
-            {item.quantity > 1 && item.price == null && item.estimatedPrice != null && (
-              <span className="ml-1 text-[11px] font-normal text-muted-foreground">
-                ({unitPriceLabel(item.estimatedPrice, item.unitType)})
-              </span>
-            )}
-          </span>
-
-          {/* Observações / Notes */}
           {item.notes && (
-            <span className="flex items-center gap-1 text-[11px] italic text-muted-foreground/80">
+            <span className="flex items-center gap-1 text-[11px] italic text-muted-foreground/80 truncate max-w-[160px]">
               <FileText size={10} className="shrink-0 opacity-70" />
-              <span className="max-w-[180px] truncate">{item.notes}</span>
+              <span className="truncate">{item.notes}</span>
             </span>
           )}
         </div>
       </div>
 
-      {/* Desktop Columns: Estimated Total | Paid Total & Savings Badge */}
-      <div className="hidden items-center gap-6 pr-2 sm:flex">
-        {/* Estimated Column */}
-        <div className="flex w-24 flex-col items-end">
-          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/70">
-            Estimado
-          </span>
-          <span
-            className={cn(
-              'text-sm font-medium',
-              item.isPurchased ? 'text-muted-foreground/60 line-through' : 'text-foreground/90'
-            )}
-          >
-            {item.estimatedPrice != null
-              ? formatCurrency(
-                  getItemEstimatedTotal(item.estimatedPrice, item.quantity, item.unitType)
-                )
-              : '---'}
-          </span>
-        </div>
-
-        {/* Paid Column + Savings Badge */}
-        <div className="flex w-28 flex-col items-end">
-          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/70">
-            {item.isPurchased ? 'Pago Total' : 'Pago'}
-          </span>
-          <span
-            className={cn(
-              'text-sm font-semibold',
-              item.isPurchased ? 'text-[#78dc77]' : 'text-muted-foreground/50'
-            )}
-          >
-            {item.price != null
-              ? formatCurrency(getItemSpentTotal(item.price, item.quantity, item.unitType))
-              : '---'}
-          </span>
-
-          {/* Savings or Increase indicator */}
-          {item.isPurchased && savings && savings.type === 'savings' && (
-            <span className="mt-0.5 inline-flex items-center gap-0.5 rounded-full bg-[#78dc77]/10 px-1.5 py-0.5 text-[10px] font-semibold text-[#78dc77]">
-              <TrendingDown size={10} />-{formatCurrency(savings.diff)} ({savings.pct}%)
-            </span>
-          )}
-          {item.isPurchased && savings && savings.type === 'increase' && (
-            <span className="mt-0.5 inline-flex items-center gap-0.5 rounded-full bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-amber-500">
-              <TrendingUp size={10} />+{formatCurrency(savings.diff)}
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Mobile view: Paid/Estimated + Savings Badge */}
-      <div className="flex shrink-0 flex-col items-end text-right sm:hidden">
-        {item.isPurchased ? (
+      {/* Valores: Mobile View (Estimado ou Pago + Badge de Economia) */}
+      <div className="flex shrink-0 flex-col items-end text-right">
+        {isPurchased ? (
           <>
-            <span className="text-xs font-semibold text-[#78dc77]">
+            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
               {item.price != null
                 ? formatCurrency(getItemSpentTotal(item.price, item.quantity, item.unitType))
-                : '---'}
+                : 'Comprado'}
             </span>
             {savings && savings.type === 'savings' && (
-              <span className="flex items-center gap-0.5 text-[10px] font-semibold text-[#78dc77]">
+              <span className="flex items-center gap-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
                 <TrendingDown size={9} />-{formatCurrency(savings.diff)}
               </span>
             )}
@@ -357,47 +322,49 @@ export function ShoppingItemRow(props: ShoppingItemRowProps) {
             )}
           </>
         ) : (
-          <span className="text-xs font-medium text-muted-foreground">
+          <span className="text-xs font-semibold text-muted-foreground">
             {item.estimatedPrice != null
               ? formatCurrency(
                   getItemEstimatedTotal(item.estimatedPrice, item.quantity, item.unitType)
                 )
-              : '---'}
+              : '—'}
           </span>
         )}
       </div>
 
-      {/* Desktop action icons */}
+      {/* Desktop Quick Actions */}
       {!isFinished && (
         <div
-          className="hidden shrink-0 items-center gap-0.5 opacity-40 transition-opacity hover:opacity-100 sm:flex"
+          className="hidden shrink-0 items-center gap-0.5 opacity-30 transition-opacity group-hover:opacity-100 sm:flex"
           onClick={(e) => e.stopPropagation()}
         >
-          {item.isPurchased ? (
-            <button
-              className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-              onClick={() => onUnmark(item)}
-              title="Desfazer compra"
-              disabled={isPending}
-            >
-              <RotateCcw size={13} />
-            </button>
-          ) : (
-            <button
-              className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-              onClick={() => onOpenInlineEdit(item)}
-              title="Editar item"
-            >
-              <Pencil size={13} />
-            </button>
+          {!isPurchased && (
+            <>
+              <button
+                className="rounded-xl p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                onClick={() => onOpenInlineEdit(item)}
+                title="Editar inline"
+              >
+                <Pencil size={13} />
+              </button>
+              {onIgnore && (
+                <button
+                  className="rounded-xl p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                  onClick={() => onIgnore(item)}
+                  title="Marcar como ignorado"
+                >
+                  <EyeOff size={13} />
+                </button>
+              )}
+            </>
           )}
           <button
-            className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:pointer-events-none disabled:opacity-50"
+            className="rounded-xl p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
             onClick={() => onDelete(item)}
             title="Remover item"
             disabled={isPending}
           >
-            {isPending ? <Spinner size="sm" /> : <Trash2 size={13} />}
+            <Trash2 size={13} />
           </button>
         </div>
       )}

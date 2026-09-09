@@ -121,7 +121,7 @@ export function useShoppingRealtime({
       setDetailData((prev) => {
         if (!prev) return prev;
         const idx = prev.items.findIndex((i) => i.shoppingItemId === resolved.shoppingItemId);
-        if (idx === -1) return { ...prev, items: [...prev.items, resolved] };
+        if (idx === -1) return { ...prev, items: [resolved, ...prev.items] };
         const items = [...prev.items];
         items[idx] = resolved;
         return { ...prev, items };
@@ -166,7 +166,34 @@ export function useShoppingRealtime({
           ...prev,
           items: prev.items.map((i) =>
             i.shoppingItemId === payload.itemId
-              ? { ...i, isPurchased: payload.isPurchased, price: payload.price }
+              ? {
+                  ...i,
+                  isPurchased: payload.isPurchased,
+                  status: payload.isPurchased ? 1 : i.status === 1 ? 0 : i.status,
+                  price: payload.price,
+                }
+              : i
+          ),
+        };
+      });
+    };
+
+    const onItemStatusChanged = (payload: {
+      itemId: string;
+      status: number;
+    }) => {
+      setDetailData((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          items: prev.items.map((i) =>
+            i.shoppingItemId === payload.itemId
+              ? {
+                  ...i,
+                  status: payload.status,
+                  isPurchased: payload.status === 1,
+                  ...(payload.status !== 1 ? { price: null, purchasedAt: null } : {}),
+                }
               : i
           ),
         };
@@ -177,12 +204,14 @@ export function useShoppingRealtime({
     connection.on('ReceiveItemUpdated', onItemUpdated);
     connection.on('ReceiveItemDeleted', onItemDeleted);
     connection.on('ReceiveItemPurchaseChanged', onItemPurchaseChanged);
+    connection.on('ReceiveItemStatusChanged', onItemStatusChanged);
 
     return () => {
       connection.off('ReceiveItemCreated', onItemCreated);
       connection.off('ReceiveItemUpdated', onItemUpdated);
       connection.off('ReceiveItemDeleted', onItemDeleted);
       connection.off('ReceiveItemPurchaseChanged', onItemPurchaseChanged);
+      connection.off('ReceiveItemStatusChanged', onItemStatusChanged);
     };
   }, [connectionRef, isConnected, shoppingCategories, setDetailData]);
 }

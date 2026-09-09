@@ -31,7 +31,7 @@ export function ManageCategoriesDialog({
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newName.trim()) return;
+    if (!newName.trim() || saving) return;
     setSaving(true);
     try {
       await onCreateCategory(newName.trim());
@@ -42,6 +42,7 @@ export function ManageCategoriesDialog({
   };
 
   const handleDelete = async (id: string) => {
+    if (deletingId) return;
     setDeletingId(id);
     try {
       await onDeleteCategory(id);

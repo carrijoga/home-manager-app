@@ -35,11 +35,16 @@ function buildSummaryFromDetail(detail: AppShoppingList): AppShoppingListSummary
     },
     { totalItems: 0, purchasedItems: 0, totalEstimated: 0, totalSpent: 0 }
   );
+  const finished = detail.finished ?? false;
   return {
     shoppingListId: detail.shoppingListId,
     name: detail.name,
     monthYear: detail.monthYear,
     notes: detail.notes ?? null,
+    finished,
+    finishedAt: detail.finishedAt ?? null,
+    finishedBy: detail.finishedBy ?? null,
+    isFinished: finished,
     ...totals,
   };
 }
@@ -52,27 +57,31 @@ export function useShoppingData() {
   const [shoppingCategories, setShoppingCategories] = useState<AppShoppingCategory[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const refreshShoppingData = useCallback(async () => {
+    if (!activeNestId) return;
+    try {
+      const [lists, cats] = await Promise.all([
+        shoppingService.getShoppingLists(undefined, activeNestId),
+        shoppingService.getShoppingCategories(activeNestId),
+      ]);
+      setShoppingLists(lists);
+      setShoppingCategories(dedupeCategories(cats));
+    } catch {
+      // Silent catch for background polling
+    }
+  }, [activeNestId]);
+
   useEffect(() => {
     if (!activeNestId) return;
     let isMounted = true;
     setLoading(true);
-    Promise.all([
-      shoppingService.getShoppingLists(undefined, activeNestId),
-      shoppingService.getShoppingCategories(activeNestId),
-    ])
-      .then(([lists, cats]) => {
-        if (!isMounted) return;
-        setShoppingLists(lists);
-        setShoppingCategories(dedupeCategories(cats));
-      })
-      .catch(() => {})
-      .finally(() => {
-        if (isMounted) setLoading(false);
-      });
+    refreshShoppingData().finally(() => {
+      if (isMounted) setLoading(false);
+    });
     return () => {
       isMounted = false;
     };
-  }, [activeNestId]);
+  }, [activeNestId, refreshShoppingData]);
 
   const loadShoppingListDetail = useCallback(
     (id: string): Promise<AppShoppingList> => shoppingService.getShoppingListById(id, nestId),
@@ -82,11 +91,16 @@ export function useShoppingData() {
   const createShoppingList = useCallback(
     async (name: string, monthYear: string, notes?: string) => {
       const detail = await shoppingService.createShoppingList({ name, monthYear, notes }, nestId);
+      const finished = detail.finished ?? false;
       const summary: AppShoppingListSummary = {
         shoppingListId: detail.shoppingListId,
         name: detail.name,
         monthYear: detail.monthYear,
         notes: detail.notes,
+        finished,
+        finishedAt: detail.finishedAt ?? null,
+        finishedBy: detail.finishedBy ?? null,
+        isFinished: finished,
         totalItems: 0,
         purchasedItems: 0,
         totalEstimated: 0,
@@ -121,7 +135,9 @@ export function useShoppingData() {
     async (id: string) => {
       await shoppingService.finishShoppingList(id, nestId);
       setShoppingLists((prev) =>
-        prev.map((l) => (l.shoppingListId === id ? { ...l, isFinished: true } : l))
+        prev.map((l) =>
+          l.shoppingListId === id ? { ...l, finished: true, isFinished: true } : l
+        )
       );
     },
     [nestId]
@@ -131,7 +147,9 @@ export function useShoppingData() {
     async (id: string) => {
       await shoppingService.unfinishShoppingList(id, nestId);
       setShoppingLists((prev) =>
-        prev.map((l) => (l.shoppingListId === id ? { ...l, isFinished: false } : l))
+        prev.map((l) =>
+          l.shoppingListId === id ? { ...l, finished: false, isFinished: false } : l
+        )
       );
     },
     [nestId]
@@ -309,11 +327,26 @@ export function useShoppingData() {
     [nestId]
   );
 
+  const ignoreShoppingItem = useCallback(
+    async (listId: string, itemId: string) => {
+      await shoppingService.ignoreShoppingItem(listId, itemId, nestId);
+    },
+    [nestId]
+  );
+
+  const unignoreShoppingItem = useCallback(
+    async (listId: string, itemId: string) => {
+      await shoppingService.unignoreShoppingItem(listId, itemId, nestId);
+    },
+    [nestId]
+  );
+
   return {
     shoppingLists,
     setShoppingLists,
     shoppingCategories,
     loading,
+    refreshShoppingData,
     loadShoppingListDetail,
     createShoppingList,
     updateShoppingList,
@@ -325,6 +358,8 @@ export function useShoppingData() {
     deleteShoppingItem,
     markItemAsPurchased,
     unmarkItemAsPurchased,
+    ignoreShoppingItem,
+    unignoreShoppingItem,
     uploadShoppingItems,
     createShoppingCategory,
     deleteShoppingCategory,

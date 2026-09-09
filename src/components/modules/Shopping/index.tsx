@@ -1,7 +1,8 @@
 import { AnimatePresence } from 'framer-motion';
-import { memo, useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 
 import { useApp } from '@/contexts/AppContext';
+import { usePolling } from '@/hooks/usePolling';
 import { useSignalR } from '@/hooks/useSignalR';
 import { DATA_MODE } from '@/services/api/config';
 import { ENDPOINTS } from '@/services/api/endpoints';
@@ -37,6 +38,8 @@ const Shopping = memo(function Shopping() {
     deleteShoppingItem: data.deleteShoppingItem,
     markItemAsPurchased: data.markItemAsPurchased,
     unmarkItemAsPurchased: data.unmarkItemAsPurchased,
+    ignoreShoppingItem: data.ignoreShoppingItem,
+    unignoreShoppingItem: data.unignoreShoppingItem,
     uploadShoppingItems: data.uploadShoppingItems,
     createShoppingCategory: data.createShoppingCategory,
     deleteShoppingCategory: data.deleteShoppingCategory,
@@ -58,9 +61,26 @@ const Shopping = memo(function Shopping() {
     nestId: activeNestId ?? undefined,
   });
 
-  const isFinished = nav.selectedListId
-    ? (nav.shoppingLists.find((l) => l.shoppingListId === nav.selectedListId)?.isFinished ?? false)
-    : false;
+  usePolling(
+    useCallback(async () => {
+      if (!activeNestId) return;
+      await data.refreshShoppingData();
+      if (nav.viewMode === 'detail' && nav.selectedListId) {
+        try {
+          const detail = await data.loadShoppingListDetail(nav.selectedListId);
+          nav.setDetailData(detail);
+        } catch {
+          // ignore background error
+        }
+      }
+    }, [activeNestId, data, nav]),
+    { intervalMs: 10000, enabled: Boolean(activeNestId) }
+  );
+
+  const selectedList = nav.selectedListId
+    ? nav.shoppingLists.find((l) => l.shoppingListId === nav.selectedListId)
+    : undefined;
+  const isFinished = selectedList ? (selectedList.finished ?? selectedList.isFinished ?? false) : false;
 
   const editListInitialData = useMemo(() => {
     if (!nav.detailData) return undefined;
@@ -132,6 +152,8 @@ const Shopping = memo(function Shopping() {
           inlineSaving={actions.inlineSaving}
           pendingId={actions.pendingId}
           isDeleting={actions.isDeleting}
+          isFinishingList={actions.isFinishingList}
+          isUnfinishingList={actions.isUnfinishingList}
           isUploading={actions.isUploading}
           uploadInputRef={actions.uploadInputRef}
           showEditList={actions.showEditList}
@@ -179,6 +201,8 @@ const Shopping = memo(function Shopping() {
           }}
           onSubmitPurchase={actions.handleMarkAsPurchased}
           onUnmarkAsPurchased={actions.handleUnmarkAsPurchased}
+          onIgnoreItem={actions.handleIgnoreItem}
+          onUnignoreItem={actions.handleUnignoreItem}
           onUploadFile={actions.handleUploadFile}
           onBulkEdit={(patch) => actions.handleBulkEdit(patch, selectedItems)}
           onBulkDelete={() => actions.handleBulkDelete(selectedItems)}

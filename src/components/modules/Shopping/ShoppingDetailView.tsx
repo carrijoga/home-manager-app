@@ -1,14 +1,23 @@
-import { formatCurrency } from '@utils/formatters';
+import { formatCurrency, formatDateBR } from '@utils/formatters';
 import { motion } from 'framer-motion';
 import {
+  Calendar,
   Check,
+  Clock,
+  EyeOff,
+  FileText,
   ListChecks,
+  Loader2,
   Pencil,
   Plus,
   RotateCcw,
   ShoppingCart,
+  Tag,
   Trash2,
+  TrendingDown,
+  TrendingUp,
   Undo2,
+  X,
 } from 'lucide-react';
 import React from 'react';
 
@@ -27,6 +36,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { useSidebar } from '@/components/ui/sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { ShoppingItemStatus } from '@/schemas/enums';
 import type { AppShoppingItem, AppShoppingList } from '@/types';
 
 import { CategorySection } from './CategorySection';
@@ -37,7 +47,15 @@ import { ItemFormDialog } from './dialogs/ItemFormDialog';
 import { ListFormDialog } from './dialogs/ListFormDialog';
 import { ManageCategoriesDialog } from './dialogs/ManageCategoriesDialog';
 import { MarkAsPurchasedDialog } from './dialogs/MarkAsPurchasedDialog';
-import { getItemEstimatedTotal, getItemSpentTotal, quantityLabel } from './helpers';
+import {
+  emptyItemForm,
+  getItemEstimatedTotal,
+  getItemSpentTotal,
+  getSavingsInfo,
+  quantityLabel,
+  unitPriceLabel,
+} from './helpers';
+import { QuickAddItemBar } from './QuickAddItemBar';
 import type { BulkEditPatch, ItemFormData, ListFormData, PurchaseFormData } from './types';
 
 interface ShoppingDetailViewProps {
@@ -70,6 +88,8 @@ interface ShoppingDetailViewProps {
   inlineSaving: boolean;
   pendingId: string | null;
   isDeleting: boolean;
+  isFinishingList?: boolean;
+  isUnfinishingList?: boolean;
   isUploading: boolean;
   uploadInputRef: React.RefObject<HTMLInputElement | null>;
   showEditList: boolean;
@@ -114,6 +134,8 @@ interface ShoppingDetailViewProps {
   onMarkAsPurchased: (item: AppShoppingItem) => void;
   onSubmitPurchase: (data: PurchaseFormData) => Promise<void>;
   onUnmarkAsPurchased: (item: AppShoppingItem) => Promise<void>;
+  onIgnoreItem: (item: AppShoppingItem) => Promise<void>;
+  onUnignoreItem: (item: AppShoppingItem) => Promise<void>;
   onUploadFile: (event: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
   onBulkEdit: (patch: BulkEditPatch) => Promise<void>;
   onBulkDelete: () => Promise<void>;
@@ -151,6 +173,8 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
     inlineSaving,
     pendingId,
     isDeleting,
+    isFinishingList = false,
+    isUnfinishingList = false,
     isUploading,
     uploadInputRef,
     showEditList,
@@ -195,12 +219,18 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
     onMarkAsPurchased,
     onSubmitPurchase,
     onUnmarkAsPurchased,
+    onIgnoreItem,
+    onUnignoreItem,
     onUploadFile,
     onBulkEdit,
     onBulkDelete,
     onCreateCategory,
     onDeleteCategory,
   } = props;
+
+  const [addItemInitialData, setAddItemInitialData] = React.useState<ItemFormData | undefined>(
+    undefined
+  );
 
   const detailPurchasedItems = detailData?.items.filter((i) => i.isPurchased).length ?? 0;
   const detailTotalItems = detailData?.items.length ?? 0;
@@ -233,7 +263,24 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
         totalSpent={totalSpent}
         remaining={remaining}
         onBack={onBack}
+        onEditList={() => setShowEditList(true)}
+        onDeleteList={() => setShowDeleteAlert(true)}
       />
+
+      {/* ── Quick Add Item Bar Mobile-First ─────────────────────────────────── */}
+      {!isFinished && !isBulkMode && (
+        <QuickAddItemBar
+          onAddItem={onAddItem}
+          onOpenDetailedForm={(initialName) => {
+            setAddItemInitialData(
+              initialName ? { ...emptyItemForm(), name: initialName } : undefined
+            );
+            setShowAddItem(true);
+          }}
+          categories={uniqueCategories}
+          disabled={!detailData}
+        />
+      )}
 
       {/* ── Sort + action toolbar / filter bar ───────────────────────────────── */}
       <DetailFilterBar
@@ -336,6 +383,8 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
               onToggleSelection={onToggleItemSelection}
               onMarkAsPurchased={onMarkAsPurchased}
               onUnmark={onUnmarkAsPurchased}
+              onIgnore={onIgnoreItem}
+              onUnignore={onUnignoreItem}
               onOpenInlineEdit={onOpenInlineEdit}
               onCancelInlineEdit={onCancelInlineEdit}
               onSaveInlineEdit={onSaveInlineEdit}
@@ -345,110 +394,299 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
         </div>
       )}
 
-      {/* Mobile edit/purchase sheet */}
-      {selectedItem && (
-        <Sheet
-          open={showMobileEditSheet}
-          onOpenChange={(v) => {
-            if (!v) {
-              setShowMobileEditSheet(false);
-              setSelectedItem(null);
-            }
-          }}
-        >
-          <SheetContent
-            side="bottom"
-            className="rounded-t-2xl border-t border-border bg-card px-6 pb-8 pt-6 dark:bg-[#1e1e1e]"
+      {/* Item detail sheet */}
+      {selectedItem && (() => {
+        const itemSpent =
+          selectedItem.isPurchased && selectedItem.price != null
+            ? getItemSpentTotal(selectedItem.price, selectedItem.quantity, selectedItem.unitType)
+            : null;
+
+        const itemEstimated =
+          selectedItem.estimatedPrice != null
+            ? getItemEstimatedTotal(
+                selectedItem.estimatedPrice,
+                selectedItem.quantity,
+                selectedItem.unitType
+              )
+            : null;
+
+        const itemSavings = selectedItem.isPurchased
+          ? getSavingsInfo(
+              selectedItem.estimatedPrice,
+              selectedItem.price,
+              selectedItem.quantity,
+              selectedItem.unitType
+            )
+          : null;
+
+        const isMultiQty = selectedItem.quantity > 1;
+
+        return (
+          <Sheet
+            open={showMobileEditSheet}
+            onOpenChange={(v) => {
+              if (!v) {
+                setShowMobileEditSheet(false);
+                setSelectedItem(null);
+              }
+            }}
           >
-            <SheetHeader className="mb-5 text-left">
-              <SheetTitle className="text-base font-semibold text-foreground">
-                {selectedItem.name}
-              </SheetTitle>
-              <p className="text-xs text-muted-foreground">
-                {quantityLabel(selectedItem.quantity, selectedItem.unitType)}
-                {selectedItem.estimatedPrice != null && (
-                  <>
-                    {' '}
-                    · estimado{' '}
-                    {formatCurrency(
-                      getItemEstimatedTotal(
-                        selectedItem.estimatedPrice,
-                        selectedItem.quantity,
-                        selectedItem.unitType
-                      )
-                    )}
-                  </>
+            <SheetContent
+              side="bottom"
+              className="rounded-t-3xl border-t border-border bg-card px-6 pb-8 pt-6 sm:max-w-lg sm:mx-auto sm:rounded-3xl sm:border sm:bottom-6 dark:bg-[#1e1e1e]"
+            >
+              <SheetHeader className="mb-5 space-y-2 text-left">
+                {/* Badges: Status + Category */}
+                <div className="flex flex-wrap items-center gap-2">
+                  {selectedItem.status === ShoppingItemStatus.Purchased || selectedItem.isPurchased ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[#78dc77]/15 px-3 py-1 text-xs font-semibold text-[#78dc77]">
+                      <Check size={12} strokeWidth={3} />
+                      Comprado
+                    </span>
+                  ) : selectedItem.status === ShoppingItemStatus.Ignored ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-muted/70 px-3 py-1 text-xs font-semibold text-muted-foreground">
+                      <EyeOff size={12} />
+                      Ignorado
+                    </span>
+                  ) : selectedItem.status === ShoppingItemStatus.NotPurchased ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-destructive/15 px-3 py-1 text-xs font-semibold text-destructive">
+                      <X size={12} strokeWidth={2.5} />
+                      Não comprado
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+                      <Clock size={12} />
+                      Pendente
+                    </span>
+                  )}
+                  {selectedItem.categoryName && (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-accent/40 px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                      <Tag size={11} />
+                      {selectedItem.categoryName}
+                    </span>
+                  )}
+                </div>
+
+                <SheetTitle className="text-xl font-bold text-foreground">
+                  {selectedItem.name}
+                </SheetTitle>
+              </SheetHeader>
+
+              {/* Informações consolidadas sem redundância */}
+              <div className="space-y-4">
+                <div className="space-y-3 rounded-2xl border border-border/70 bg-accent/20 p-4">
+                  {/* Quantidade */}
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Quantidade</span>
+                    <span className="font-semibold text-foreground">
+                      {quantityLabel(selectedItem.quantity, selectedItem.unitType)}
+                    </span>
+                  </div>
+
+                  {/* Detalhes de preço quando comprado */}
+                  {selectedItem.isPurchased ? (
+                    <>
+                      {/* Valor pago */}
+                      <div className="flex items-center justify-between border-t border-border/40 pt-2.5 text-sm">
+                        <span className="text-muted-foreground">Valor pago</span>
+                        <div className="text-right">
+                          <span className="text-base font-bold text-[#78dc77]">
+                            {itemSpent != null ? formatCurrency(itemSpent) : '---'}
+                          </span>
+                          {isMultiQty && selectedItem.price != null && (
+                            <span className="block text-[11px] font-normal text-muted-foreground">
+                              ({unitPriceLabel(selectedItem.price, selectedItem.unitType)})
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Estimativa de referência (se houver) */}
+                      {itemEstimated != null && (
+                        <div className="flex items-center justify-between border-t border-border/40 pt-2.5 text-sm">
+                          <span className="text-muted-foreground">Estimado</span>
+                          <div className="text-right">
+                            <span className="font-medium text-muted-foreground/80 line-through">
+                              {formatCurrency(itemEstimated)}
+                            </span>
+                            {isMultiQty && selectedItem.estimatedPrice != null && (
+                              <span className="block text-[11px] font-normal text-muted-foreground/70">
+                                ({unitPriceLabel(selectedItem.estimatedPrice, selectedItem.unitType)})
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Variação / Economia */}
+                      {itemSavings && itemSavings.type === 'savings' && (
+                        <div className="flex items-center justify-between rounded-xl bg-[#78dc77]/10 px-3 py-2 text-xs font-semibold text-[#78dc77]">
+                          <span className="flex items-center gap-1.5">
+                            <TrendingDown size={14} /> Economia
+                          </span>
+                          <span>
+                            -{formatCurrency(itemSavings.diff)} ({itemSavings.pct}%)
+                          </span>
+                        </div>
+                      )}
+                      {itemSavings && itemSavings.type === 'increase' && (
+                        <div className="flex items-center justify-between rounded-xl bg-amber-500/10 px-3 py-2 text-xs font-semibold text-amber-500">
+                          <span className="flex items-center gap-1.5">
+                            <TrendingUp size={14} /> Acréscimo
+                          </span>
+                          <span>
+                            +{formatCurrency(itemSavings.diff)} ({itemSavings.pct}%)
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Data da compra */}
+                      {selectedItem.purchasedAt && (
+                        <div className="flex items-center justify-between border-t border-border/40 pt-2.5 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1.5">
+                            <Calendar size={13} /> Data da compra
+                          </span>
+                          <span className="font-medium text-foreground">
+                            {formatDateBR(selectedItem.purchasedAt)}
+                          </span>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    /* Detalhes de preço quando pendente */
+                    <div className="flex items-center justify-between border-t border-border/40 pt-2.5 text-sm">
+                      <span className="text-muted-foreground">Estimativa</span>
+                      <div className="text-right">
+                        <span className="font-semibold text-foreground">
+                          {itemEstimated != null ? formatCurrency(itemEstimated) : 'Não informado'}
+                        </span>
+                        {isMultiQty && selectedItem.estimatedPrice != null && (
+                          <span className="block text-[11px] font-normal text-muted-foreground">
+                            ({unitPriceLabel(selectedItem.estimatedPrice, selectedItem.unitType)})
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Observações */}
+                {selectedItem.notes && (
+                  <div className="space-y-1 rounded-2xl border border-border/60 bg-muted/30 p-3.5 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1.5 font-medium text-foreground/80">
+                      <FileText size={12} /> Observações
+                    </span>
+                    <p className="leading-relaxed text-muted-foreground">{selectedItem.notes}</p>
+                  </div>
                 )}
-              </p>
-              {selectedItem.notes && (
-                <p className="mt-1 text-sm text-muted-foreground">{selectedItem.notes}</p>
-              )}
-            </SheetHeader>
 
-            <div className="space-y-4">
-              {/* Quick mark as purchased */}
-              {!selectedItem.isPurchased && !isFinished && (
-                <button
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-sm font-semibold transition-colors"
-                  style={{ background: '#78dc77', color: '#131313' }}
-                  onClick={() => {
-                    setShowMobileEditSheet(false);
-                    setShowPurchase(true);
-                  }}
-                >
-                  <Check size={16} strokeWidth={3} />
-                  Marcar como comprado
-                </button>
-              )}
+                {/* Botões de Ação */}
+                <div className="space-y-2.5 pt-2">
+                  {/* Item pendente: Marcar como comprado, Marcar como ignorado, Editar, Remover */}
+                  {!isFinished && selectedItem.status === ShoppingItemStatus.Pending && !selectedItem.isPurchased && (
+                    <>
+                      <button
+                        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 py-3.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-emerald-600 active:scale-98"
+                        onClick={() => {
+                          setShowMobileEditSheet(false);
+                          setShowPurchase(true);
+                        }}
+                      >
+                        <Check size={18} strokeWidth={3} />
+                        Marcar como comprado
+                      </button>
 
-              {/* Edit + Delete — only when not purchased and not finished */}
-              {!selectedItem.isPurchased && !isFinished && (
-                <>
-                  <button
-                    className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border py-3 text-sm font-medium text-foreground transition-colors hover:bg-accent"
-                    onClick={() => {
-                      setShowMobileEditSheet(false);
-                      setShowEditItem(true);
-                    }}
-                  >
-                    <Pencil size={15} />
-                    Editar item
-                  </button>
+                      <button
+                        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border/80 bg-card py-3 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground active:scale-98 dark:bg-[#222]"
+                        onClick={() => {
+                          onIgnoreItem(selectedItem);
+                          setShowMobileEditSheet(false);
+                          setSelectedItem(null);
+                        }}
+                        disabled={pendingId === selectedItem.shoppingItemId}
+                      >
+                        <EyeOff size={16} />
+                        Marcar como ignorado
+                      </button>
 
-                  <button
-                    className="flex w-full items-center justify-center gap-2 rounded-2xl border border-destructive/30 py-3 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
-                    onClick={() => {
-                      onDeleteItem(selectedItem);
-                      setShowMobileEditSheet(false);
-                      setSelectedItem(null);
-                    }}
-                    disabled={pendingId === selectedItem.shoppingItemId}
-                  >
-                    <Trash2 size={15} />
-                    Remover item
-                  </button>
-                </>
-              )}
+                      <button
+                        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border/80 bg-card py-3 text-sm font-semibold text-foreground transition-colors hover:bg-accent active:scale-98 dark:bg-[#222]"
+                        onClick={() => {
+                          setShowMobileEditSheet(false);
+                          setShowEditItem(true);
+                        }}
+                      >
+                        <Pencil size={16} />
+                        Editar item
+                      </button>
 
-              {/* Undo purchase — only when purchased and not finished */}
-              {selectedItem.isPurchased && !isFinished && (
-                <button
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent"
-                  onClick={() => {
-                    onUnmarkAsPurchased(selectedItem);
-                    setShowMobileEditSheet(false);
-                    setSelectedItem(null);
-                  }}
-                  disabled={pendingId === selectedItem.shoppingItemId}
-                >
-                  <RotateCcw size={15} />
-                  Desfazer compra
-                </button>
-              )}
-            </div>
-          </SheetContent>
-        </Sheet>
-      )}
+                      <button
+                        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-destructive/30 py-3 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10 active:scale-98"
+                        onClick={() => {
+                          onDeleteItem(selectedItem);
+                          setShowMobileEditSheet(false);
+                          setSelectedItem(null);
+                        }}
+                        disabled={pendingId === selectedItem.shoppingItemId}
+                      >
+                        <Trash2 size={16} />
+                        Remover item
+                      </button>
+                    </>
+                  )}
+
+                  {/* Item ignorado: Voltar para pendente, Remover */}
+                  {!isFinished && selectedItem.status === ShoppingItemStatus.Ignored && (
+                    <>
+                      <button
+                        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border/80 bg-card py-3.5 text-sm font-semibold text-foreground transition-colors hover:bg-accent active:scale-98 dark:bg-[#222]"
+                        onClick={() => {
+                          onUnignoreItem(selectedItem);
+                          setShowMobileEditSheet(false);
+                          setSelectedItem(null);
+                        }}
+                        disabled={pendingId === selectedItem.shoppingItemId}
+                      >
+                        <RotateCcw size={15} />
+                        Voltar para pendente
+                      </button>
+
+                      <button
+                        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-destructive/30 py-3 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
+                        onClick={() => {
+                          onDeleteItem(selectedItem);
+                          setShowMobileEditSheet(false);
+                          setSelectedItem(null);
+                        }}
+                        disabled={pendingId === selectedItem.shoppingItemId}
+                      >
+                        <Trash2 size={15} />
+                        Remover item
+                      </button>
+                    </>
+                  )}
+
+                  {/* Item comprado: Apenas Desfazer compra */}
+                  {!isFinished && (selectedItem.status === ShoppingItemStatus.Purchased || selectedItem.isPurchased) && (
+                    <button
+                      className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                      onClick={() => {
+                        onUnmarkAsPurchased(selectedItem);
+                        setShowMobileEditSheet(false);
+                        setSelectedItem(null);
+                      }}
+                      disabled={pendingId === selectedItem.shoppingItemId}
+                    >
+                      <RotateCcw size={15} />
+                      Desfazer compra
+                    </button>
+                  )}
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+        );
+      })()}
 
       {/* Floating bulk action bar */}
       {isBulkMode && selectedItems.length > 0 && (
@@ -517,10 +755,15 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
       />
       <ItemFormDialog
         open={showAddItem}
-        onClose={() => setShowAddItem(false)}
+        onClose={() => {
+          setShowAddItem(false);
+          setAddItemInitialData(undefined);
+        }}
+        initialData={addItemInitialData}
         onSubmit={onAddItem}
         title="Adicionar Item"
         categories={uniqueCategories}
+        onCreateCategory={onCreateCategory}
       />
       <ItemFormDialog
         open={showEditItem}
@@ -532,6 +775,7 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
         onSubmit={onEditItem}
         title="Editar Item"
         categories={uniqueCategories}
+        onCreateCategory={onCreateCategory}
       />
       <MarkAsPurchasedDialog
         open={showPurchase}
@@ -619,25 +863,53 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
           {/* Right: finish / reopen button */}
           {isFinished ? (
             <button
-              className="flex shrink-0 items-center gap-2 rounded-2xl px-6 py-3 text-sm font-bold uppercase tracking-widest text-[#131313] shadow-lg transition-opacity hover:opacity-90 active:scale-95"
+              className="flex shrink-0 items-center gap-2 rounded-2xl px-6 py-3 text-sm font-bold uppercase tracking-widest text-[#131313] shadow-lg transition-opacity hover:opacity-90 active:scale-95 disabled:pointer-events-none disabled:opacity-50"
               style={{ background: 'linear-gradient(90deg, #ffd6a5 0%, #ffb347 100%)' }}
               onClick={onUnfinishList}
+              disabled={isUnfinishingList}
             >
-              <Undo2 size={14} strokeWidth={3} />
-              Reabrir Lista
+              {isUnfinishingList ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <Undo2 size={14} strokeWidth={3} />
+              )}
+              {isUnfinishingList ? 'Reabrindo...' : 'Reabrir Lista'}
             </button>
           ) : (
             <button
-              className="flex shrink-0 items-center gap-2 rounded-2xl px-6 py-3 text-sm font-bold uppercase tracking-widest text-[#131313] shadow-lg transition-opacity hover:opacity-90 active:scale-95 disabled:opacity-50"
+              className="flex shrink-0 items-center gap-2 rounded-2xl px-6 py-3 text-sm font-bold uppercase tracking-widest text-[#131313] shadow-lg transition-opacity hover:opacity-90 active:scale-95 disabled:pointer-events-none disabled:opacity-50"
               style={{ background: 'linear-gradient(90deg, #adc6ff 0%, #8cafff 100%)' }}
               onClick={onFinishList}
-              disabled={detailTotalItems === 0 || detailPurchasedItems < detailTotalItems}
+              disabled={detailTotalItems === 0 || isFinishingList}
             >
-              <Check size={14} strokeWidth={3} />
-              Finalizar Compra
+              {isFinishingList ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <Check size={14} strokeWidth={3} />
+              )}
+              {isFinishingList ? 'Finalizando...' : 'Finalizar Compra'}
             </button>
           )}
         </div>
+      )}
+
+      {/* ── Mobile FAB Principal para Adicionar Item ────────────────────────── */}
+      {!isFinished && !isBulkMode && (
+        <motion.div
+          className="fixed bottom-24 right-5 z-40 sm:hidden pb-[env(safe-area-inset-bottom)]"
+          whileTap={{ scale: 0.92 }}
+        >
+          <button
+            onClick={() => {
+              setAddItemInitialData(undefined);
+              setShowAddItem(true);
+            }}
+            className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-2xl transition-transform active:scale-95"
+            aria-label="Adicionar item"
+          >
+            <Plus size={26} strokeWidth={3} />
+          </button>
+        </motion.div>
       )}
     </motion.div>
   );

@@ -1,11 +1,11 @@
-// src/components/modules/Shopping/hooks/useShoppingNavigation.ts
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
 import { useDebounce } from '@/hooks/useDebounce';
 import type { AppShoppingCategory, AppShoppingList, AppShoppingListSummary } from '@/types';
 
-import { addMonths, currentMonthValue } from '../helpers';
+import { addMonths, currentMonthValue, fromISOMonthYear } from '../helpers';
 import type { ViewMode } from '../types';
 
 interface ShoppingNavigationDeps {
@@ -77,8 +77,9 @@ export function useShoppingNavigation({
   const groupedItems = useMemo(() => {
     if (!detailData) return {};
     let items = detailData.items;
-    if (categoryFilter === '__unpurchased__') items = items.filter((i) => !i.isPurchased);
-    else if (categoryFilter === '__purchased__') items = items.filter((i) => i.isPurchased);
+    if (categoryFilter === '__unpurchased__') items = items.filter((i) => i.status === 0 || (!i.isPurchased && i.status !== 2));
+    else if (categoryFilter === '__purchased__') items = items.filter((i) => i.status === 1 || i.isPurchased);
+    else if (categoryFilter === '__ignored__') items = items.filter((i) => i.status === 2);
     else if (categoryFilter) items = items.filter((i) => i.categoryName === categoryFilter);
     if (debouncedSearch.trim()) {
       const q = debouncedSearch.trim().toLowerCase();
@@ -112,33 +113,88 @@ export function useShoppingNavigation({
     }
   }, [groupedItems, sortOrder]);
 
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlListId = searchParams.get('listId') || searchParams.get('id');
+  const isNavigatingBackRef = useRef(false);
+
   const openListDetail = useCallback(
     async (id: string) => {
+      isNavigatingBackRef.current = false;
       setSelectedListId(id);
       setIsLoadingDetail(true);
       setDetailData(null);
       setViewMode('detail');
       setCategoryFilter(null);
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set('listId', id);
+          return next;
+        },
+        { replace: false }
+      );
       try {
         const data = await loadShoppingListDetail(id);
         setDetailData(data);
+        if (data?.monthYear) {
+          setFilterMonth(fromISOMonthYear(data.monthYear));
+        }
       } catch {
         showError('Erro ao carregar lista.');
         setViewMode('lists');
         setSelectedListId(null);
+        setSearchParams(
+          (prev) => {
+            const next = new URLSearchParams(prev);
+            next.delete('listId');
+            next.delete('id');
+            return next;
+          },
+          { replace: true }
+        );
       } finally {
         setIsLoadingDetail(false);
       }
     },
-    [loadShoppingListDetail, showError]
+    [loadShoppingListDetail, showError, setSearchParams]
   );
 
   const backToLists = useCallback(() => {
+    isNavigatingBackRef.current = true;
     setViewMode('lists');
     setSelectedListId(null);
     setDetailData(null);
     setCategoryFilter(null);
-  }, []);
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete('listId');
+        next.delete('id');
+        return next;
+      },
+      { replace: true }
+    );
+  }, [setSearchParams]);
+
+  // Synchronize URL search params (?listId=...) with viewMode/detail
+  useEffect(() => {
+    if (urlListId) {
+      if (isNavigatingBackRef.current) {
+        return;
+      }
+      if (urlListId !== selectedListId) {
+        void openListDetail(urlListId);
+      }
+    } else {
+      isNavigatingBackRef.current = false;
+      if (viewMode === 'detail') {
+        setViewMode('lists');
+        setSelectedListId(null);
+        setDetailData(null);
+        setCategoryFilter(null);
+      }
+    }
+  }, [urlListId, selectedListId, viewMode, openListDetail]);
 
   const toggleCategoryCollapse = useCallback((category: string) => {
     setCollapsedCategories((prev) => {

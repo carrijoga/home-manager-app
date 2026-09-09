@@ -67,6 +67,8 @@ interface ShoppingActionsDeps {
     unitType: number,
     price: number
   ) => Promise<void>;
+  ignoreShoppingItem: (listId: string, itemId: string) => Promise<void>;
+  unignoreShoppingItem: (listId: string, itemId: string) => Promise<void>;
   uploadShoppingItems: (listId: string, file: File) => Promise<AppShoppingList>;
   createShoppingCategory: (name: string, description?: string) => Promise<AppShoppingCategory>;
   deleteShoppingCategory: (id: string) => Promise<void>;
@@ -90,6 +92,8 @@ export function useShoppingActions(
     deleteShoppingItem,
     markItemAsPurchased,
     unmarkItemAsPurchased,
+    ignoreShoppingItem,
+    unignoreShoppingItem,
     uploadShoppingItems,
     createShoppingCategory,
     deleteShoppingCategory,
@@ -112,6 +116,8 @@ export function useShoppingActions(
   const [editingListId, setEditingListId] = useState<string | null>(null);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isFinishingList, setIsFinishingList] = useState(false);
+  const [isUnfinishingList, setIsUnfinishingList] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -330,27 +336,51 @@ export function useShoppingActions(
 
   const handleFinishList = useCallback(
     async (listId: string, onSuccess: () => void) => {
+      if (isFinishingList) return;
+      setIsFinishingList(true);
       try {
         await finishShoppingList(listId);
         showSuccess('Lista finalizada!');
         onSuccess();
       } catch {
         showError('Erro ao finalizar lista.');
+      } finally {
+        setIsFinishingList(false);
       }
     },
-    [finishShoppingList, showSuccess, showError]
+    [finishShoppingList, showSuccess, showError, isFinishingList]
   );
 
   const handleUnfinishList = useCallback(
     async (listId: string) => {
+      if (isUnfinishingList) return;
+      setIsUnfinishingList(true);
       try {
         await unfinishShoppingList(listId);
         showSuccess('Lista reaberta!');
-      } catch {
-        showError('Erro ao reabrir lista.');
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : '';
+        const isFinancialPaymentsError =
+          message.toLowerCase().includes('already has payments') ||
+          message.toLowerCase().includes('financial transaction already has payments') ||
+          message.toLowerCase().includes('transação financeira') ||
+          message.toLowerCase().includes('já possui pagamentos') ||
+          message.toLowerCase().includes('já tem pagamentos');
+
+        if (isFinancialPaymentsError) {
+          showError('Não é possível reabrir a lista', {
+            description:
+              'A transação financeira gerada por esta lista já possui pagamentos registrados. Acesse o módulo Financeiro e estorne os pagamentos antes de reabrir a lista.',
+            duration: 8000,
+          });
+        } else {
+          showError(message || 'Erro ao reabrir lista.');
+        }
+      } finally {
+        setIsUnfinishingList(false);
       }
     },
-    [unfinishShoppingList, showSuccess, showError]
+    [unfinishShoppingList, showSuccess, showError, isUnfinishingList]
   );
 
   const handleEditListFromGrid = useCallback(
@@ -408,7 +438,7 @@ export function useShoppingActions(
         setDetailData((prev) => {
           if (!prev) return prev;
           const idx = prev.items.findIndex((i) => i.shoppingItemId === newItem.shoppingItemId);
-          if (idx === -1) return { ...prev, items: [...prev.items, newItem] };
+          if (idx === -1) return { ...prev, items: [newItem, ...prev.items] };
           // Item já foi inserido pelo broadcast do SignalR — substitui pelos dados
           // completos vindos da própria resposta do POST (fonte mais confiável).
           const items = [...prev.items];
@@ -530,7 +560,7 @@ export function useShoppingActions(
             ...prev,
             items: prev.items.map((i) =>
               i.shoppingItemId === selectedItem.shoppingItemId
-                ? { ...i, quantity: qty, isPurchased: true, price, purchasedAt }
+                ? { ...i, quantity: qty, isPurchased: true, status: 1, price, purchasedAt }
                 : i
             ),
           };
@@ -562,7 +592,7 @@ export function useShoppingActions(
             ...prev,
             items: prev.items.map((i) =>
               i.shoppingItemId === item.shoppingItemId
-                ? { ...i, isPurchased: false, price: null, purchasedAt: null }
+                ? { ...i, isPurchased: false, status: 0, price: null, purchasedAt: null }
                 : i
             ),
           };
@@ -575,6 +605,60 @@ export function useShoppingActions(
       }
     },
     [selectedListId, unmarkItemAsPurchased, showSuccess, setDetailData]
+  );
+
+  const handleIgnoreItem = useCallback(
+    async (item: AppShoppingItem) => {
+      if (!selectedListId) return;
+      setPendingId(item.shoppingItemId);
+      try {
+        await ignoreShoppingItem(selectedListId, item.shoppingItemId);
+        setDetailData((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            items: prev.items.map((i) =>
+              i.shoppingItemId === item.shoppingItemId
+                ? { ...i, isPurchased: false, status: 2, price: null, purchasedAt: null }
+                : i
+            ),
+          };
+        });
+        showSuccess('Item marcado como ignorado.');
+      } catch {
+        showError('Erro ao ignorar item.');
+      } finally {
+        setPendingId(null);
+      }
+    },
+    [selectedListId, ignoreShoppingItem, showSuccess, showError, setDetailData]
+  );
+
+  const handleUnignoreItem = useCallback(
+    async (item: AppShoppingItem) => {
+      if (!selectedListId) return;
+      setPendingId(item.shoppingItemId);
+      try {
+        await unignoreShoppingItem(selectedListId, item.shoppingItemId);
+        setDetailData((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            items: prev.items.map((i) =>
+              i.shoppingItemId === item.shoppingItemId
+                ? { ...i, isPurchased: false, status: 0, price: null, purchasedAt: null }
+                : i
+            ),
+          };
+        });
+        showSuccess('Item voltou para pendente.');
+      } catch {
+        showError('Erro ao desmarcar item ignorado.');
+      } finally {
+        setPendingId(null);
+      }
+    },
+    [selectedListId, unignoreShoppingItem, showSuccess, showError, setDetailData]
   );
 
   const handleUploadFile = useCallback(
@@ -702,6 +786,8 @@ export function useShoppingActions(
     setEditingListId,
     pendingId,
     isDeleting,
+    isFinishingList,
+    isUnfinishingList,
     isUploading,
     uploadInputRef,
     // bulk
@@ -737,6 +823,8 @@ export function useShoppingActions(
     handleDeleteItem,
     handleMarkAsPurchased,
     handleUnmarkAsPurchased,
+    handleIgnoreItem,
+    handleUnignoreItem,
     handleUploadFile,
     handleBulkEdit,
     handleBulkDelete,

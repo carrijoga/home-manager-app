@@ -1,17 +1,18 @@
 import { formatCurrency } from '@utils/formatters';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
+  CheckCircle2,
   ChevronLeft,
   ChevronRight,
-  Flame,
+  Clock,
   MoreVertical,
   Pencil,
   Plus,
   RotateCcw,
   ShoppingCart,
-  Sparkles,
   Trash2,
 } from 'lucide-react';
+import { useState } from 'react';
 
 import {
   AlertDialog,
@@ -23,6 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -83,285 +85,372 @@ export function ShoppingListsView(props: ShoppingListsViewProps) {
     onUnfinishList,
   } = props;
 
-  const cardIcons = [ShoppingCart, Flame, Sparkles] as const;
-  const cardIconBgs = [
-    'bg-honey-400/10 text-honey-400',
-    'bg-terracotta-400/10 text-terracotta-400',
-    'bg-sage-500/10 text-sage-500',
-  ] as const;
+  // Filtro de status mobile: 'all' | 'active' | 'completed'
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'completed'>('all');
 
   const activeLists = filteredLists.filter(
-    (l) => l.purchasedItems < l.totalItems || l.totalItems === 0
-  ).length;
+    (l) => !(l.finished ?? l.isFinished)
+  );
+  const completedLists = filteredLists.filter(
+    (l) => (l.finished ?? l.isFinished)
+  );
+
+  const displayedLists =
+    statusFilter === 'active'
+      ? activeLists
+      : statusFilter === 'completed'
+        ? completedLists
+        : filteredLists;
+
   const totalItems = filteredLists.reduce((s, l) => s + l.totalItems, 0);
+  const totalPurchasedItems = filteredLists.reduce((s, l) => s + l.purchasedItems, 0);
   const totalSpent = filteredLists.reduce((s, l) => s + (l.totalSpent ?? 0), 0);
+  const overallProgress = totalItems > 0 ? Math.round((totalPurchasedItems / totalItems) * 100) : 0;
 
   return (
     <motion.div
       key="lists"
-      initial={{ opacity: 0, x: -24 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -24 }}
-      transition={{ duration: 0.25, ease: [0.25, 1, 0.5, 1] }}
-      className="max-w-full space-y-8 pb-24"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
+      transition={{ duration: 0.25, ease: 'easeOut' }}
+      className="max-w-5xl mx-auto space-y-6 pb-28 px-1 sm:px-4"
     >
-      {/* Editorial header */}
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div className="space-y-1 border-l-4 border-honey-400 pl-7">
-          <p className="text-xs font-semibold uppercase tracking-[0.15em] text-honey-400">
-            Lista de Compras
-          </p>
-          <div className="relative overflow-hidden" style={{ minHeight: '2.5rem' }}>
-            <AnimatePresence mode="popLayout" initial={false}>
-              <motion.h2
-                key={filterMonth}
-                initial={{ opacity: 0, x: monthNavDir * 24 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{
-                  opacity: 0,
-                  x: monthNavDir * -24,
-                  position: 'absolute',
-                }}
-                transition={{ duration: 0.22, ease: [0.25, 1, 0.5, 1] }}
-                className="font-display text-3xl font-bold text-foreground"
-              >
-                {(() => {
-                  const s = formatMonthYearPT(filterMonth);
-                  return s.charAt(0).toUpperCase() + s.slice(1);
-                })()}
-              </motion.h2>
-            </AnimatePresence>
+      {/* ── App Bar / Header Mobile ────────────────────────────────────────── */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-0.5">
+          <div className="flex items-center gap-2">
+            <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-primary/15 text-primary">
+              <ShoppingCart size={14} />
+            </span>
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Módulo de Compras
+            </span>
           </div>
+          <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+            Minhas Listas
+          </h1>
         </div>
 
-        {/* Month nav */}
-        <div className="flex items-center gap-2">
+        {/* Seletor de Mês Compacto e Touch-Friendly */}
+        <div className="flex items-center justify-between sm:justify-end gap-1.5 rounded-2xl border border-border/80 bg-card p-1 shadow-sm dark:bg-[#181818]">
           <motion.button
-            whileTap={{ scale: 0.85 }}
-            transition={{ duration: 0.1 }}
-            onClick={() => {
-              onNavigateMonth(-1);
-            }}
-            className="rounded-xl p-2.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            whileTap={{ scale: 0.88 }}
+            onClick={() => onNavigateMonth(-1)}
+            className="flex h-9 w-9 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            aria-label="Mês anterior"
           >
-            <ChevronLeft size={16} />
+            <ChevronLeft size={18} />
           </motion.button>
+
+          <div className="relative min-w-[130px] text-center overflow-hidden px-1">
+            <AnimatePresence mode="popLayout" initial={false}>
+              <motion.span
+                key={filterMonth}
+                initial={{ opacity: 0, x: monthNavDir * 16 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: monthNavDir * -16, position: 'absolute' }}
+                transition={{ duration: 0.2 }}
+                className="text-xs sm:text-sm font-semibold capitalize text-foreground"
+              >
+                {formatMonthYearPT(filterMonth)}
+              </motion.span>
+            </AnimatePresence>
+          </div>
+
+          <motion.button
+            whileTap={{ scale: 0.88 }}
+            onClick={() => onNavigateMonth(1)}
+            className="flex h-9 w-9 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            aria-label="Próximo mês"
+          >
+            <ChevronRight size={18} />
+          </motion.button>
+
           <button
-            onClick={() => {
-              onResetMonth();
-            }}
-            className="rounded-lg border border-border bg-card px-5 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+            onClick={onResetMonth}
+            className="ml-1 rounded-xl bg-muted/60 px-2.5 py-1.5 text-[11px] font-semibold text-foreground transition-colors hover:bg-muted"
           >
             Hoje
           </button>
-          <motion.button
-            whileTap={{ scale: 0.85 }}
-            transition={{ duration: 0.1 }}
-            onClick={() => {
-              onNavigateMonth(1);
-            }}
-            className="rounded-xl p-2.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          >
-            <ChevronRight size={16} />
-          </motion.button>
         </div>
       </div>
 
-      {/* Stats summary card */}
+      {/* ── Hero Summary Card Mobile ───────────────────────────────────────── */}
       {filteredLists.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25, delay: 0.05 }}
-          className="flex items-center justify-around gap-4 rounded-2xl border border-border bg-card px-8 py-7"
-        >
-          <div className="flex-1 space-y-1 text-center">
-            <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
-              Gasto no Mês
-            </p>
-            <p className="font-display text-2xl font-bold text-honey-400 dark:text-honey-300">
-              {totalSpent > 0 ? formatCurrency(totalSpent) : '—'}
-            </p>
-          </div>
-          <div className="h-12 w-px shrink-0 bg-border" />
-          <div className="flex-1 space-y-1 text-center">
-            <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
-              Listas Ativas
-            </p>
-            <p className="font-display text-2xl font-bold" style={{ color: '#adc6ff' }}>
-              {String(activeLists).padStart(2, '0')}
-            </p>
-          </div>
-          <div className="h-12 w-px shrink-0 bg-border" />
-          <div className="flex-1 space-y-1 text-center">
-            <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
-              Items Totais
-            </p>
-            <p className="font-display text-2xl font-bold text-foreground">{totalItems}</p>
-          </div>
-        </motion.div>
-      )}
+        <div className="relative overflow-hidden rounded-3xl border border-border/80 bg-gradient-to-br from-card via-card to-muted/30 p-5 shadow-sm dark:bg-[#181818] dark:from-[#1a1a1a] dark:to-[#141414]">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  Gasto Total no Mês
+                </span>
+                <p className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+                  {totalSpent > 0 ? formatCurrency(totalSpent) : 'R$ 0,00'}
+                </p>
+              </div>
 
-      {/* Bento grid / empty state */}
-      {filteredLists.length === 0 ? (
-        <div className="flex flex-col items-center justify-center space-y-4 py-20 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full border border-honey-200/60 bg-gradient-to-br from-honey-100 to-linen-200 dark:border-honey-800/30 dark:from-honey-900/30 dark:to-muted">
-            <ShoppingCart size={28} className="text-honey-600 dark:text-honey-400" />
-          </div>
-          <div>
-            <p className="font-medium text-foreground">
-              Nenhuma lista em {formatMonthYearShort(filterMonth)}
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Use o botão + para criar uma lista.
-            </p>
+              <div className="flex gap-2">
+                <div className="flex flex-col items-end">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                    Listas Ativas
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-xl bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">
+                    <Clock size={12} />
+                    {activeLists.length}
+                  </span>
+                </div>
+                <div className="flex flex-col items-end">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                    Concluídas
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-xl bg-emerald-500/10 px-2.5 py-1 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                    <CheckCircle2 size={12} />
+                    {completedLists.length}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Progresso Geral de Compras */}
+            {totalItems > 0 && (
+              <div className="space-y-1.5 pt-1">
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span className="font-medium">Progresso de itens comprados</span>
+                  <span className="font-bold text-foreground">
+                    {totalPurchasedItems} de {totalItems} ({overallProgress}%)
+                  </span>
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-muted/60">
+                  <motion.div
+                    className="h-full rounded-full bg-primary"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${overallProgress}%` }}
+                    transition={{ duration: 0.5, ease: 'easeOut' }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
-      ) : (
-        <motion.div
-          className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
-          initial="hidden"
-          animate="visible"
-          variants={{ visible: { transition: { staggerChildren: 0.07 } } }}
+      )}
+
+      {/* ── Abas de Status / Segmented Control Mobile ────────────────────────── */}
+      <div className="flex items-center justify-between border-b border-border/40 pb-3">
+        <div className="flex gap-1.5 rounded-2xl bg-muted/50 p-1">
+          <button
+            type="button"
+            onClick={() => setStatusFilter('all')}
+            className={cn(
+              'rounded-xl px-3 py-1.5 text-xs font-semibold transition-all active:scale-95',
+              statusFilter === 'all'
+                ? 'bg-card text-foreground shadow-sm dark:bg-[#222]'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            Todas ({filteredLists.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setStatusFilter('active')}
+            className={cn(
+              'rounded-xl px-3 py-1.5 text-xs font-semibold transition-all active:scale-95',
+              statusFilter === 'active'
+                ? 'bg-card text-foreground shadow-sm dark:bg-[#222]'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            Em Aberto ({activeLists.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setStatusFilter('completed')}
+            className={cn(
+              'rounded-xl px-3 py-1.5 text-xs font-semibold transition-all active:scale-95',
+              statusFilter === 'completed'
+                ? 'bg-card text-foreground shadow-sm dark:bg-[#222]'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            Concluídas ({completedLists.length})
+          </button>
+        </div>
+
+        {/* Botão de Nova Lista Inline para desktop/tablet */}
+        <Button
+          onClick={() => setShowCreateList(true)}
+          className="hidden sm:inline-flex h-9 items-center gap-1.5 rounded-xl font-bold"
         >
-          {filteredLists.map((list, idx) => {
-            const isComplete = list.isFinished;
-            const Icon = cardIcons[idx % 3];
-            const iconBg = cardIconBgs[idx % 3];
+          <Plus size={16} strokeWidth={3} />
+          Nova Lista
+        </Button>
+      </div>
+
+      {/* ── Grid / Lista de Cards ──────────────────────────────────────────── */}
+      {displayedLists.length === 0 ? (
+        <div className="flex flex-col items-center justify-center space-y-4 rounded-3xl border border-dashed border-border/80 py-16 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <ShoppingCart size={28} />
+          </div>
+          <div className="space-y-1">
+            <p className="text-base font-bold text-foreground">
+              {filteredLists.length === 0
+                ? `Nenhuma lista em ${formatMonthYearShort(filterMonth)}`
+                : 'Nenhuma lista com este status'}
+            </p>
+            <p className="text-xs text-muted-foreground max-w-xs mx-auto">
+              {filteredLists.length === 0
+                ? 'Crie uma nova lista de supermercado ou despensa para começar.'
+                : 'Alterne as abas acima para visualizar outras listas.'}
+            </p>
+          </div>
+          <Button
+            onClick={() => setShowCreateList(true)}
+            className="h-11 rounded-2xl px-5 font-bold shadow-sm"
+          >
+            <Plus size={16} strokeWidth={3} className="mr-1.5" />
+            Criar Nova Lista
+          </Button>
+        </div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {displayedLists.map((list) => {
+            const isComplete = Boolean(list.finished ?? list.isFinished);
+            const listPct =
+              list.totalItems > 0 ? Math.round((list.purchasedItems / list.totalItems) * 100) : 0;
+
             return (
               <motion.div
                 key={list.shoppingListId}
-                variants={{
-                  hidden: { opacity: 0, y: 14 },
-                  visible: {
-                    opacity: 1,
-                    y: 0,
-                    transition: { duration: 0.3, ease: [0.25, 1, 0.5, 1] },
-                  },
-                }}
-                className="group relative"
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.1 }}
+                className="group relative cursor-pointer overflow-hidden rounded-3xl border border-border/80 bg-card p-5 shadow-sm transition-all hover:border-primary/50 hover:shadow-md dark:bg-[#181818]"
+                onClick={() => onOpenList(list.shoppingListId)}
               >
-                {/* Card body */}
-                <div
-                  role="button"
-                  tabIndex={0}
-                  className="w-full cursor-pointer space-y-4 rounded-3xl border border-border bg-card p-6 text-left transition-all duration-200 hover:border-honey-300 hover:shadow-md dark:hover:border-honey-700"
-                  onClick={() => onOpenList(list.shoppingListId)}
-                  onKeyDown={(e) => e.key === 'Enter' && onOpenList(list.shoppingListId)}
-                >
-                  {/* Icon + context menu */}
-                  <div className="flex items-start justify-between">
-                    <div
-                      className={cn(
-                        'flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl',
-                        iconBg
-                      )}
-                    >
-                      <Icon size={20} />
-                    </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button
-                          onClick={(e) => e.stopPropagation()}
-                          className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                          aria-label="Ações da lista"
-                        >
-                          <MoreVertical size={16} />
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                        {isComplete ? (
-                          <DropdownMenuItem
-                            className="gap-2"
-                            onClick={() => {
-                              onUnfinishList(list.shoppingListId);
-                              onOpenList(list.shoppingListId);
-                            }}
-                          >
-                            <RotateCcw size={13} />
-                            Reabrir
-                          </DropdownMenuItem>
-                        ) : (
-                          <>
-                            <DropdownMenuItem
-                              className="gap-2"
-                              onClick={() => {
-                                setEditingListId(list.shoppingListId);
-                                setShowEditList(true);
-                              }}
-                            >
-                              <Pencil size={13} />
-                              Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="gap-2 text-destructive focus:text-destructive"
-                              onClick={() => {
-                                setEditingListId(list.shoppingListId);
-                                setShowDeleteAlert(true);
-                              }}
-                            >
-                              <Trash2 size={13} />
-                              Excluir
-                            </DropdownMenuItem>
-                          </>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-
-                  {/* Name + status badge */}
-                  <div className="space-y-1.5">
-                    <p className="font-display text-xl font-bold leading-snug text-foreground">
-                      {list.name}
-                    </p>
+                {/* Top Row: Icon + Badge + Menu */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2">
                     {isComplete ? (
-                      <span className="inline-block rounded-xl bg-sage-500/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-sage-500">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2.5 py-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                        <CheckCircle2 size={12} strokeWidth={2.5} />
                         Finalizada
                       </span>
                     ) : (
-                      <span
-                        className="inline-block rounded-xl px-3 py-1 text-[10px] font-semibold uppercase tracking-wide"
-                        style={{ background: 'rgba(173,198,255,0.15)', color: '#adc6ff' }}
-                      >
+                      <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2.5 py-1 text-[11px] font-bold text-primary">
+                        <Clock size={12} />
                         Em aberto
                       </span>
                     )}
                   </div>
 
-                  {/* Notes */}
+                  {/* Context Menu */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex h-8 w-8 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                        aria-label="Ações da lista"
+                      >
+                        <MoreVertical size={16} />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                      {isComplete ? (
+                        <DropdownMenuItem
+                          className="gap-2 text-primary font-medium"
+                          onClick={() => {
+                            onUnfinishList(list.shoppingListId);
+                            onOpenList(list.shoppingListId);
+                          }}
+                        >
+                          <RotateCcw size={14} />
+                          Reabrir Lista
+                        </DropdownMenuItem>
+                      ) : (
+                        <>
+                          <DropdownMenuItem
+                            className="gap-2"
+                            onClick={() => {
+                              setEditingListId(list.shoppingListId);
+                              setShowEditList(true);
+                            }}
+                          >
+                            <Pencil size={14} />
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="gap-2 text-destructive focus:text-destructive"
+                            onClick={() => {
+                              setEditingListId(list.shoppingListId);
+                              setShowDeleteAlert(true);
+                            }}
+                          >
+                            <Trash2 size={14} />
+                            Excluir
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+
+                {/* List Name */}
+                <div className="mt-3 space-y-1">
+                  <h3 className="font-display text-lg font-bold leading-tight text-foreground line-clamp-1">
+                    {list.name}
+                  </h3>
                   {list.notes && (
-                    <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+                    <p className="line-clamp-2 text-xs text-muted-foreground leading-relaxed">
                       {list.notes}
                     </p>
                   )}
+                </div>
 
-                  {/* Divider + footer stats */}
-                  <div className="grid grid-cols-2 gap-4 border-t border-border pt-5">
-                    <div className="space-y-0.5">
-                      <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
-                        Itens
-                      </p>
-                      <p className="text-base font-semibold text-foreground">
-                        {list.totalItems} produtos
-                      </p>
-                    </div>
-                    <div className="space-y-0.5">
-                      <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
-                        Total Est.
-                      </p>
-                      <p className="text-base font-semibold text-foreground">
-                        {list.totalEstimated ? formatCurrency(list.totalEstimated) : '—'}
-                      </p>
-                    </div>
+                {/* Progress Bar inside Card */}
+                <div className="mt-4 space-y-1.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-medium text-muted-foreground">
+                      {list.purchasedItems} de {list.totalItems} itens
+                    </span>
+                    <span className="font-bold text-foreground">{listPct}%</span>
+                  </div>
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-muted/60">
+                    <div
+                      className={cn(
+                        'h-full rounded-full transition-all duration-300',
+                        isComplete ? 'bg-emerald-500' : 'bg-primary'
+                      )}
+                      style={{ width: `${listPct}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Card Footer: Estimated vs Spent */}
+                <div className="mt-4 grid grid-cols-2 gap-2 border-t border-border/50 pt-3 text-xs">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                      Estimado
+                    </span>
+                    <p className="font-semibold text-foreground">
+                      {list.totalEstimated ? formatCurrency(list.totalEstimated) : '—'}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                      Gasto Real
+                    </span>
+                    <p className={cn('font-bold', list.totalSpent ? 'text-emerald-600 dark:text-emerald-400' : 'text-foreground')}>
+                      {list.totalSpent ? formatCurrency(list.totalSpent) : '—'}
+                    </p>
                   </div>
                 </div>
               </motion.div>
             );
           })}
-        </motion.div>
+        </div>
       )}
 
-      {/* Dialogs */}
+      {/* ── Dialogs ─────────────────────────────────────────────────────────── */}
       <ListFormDialog
         open={showCreateList}
         onClose={() => setShowCreateList(false)}
@@ -387,42 +476,38 @@ export function ShoppingListsView(props: ShoppingListsViewProps) {
           }
         }}
       >
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-3xl">
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir lista?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação não pode ser desfeita. Todos os itens serão removidos.
+              Esta ação removerá a lista e todos os itens dela. Não poderá ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={onDeleteListFromGrid} disabled={isDeleting}>
-              {isDeleting ? 'Excluindo…' : 'Excluir'}
+            <AlertDialogCancel className="rounded-xl">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={onDeleteListFromGrid}
+              disabled={isDeleting}
+              className="rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? 'Excluindo...' : 'Excluir'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Floating Action Button */}
+      {/* ── FAB Mobile Principal (Alto Contraste, Seguro contra Safe Area) ───── */}
       <motion.div
-        className="group fixed bottom-6 right-6 z-50"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        transition={{ duration: 0.15 }}
+        className="fixed bottom-6 right-6 z-40 sm:hidden pb-[env(safe-area-inset-bottom)]"
+        whileTap={{ scale: 0.92 }}
       >
-        <div className="relative flex items-center">
-          <span className="pointer-events-none absolute right-[72px] whitespace-nowrap rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
-            Nova Lista
-          </span>
-          <button
-            className="flex h-16 w-16 items-center justify-center rounded-xl shadow-2xl"
-            style={{ backgroundColor: '#adc6ff' }}
-            onClick={() => setShowCreateList(true)}
-            aria-label="Nova Lista"
-          >
-            <Plus size={20} style={{ color: '#131313' }} />
-          </button>
-        </div>
+        <button
+          onClick={() => setShowCreateList(true)}
+          className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-2xl transition-transform"
+          aria-label="Criar nova lista"
+        >
+          <Plus size={26} strokeWidth={3} />
+        </button>
       </motion.div>
     </motion.div>
   );

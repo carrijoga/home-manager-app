@@ -1,8 +1,9 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronDown, ChevronUp, Tag } from 'lucide-react';
+import { CheckCircle2, ChevronDown, FolderMinus, Tag } from 'lucide-react';
 import React from 'react';
 
 import { Checkbox } from '@/components/ui/checkbox';
+import { cn } from '@/lib/utils';
 import type { AppShoppingItem } from '@/types';
 
 import { ShoppingItemRow } from './ShoppingItemRow';
@@ -27,6 +28,8 @@ interface CategorySectionProps {
   onToggleSelection: (id: string) => void;
   onMarkAsPurchased: (item: AppShoppingItem) => void;
   onUnmark: (item: AppShoppingItem) => void;
+  onIgnore?: (item: AppShoppingItem) => void;
+  onUnignore?: (item: AppShoppingItem) => void;
   onOpenInlineEdit: (item: AppShoppingItem) => void;
   onCancelInlineEdit: () => void;
   onSaveInlineEdit: (item: AppShoppingItem) => void;
@@ -52,6 +55,8 @@ export function CategorySection(props: CategorySectionProps) {
     onToggleSelection,
     onMarkAsPurchased,
     onUnmark,
+    onIgnore,
+    onUnignore,
     onOpenInlineEdit,
     onCancelInlineEdit,
     onSaveInlineEdit,
@@ -60,66 +65,91 @@ export function CategorySection(props: CategorySectionProps) {
 
   const purchasedCount = items.filter((i) => i.isPurchased).length;
   const unpurchased = items.filter((i) => !i.isPurchased);
+  const allPurchased = items.length > 0 && purchasedCount === items.length;
   const allGroupSelected =
     unpurchased.length > 0 && unpurchased.every((i) => selectedItemIds.has(i.shoppingItemId));
   const someGroupSelected = unpurchased.some((i) => selectedItemIds.has(i.shoppingItemId));
 
+  const isNoneCategory = category === 'Sem categoria';
+
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-card dark:bg-[#1e1e1e]">
-      {/* Category header */}
-      <div className="flex items-center justify-between border-b border-border/50 bg-card px-5 py-3.5 dark:bg-[#242424]">
-        <div className="flex items-center gap-3">
+    <div className="overflow-hidden rounded-3xl border border-border/80 bg-card shadow-sm transition-all dark:bg-[#181818]">
+      {/* Category header - Tappable with thumb */}
+      <div
+        onClick={() => onToggleCollapse(category)}
+        className="flex cursor-pointer items-center justify-between border-b border-border/40 bg-muted/20 px-4 py-3 select-none transition-colors hover:bg-muted/40 active:bg-muted/60 dark:bg-[#1f1f1f]/50"
+      >
+        <div className="flex items-center gap-2.5 min-w-0">
           {isBulkMode && unpurchased.length > 0 && (
-            <Checkbox
-              checked={allGroupSelected}
-              data-state={someGroupSelected && !allGroupSelected ? 'indeterminate' : undefined}
-              onCheckedChange={(checked) => {
-                setSelectedItemIds((prev) => {
-                  const next = new Set(prev);
-                  unpurchased.forEach((i) => {
-                    if (checked) next.add(i.shoppingItemId);
-                    else next.delete(i.shoppingItemId);
+            <div onClick={(e) => e.stopPropagation()}>
+              <Checkbox
+                checked={allGroupSelected}
+                data-state={someGroupSelected && !allGroupSelected ? 'indeterminate' : undefined}
+                onCheckedChange={(checked) => {
+                  setSelectedItemIds((prev) => {
+                    const next = new Set(prev);
+                    unpurchased.forEach((i) => {
+                      if (checked) next.add(i.shoppingItemId);
+                      else next.delete(i.shoppingItemId);
+                    });
+                    return next;
                   });
-                  return next;
-                });
-              }}
-              className="shrink-0"
-            />
+                }}
+                className="shrink-0 rounded-lg h-5 w-5 mr-1"
+              />
+            </div>
           )}
+
           <div
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-2xl"
-            style={{ background: 'rgba(173,198,255,0.1)' }}
+            className={cn(
+              'flex h-8 w-8 shrink-0 items-center justify-center rounded-xl',
+              allPurchased
+                ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                : 'bg-primary/10 text-primary'
+            )}
           >
-            <Tag size={13} style={{ color: '#adc6ff' }} />
+            {isNoneCategory ? <FolderMinus size={15} /> : <Tag size={15} />}
           </div>
-          <span className="text-sm font-semibold uppercase tracking-wider text-foreground">
+
+          <span className="truncate text-sm font-bold tracking-tight text-foreground">
             {category}
           </span>
-          <span className="text-xs text-muted-foreground">
+
+          <span className="inline-flex items-center rounded-lg bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground shrink-0">
             {purchasedCount}/{items.length}
           </span>
         </div>
-        <button
-          onClick={() => onToggleCollapse(category)}
-          className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          aria-label={isCollapsed ? 'Expandir categoria' : 'Recolher categoria'}
-        >
-          {isCollapsed ? <ChevronDown size={15} /> : <ChevronUp size={15} />}
-        </button>
+
+        <div className="flex items-center gap-2 shrink-0">
+          {allPurchased && (
+            <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+              <CheckCircle2 size={11} /> Concluída
+            </span>
+          )}
+
+          <span
+            className={cn(
+              'flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-transform duration-200',
+              !isCollapsed && 'rotate-180'
+            )}
+          >
+            <ChevronDown size={16} />
+          </span>
+        </div>
       </div>
 
-      {/* Items */}
+      {/* Items List */}
       <AnimatePresence initial={false}>
         {!isCollapsed && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.22, ease: [0.25, 1, 0.5, 1] }}
-            className="overflow-hidden"
+            transition={{ duration: 0.2, ease: [0.25, 1, 0.5, 1] }}
+            className="overflow-hidden divide-y divide-border/30"
           >
             <AnimatePresence mode="popLayout">
-              {items.map((item, idx) => {
+              {items.map((item) => {
                 const isEditing = inlineEditingId === item.shoppingItemId;
 
                 return (
@@ -130,7 +160,6 @@ export function CategorySection(props: CategorySectionProps) {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, x: -20, scale: 0.98 }}
                     transition={{ duration: 0.2, ease: [0.25, 1, 0.5, 1] }}
-                    className={idx > 0 ? 'border-t border-border/30' : ''}
                   >
                     <ShoppingItemRow
                       item={item}
@@ -146,6 +175,8 @@ export function CategorySection(props: CategorySectionProps) {
                       onToggleSelection={onToggleSelection}
                       onMarkAsPurchased={onMarkAsPurchased}
                       onUnmark={onUnmark}
+                      onIgnore={onIgnore}
+                      onUnignore={onUnignore}
                       onOpenInlineEdit={onOpenInlineEdit}
                       onCancelInlineEdit={onCancelInlineEdit}
                       onSaveInlineEdit={onSaveInlineEdit}

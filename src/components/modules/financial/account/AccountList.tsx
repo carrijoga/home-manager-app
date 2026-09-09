@@ -1,4 +1,4 @@
-import { MoreVertical, Pencil, Plus, Power, PowerOff, Trash2 } from 'lucide-react';
+import { DollarSign, MoreVertical, Pencil, Plus, Power, PowerOff, Trash2 } from 'lucide-react';
 
 import { Button } from '@/components/ui';
 import {
@@ -18,6 +18,7 @@ interface AccountListProps {
   canDeleteMap: Record<string, boolean>;
   onSelect: (id: string) => void;
   onEdit: (account: BankAccountResponse) => void;
+  onAdjustBalance: (account: BankAccountResponse) => void;
   onToggleActive: (account: BankAccountResponse) => void;
   onDelete: (account: BankAccountResponse) => void;
   onAdd: () => void;
@@ -29,6 +30,7 @@ export function AccountList({
   canDeleteMap,
   onSelect,
   onEdit,
+  onAdjustBalance,
   onToggleActive,
   onDelete,
   onAdd,
@@ -90,6 +92,9 @@ export function AccountList({
             <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
               <DropdownMenuItem onClick={() => onEdit(acc)} className="gap-2">
                 <Pencil size={14} strokeWidth={1.5} /> Editar
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onAdjustBalance(acc)} className="gap-2">
+                <DollarSign size={14} strokeWidth={1.5} /> Alterar saldo
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onToggleActive(acc)} className="gap-2">
                 {acc.isActive ? (

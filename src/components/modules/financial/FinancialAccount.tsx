@@ -2,6 +2,7 @@ import { Plus, Wallet } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import EmptyState from '@/components/common/EmptyState';
+import { AdjustBalanceDialog } from '@/components/modals/AdjustBalanceDialog';
 import { BankAccountSheet } from '@/components/modals/BankAccountSheet';
 import { DeleteAccountDialog } from '@/components/modals/DeleteAccountDialog';
 import { InactivateAccountDialog } from '@/components/modals/InactivateAccountDialog';
@@ -10,6 +11,7 @@ import { Button } from '@/components/ui';
 import { useApp } from '@/contexts/AppContext';
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
 import type {
+  AdjustBalanceRequest,
   BankAccountResponse,
   CreateBankAccountRequest,
   UpdateBankAccountRequest,
@@ -30,6 +32,9 @@ export function FinancialAccount() {
 
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<BankAccountResponse | null>(null);
+
+  const [adjustOpen, setAdjustOpen] = useState(false);
+  const [adjustingAccount, setAdjustingAccount] = useState<BankAccountResponse | null>(null);
 
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState<BankAccountResponse | null>(null);
@@ -107,6 +112,18 @@ export function FinancialAccount() {
     }
   };
 
+  const handleAdjustBalance = async (id: string, payload: AdjustBalanceRequest) => {
+    try {
+      await bankAccountService.adjustBankAccountBalance(id, payload, nestId);
+      showSuccess('Saldo atualizado com sucesso!');
+      await loadAccounts();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Não foi possível alterar o saldo.';
+      showError(msg);
+      throw err;
+    }
+  };
+
   const handleConfirmDelete = async () => {
     if (!deletingAccount) return;
     try {
@@ -165,6 +182,10 @@ export function FinancialAccount() {
     setEditingAccount(account);
     setSheetOpen(true);
   };
+  const openAdjust = (account: BankAccountResponse) => {
+    setAdjustingAccount(account);
+    setAdjustOpen(true);
+  };
   const openDelete = (account: BankAccountResponse) => {
     setDeletingAccount(account);
     setDeleteOpen(true);
@@ -204,13 +225,16 @@ export function FinancialAccount() {
               canDeleteMap={canDeleteMap}
               onSelect={setSelectedId}
               onEdit={openEdit}
+              onAdjustBalance={openAdjust}
               onToggleActive={handleToggleActive}
               onDelete={openDelete}
               onAdd={openCreate}
             />
           </div>
           <div className="flex-1">
-            {selectedAccount && <AccountDetails account={selectedAccount} />}
+            {selectedAccount && (
+              <AccountDetails account={selectedAccount} onAdjustBalance={openAdjust} />
+            )}
           </div>
         </div>
       )}
@@ -221,6 +245,13 @@ export function FinancialAccount() {
         account={editingAccount}
         onCreate={handleCreate}
         onUpdate={handleUpdate}
+      />
+
+      <AdjustBalanceDialog
+        open={adjustOpen}
+        account={adjustingAccount}
+        onClose={() => setAdjustOpen(false)}
+        onConfirm={handleAdjustBalance}
       />
 
       <DeleteAccountDialog

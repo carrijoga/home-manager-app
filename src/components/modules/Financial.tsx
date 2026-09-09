@@ -1,7 +1,8 @@
 import type { Variants } from 'framer-motion';
 import { motion } from 'framer-motion';
-import { Plus } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { Plus, Sparkles } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { PaymentModal } from '@/components/modals/PaymentModal';
 import { TransactionSheet } from '@/components/modals/TransactionSheet';
@@ -18,6 +19,7 @@ import {
 import { useApp } from '@/contexts/AppContext';
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
 import { useDebounce } from '@/hooks/useDebounce';
+import { usePolling } from '@/hooks/usePolling';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import type { BankAccountResponse } from '@/schemas/bank-account';
 import type { CategoryResponse } from '@/schemas/category';
@@ -66,6 +68,7 @@ const cardSlide: Variants = {
  * resumo e contas-a-vencer são derivados client-side — sem requests extras.
  */
 const Financial = () => {
+  const navigate = useNavigate();
   const { user, activeNestId } = useApp();
   const { showSuccess, showError } = useToastNotifications();
   const prefersReducedMotion = usePrefersReducedMotion();
@@ -95,29 +98,33 @@ const Financial = () => {
   const [deletingTx, setDeletingTx] = useState<FinancialTransactionResponse | null>(null);
 
   // Busca dashboard e lista de transações em paralelo.
-  useEffect(() => {
-    let active = true;
-    setLoading(true);
-    Promise.all([
-      financialService.getFinancialDashboard(month.getMonth() + 1, month.getFullYear(), nestId),
-      financialService.listTransactions({ ...getMonthRange(month), pageSize: 1000 }, nestId),
-    ])
-      .then(([dashboard, list]) => {
-        if (!active) return;
+  const loadData = useCallback(
+    async (silent = false) => {
+      if (!silent) setLoading(true);
+      try {
+        const [dashboard, list] = await Promise.all([
+          financialService.getFinancialDashboard(month.getMonth() + 1, month.getFullYear(), nestId),
+          financialService.listTransactions({ ...getMonthRange(month), pageSize: 1000 }, nestId),
+        ]);
         setDashboardData(dashboard);
         setMonthTransactions(list ?? []);
-      })
-      .catch(() => {
-        if (active) showError('Erro ao carregar transações.');
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [month, nestId, refreshKey]);
+      } catch {
+        if (!silent) showError('Erro ao carregar transações.');
+      } finally {
+        if (!silent) setLoading(false);
+      }
+    },
+    [month, nestId, showError]
+  );
+
+  useEffect(() => {
+    loadData(false);
+  }, [loadData, refreshKey]);
+
+  usePolling(
+    useCallback(() => loadData(true), [loadData]),
+    { intervalMs: 10000, enabled: Boolean(nestId) }
+  );
 
   // Categorias — uma vez por nest, sem refresh em mutações
   useEffect(() => {
@@ -286,6 +293,24 @@ const Financial = () => {
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="flex max-w-full flex-col gap-6 overflow-x-hidden">
+      {/* ── Banner de Alternância de Versão (V2 Beta) ── */}
+      <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-2xl border border-primary/20 bg-primary/10 px-4 py-2.5 text-xs">
+        <div className="flex items-center gap-2 font-semibold text-primary">
+          <Sparkles size={16} />
+          <span>
+            Conheça o novo <strong className="font-bold">Financial V2</strong> com novo design, métricas analíticas e baixa rápida
+          </span>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => navigate('/financial-v2')}
+          className="font-ui font-semibold text-primary underline transition-colors hover:text-primary/80"
+        >
+          Experimentar V2 →
+        </button>
+      </div>
+
       {/* Header: período + saldo + nova transação */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <MonthNavigator month={month} onChange={setMonth} />

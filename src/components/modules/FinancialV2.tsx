@@ -1,7 +1,7 @@
 import type { Variants } from 'framer-motion';
 import { motion } from 'framer-motion';
-import { Plus, Sparkles } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { ArrowDownRight, ArrowUpRight, CheckCircle2, Clock, Plus, Sparkles } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { CreateCategoryModal } from '@/components/modals/CreateCategoryModal';
@@ -20,6 +20,7 @@ import {
 import { useApp } from '@/contexts/AppContext';
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
 import { useDebounce } from '@/hooks/useDebounce';
+import { usePolling } from '@/hooks/usePolling';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import type { BankAccountResponse } from '@/schemas/bank-account';
 import type { CategoryResponse } from '@/schemas/category';
@@ -40,7 +41,7 @@ import * as financialService from '@/services/financialService';
 import * as nestService from '@/services/nestService';
 import * as paymentCardService from '@/services/paymentCardService';
 import { formatCurrency } from '@/utils/dashboardMetrics';
-import { getMonthLabel, getMonthRange } from '@/utils/financialUtils';
+import { getEffectiveAmount, getMonthLabel, getMonthRange } from '@/utils/financialUtils';
 
 import { MonthNavigator } from './financial/MonthNavigator';
 import { CategoryBreakdownCardV2 } from './financial-v2/CategoryBreakdownCardV2';
@@ -59,14 +60,14 @@ const firstOfCurrentMonth = () => {
 };
 
 const cardSlide: Variants = {
-  hidden: { opacity: 0, y: 24, scale: 0.97 },
-  show: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.45, ease: [0.25, 1, 0.5, 1] } },
+  hidden: { opacity: 0, y: 20, scale: 0.98 },
+  show: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.4, ease: [0.25, 1, 0.5, 1] } },
 };
 
 /**
- * FinancialV2 — Hub de lançamentos financeiros redesenhado (Versão 2).
- * Traz saldo real/previsto, filtros inteligentes por morador e categoria por clique,
- * baixa rápida em 1 clique e exportação de extrato em CSV.
+ * FinancialV2 — Hub Analítico de Lançamentos Financeiros (Versão 2 Redesenhada).
+ * Integra KPIs superiores, comparativos de liquidação de caixa,
+ * central de contas a vencer, filtros instantâneos com contadores dinâmicos e baixa rápida em 1 clique.
  */
 export function FinancialV2() {
   const navigate = useNavigate();
@@ -100,30 +101,34 @@ export function FinancialV2() {
   const [payingTx, setPayingTx] = useState<FinancialTransactionResponse | null>(null);
   const [deletingTx, setDeletingTx] = useState<FinancialTransactionResponse | null>(null);
 
-  // Busca dashboard e lista de transações em paralelo.
-  useEffect(() => {
-    let active = true;
-    setLoading(true);
-    Promise.all([
-      financialService.getFinancialDashboard(month.getMonth() + 1, month.getFullYear(), nestId),
-      financialService.listTransactions({ ...getMonthRange(month), pageSize: 1000 }, nestId),
-    ])
-      .then(([dashboard, list]) => {
-        if (!active) return;
+  // Busca dashboard e lista de transações em paralelo
+  const loadData = useCallback(
+    async (silent = false) => {
+      if (!silent) setLoading(true);
+      try {
+        const [dashboard, list] = await Promise.all([
+          financialService.getFinancialDashboard(month.getMonth() + 1, month.getFullYear(), nestId),
+          financialService.listTransactions({ ...getMonthRange(month), pageSize: 1000 }, nestId),
+        ]);
         setDashboardData(dashboard);
         setMonthTransactions(list ?? []);
-      })
-      .catch(() => {
-        if (active) showError('Erro ao carregar transações.');
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [month, nestId, refreshKey]);
+      } catch {
+        if (!silent) showError('Erro ao carregar transações.');
+      } finally {
+        if (!silent) setLoading(false);
+      }
+    },
+    [month, nestId, showError]
+  );
+
+  useEffect(() => {
+    loadData(false);
+  }, [loadData, refreshKey]);
+
+  usePolling(
+    useCallback(() => loadData(true), [loadData]),
+    { intervalMs: 10000, enabled: Boolean(nestId) }
+  );
 
   // Categorias — uma vez por nest
   useEffect(() => {
@@ -209,6 +214,29 @@ export function FinancialV2() {
     debouncedSearch,
   ]);
 
+  // Totais analíticos para os Hero KPI Cards
+  const paidIncome = useMemo(
+    () =>
+      monthTransactions
+        .filter((t) => t.transactionType === TransactionType.Income)
+        .reduce((sum, t) => sum + getEffectiveAmount(t), 0),
+    [monthTransactions]
+  );
+
+  const paidExpense = useMemo(
+    () =>
+      monthTransactions
+        .filter((t) => t.transactionType === TransactionType.Expense)
+        .reduce((sum, t) => sum + getEffectiveAmount(t), 0),
+    [monthTransactions]
+  );
+
+  const realBalance = paidIncome - paidExpense;
+  const projectedBalance = Number(dashboardData?.currentMonth.balance ?? 0);
+  const totalIncome = Number(dashboardData?.currentMonth.totalIncome ?? 0);
+  const totalExpenses = Number(dashboardData?.currentMonth.totalExpenses ?? 0);
+  const paidExpensePercent = totalExpenses > 0 ? Math.round((paidExpense / totalExpenses) * 100) : 0;
+
   // ── Mutações ───────────────────────────────────────────────────────────────
   const refresh = () => setRefreshKey((k) => k + 1);
 
@@ -237,7 +265,7 @@ export function FinancialV2() {
   const handlePaymentSubmit = async (payload: AddPaymentRequest) => {
     try {
       await financialService.addPayment(payload, nestId);
-      showSuccess('Pagamento registrado!');
+      showSuccess('Pagamento registrado com sucesso!');
       refresh();
     } catch (error) {
       showError('Erro ao registrar pagamento. Tente novamente.');
@@ -269,10 +297,10 @@ export function FinancialV2() {
         { financialTransactionId: deletingTx.financialTransactionId },
         nestId
       );
-      showSuccess('Transação excluída.');
+      showSuccess('Transação excluída com sucesso.');
       refresh();
     } catch {
-      showError('Erro ao excluir.');
+      showError('Erro ao excluir transação.');
     } finally {
       setDeletingTx(null);
     }
@@ -315,61 +343,167 @@ export function FinancialV2() {
   const monthLabelStr = getMonthLabel(month);
 
   return (
-    <div className="flex max-w-full flex-col gap-6 overflow-x-hidden">
-      {/* Banner de Alternância de Versão (V1 / V2) */}
-      <div className="font-ui flex items-center justify-between rounded-2xl border border-primary/20 bg-primary/10 p-3 px-4 text-xs">
+    <div className="flex max-w-full flex-col gap-5 overflow-x-hidden pb-12">
+      {/* ── Banner de Alternância de Versão (V2 Beta) + Sub-navegação ── */}
+      <div data-tour="financial-header" className="flex flex-wrap items-center justify-between gap-2.5 rounded-2xl border border-primary/20 bg-primary/10 px-4 py-2.5 text-xs">
         <div className="flex items-center gap-2 font-semibold text-primary">
           <Sparkles size={16} />
           <span>
-            Você está visualizando a <strong className="font-bold">Versão 2 (Novo Design)</strong>{' '}
-            de Lançamentos Financeiros
+            Você está visualizando a <strong className="font-bold">Versão 2 (Novo Design)</strong> de
+            Lançamentos Financeiros
           </span>
         </div>
-        <button
-          type="button"
-          onClick={() => navigate('/financial')}
-          className="font-semibold text-foreground underline transition-colors hover:text-primary"
-        >
-          Voltar para V1 Original
-        </button>
-      </div>
 
-      {/* Header: período + saldo + nova transação */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <MonthNavigator month={month} onChange={setMonth} />
         <div className="flex items-center gap-4">
-          <span className="font-ui hidden text-sm text-muted-foreground sm:inline">
-            Saldo do mês{' '}
-            <b
-              className="text-base"
-              style={{
-                color:
-                  Number(dashboardData?.currentMonth.balance ?? 0) >= 0
-                    ? 'var(--chart-2)'
-                    : 'var(--destructive)',
-              }}
+          <div data-tour="financial-tabs" className="flex items-center gap-2 text-xs">
+            <button
+              type="button"
+              onClick={() => navigate('/financial/goals')}
+              className="font-ui text-muted-foreground transition-colors hover:text-foreground"
             >
-              {formatCurrency(Number(dashboardData?.currentMonth.balance ?? 0))}
-            </b>
-          </span>
+              Metas
+            </button>
+            <span className="text-border">·</span>
+            <button
+              type="button"
+              onClick={() => navigate('/financial/recurrences')}
+              className="font-ui text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Recorrências
+            </button>
+            <span className="text-border">·</span>
+            <button
+              type="button"
+              onClick={() => navigate('/financial/account')}
+              className="font-ui text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Contas
+            </button>
+            <span className="text-border">·</span>
+            <button
+              type="button"
+              onClick={() => navigate('/financial/card')}
+              className="font-ui text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Cartões
+            </button>
+          </div>
+
           <button
             type="button"
-            onClick={openCreate}
-            className="font-ui duration-[length:var(--dur-base)] hidden items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:brightness-105 active:scale-[0.98] sm:inline-flex"
+            onClick={() => navigate('/financial')}
+            className="font-ui font-semibold text-primary underline transition-colors hover:text-primary/80"
           >
-            <Plus size={16} strokeWidth={2} /> Nova transação
+            Voltar para V1
           </button>
         </div>
       </div>
 
+      {/* Header Superior: MonthNavigator + Botão Nova Transação */}
+      <div data-tour="financial-action-buttons" className="flex flex-wrap items-center justify-between gap-3">
+        <MonthNavigator month={month} onChange={setMonth} />
+
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={openCreate}
+            className="font-ui inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-xs font-bold text-primary-foreground shadow-sm transition-all hover:brightness-105 active:scale-[0.98]"
+          >
+            <Plus size={16} strokeWidth={2.5} /> Nova Transação
+          </button>
+        </div>
+      </div>
+
+      {/* Grade Superior de 4 KPIs Analíticos */}
+      <div data-tour="financial-summary" className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {/* KPI 1: Saldo em Caixa (Efetivado) */}
+        <div className="flex flex-col gap-1 rounded-2xl border border-border/80 bg-card p-4 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="font-ui text-[11px] font-semibold text-muted-foreground">
+              Saldo em Caixa
+            </span>
+            <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-chart-2/15 text-chart-2">
+              <CheckCircle2 size={15} strokeWidth={2.5} />
+            </div>
+          </div>
+          <span
+            className="font-ui text-lg font-extrabold tracking-tight sm:text-xl"
+            style={{ color: realBalance >= 0 ? 'var(--chart-2)' : 'var(--destructive)' }}
+          >
+            {formatCurrency(realBalance)}
+          </span>
+          <span className="font-ui text-[10px] text-muted-foreground">
+            {paidIncome >= paidExpense ? 'Receitas − Despesas quitadas' : 'Déficit realizado'}
+          </span>
+        </div>
+
+        {/* KPI 2: Saldo Previsto */}
+        <div className="flex flex-col gap-1 rounded-2xl border border-border/80 bg-card p-4 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="font-ui text-[11px] font-semibold text-muted-foreground">
+              Saldo Previsto
+            </span>
+            <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-primary/15 text-primary">
+              <Clock size={15} strokeWidth={2.5} />
+            </div>
+          </div>
+          <span
+            className="font-ui text-lg font-extrabold tracking-tight sm:text-xl"
+            style={{ color: projectedBalance >= 0 ? 'var(--foreground)' : 'var(--destructive)' }}
+          >
+            {formatCurrency(projectedBalance)}
+          </span>
+          <span className="font-ui text-[10px] text-muted-foreground">
+            Projeção ao fim do mês
+          </span>
+        </div>
+
+        {/* KPI 3: Receitas Totais */}
+        <div className="flex flex-col gap-1 rounded-2xl border border-border/80 bg-card p-4 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="font-ui text-[11px] font-semibold text-muted-foreground">
+              Receitas do Mês
+            </span>
+            <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-chart-2/15 text-chart-2">
+              <ArrowUpRight size={15} strokeWidth={2.5} />
+            </div>
+          </div>
+          <span className="font-ui text-lg font-extrabold tracking-tight text-chart-2 sm:text-xl">
+            {formatCurrency(totalIncome)}
+          </span>
+          <span className="font-ui text-[10px] text-muted-foreground">
+            {paidIncome > 0 ? `${formatCurrency(paidIncome)} já recebido` : 'Aguardando recebimentos'}
+          </span>
+        </div>
+
+        {/* KPI 4: Despesas Totais */}
+        <div className="flex flex-col gap-1 rounded-2xl border border-border/80 bg-card p-4 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="font-ui text-[11px] font-semibold text-muted-foreground">
+              Despesas do Mês
+            </span>
+            <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-destructive/15 text-destructive">
+              <ArrowDownRight size={15} strokeWidth={2.5} />
+            </div>
+          </div>
+          <span className="font-ui text-lg font-extrabold tracking-tight text-destructive sm:text-xl">
+            {formatCurrency(totalExpenses)}
+          </span>
+          <span className="font-ui text-[10px] text-muted-foreground">
+            {paidExpensePercent}% quitadas ({formatCurrency(paidExpense)})
+          </span>
+        </div>
+      </div>
+
+      {/* Grade Principal: Coluna Lateral (Analytics) + Coluna Principal (Lançamentos) */}
       <motion.div
-        className="grid grid-cols-1 items-start gap-3 md:gap-6 lg:grid-cols-3"
-        variants={{ hidden: {}, show: { transition: { staggerChildren: 0.1 } } }}
+        className="grid grid-cols-1 items-start gap-4 md:gap-6 lg:grid-cols-3"
+        variants={{ hidden: {}, show: { transition: { staggerChildren: 0.08 } } }}
         initial={prefersReducedMotion ? false : 'hidden'}
         animate="show"
       >
-        {/* Coluna lateral — primeiro no mobile */}
-        <div className="order-1 flex flex-col gap-3 md:gap-6 lg:order-2 lg:col-span-1">
+        {/* Coluna Lateral — cards de análise e contas a vencer */}
+        <div className="order-1 flex flex-col gap-4 lg:order-2 lg:col-span-1">
           <motion.div variants={cardSlide}>
             <FinancialSummaryCardV2
               currentMonth={
@@ -381,6 +515,7 @@ export function FinancialV2() {
               transactions={monthTransactions}
             />
           </motion.div>
+
           <motion.div variants={cardSlide}>
             <UpcomingBillsCardV2
               bills={dashboardData?.upcomingBills ?? []}
@@ -388,6 +523,7 @@ export function FinancialV2() {
               onViewAllUnpaid={() => setFilters((f) => ({ ...f, status: 'unpaid' }))}
             />
           </motion.div>
+
           <motion.div variants={cardSlide} className="hidden lg:block">
             <CategoryBreakdownCardV2
               expensesByCategory={dashboardData?.expensesByCategory ?? []}
@@ -399,19 +535,21 @@ export function FinancialV2() {
           </motion.div>
         </div>
 
-        {/* Coluna principal — lista */}
+        {/* Coluna Principal — barra de filtros + lista de transações */}
         <motion.div
           variants={cardSlide}
-          className="order-2 flex flex-col gap-3 lg:order-1 lg:col-span-2"
+          className="order-2 flex flex-col gap-4 lg:order-1 lg:col-span-2"
         >
           <TransactionFiltersV2
             value={filters}
             onChange={setFilters}
             categories={categories}
             members={members}
+            monthTransactions={monthTransactions}
             filteredTransactions={filteredTransactions}
             monthLabel={monthLabelStr}
           />
+
           <TransactionListV2
             transactions={filteredTransactions}
             loading={loading}
@@ -419,9 +557,14 @@ export function FinancialV2() {
             loadingMore={false}
             onLoadMore={() => {}}
             emptyTitle={
-              hasActiveFilters ? 'Nenhuma transação encontrada' : 'Nenhuma transação neste mês'
+              hasActiveFilters ? 'Nenhum lançamento encontrado' : 'Nenhum lançamento neste mês'
             }
-            emptyDescription="Registre a primeira transação pelo botão Nova transação."
+            emptyDescription={
+              hasActiveFilters
+                ? 'Tente ajustar ou limpar os filtros aplicados para exibir outros lançamentos.'
+                : 'Registre o primeiro lançamento financeiro pelo botão Nova Transação.'
+            }
+            onResetFilters={hasActiveFilters ? () => setFilters(DEFAULT_FILTERS_V2) : undefined}
             onPay={setPayingTx}
             onEdit={openEdit}
             onDelete={setDeletingTx}
@@ -432,7 +575,7 @@ export function FinancialV2() {
           />
         </motion.div>
 
-        {/* Categorias — abaixo da lista no mobile */}
+        {/* Categorias — exibidas abaixo no mobile */}
         <motion.div variants={cardSlide} className="order-3 lg:hidden">
           <CategoryBreakdownCardV2
             expensesByCategory={dashboardData?.expensesByCategory ?? []}
@@ -444,23 +587,24 @@ export function FinancialV2() {
         </motion.div>
       </motion.div>
 
-      {/* FAB mobile */}
+      {/* FAB Mobile para Nova Transação */}
       <button
         type="button"
-        aria-label="Nova transação"
+        aria-label="Nova Transação"
         onClick={openCreate}
         className="fixed bottom-20 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform active:scale-95 sm:hidden"
       >
-        <Plus size={24} strokeWidth={2} />
+        <Plus size={24} strokeWidth={2.5} />
       </button>
 
-      {/* Modais */}
+      {/* Modais Integrados */}
       <CreateCategoryModal
         open={createCategoryOpen}
         onClose={() => setCreateCategoryOpen(false)}
         nestId={nestId}
         onCategoryCreated={(newCat) => setCategories((prev) => [...prev, newCat])}
       />
+
       <TransactionSheet
         open={formOpen}
         onClose={closeForm}
@@ -472,6 +616,7 @@ export function FinancialV2() {
         editingTransaction={editingTx}
         onUpdate={handleUpdate}
       />
+
       <PaymentModal
         open={payingTx !== null}
         onClose={() => setPayingTx(null)}
@@ -480,6 +625,7 @@ export function FinancialV2() {
         nestId={nestId}
         onSubmit={handlePaymentSubmit}
       />
+
       <AlertDialog
         open={deletingTx !== null}
         onOpenChange={(o) => {
@@ -488,9 +634,9 @@ export function FinancialV2() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir transação?</AlertDialogTitle>
+            <AlertDialogTitle>Excluir lançamento financeiro?</AlertDialogTitle>
             <AlertDialogDescription>
-              &quot;{deletingTx?.description}&quot; será removida permanentemente. Essa ação não
+              &quot;{deletingTx?.description}&quot; será removido permanentemente. Essa ação não
               pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -512,3 +658,4 @@ export function FinancialV2() {
 }
 
 export default FinancialV2;
+

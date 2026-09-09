@@ -1,5 +1,6 @@
-import { CreditCard, PowerOff } from 'lucide-react';
+import { CreditCard, DollarSign, PowerOff } from 'lucide-react';
 
+import { Button } from '@/components/ui';
 import { cn } from '@/lib/utils';
 import type { BankAccountResponse } from '@/schemas/bank-account';
 import { CARD_TYPE_LABELS } from '@/schemas/enums';
@@ -9,9 +10,10 @@ import { accountTypeLabel } from './accountType';
 
 interface AccountDetailsProps {
   account: BankAccountResponse;
+  onAdjustBalance?: (account: BankAccountResponse) => void;
 }
 
-export function AccountDetails({ account }: AccountDetailsProps) {
+export function AccountDetails({ account, onAdjustBalance }: AccountDetailsProps) {
   const balance = Number(account.balance);
 
   return (
@@ -51,28 +53,43 @@ export function AccountDetails({ account }: AccountDetailsProps) {
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-6 border-t border-dashed border-border pt-4">
-        <div>
-          <p className="font-ui text-[11px] uppercase tracking-wide text-muted-foreground">Saldo</p>
-          <p
-            className="font-editorial mt-1 text-3xl font-bold"
-            style={
-              account.isActive
-                ? { color: balance < 0 ? 'var(--destructive)' : 'var(--chart-2)' }
-                : { color: 'var(--muted-foreground)' }
-            }
+      <div className="flex flex-wrap items-end justify-between gap-4 border-t border-dashed border-border pt-4">
+        <div className="flex flex-wrap gap-6">
+          <div>
+            <p className="font-ui text-[11px] uppercase tracking-wide text-muted-foreground">Saldo</p>
+            <p
+              className="font-editorial mt-1 text-3xl font-bold"
+              style={
+                account.isActive
+                  ? { color: balance < 0 ? 'var(--destructive)' : 'var(--chart-2)' }
+                  : { color: 'var(--muted-foreground)' }
+              }
+            >
+              {formatCurrency(balance)}
+            </p>
+          </div>
+          <div>
+            <p className="font-ui text-[11px] uppercase tracking-wide text-muted-foreground">
+              Saldo inicial
+            </p>
+            <p className="font-editorial mt-1 text-lg font-semibold text-foreground">
+              {formatCurrency(Number(account.initialBalance))}
+            </p>
+          </div>
+        </div>
+
+        {onAdjustBalance && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => onAdjustBalance(account)}
+            className="gap-2 font-semibold shadow-2xs"
           >
-            {formatCurrency(balance)}
-          </p>
-        </div>
-        <div>
-          <p className="font-ui text-[11px] uppercase tracking-wide text-muted-foreground">
-            Saldo inicial
-          </p>
-          <p className="font-editorial mt-1 text-lg font-semibold text-foreground">
-            {formatCurrency(Number(account.initialBalance))}
-          </p>
-        </div>
+            <DollarSign size={15} strokeWidth={1.8} />
+            Alterar saldo
+          </Button>
+        )}
       </div>
 
       <div className="border-t border-dashed border-border pt-4">

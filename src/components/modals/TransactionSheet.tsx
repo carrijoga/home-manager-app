@@ -1,10 +1,12 @@
 // src/components/modals/TransactionSheet.tsx
 import { AnimatePresence, motion } from 'framer-motion';
+import { ShoppingCart } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { Button, Sheet, SheetContent } from '@/components/ui';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { useToastNotifications } from '@/hooks/use-toast-notifications';
 import type { BankAccountResponse } from '@/schemas/bank-account';
 import type { CategoryResponse } from '@/schemas/category';
 import { TransactionType } from '@/schemas/enums';
@@ -36,8 +38,12 @@ export interface TransactionSheetProps {
 }
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
-const toApiDateTime = (isoDate: string) => new Date(`${isoDate}T12:00:00`).toISOString();
-const toInputDate = (iso: string) => iso.slice(0, 10);
+const toApiDateTime = (isoDate: string) => {
+  if (!isoDate) return new Date().toISOString();
+  if (isoDate.includes('T')) return new Date(isoDate).toISOString();
+  return new Date(`${isoDate}T12:00:00`).toISOString();
+};
+const toInputDate = (iso?: string | null) => (iso ? String(iso).slice(0, 10) : todayIso());
 
 const EXPENSE_COLOR = '#e07070';
 const INCOME_COLOR = '#6ab085';
@@ -56,6 +62,7 @@ export function TransactionSheet({
   const isEditMode = editingTransaction !== null;
   const isMobile = useIsMobile();
   const reduced = usePrefersReducedMotion();
+  const { showError } = useToastNotifications();
 
   const [type, setType] = useState<number>(TransactionType.Expense);
   const [description, setDescription] = useState('');
@@ -111,13 +118,19 @@ export function TransactionSheet({
     if (editingTransaction) {
       const t = editingTransaction;
       setType(t.transactionType);
-      setDescription(t.description);
-      setAmount(Number(t.value));
-      setTransactionDate(toInputDate(String(t.transactionDate)));
-      setCategoryId(t.categoryId);
-      setResponsibleUserId(t.responsibleUserId);
+      setDescription(t.description ?? '');
+      const rawVal =
+        t.value !== undefined && t.value !== null
+          ? Number(t.value)
+          : (t as unknown as { amount?: number }).amount !== undefined
+            ? Number((t as unknown as { amount?: number }).amount)
+            : null;
+      setAmount(rawVal);
+      setTransactionDate(toInputDate(t.transactionDate));
+      setCategoryId(t.categoryId ?? '');
+      setResponsibleUserId(t.responsibleUserId || currentUserId);
       setObservation(t.observation ?? '');
-      setDueDate(t.dueDate ? toInputDate(String(t.dueDate)) : todayIso());
+      setDueDate(t.dueDate ? toInputDate(t.dueDate) : todayIso());
       setPaymentMethod(null);
       setSourceId(t.sourceId ?? defaultAccount);
       setIsDetailsOpen(true);
@@ -163,18 +176,33 @@ export function TransactionSheet({
 
   const visibleCategories = categories.filter((c) => c.type === type);
 
-  const isValid =
-    description.trim().length > 0 &&
-    amount !== null &&
-    amount > 0 &&
-    Boolean(categoryId) &&
-    Boolean(responsibleUserId) &&
-    members.length > 0 &&
-    (type !== TransactionType.Income || Boolean(sourceId));
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isValid || isSubmitting) return;
+    if (isSubmitting) return;
+
+    const trimmedDesc = description.trim();
+    if (!trimmedDesc) {
+      showError('Informe a descrição do lançamento.');
+      return;
+    }
+    if (amount === null || isNaN(amount) || amount <= 0) {
+      showError('Informe um valor válido maior que zero.');
+      return;
+    }
+    if (!categoryId) {
+      showError('Selecione uma categoria.');
+      return;
+    }
+    const finalResponsible = responsibleUserId || currentUserId;
+    if (!finalResponsible) {
+      showError('Selecione o responsável pelo lançamento.');
+      return;
+    }
+    if (type === TransactionType.Income && !sourceId) {
+      showError('Selecione a conta bancária de destino da receita.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const isExpenseType = type === TransactionType.Expense;
@@ -182,28 +210,30 @@ export function TransactionSheet({
         await onUpdate({
           financialTransactionId: editingTransaction.financialTransactionId,
           type,
-          description: description.trim(),
+          description: trimmedDesc,
           amount: amount as number,
           transactionDate: toApiDateTime(transactionDate),
-          dueDate: isExpenseType ? toApiDateTime(dueDate) : null,
+          dueDate: isExpenseType && dueDate ? toApiDateTime(dueDate) : null,
           categoryId,
-          responsibleUserId,
-          sourceId: isExpenseType ? null : sourceId,
+          responsibleUserId: finalResponsible,
+          sourceId: isExpenseType ? null : sourceId || null,
           observation: observation.trim() || null,
         });
       } else {
         await onCreate({
           type,
-          description: description.trim(),
+          description: trimmedDesc,
           amount: amount as number,
           transactionDate: toApiDateTime(transactionDate),
-          dueDate: isExpenseType ? toApiDateTime(dueDate) : null,
+          dueDate: isExpenseType && dueDate ? toApiDateTime(dueDate) : null,
           categoryId,
-          responsibleUserId,
-          sourceId: isExpenseType ? null : sourceId,
+          responsibleUserId: finalResponsible,
+          sourceId: isExpenseType ? null : sourceId || null,
         });
       }
       onClose();
+    } catch (err) {
+      console.error('Erro ao salvar lançamento:', err);
     } finally {
       setIsSubmitting(false);
     }
@@ -245,6 +275,13 @@ export function TransactionSheet({
             {isEditMode ? 'Edição' : 'Cadastro'}
           </span>
         </div>
+
+        {editingTransaction?.shoppingListId && (
+          <div className="font-ui mb-3 flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2 text-xs font-medium text-primary">
+            <ShoppingCart size={14} className="shrink-0" />
+            <span>Transação gerada automaticamente por uma Lista de Compras.</span>
+          </div>
+        )}
 
         <form
           onSubmit={(e) => {
@@ -330,7 +367,8 @@ export function TransactionSheet({
           >
             <Button
               type="submit"
-              disabled={isSubmitting || !isValid}
+              disabled={isSubmitting}
+              loading={isSubmitting}
               className="w-full bg-transparent font-semibold text-white hover:bg-black/10 disabled:opacity-50"
             >
               {submitLabel}

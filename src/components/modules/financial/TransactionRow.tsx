@@ -5,9 +5,11 @@ import {
   MoreHorizontal,
   Pencil,
   RotateCcw,
+  ShoppingCart,
   Trash2,
 } from 'lucide-react';
 import { useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import {
   DropdownMenu,
@@ -82,16 +84,21 @@ export function TransactionRow({
   onRemovePayment,
   sourceNameById,
 }: TransactionRowProps) {
+  const navigate = useNavigate();
   const [expanded, setExpanded] = useState(false);
   const prefersReducedMotion = usePrefersReducedMotion();
   const payIconRef = useRef<CheckIconHandle>(null);
 
   const isIncome = t.transactionType === TransactionType.Income;
+  const isAdjustment =
+    t.transactionType === TransactionType.Adjustment ||
+    t.transactionType === 2 ||
+    (!t.categoryId && !t.categoryName);
   const status = getTransactionStatus(t);
   const paidRatio = Number(t.value) > 0 ? getPaidAmount(t) / Number(t.value) : 0;
-  const canPay = !isIncome && t.paymentStatus !== PaymentStatus.Paid;
-  // Backend bloqueia edição de transação com pagamentos vinculados.
-  const canEdit = t.payments.length === 0;
+  const canPay = !isIncome && !isAdjustment && t.paymentStatus !== PaymentStatus.Paid;
+  // Backend bloqueia edição de transação com pagamentos vinculados ou de ajuste.
+  const canEdit = !isAdjustment && (t.payments ?? []).length === 0;
 
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card">
@@ -125,9 +132,17 @@ export function TransactionRow({
         </div>
 
         <div className="min-w-0 flex-1">
-          <p className="font-ui truncate text-sm font-semibold text-foreground">{t.description}</p>
+          <div className="flex items-center gap-2">
+            <p className="font-ui truncate text-sm font-semibold text-foreground">{t.description}</p>
+            {t.shoppingListId && (
+              <span className="font-ui inline-flex shrink-0 items-center gap-1 rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+                <ShoppingCart size={10} /> Lista de compras
+              </span>
+            )}
+          </div>
           <p className="font-ui truncate text-xs text-muted-foreground">
-            {t.categoryName} · {t.responsibleUserName}
+            {t.categoryName ? `${t.categoryName} · ` : ''}
+            {t.responsibleUserName || 'Sistema'}
             {t.paymentStatus !== PaymentStatus.Paid && t.dueDate && (
               <span className={t.isOverdue ? 'font-semibold text-destructive' : undefined}>
                 {' '}
@@ -190,6 +205,24 @@ export function TransactionRow({
                 {t.dueDate && <span>Vencimento: {formatLocalDate(String(t.dueDate))}</span>}
                 {t.originName && <span>Origem: {t.originName}</span>}
               </div>
+              {t.shoppingListId && (
+                <div className="flex items-center justify-between rounded-xl border border-primary/20 bg-primary/5 p-2.5">
+                  <span className="flex items-center gap-1.5 text-xs font-medium text-foreground">
+                    <ShoppingCart size={13} className="text-primary" />
+                    Gerado automaticamente por lista de compras
+                  </span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/shopping?listId=${t.shoppingListId}`);
+                    }}
+                    className="text-xs font-semibold text-primary transition-opacity hover:opacity-80 hover:underline"
+                  >
+                    Ver lista →
+                  </button>
+                </div>
+              )}
               {t.observation && <p>Obs.: {t.observation}</p>}
               {canPay && (
                 <button

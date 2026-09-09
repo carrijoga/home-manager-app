@@ -12,11 +12,13 @@ import {
   Pencil,
   PieChart,
   RotateCcw,
+  ShoppingCart,
   Tag,
   Trash2,
   User,
 } from 'lucide-react';
 import { useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import {
   DropdownMenu,
@@ -56,13 +58,24 @@ interface TransactionRowV2Props {
 
 function StatusBadge({
   status,
+  isOverdue,
   paidRatio,
   isIncome,
 }: {
   status: TransactionStatus;
+  isOverdue: boolean;
   paidRatio: number;
   isIncome: boolean;
 }) {
+  if (isOverdue && status !== 'paid') {
+    return (
+      <span className="font-ui inline-flex items-center gap-1 rounded-full border border-destructive/40 bg-destructive/15 px-2.5 py-0.5 text-[10px] font-bold text-destructive">
+        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-destructive" />
+        VENCIDA
+      </span>
+    );
+  }
+
   const styles: Record<
     TransactionStatus,
     { label: string; className: string; icon: typeof CheckCircle2 }
@@ -96,6 +109,7 @@ function StatusBadge({
   );
 }
 
+
 /**
  * TransactionRowV2 — Linha de transação V2 (Design Premium Meticuloso).
  * Traz baixas rápidas interativas, micro-animações, chips refinados e drawer de detalhes expandido.
@@ -108,17 +122,22 @@ export function TransactionRowV2({
   onRemovePayment,
   sourceNameById,
 }: TransactionRowV2Props) {
+  const navigate = useNavigate();
   const [expanded, setExpanded] = useState(false);
   const prefersReducedMotion = usePrefersReducedMotion();
   const payIconRef = useRef<CheckIconHandle>(null);
 
   const isIncome = t.transactionType === TransactionType.Income;
+  const isAdjustment =
+    t.transactionType === TransactionType.Adjustment ||
+    t.transactionType === 2 ||
+    (!t.categoryId && !t.categoryName);
   const status = getTransactionStatus(t);
   const totalValue = Number(t.value) || 0;
   const paidAmount = getPaidAmount(t);
   const paidRatio = totalValue > 0 ? paidAmount / totalValue : 0;
-  const canPay = !isIncome && t.paymentStatus !== PaymentStatus.Paid;
-  const canEdit = t.payments.length === 0;
+  const canPay = !isIncome && !isAdjustment && t.paymentStatus !== PaymentStatus.Paid;
+  const canEdit = !isAdjustment && (t.payments ?? []).length === 0;
 
   return (
     <div
@@ -164,6 +183,11 @@ export function TransactionRowV2({
             <p className="font-ui truncate text-sm font-semibold tracking-tight text-foreground">
               {t.description}
             </p>
+            {t.shoppingListId && (
+              <span className="font-ui inline-flex shrink-0 items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                <ShoppingCart size={10} /> Lista de compras
+              </span>
+            )}
             {t.responsibleUserName && (
               <span className="font-ui hidden shrink-0 items-center gap-1 rounded-full border border-border/40 bg-muted/80 px-2 py-0.5 text-[10px] font-medium text-muted-foreground md:inline-flex">
                 <User size={10} className="text-primary/70" /> {t.responsibleUserName}
@@ -172,10 +196,12 @@ export function TransactionRowV2({
           </div>
 
           <div className="font-ui mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <Tag size={11} className="shrink-0 text-muted-foreground/70" />
-              {t.categoryName}
-            </span>
+            {t.categoryName && (
+              <span className="flex items-center gap-1">
+                <Tag size={11} className="shrink-0 text-muted-foreground/70" />
+                {t.categoryName}
+              </span>
+            )}
 
             {t.paymentStatus !== PaymentStatus.Paid && t.dueDate && (
               <span
@@ -212,7 +238,12 @@ export function TransactionRowV2({
           >
             {isIncome ? '+' : '−'} {formatCurrency(totalValue)}
           </span>
-          <StatusBadge status={status} paidRatio={paidRatio} isIncome={isIncome} />
+          <StatusBadge
+            status={status}
+            isOverdue={Boolean(t.isOverdue)}
+            paidRatio={paidRatio}
+            isIncome={isIncome}
+          />
         </div>
 
         {/* Grupo de Ações (Baixa Rápida + Menu de Opções) */}
@@ -326,6 +357,26 @@ export function TransactionRowV2({
                   </div>
                 )}
               </div>
+
+              {/* Vínculo com Lista de Compras */}
+              {t.shoppingListId && (
+                <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-primary/30 bg-primary/5 p-2.5">
+                  <div className="flex items-center gap-2 text-xs font-medium text-foreground">
+                    <ShoppingCart size={14} className="text-primary" />
+                    <span>Gerada automaticamente a partir de uma Lista de Compras</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/shopping?listId=${t.shoppingListId}`);
+                    }}
+                    className="font-ui text-xs font-bold text-primary transition-opacity hover:opacity-80 hover:underline"
+                  >
+                    Ver no módulo de compras →
+                  </button>
+                </div>
+              )}
 
               {/* Observações */}
               {t.observation && (

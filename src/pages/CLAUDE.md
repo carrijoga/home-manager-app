@@ -4,12 +4,13 @@ Pages in this directory are **standalone public flow pages** (auth and invitatio
 
 ## Standalone Pages
 
-| File                 | Route                   | Description                                                |
-| -------------------- | ----------------------- | ---------------------------------------------------------- |
-| `Login.tsx`          | `/login`                | Email/password + Google OAuth login                        |
-| `Register.tsx`       | `/register`             | New account registration form                              |
-| `GoogleCallback.tsx` | `/auth/google/callback` | Handles the OAuth redirect from Google                     |
-| `InviteAccept.tsx`   | `/invite`               | Handles nest invitation code validation and member join    |
+| File                 | Route                   | Description                                             |
+| -------------------- | ----------------------- | ------------------------------------------------------- |
+| `Login.tsx`          | `/login`                | Email/password + Google OAuth login                     |
+| `Register.tsx`       | `/register`             | New account registration form                           |
+| `GoogleCallback.tsx` | `/auth/google/callback` | Handles the OAuth redirect from Google                  |
+| `InviteAccept.tsx`   | `/invite`               | Handles nest invitation code validation and member join |
+| `NotFound.tsx`       | `/404`, `*`             | 404 Not Found page for invalid or missing routes        |
 
 ## Route Registration
 

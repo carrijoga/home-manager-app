@@ -49,7 +49,13 @@ migrations/
 .planning
 
 v1.json
-api.json
 
 *storybook.log
 storybook-static
+
+statusline.py
+
+# Temporary & Test files
+scratch/
+screenshot*.png
+test.png

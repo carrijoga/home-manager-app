@@ -418,6 +418,94 @@
         }
       }
     },
+    "/api/users/me/notification/{notificationId}/read": {
+      "put": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Marks a notification for the currently authenticated user as read.",
+        "parameters": [
+          {
+            "name": "notificationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/me/notification/{notificationId}": {
+      "delete": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Deletes a notification for the currently authenticated user.",
+        "parameters": [
+          {
+            "name": "notificationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/users/me/nests": {
       "get": {
         "tags": [
@@ -1671,6 +1759,112 @@
           "ShoppingItem"
         ],
         "summary": "Unmarks a shopping item as purchased, resetting price and purchase date",
+        "parameters": [
+          {
+            "name": "ShoppingListId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "ShoppingItemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/shopping-item/{ShoppingListId}/ignore/{ShoppingItemId}": {
+      "patch": {
+        "tags": [
+          "ShoppingItem"
+        ],
+        "summary": "Marks a shopping item as ignored, so it won't be purchased and won't be affected when the list is finished",
+        "parameters": [
+          {
+            "name": "ShoppingListId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "ShoppingItemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/shopping-item/{ShoppingListId}/unignore/{ShoppingItemId}": {
+      "patch": {
+        "tags": [
+          "ShoppingItem"
+        ],
+        "summary": "Unmarks a shopping item as ignored, returning it to pending",
         "parameters": [
           {
             "name": "ShoppingListId",
@@ -3399,6 +3593,149 @@
         }
       }
     },
+    "/api/nests/code": {
+      "get": {
+        "tags": [
+          "Nest"
+        ],
+        "summary": "Retrieves the current nest's shareable code.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/nests/regenerate-code": {
+      "post": {
+        "tags": [
+          "Nest"
+        ],
+        "summary": "Regenerates the current nest's shareable code, invalidating the previous one.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/nests/join/{code}": {
+      "post": {
+        "tags": [
+          "Nest"
+        ],
+        "summary": "Joins a nest directly using its shareable code.",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/nests/invites": {
       "get": {
         "tags": [
@@ -5022,6 +5359,72 @@
         }
       }
     },
+    "/api/bank-account/{id}/adjust-balance": {
+      "patch": {
+        "tags": [
+          "BankAccount"
+        ],
+        "summary": "Adjusts a bank account's balance to a new target value, recording the delta as a balance-adjustment transaction",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The unique identifier of the bank account",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "The new target balance and an optional observation",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdjustBankAccountBalanceRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdjustBankAccountBalanceRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdjustBankAccountBalanceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Balance adjusted successfully"
+          },
+          "400": {
+            "description": "Bank account not found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/bank-account/{id}/can-delete": {
       "get": {
         "tags": [
@@ -5761,6 +6164,29 @@
           }
         }
       },
+      "AdjustBankAccountBalanceRequest": {
+        "required": [
+          "newBalance",
+          "observation"
+        ],
+        "type": "object",
+        "properties": {
+          "newBalance": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "observation": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "AttachmentOwnerType": {
         "type": "integer"
       },
@@ -6037,6 +6463,9 @@
           "date": {
             "type": "string",
             "format": "date-time"
+          },
+          "priority": {
+            "$ref": "#/components/schemas/Priority"
           },
           "expiresAt": {
             "type": [
@@ -6838,7 +7267,10 @@
             "type": "string"
           },
           "categoryId": {
-            "type": "string",
+            "type": [
+              "null",
+              "string"
+            ],
             "format": "uuid"
           },
           "categoryName": {
@@ -6866,6 +7298,13 @@
             ]
           },
           "sourceId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "shoppingListId": {
             "type": [
               "null",
               "string"
@@ -6907,6 +7346,9 @@
         }
       },
       "InviteStatus": {
+        "type": "integer"
+      },
+      "ItemStatus": {
         "type": "integer"
       },
       "ListCategoryOptionsQuery": {
@@ -7121,6 +7563,8 @@
           "noticeReactionId",
           "noticeId",
           "userId",
+          "userName",
+          "userProfilePictureUrl",
           "emoji",
           "createdAt"
         ],
@@ -7138,6 +7582,15 @@
             "type": "string",
             "format": "uuid"
           },
+          "userName": {
+            "type": "string"
+          },
+          "userProfilePictureUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
           "emoji": {
             "type": "string"
           },
@@ -7152,10 +7605,13 @@
           "noticeId",
           "message",
           "date",
+          "priority",
           "isPinned",
           "expiresAt",
           "isActive",
           "createdBy",
+          "createdByName",
+          "createdByProfilePictureUrl",
           "createdAt",
           "reactions"
         ],
@@ -7171,6 +7627,9 @@
           "date": {
             "type": "string",
             "format": "date-time"
+          },
+          "priority": {
+            "$ref": "#/components/schemas/Priority"
           },
           "isPinned": {
             "type": "boolean"
@@ -7188,6 +7647,15 @@
           "createdBy": {
             "type": "string",
             "format": "uuid"
+          },
+          "createdByName": {
+            "type": "string"
+          },
+          "createdByProfilePictureUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "createdAt": {
             "type": "string",
@@ -7462,6 +7930,9 @@
           "isPurchased": {
             "type": "boolean"
           },
+          "status": {
+            "$ref": "#/components/schemas/ItemStatus"
+          },
           "price": {
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
             "type": [
@@ -7515,6 +7986,23 @@
               "string"
             ]
           },
+          "finished": {
+            "type": "boolean"
+          },
+          "finishedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "finishedBy": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
           "items": {
             "type": "array",
             "items": {
@@ -7542,6 +8030,23 @@
               "null",
               "string"
             ]
+          },
+          "finished": {
+            "type": "boolean"
+          },
+          "finishedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "finishedBy": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
           },
           "totalItems": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",

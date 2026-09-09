@@ -52,6 +52,7 @@ All 16 services in this directory are fully typed TypeScript modules (`.ts`):
 | `goalsService.ts`       | Financial savings and expense goals                  |
 | `nestService.ts`        | Nests management, invitations, and member access     |
 | `noticeService.ts`      | Family notice board (avisos)                         |
+| `notificationService.ts`| User notifications management (list, read, delete)   |
 | `paymentCardService.ts` | Credit and debit card management and card statements |
 | `settingsService.ts`    | User and nest preferences                            |
 | `shoppingService.ts`    | Shopping lists and item CRUD                         |

@@ -11,6 +11,8 @@ Custom React hooks shared across the application. Always use hooks from here ins
 | `useDebounce()`             | Debounce hook for search/filter inputs. Returns debounced value after delay (default 300ms).                                     |
 | `use-mobile()`              | Mobile device detection. Returns boolean `isMobile`. Use for responsive behavior decisions.                                      |
 | `useSignalR()`              | SignalR WebSocket connection hook for real-time item updates (e.g., shopping list synchronization).                               |
+| `useNotificationRealtime()` | SignalR WebSocket connection hook for real-time user profile notifications (`/hubs/notifications`).                                |
+| `usePolling()`              | Custom hook for periodic background polling (pauses when tab is hidden, resumes when active).                                       |
 
 ## Usage Patterns
 

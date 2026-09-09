@@ -119,10 +119,10 @@ interface ToastContainerProps {
 
 function ToastContainer({ toasts, position, onRemove }: ToastContainerProps) {
   const positionClasses = {
-    'top-center': 'top-4 left-1/2 -translate-x-1/2',
-    'top-right': 'top-4 right-4',
-    'bottom-center': 'bottom-4 left-1/2 -translate-x-1/2',
-    'bottom-right': 'bottom-4 right-4',
+    'top-center': 'top-4 left-1/2 -translate-x-1/2 w-full max-w-[calc(100vw-24px)] sm:w-auto',
+    'top-right': 'top-4 left-1/2 -translate-x-1/2 sm:left-auto sm:translate-x-0 sm:right-4 w-full max-w-[calc(100vw-24px)] sm:w-auto',
+    'bottom-center': 'bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 w-full max-w-[calc(100vw-24px)] sm:w-auto',
+    'bottom-right': 'bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 sm:left-auto sm:translate-x-0 sm:right-4 w-full max-w-[calc(100vw-24px)] sm:w-auto',
   };
 
   const variants = position.includes('right') ? toastFromRightVariants : toastVariants;
@@ -130,7 +130,7 @@ function ToastContainer({ toasts, position, onRemove }: ToastContainerProps) {
   return (
     <div
       className={cn(
-        'pointer-events-none fixed z-[100] flex flex-col gap-2.5 max-w-full px-4 sm:px-0',
+        'pointer-events-none fixed z-[100] flex flex-col gap-2.5 items-center sm:items-end px-3 sm:px-0',
         positionClasses[position]
       )}
     >
@@ -143,7 +143,7 @@ function ToastContainer({ toasts, position, onRemove }: ToastContainerProps) {
             animate="animate"
             exit="exit"
             layout
-            className="pointer-events-auto"
+            className="pointer-events-auto w-full sm:w-auto"
           >
             <ToastItem toast={toast} onClose={() => onRemove(toast.id)} />
           </motion.div>
@@ -165,27 +165,23 @@ interface ToastItemProps {
 const TYPE_CONFIG = {
   success: {
     icon: CheckCircle2,
-    badgeBg: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
+    iconColor: 'text-emerald-500',
     barBg: 'bg-emerald-500',
-    borderColor: 'border-emerald-500/30',
   },
   error: {
     icon: XCircle,
-    badgeBg: 'bg-destructive/15 text-destructive',
-    barBg: 'bg-destructive',
-    borderColor: 'border-destructive/30',
+    iconColor: 'text-rose-500',
+    barBg: 'bg-rose-500',
   },
   warning: {
     icon: AlertTriangle,
-    badgeBg: 'bg-amber-500/15 text-amber-600 dark:text-amber-400',
+    iconColor: 'text-amber-500',
     barBg: 'bg-amber-500',
-    borderColor: 'border-amber-500/30',
   },
   info: {
     icon: Info,
-    badgeBg: 'bg-blue-500/15 text-blue-600 dark:text-blue-400',
+    iconColor: 'text-blue-500',
     barBg: 'bg-blue-500',
-    borderColor: 'border-blue-500/30',
   },
 };
 
@@ -197,36 +193,29 @@ function ToastItem({ toast, onClose }: ToastItemProps) {
   return (
     <div
       className={cn(
-        'relative overflow-hidden flex items-start gap-3 rounded-2xl border p-4 shadow-xl backdrop-blur-xl',
-        'w-[340px] max-w-full bg-popover/95 text-popover-foreground',
-        config.borderColor
+        'relative overflow-hidden flex items-center gap-3 rounded-xl border border-slate-200/80 dark:border-slate-800 p-3.5 shadow-lg transition-all',
+        'w-full sm:w-[356px] max-w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100',
+        'shadow-black/[0.04] dark:shadow-black/40'
       )}
     >
       {/* Ícone */}
-      <div
-        className={cn(
-          'flex size-9 shrink-0 items-center justify-center rounded-xl font-medium',
-          config.badgeBg
-        )}
-      >
-        <IconComponent size={20} />
-      </div>
+      <IconComponent className={cn('size-4 shrink-0', config.iconColor)} />
 
       {/* Conteúdo */}
-      <div className="min-w-0 flex-1 pt-0.5">
-        <p className="text-sm font-semibold leading-tight text-foreground">{toast.title}</p>
+      <div className="min-w-0 flex-1">
+        <p className="text-xs sm:text-sm font-medium leading-snug text-slate-900 dark:text-slate-100">{toast.title}</p>
         {toast.description && (
-          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{toast.description}</p>
+          <p className="mt-0.5 text-xs leading-relaxed text-slate-500 dark:text-slate-400">{toast.description}</p>
         )}
       </div>
 
       {/* Botão de fechar */}
       <button
         onClick={onClose}
-        className="shrink-0 rounded-lg p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        className="shrink-0 rounded-lg p-1.5 sm:p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
         aria-label="Fechar notificação"
       >
-        <X size={16} />
+        <X size={15} />
       </button>
 
       {/* Barra de Progresso de tempo */}
@@ -235,7 +224,7 @@ function ToastItem({ toast, onClose }: ToastItemProps) {
           initial={{ width: '100%' }}
           animate={{ width: '0%' }}
           transition={{ duration: duration / 1000, ease: 'linear' }}
-          className={cn('absolute bottom-0 left-0 h-1', config.barBg)}
+          className={cn('absolute bottom-0 left-0 h-[2px] opacity-40', config.barBg)}
         />
       )}
     </div>

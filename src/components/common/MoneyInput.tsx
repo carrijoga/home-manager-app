@@ -1,6 +1,6 @@
 import { type NumberFormatValues, NumericFormat } from 'react-number-format';
 
-import Input from './Input';
+import { Input } from '@/components/ui/input';
 
 interface MoneyInputProps {
   value: number | null;
@@ -9,6 +9,7 @@ interface MoneyInputProps {
   className?: string;
   disabled?: boolean;
   id?: string;
+  allowNegative?: boolean;
 }
 
 export default function MoneyInput({
@@ -18,6 +19,7 @@ export default function MoneyInput({
   className,
   disabled,
   id,
+  allowNegative = false,
 }: MoneyInputProps) {
   return (
     <NumericFormat
@@ -27,7 +29,7 @@ export default function MoneyInput({
       thousandSeparator="."
       decimalScale={2}
       fixedDecimalScale
-      allowNegative={false}
+      allowNegative={allowNegative}
       customInput={Input}
       value={value ?? ''}
       placeholder={placeholder}

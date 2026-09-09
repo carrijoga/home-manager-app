@@ -1,5 +1,6 @@
 import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
+import { Loader2 } from 'lucide-react';
 import * as React from 'react';
 
 import { cn } from '@/lib/utils';
@@ -35,18 +36,102 @@ const buttonVariants = cva(
 );
 
 export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
   asChild?: boolean;
+  loading?: boolean;
+  isLoading?: boolean;
+  loadingText?: React.ReactNode;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
-    const Comp = asChild ? Slot : 'button';
+  (
+    {
+      className,
+      variant,
+      size,
+      asChild = false,
+      loading = false,
+      isLoading = false,
+      loadingText,
+      disabled,
+      onClick,
+      children,
+      ...props
+    },
+    ref
+  ) => {
+    const [isAsyncPending, setIsAsyncPending] = React.useState(false);
+    const isBusy = loading || isLoading || isAsyncPending;
+    const isDisabled = disabled || isBusy;
+
+    const handleClick = React.useCallback(
+      async (e: React.MouseEvent<HTMLButtonElement>) => {
+        if (isDisabled) {
+          e.preventDefault();
+          e.stopPropagation();
+          return;
+        }
+
+        if (onClick) {
+          const result: unknown = (
+            onClick as (e: React.MouseEvent<HTMLButtonElement>) => unknown
+          )(e);
+          if (
+            result !== null &&
+            typeof result === 'object' &&
+            'then' in result &&
+            typeof (result as Promise<unknown>).then === 'function'
+          ) {
+            setIsAsyncPending(true);
+            try {
+              await result;
+            } finally {
+              setIsAsyncPending(false);
+            }
+          }
+        }
+      },
+      [isDisabled, onClick]
+    );
+
+    if (asChild) {
+      return (
+        <Slot
+          className={cn(buttonVariants({ variant, size, className }))}
+          ref={ref}
+          aria-busy={isBusy ? 'true' : undefined}
+          aria-disabled={isDisabled ? 'true' : undefined}
+          {...props}
+          onClick={onClick ? handleClick : undefined}
+        >
+          {children}
+        </Slot>
+      );
+    }
+
     return (
-      <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />
+      <button
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        disabled={isDisabled}
+        aria-busy={isBusy ? 'true' : undefined}
+        onClick={onClick ? handleClick : undefined}
+        {...props}
+      >
+        {isBusy ? (
+          <>
+            <Loader2 className="animate-spin shrink-0" />
+            {loadingText ?? children}
+          </>
+        ) : (
+          children
+        )}
+      </button>
     );
   }
 );
 Button.displayName = 'Button';
 
 export { Button, buttonVariants };
+

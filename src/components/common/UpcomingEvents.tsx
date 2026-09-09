@@ -51,18 +51,24 @@ export function UpcomingEvents({ events = [], className }: UpcomingEventsProps) 
       </div>
 
       {/* Event list */}
-      <div className="flex flex-1 flex-col gap-6 pb-2">
+      <div className="flex flex-1 flex-col gap-4 pb-2">
         {events.length === 0 ? (
-          <p className="font-ui text-sm leading-relaxed text-muted-foreground/50">
-            Nenhum compromisso esta semana.
-          </p>
+          <div className="flex flex-1 flex-col items-center justify-center rounded-2xl border border-dashed border-border/60 bg-muted/20 p-6 text-center">
+            <Calendar size={24} className="mb-2 text-muted-foreground/40" strokeWidth={1.5} />
+            <p className="font-ui text-sm font-medium text-muted-foreground">
+              Nenhum compromisso esta semana.
+            </p>
+          </div>
         ) : (
           events.map((event) => (
-            <div key={event.id} className="relative pl-6">
+            <div
+              key={event.id}
+              className="group relative rounded-xl p-2 pl-6 transition-colors hover:bg-muted/40"
+            >
               {/* Colored vertical accent — tonal, no border lines */}
               <div
                 className={cn(
-                  'absolute bottom-1 left-0 top-1 w-0.5 rounded-full',
+                  'absolute bottom-2 left-2 top-2 w-1 rounded-full transition-all group-hover:w-1.5',
                   event.isNext ? 'bg-primary' : 'bg-muted-foreground/30'
                 )}
               />
@@ -97,10 +103,8 @@ export function UpcomingEvents({ events = [], className }: UpcomingEventsProps) 
       <button
         type="button"
         onClick={() => navigate('/calendar')}
-        className="font-ui flex min-h-[44px] w-full shrink-0 items-center justify-center rounded-2xl bg-transparent px-4 font-semibold uppercase tracking-[1.2px] transition-opacity hover:opacity-70 active:scale-[0.98]"
+        className="font-ui flex min-h-[44px] w-full shrink-0 items-center justify-center rounded-2xl border border-border bg-transparent px-4 font-semibold uppercase tracking-[1.2px] text-muted-foreground transition-all hover:bg-muted/50 hover:text-foreground active:scale-[0.98]"
         style={{
-          border: '1px solid var(--border)',
-          color: 'var(--muted-foreground)',
           fontSize: 'var(--text-xs)',
         }}
       >

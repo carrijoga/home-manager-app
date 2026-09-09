@@ -59,9 +59,9 @@ export function ModuleMetricWidget({
       onClick={onClick}
       onKeyDown={onClick ? (e) => e.key === 'Enter' && onClick() : undefined}
       className={cn(
-        'flex h-full flex-col justify-between gap-6 rounded-3xl border border-border bg-card p-6 outline-none',
+        'flex h-full flex-col justify-between gap-6 rounded-3xl border border-border bg-card p-6 outline-none transition-all duration-300',
         onClick &&
-          'duration-[length:var(--dur-base)] cursor-pointer transition-all hover:brightness-105 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98]',
+          'cursor-pointer hover:-translate-y-1 hover:border-primary/30 hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98]',
         className
       )}
     >

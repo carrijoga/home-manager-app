@@ -7,6 +7,10 @@ import { BrowserRouter } from 'react-router-dom';
 
 import App from './App';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { initGlobalClickProtection } from './lib/preventDoubleClick';
+
+// Inicializa proteção global contra cliques duplos em botões
+initGlobalClickProtection();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

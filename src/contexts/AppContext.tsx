@@ -1,8 +1,11 @@
-import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
+import { useNotificationRealtime } from '@/hooks/useNotificationRealtime';
+import { DATA_MODE } from '@/services/api/config';
 import * as authService from '@/services/authService';
 import * as nestService from '@/services/nestService';
+import * as notificationService from '@/services/notificationService';
 import * as userService from '@/services/userService';
 import type { AppNotification, AppUser, AppUserNest } from '@/types';
 import { userProfileToAppUser } from '@/types';
@@ -66,40 +69,94 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   // ========== NOTIFICATIONS ==========
-  // TODO: Replace initial seeding with WebSocket subscription for real-time notifications
   useEffect(() => {
     if (!user) {
       setNotifications([]);
       return;
     }
-    setNotifications(user.notifications ?? []);
+
+    let isMounted = true;
+
+    if (DATA_MODE === 'mock') {
+      setNotifications(user.notifications ?? []);
+      return;
+    }
+
+    notificationService
+      .getNotifications()
+      .then((items) => {
+        if (isMounted) setNotifications(items);
+      })
+      .catch((err) => {
+        if (import.meta.env.DEV) {
+          console.warn('[AppContext] Erro ao carregar notificações da API:', err);
+        }
+        if (isMounted) setNotifications(user.notifications ?? []);
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, [user]);
 
-  const markAsRead = (notificationId: string) => {
+  const markAsRead = useCallback((notificationId: string) => {
     setNotifications((prev) =>
       prev.map((n) => (n.notificationId === notificationId ? { ...n, isRead: true } : n))
     );
-    // TODO: API call to mark notification as read
-  };
 
-  const markAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-    // TODO: API call to mark all notifications as read
-  };
+    notificationService.markAsRead(notificationId).catch((err) => {
+      const msg = err instanceof Error ? err.message : 'Notificação não encontrada';
+      toast.error(msg);
+    });
+  }, []);
 
-  const clearNotification = (notificationId: string) => {
+  const markAllAsRead = useCallback(() => {
+    setNotifications((prev) => {
+      const unreadIds = prev.filter((n) => !n.isRead).map((n) => n.notificationId);
+      if (unreadIds.length > 0) {
+        Promise.allSettled(unreadIds.map((id) => notificationService.markAsRead(id))).catch(
+          () => {}
+        );
+      }
+      return prev.map((n) => ({ ...n, isRead: true }));
+    });
+  }, []);
+
+  const clearNotification = useCallback((notificationId: string) => {
     setNotifications((prev) => prev.filter((n) => n.notificationId !== notificationId));
-    // TODO: API call to delete notification
-  };
 
-  const clearAllNotifications = () => {
-    setNotifications([]);
-    // TODO: API call to clear all notifications
-  };
+    notificationService.deleteNotification(notificationId).catch((err) => {
+      const msg = err instanceof Error ? err.message : 'Notificação não encontrada';
+      toast.error(msg);
+    });
+  }, []);
 
-  const pushNotification = (notification: AppNotification) => {
-    setNotifications((prev) => [notification, ...prev]);
-  };
+  const clearAllNotifications = useCallback(() => {
+    setNotifications((prev) => {
+      const allIds = prev.map((n) => n.notificationId);
+      if (allIds.length > 0) {
+        Promise.allSettled(allIds.map((id) => notificationService.deleteNotification(id))).catch(
+          () => {}
+        );
+      }
+      return [];
+    });
+  }, []);
+
+  const pushNotification = useCallback((notification: AppNotification) => {
+    setNotifications((prev) => {
+      if (prev.some((n) => n.notificationId === notification.notificationId)) {
+        return prev;
+      }
+      return [notification, ...prev];
+    });
+  }, []);
+
+  // ========== SIGNALR REALTIME NOTIFICATIONS ==========
+  useNotificationRealtime({
+    enabled: Boolean(user) && DATA_MODE !== 'mock',
+    onNotificationReceived: pushNotification,
+  });
 
   // ========== USER PROFILE ==========
   const loadUserProfile = async (): Promise<AppUser> => {

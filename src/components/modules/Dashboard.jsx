@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
-import { Calendar, CheckCircle2, DollarSign, ShoppingCart } from 'lucide-react';
+import { Calendar, CheckCircle2, DollarSign, ShoppingCart, Sparkles } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { useApp } from '@/contexts/AppContext';
@@ -15,7 +16,6 @@ import { DATA_MODE } from '@/services/api/config';
 import { ENDPOINTS } from '@/services/api/endpoints';
 import * as calendarService from '@/services/calendarService';
 import * as dashboardService from '@/services/dashboardService';
-import * as goalsService from '@/services/goalsService';
 import * as noticeService from '@/services/noticeService';
 import * as weatherService from '@/services/weatherService';
 import { ApiPriority } from '@/types';
@@ -23,7 +23,6 @@ import { formatCurrency } from '@/utils/dashboardMetrics';
 
 import BulletinBoard from '../common/BulletinBoard';
 import DashboardHeader from '../common/DashboardHeader';
-import FamilyGoalCard from '../common/FamilyGoalCard';
 import ModuleMetricWidget from '../common/ModuleMetricWidget';
 import UpcomingEvents from '../common/UpcomingEvents';
 import { CreateNoteModal } from '../modals/CreateNoteModal';
@@ -79,6 +78,7 @@ const isMockMode = DATA_MODE === 'mock';
  * Dashboard — Visão geral da casa (Domestic Sanctuary design)
  */
 const Dashboard = () => {
+  const navigate = useNavigate();
   const { user, activeNestId } = useApp();
   const [createNoteOpen, setCreateNoteOpen] = useState(false);
   const [editingNote, setEditingNote] = useState(null);
@@ -95,25 +95,26 @@ const Dashboard = () => {
     visible: false,
   });
   const [weatherOnboardingKey, setWeatherOnboardingKey] = useState(0);
-  const [familyGoals, setFamilyGoals] = useState([]);
   const [calendarEvents, setCalendarEvents] = useState([]);
   const [apiDashboard, setApiDashboard] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  const currentNest = user?.nests?.find((n) => n.nestId === activeNestId);
+  const currentUserRole = currentNest?.role ?? (isMockMode ? 1 : 3);
+  const isOwnerOrAdmin = isMockMode || currentUserRole === 1 || currentUserRole === 2;
+
   // ── Notices locais ─────────────────────────────────────────────────────────
-  useEffect(() => {
+  const refreshNotices = useCallback(async () => {
     if (!activeNestId && !isMockMode) return;
-    let isMounted = true;
-    noticeService
-      .getActiveNotices(activeNestId ?? undefined)
-      .then((data) => {
-        if (isMounted) setNotices(data);
-      })
-      .catch(() => {});
-    return () => {
-      isMounted = false;
-    };
+    try {
+      const data = await noticeService.getActiveNotices(activeNestId ?? undefined);
+      setNotices(data);
+    } catch {}
   }, [activeNestId]);
+
+  useEffect(() => {
+    refreshNotices();
+  }, [refreshNotices]);
 
   const formatEventDateLabel = useCallback((startsAt) => {
     const date = new Date(startsAt);
@@ -225,21 +226,6 @@ const Dashboard = () => {
   useEffect(() => {
     let isMounted = true;
 
-    const loadGoals = async () => {
-      const goals = await goalsService.getAllGoals();
-      if (isMounted) setFamilyGoals(goals);
-    };
-
-    loadGoals();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    let isMounted = true;
-
     const loadUpcomingEvents = async () => {
       const events = await calendarService.getUpcomingEvents(4);
       if (isMounted) setCalendarEvents(events);
@@ -292,16 +278,14 @@ const Dashboard = () => {
           return null;
         }),
         noticeService.getActiveNotices(activeNestId ?? undefined).catch(() => null),
-        goalsService.getAllGoals().catch(() => null),
         calendarService.getUpcomingEvents(4).catch(() => null),
         loadWeather().catch(() => {}),
       ];
 
-      const [dashData, noticesData, goalsData, eventsData] = await Promise.all(promises);
+      const [dashData, noticesData, eventsData] = await Promise.all(promises);
 
       if (dashData) setApiDashboard(dashData);
       if (noticesData) setNotices(noticesData);
-      if (goalsData) setFamilyGoals(goalsData);
       if (eventsData) setCalendarEvents(eventsData);
 
       toast.success('Dashboard atualizado com sucesso!');
@@ -350,25 +334,27 @@ const Dashboard = () => {
   const bulletinNotes = useMemo(() => {
     const rawList = notices && notices.length > 0 ? notices : (apiDashboard?.notices ?? []);
 
-    return [...rawList]
-      .filter((n) => n.isActive !== false)
-      .sort((a, b) => {
-        if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
-        const timeA = new Date(b.createdAt || b.date || 0).getTime();
-        const timeB = new Date(a.createdAt || a.date || 0).getTime();
-        return timeA - timeB;
-      })
-      .slice(0, 6)
-      .map((n) => ({
-        id: n.noticeId,
-        priority: n.isPinned ? ApiPriority.Urgente : (n.priority ?? ApiPriority.Baixa),
-        content: n.message,
-        isPinned: n.isPinned,
-        authorName: n.authorName,
-        timeLabel:
-          n.createdAt || n.date ? formatRelativeNoticeTime(n.createdAt || n.date) : undefined,
-        reactions: n.reactions ?? [],
-      }));
+    const activeList = rawList.filter(
+      (n) =>
+        n.isActive !== false &&
+        (n.isPinned || !noticeService.isCreatedInPastDays(n.createdAt || n.date))
+    );
+
+    const sorted = noticeService.sortNotices(activeList);
+
+    return sorted.slice(0, 6).map((n) => ({
+      id: n.noticeId,
+      priority: n.priority ?? ApiPriority.Baixa,
+      content: n.message,
+      isPinned: Boolean(n.isPinned),
+      createdBy: n.createdBy,
+      authorName: n.authorName,
+      authorAvatar: n.authorAvatar,
+      createdAt: n.createdAt || n.date,
+      timeLabel:
+        n.createdAt || n.date ? formatRelativeNoticeTime(n.createdAt || n.date) : undefined,
+      reactions: n.reactions ?? [],
+    }));
   }, [notices, apiDashboard]);
 
   const upcomingEvents = useMemo(() => {
@@ -403,28 +389,39 @@ const Dashboard = () => {
       : null;
 
   // ── Notice actions locais ──────────────────────────────────────────────────
-  const handleSaveNotice = async (message, noteId) => {
+  const handleSaveNotice = async (message, noteId, priority) => {
     if (noteId) {
-      await noticeService.updateNotice(noteId, { message }, activeNestId ?? undefined);
-      setNotices((prev) => prev.map((n) => (n.noticeId === noteId ? { ...n, message } : n)));
+      await noticeService.updateNotice(noteId, { message, priority }, activeNestId ?? undefined);
     } else {
-      const newNotice = await noticeService.createNotice(
-        { message, date: new Date().toISOString() },
-        activeNestId ?? undefined
+      await noticeService.createNotice(
+        { message, priority, date: new Date().toISOString() },
+        activeNestId ?? undefined,
+        user
+          ? {
+              id: user.id,
+              name: user.name,
+              avatar: user.profilePictureUrl || user.avatar,
+            }
+          : undefined
       );
-      setNotices((prev) => [newNotice, ...prev]);
     }
+    // Ao ser criado (ou editado), o componente faz a busca novamente da lista
+    await refreshNotices();
   };
 
   const handleEditNotice = (bulletinNote) => {
-    setEditingNote({ id: bulletinNote.id, message: String(bulletinNote.content) });
+    setEditingNote({
+      id: bulletinNote.id,
+      message: String(bulletinNote.content),
+      priority: bulletinNote.priority,
+    });
     setCreateNoteOpen(true);
   };
 
   const handleDeleteNotice = async (noteId) => {
     try {
       await noticeService.deleteNotice(noteId, activeNestId ?? undefined);
-      setNotices((prev) => prev.filter((n) => n.noticeId !== noteId));
+      await refreshNotices();
       toast.success('Recado excluído com sucesso!');
     } catch {
       toast.error('Erro ao excluir recado.');
@@ -435,25 +432,32 @@ const Dashboard = () => {
     try {
       if (isPinned) {
         await noticeService.unpinNotice(noteId, activeNestId ?? undefined);
-        const newExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-        setNotices((prev) =>
-          prev.map((n) =>
-            n.noticeId === noteId ? { ...n, isPinned: false, expiresAt: newExpiry } : n
-          )
-        );
       } else {
         await noticeService.pinNotice(noteId, activeNestId ?? undefined);
-        setNotices((prev) =>
-          prev
-            .map((n) => (n.noticeId === noteId ? { ...n, isPinned: true, expiresAt: null } : n))
-            .sort((a, b) => {
-              if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
-              return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-            })
-        );
       }
+      await refreshNotices();
     } catch {
-      // silencioso — o estado local não muda se a API falhar
+      // silencioso se a API falhar
+    }
+  };
+
+  const handleReactToNotice = async (noteId, emoji) => {
+    try {
+      await noticeService.reactToNotice(
+        noteId,
+        emoji,
+        activeNestId ?? undefined,
+        user
+          ? {
+              id: user.id,
+              name: user.name,
+              avatar: user.profilePictureUrl || user.avatar,
+            }
+          : undefined
+      );
+      await refreshNotices();
+    } catch {
+      // silencioso
     }
   };
 
@@ -476,27 +480,48 @@ const Dashboard = () => {
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="flex max-w-full flex-col gap-6 overflow-x-hidden md:gap-10">
+      {/* ── Banner de Alternância de Versão (V2 Beta) ── */}
+      <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-2xl border border-primary/20 bg-primary/10 px-4 py-2.5 text-xs">
+        <div className="flex items-center gap-2 font-semibold text-primary">
+          <Sparkles size={16} />
+          <span>
+            Conheça o novo <strong className="font-bold">Dashboard V2</strong> com novo design e visão dinâmica do lar
+          </span>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => navigate('/dashboard-v2')}
+          className="font-ui font-semibold text-primary underline transition-colors hover:text-primary/80"
+        >
+          Experimentar V2 →
+        </button>
+      </div>
+
       {/* ── Row 0: Header ── */}
-      <DashboardHeader
-        userName={user?.callmeby || user?.name || 'Família'}
-        pendingTasksCount={taskMetrics.pending}
-        showWeather={weatherState.visible}
-        weatherCity={weatherState.city || 'São Paulo'}
-        weatherDescription={weatherState.description || 'Tempo indisponível'}
-        weatherTemperatureLabel={weatherState.temperatureLabel}
-        weatherConditionCode={weatherState.conditionCode}
-        weatherTemperature={weatherState.temperature}
-        isWeatherLoading={weatherState.loading}
-        isWeatherError={weatherState.error}
-        onRefreshWeather={loadWeather}
-        onWeatherEnable={handleEnableWeather}
-        weatherOnboardingKey={weatherOnboardingKey}
-        onRefreshDashboard={handleRefreshDashboard}
-        isRefreshingDashboard={isRefreshing}
-      />
+      <div data-tour="dashboard-header">
+        <DashboardHeader
+          userName={user?.callmeby || user?.name || 'Família'}
+          pendingTasksCount={taskMetrics.pending}
+          showWeather={weatherState.visible}
+          weatherCity={weatherState.city || 'São Paulo'}
+          weatherDescription={weatherState.description || 'Tempo indisponível'}
+          weatherTemperatureLabel={weatherState.temperatureLabel}
+          weatherConditionCode={weatherState.conditionCode}
+          weatherTemperature={weatherState.temperature}
+          isWeatherLoading={weatherState.loading}
+          isWeatherError={weatherState.error}
+          onRefreshWeather={loadWeather}
+          onWeatherEnable={handleEnableWeather}
+          weatherOnboardingKey={weatherOnboardingKey}
+          onRefreshDashboard={handleRefreshDashboard}
+          isRefreshingDashboard={isRefreshing}
+        />
+      </div>
 
       {/* ── Row 1: Module Metric Widgets ── */}
       <motion.div
+        data-tour="dashboard-metrics"
         className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:gap-6 xl:grid-cols-4"
         variants={rowVariants}
         initial="hidden"
@@ -504,6 +529,7 @@ const Dashboard = () => {
       >
         <motion.div variants={cardSlide}>
           <ModuleMetricWidget
+            onClick={() => navigate('/financial')}
             icon={<DollarSign size={20} strokeWidth={1.5} />}
             iconColor="var(--primary)"
             category="Finanças"
@@ -524,6 +550,7 @@ const Dashboard = () => {
 
         <motion.div variants={cardSlide}>
           <ModuleMetricWidget
+            onClick={() => navigate('/shopping')}
             icon={<ShoppingCart size={20} strokeWidth={1.5} />}
             iconColor="var(--secondary)"
             category="Lista de Compras"
@@ -544,6 +571,7 @@ const Dashboard = () => {
 
         <motion.div variants={cardSlide}>
           <ModuleMetricWidget
+            onClick={() => navigate('/tasks')}
             icon={<CheckCircle2 size={20} strokeWidth={1.5} />}
             iconColor="var(--chart-2)"
             category="Tarefas"
@@ -562,6 +590,7 @@ const Dashboard = () => {
 
         <motion.div variants={cardSlide}>
           <ModuleMetricWidget
+            onClick={() => navigate('/calendar')}
             icon={<Calendar size={20} strokeWidth={1.5} />}
             iconColor="var(--chart-5)"
             category="Agenda"
@@ -574,17 +603,20 @@ const Dashboard = () => {
 
       {/* ── Row 2: Mural de Recados + Próximos Eventos ── */}
       <motion.div
-        className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-6 lg:grid-cols-3"
+        data-tour="dashboard-bulletin"
+        className="grid grid-cols-1 gap-4 md:gap-6 lg:grid-cols-3 items-stretch"
         variants={{
           hidden: {},
-          show: { transition: { staggerChildren: 0.1, delayChildren: 0.3 } },
+          show: { transition: { staggerChildren: 0.1, delayChildren: 0.25 } },
         }}
         initial="hidden"
         animate="show"
       >
-        <motion.div variants={cardSlide} className="h-full md:col-span-2 lg:col-span-2">
+        <motion.div variants={cardSlide} className="h-full lg:col-span-2">
           <BulletinBoard
             notes={bulletinNotes}
+            currentUserId={user?.id}
+            isOwnerOrAdmin={isOwnerOrAdmin}
             onTogglePin={handleTogglePin}
             onCreateNote={() => {
               setEditingNote(null);
@@ -592,11 +624,12 @@ const Dashboard = () => {
             }}
             onEditNote={handleEditNotice}
             onDeleteNote={handleDeleteNotice}
+            onReactNote={handleReactToNotice}
             onViewHistory={() => setHistoryOpen(true)}
             className="h-full"
           />
         </motion.div>
-        <motion.div variants={cardSlide} className="h-full md:col-span-2 lg:col-span-1">
+        <motion.div variants={cardSlide} className="h-full lg:col-span-1">
           <UpcomingEvents events={upcomingEvents} className="h-full" />
         </motion.div>
       </motion.div>
@@ -616,21 +649,6 @@ const Dashboard = () => {
         onClose={() => setHistoryOpen(false)}
         nestId={activeNestId ?? undefined}
       />
-
-      {/* ── Row 3: Metas da Família ── */}
-      <motion.div
-        className="grid grid-cols-1 gap-3 md:gap-6"
-        variants={{
-          hidden: {},
-          show: { transition: { staggerChildren: 0.1, delayChildren: 0.5 } },
-        }}
-        initial="hidden"
-        animate="show"
-      >
-        <motion.div variants={cardSlide} className="h-full">
-          <FamilyGoalCard goals={familyGoals} className="h-full" />
-        </motion.div>
-      </motion.div>
     </div>
   );
 };

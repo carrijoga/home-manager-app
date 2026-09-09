@@ -8,6 +8,7 @@ import { TaskHistoryModal } from '@/components/modals/TaskHistoryModal';
 import { Button } from '@/components/ui';
 import { useApp } from '@/contexts/AppContext';
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
+import { usePolling } from '@/hooks/usePolling';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import type { NestMember } from '@/schemas/nest';
 import * as nestService from '@/services/nestService';
@@ -34,19 +35,21 @@ function Tasks() {
   const [totalCount, setTotalCount] = useState(0);
 
   const loadTasks = useCallback(
-    async (targetPage: number) => {
+    async (targetPage: number, silent = false) => {
       if (!activeNestId) return;
-      setTasksLoading(true);
+      if (!silent) setTasksLoading(true);
       try {
         const res = await taskService.getActiveTasks(targetPage, pageSize, activeNestId);
         setTasks(res.items);
         setTotalCount(res.totalCount);
         setPage(res.page);
       } catch {
-        setTasks([]);
-        setTotalCount(0);
+        if (!silent) {
+          setTasks([]);
+          setTotalCount(0);
+        }
       } finally {
-        setTasksLoading(false);
+        if (!silent) setTasksLoading(false);
       }
     },
     [activeNestId, pageSize]
@@ -55,6 +58,11 @@ function Tasks() {
   useEffect(() => {
     loadTasks(page);
   }, [loadTasks, page]);
+
+  usePolling(
+    useCallback(() => loadTasks(page, true), [loadTasks, page]),
+    { intervalMs: 10000, enabled: Boolean(activeNestId) }
+  );
 
   useEffect(() => {
     if (!activeNestId) return;
@@ -272,6 +280,7 @@ function Tasks() {
         {viewMode === 'list' && (
           <motion.div
             key="list-header"
+            data-tour="tasks-header"
             initial={prefersReducedMotion ? false : { opacity: 0, y: -12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -12 }}
@@ -321,7 +330,7 @@ function Tasks() {
             </div>
 
             {/* Controls */}
-            <div className="flex shrink-0 items-center gap-2">
+            <div className="flex shrink-0 items-center gap-2" data-tour="tasks-filters">
               <button
                 onClick={() => setHistoryOpen(true)}
                 className="font-ui flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
@@ -345,6 +354,7 @@ function Tasks() {
                 </button>
               </div>
               <button
+                data-tour="tasks-create-button"
                 onClick={openNewTask}
                 className="font-ui hidden items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-all hover:brightness-105 active:scale-[0.98] sm:inline-flex"
               >
@@ -360,6 +370,7 @@ function Tasks() {
         {viewMode === 'list' ? (
           <motion.div
             key="list-view"
+            data-tour="tasks-board"
             initial={prefersReducedMotion ? false : { opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

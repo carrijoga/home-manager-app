@@ -42,6 +42,11 @@ export const GoogleCallback = () => {
         toast.success(
           (response as { message?: string }).message || 'Login com Google realizado com sucesso!'
         );
+        const pendingInviteCode = sessionStorage.getItem('pending_invite_code');
+        if (pendingInviteCode) {
+          navigate(`/invite?code=${encodeURIComponent(pendingInviteCode)}`, { replace: true });
+          return;
+        }
         const pendingInviteToken = sessionStorage.getItem('pending_invite_token');
         if (pendingInviteToken) {
           navigate(`/invite?token=${encodeURIComponent(pendingInviteToken)}`, { replace: true });

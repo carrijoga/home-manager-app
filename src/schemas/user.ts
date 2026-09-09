@@ -15,6 +15,8 @@ export const UserConfigurationResponseSchema = z.object({
   notifyError: z.boolean(),
   notifySuccess: z.boolean(),
   shareDataForAnalytics: z.boolean(),
+  hasCompletedInitialOnboarding: z.boolean().optional(),
+  completedOnboardingTours: z.array(z.string()).optional(),
   profileId: UuidSchema,
 });
 export type UserConfigurationResponse = z.infer<typeof UserConfigurationResponseSchema>;

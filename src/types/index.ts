@@ -120,6 +120,17 @@ export interface AppWeather {
   observedAt?: string | null;
 }
 
+/** Reação de aviso no mural */
+export interface NoticeReaction {
+  reactionId: string;
+  noticeId: string;
+  userId: string;
+  userName?: string;
+  userAvatar?: string;
+  emoji: string;
+  createdAt: string;
+}
+
 /** Aviso do quadro (módulo Notices) */
 export interface Notice {
   noticeId: string;
@@ -129,11 +140,12 @@ export interface Notice {
   priority: ApiPriority;
   expiresAt: string | null;
   isActive: boolean;
-  createdBy: string; // UUID do autor
+  createdBy: string; // UUID do autor/criador
   createdAt: string;
-  authorName?: string; // nome legível, enriquecido no frontend
-  color?: string; // chave de cor do post-it (yellow|pink|green|orange|blue)
-  reactions?: Array<{ emoji: string; count: number }>;
+  authorName?: string; // nome do criador
+  authorAvatar?: string; // foto/avatar do criador
+  color?: string; // chave de cor do post-it
+  reactions?: NoticeReaction[];
 }
 
 /** Tarefa (módulo Tasks) */
@@ -185,6 +197,7 @@ export interface AppShoppingItem {
   shoppingCategoryId?: string | null;
   categoryName?: string | null;
   isPurchased: boolean;
+  status: number; // 0=Pending, 1=Purchased, 2=Ignored, 3=NotPurchased
   price?: number | null;
   estimatedPrice?: number | null;
   purchasedAt?: string | null;
@@ -197,6 +210,9 @@ export interface AppShoppingList {
   name: string;
   monthYear: string; // ISO date-time string
   notes?: string | null;
+  finished: boolean;
+  finishedAt?: string | null;
+  finishedBy?: string | null;
   items: AppShoppingItem[];
 }
 
@@ -210,6 +226,9 @@ export interface AppShoppingListSummary {
   purchasedItems: number;
   totalEstimated?: number | null;
   totalSpent?: number | null;
+  finished: boolean;
+  finishedAt?: string | null;
+  finishedBy?: string | null;
   isFinished?: boolean;
 }
 

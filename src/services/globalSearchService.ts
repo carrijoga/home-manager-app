@@ -228,7 +228,7 @@ export async function searchAll(
         subtitle: `${list.totalItems ?? 0} itens • ${list.monthYear || 'Lista de compras'}`,
         badge: list.isFinished ? 'Finalizada' : 'Em andamento',
         icon: ShoppingCart,
-        path: '/shopping',
+        path: `/shopping?listId=${list.shoppingListId}`,
       });
     });
 
@@ -254,7 +254,7 @@ export async function searchAll(
             subtitle: `Na lista "${detail.name}"${item.categoryName ? ` • ${item.categoryName}` : ''}`,
             badge: item.isPurchased ? 'Comprado' : 'Pendente',
             icon: ShoppingCart,
-            path: '/shopping',
+            path: `/shopping?listId=${detail.shoppingListId}`,
           });
         });
       }

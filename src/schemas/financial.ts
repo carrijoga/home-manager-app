@@ -122,20 +122,21 @@ export const FinancialTransactionResponseSchema = z.object({
   value: MoneySchema,
   transactionDate: DateTimeSchema,
   dueDate: DateTimeSchema.nullable(),
-  responsibleUserId: UuidSchema,
-  responsibleUserName: z.string(),
-  categoryId: UuidSchema,
-  categoryName: z.string(),
-  origin: ModulesSchema,
+  responsibleUserId: UuidSchema.nullable().optional(),
+  responsibleUserName: z.string().nullable().optional(),
+  categoryId: UuidSchema.nullable().optional(),
+  categoryName: z.string().nullable().optional(),
+  origin: ModulesSchema.nullable().optional(),
   originName: z.string().nullable().optional(),
   observation: z.string().nullable().optional(),
   // Nullable: só preenchido quando transactionType === Income, sempre aponta pra
   // BankAccount. Expense nunca tem sourceId na própria transação — a origem só
   // aparece via payments[].sourceId.
-  sourceId: UuidSchema.nullable(),
-  payments: z.array(FinancialTransactionPaymentResponseSchema),
-  paymentStatus: PaymentStatusSchema,
-  isOverdue: z.boolean(),
+  sourceId: UuidSchema.nullable().optional(),
+  payments: z.array(FinancialTransactionPaymentResponseSchema).optional().default([]),
+  paymentStatus: PaymentStatusSchema.optional().default(2),
+  isOverdue: z.boolean().optional().default(false),
+  shoppingListId: UuidSchema.nullable().optional(),
 });
 export type FinancialTransactionResponse = z.infer<typeof FinancialTransactionResponseSchema>;
 

@@ -20,6 +20,11 @@ const MOCK_NESTS: AppUserNest[] = [
   { nestId: 'nest-mock-0002', name: 'Trabalho', icon: 'Briefcase', isDefault: false, role: 2 },
 ];
 
+const MOCK_NEST_CODES: Record<string, string> = {
+  'nest-mock-0001': 'NINHO123',
+  'nest-mock-0002': 'TRAB456',
+};
+
 const MOCK_INVITES: NestInvite[] = [
   {
     nestInviteId: 'invite-mock-0001',
@@ -280,6 +285,41 @@ export async function acceptInvite(tokenHash: string): Promise<void> {
     return;
   }
   await httpClient.post<void>(ENDPOINTS.nests.acceptInvite(tokenHash));
+}
+
+export async function getNestCode(nestId: string): Promise<string> {
+  if (DATA_MODE === 'mock') {
+    await delay(100);
+    if (!MOCK_NEST_CODES[nestId]) {
+      MOCK_NEST_CODES[nestId] = Math.random().toString(36).substring(2, 8).toUpperCase();
+    }
+    return MOCK_NEST_CODES[nestId];
+  }
+  const raw = await httpClient.get<unknown>(ENDPOINTS.nests.getCode, nestId);
+  if (typeof raw === 'string') return raw;
+  if (raw && typeof raw === 'object' && 'code' in raw) return String((raw as Record<string, unknown>).code);
+  return String(raw || '');
+}
+
+export async function regenerateNestCode(nestId: string): Promise<string> {
+  if (DATA_MODE === 'mock') {
+    await delay(100);
+    const newCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+    MOCK_NEST_CODES[nestId] = newCode;
+    return newCode;
+  }
+  const raw = await httpClient.post<unknown>(ENDPOINTS.nests.regenerateCode, undefined, { nestId });
+  if (typeof raw === 'string') return raw;
+  if (raw && typeof raw === 'object' && 'code' in raw) return String((raw as Record<string, unknown>).code);
+  return String(raw || '');
+}
+
+export async function joinNestByCode(code: string): Promise<void> {
+  if (DATA_MODE === 'mock') {
+    await delay(100);
+    return;
+  }
+  await httpClient.post<void>(ENDPOINTS.nests.joinByCode(code));
 }
 
 // ── NestConfiguration ─────────────────────────────────────────────────────────

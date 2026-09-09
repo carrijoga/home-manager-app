@@ -1,4 +1,4 @@
-import { PaymentStatus } from '@/schemas/enums';
+import { PaymentStatus, TransactionType } from '@/schemas/enums';
 import type { FinancialTransactionResponse } from '@/schemas/financial';
 
 export type TransactionStatus = 'open' | 'partiallyPaid' | 'paid';
@@ -94,3 +94,77 @@ export function getDueLabel(isoDateTime: string): string {
   if (diff < 0) return `venceu há ${-diff} dia${diff === -1 ? '' : 's'}`;
   return `vence em ${diff} dia${diff === 1 ? '' : 's'}`;
 }
+
+/**
+ * Retorna o valor efetivamente liquidado/pago de uma transação.
+ */
+export function getEffectiveAmount(t: FinancialTransactionResponse): number {
+  if (t.paymentStatus === PaymentStatus.Paid) {
+    return Math.max(getPaidAmount(t), Number(t.value) || 0);
+  }
+  return getPaidAmount(t);
+}
+
+/**
+ * Calcula os totais (receitas, despesas e saldo líquido) de um grupo de transações.
+ */
+export function calculateTransactionsTotals(items: FinancialTransactionResponse[]): {
+  income: number;
+  expense: number;
+  balance: number;
+} {
+  let income = 0;
+  let expense = 0;
+  for (const t of items) {
+    const val = Number(t.value) || 0;
+    if (t.transactionType === TransactionType.Income) {
+      income += val;
+    } else if (t.transactionType === TransactionType.Expense) {
+      expense += val;
+    }
+  }
+  return {
+    income,
+    expense,
+    balance: income - expense,
+  };
+}
+
+/**
+ * Contadores rápidos para pílulas de filtros da V2.
+ */
+export function calculateFilterCounts(items: FinancialTransactionResponse[]): {
+  total: number;
+  expense: number;
+  income: number;
+  unpaid: number;
+  overdue: number;
+} {
+  let expense = 0;
+  let income = 0;
+  let unpaid = 0;
+  let overdue = 0;
+
+  for (const t of items) {
+    if (t.transactionType === TransactionType.Income) {
+      income += 1;
+    } else if (t.transactionType === TransactionType.Expense) {
+      expense += 1;
+    }
+    if (t.paymentStatus !== PaymentStatus.Paid) {
+      unpaid += 1;
+    }
+    if (t.isOverdue) {
+      overdue += 1;
+    }
+  }
+
+  return {
+    total: items.length,
+    expense,
+    income,
+    unpaid,
+    overdue,
+  };
+}
+

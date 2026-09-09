@@ -21,6 +21,12 @@ export const UpdateBankAccountRequestSchema = z.object({
 });
 export type UpdateBankAccountRequest = z.infer<typeof UpdateBankAccountRequestSchema>;
 
+export const AdjustBalanceRequestSchema = z.object({
+  newBalance: z.number().finite('Valor inválido'),
+  observation: z.string().nullable().optional(),
+});
+export type AdjustBalanceRequest = z.infer<typeof AdjustBalanceRequestSchema>;
+
 // ── Responses ─────────────────────────────────────────────────────────────────
 
 export const PaymentCardSummaryResponseSchema = z.object({

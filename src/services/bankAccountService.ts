@@ -1,5 +1,6 @@
 import { mockBankAccountLinkedCounts, mockBankAccounts } from '@/mocks/data';
 import type {
+  AdjustBalanceRequest,
   BankAccountResponse,
   CanDeleteBankAccountResponse,
   CreateBankAccountRequest,
@@ -81,6 +82,23 @@ export async function updateBankAccount(
     return;
   }
   await httpClient.put<unknown>(ENDPOINTS.bankAccounts.update(id), payload, nestId);
+}
+
+/** Ajusta manualmente o saldo da conta bancária */
+export async function adjustBankAccountBalance(
+  id: string,
+  payload: AdjustBalanceRequest,
+  nestId?: string
+): Promise<void> {
+  if (DATA_MODE === 'mock') {
+    const acc = mockBankAccounts.find((a) => a.bankAccountId === id);
+    if (acc) {
+      acc.balance = payload.newBalance;
+    }
+    await delay(null);
+    return;
+  }
+  await httpClient.patch<unknown>(ENDPOINTS.bankAccounts.adjustBalance(id), payload, nestId);
 }
 
 /** Verifica se a conta pode ser excluída (e quantas transações estão vinculadas) */

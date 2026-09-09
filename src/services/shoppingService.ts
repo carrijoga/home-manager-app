@@ -87,6 +87,7 @@ function mapCategory(r: ShoppingCategoryResponse): AppShoppingCategory {
 }
 
 export function mapItem(r: ShoppingItemResponse): AppShoppingItem {
+  const status = r.status ?? (r.isPurchased ? 1 : 0);
   return {
     shoppingItemId: r.shoppingItemId,
     shoppingListId: r.shoppingListId,
@@ -95,7 +96,8 @@ export function mapItem(r: ShoppingItemResponse): AppShoppingItem {
     unitType: Number(r.unitType),
     shoppingCategoryId: r.shoppingCategoryId ?? null,
     categoryName: r.categoryName ?? null,
-    isPurchased: r.isPurchased,
+    isPurchased: status === 1 || Boolean(r.isPurchased),
+    status,
     price: r.price != null ? Number(r.price) : null,
     estimatedPrice: r.estimatedPrice != null ? Number(r.estimatedPrice) : null,
     purchasedAt: r.purchasedAt ?? null,
@@ -109,11 +111,15 @@ function mapListDetail(r: ShoppingListResponse): AppShoppingList {
     name: r.name,
     monthYear: r.monthYear,
     notes: r.notes ?? null,
-    items: r.items.map(mapItem),
+    finished: r.finished,
+    finishedAt: r.finishedAt ?? null,
+    finishedBy: r.finishedBy ?? null,
+    items: [...r.items.map(mapItem)].reverse(),
   };
 }
 
 function mapListSummary(r: ShoppingListSummaryResponse): AppShoppingListSummary {
+  const finished = r.finished ?? r.isFinished ?? false;
   return {
     shoppingListId: r.shoppingListId,
     name: r.name,
@@ -123,7 +129,10 @@ function mapListSummary(r: ShoppingListSummaryResponse): AppShoppingListSummary 
     purchasedItems: Number(r.purchasedItems),
     totalEstimated: r.totalEstimated != null ? Number(r.totalEstimated) : null,
     totalSpent: r.totalSpent != null ? Number(r.totalSpent) : null,
-    isFinished: r.isFinished ?? false,
+    finished,
+    finishedAt: r.finishedAt ?? null,
+    finishedBy: r.finishedBy ?? null,
+    isFinished: finished,
   };
 }
 
@@ -131,7 +140,7 @@ function mapListSummary(r: ShoppingListSummaryResponse): AppShoppingListSummary 
 
 let _mockLists: AppShoppingListSummary[] = [...mockShoppingLists];
 const _mockDetails: Record<string, AppShoppingList> = Object.fromEntries(
-  Object.entries(mockShoppingListDetails).map(([k, v]) => [k, { ...v, items: [...v.items] }])
+  Object.entries(mockShoppingListDetails).map(([k, v]) => [k, { ...v, items: [...v.items].reverse() }])
 );
 let _mockCategories: AppShoppingCategory[] = [...mockShoppingCategories];
 
@@ -233,6 +242,9 @@ export async function createShoppingList(
       name: data.name,
       monthYear: data.monthYear,
       notes: data.notes ?? null,
+      finished: false,
+      finishedAt: null,
+      finishedBy: null,
       items: [],
     };
     const summary: AppShoppingListSummary = {
@@ -240,6 +252,10 @@ export async function createShoppingList(
       name: data.name,
       monthYear: data.monthYear,
       notes: data.notes ?? null,
+      finished: false,
+      finishedAt: null,
+      finishedBy: null,
+      isFinished: false,
       totalItems: 0,
       purchasedItems: 0,
       totalEstimated: 0,
@@ -256,6 +272,9 @@ export async function createShoppingList(
     name: data.name,
     monthYear: data.monthYear,
     notes: data.notes ?? null,
+    finished: false,
+    finishedAt: null,
+    finishedBy: null,
     items: [],
   };
 }
@@ -297,6 +316,14 @@ export async function deleteShoppingList(id: string, nestId?: string): Promise<v
 
 export async function finishShoppingList(id: string, nestId?: string): Promise<void> {
   if (DATA_MODE === 'mock') {
+    if (_mockDetails[id]) {
+      _mockDetails[id].items = _mockDetails[id].items.map((i) =>
+        i.status === 0 ? { ...i, status: 3 } : i
+      );
+      _mockDetails[id].finished = true;
+      _mockDetails[id].finishedAt = new Date().toISOString();
+      _recomputeSummary(id);
+    }
     return new Promise((resolve) => setTimeout(resolve, 100));
   }
 
@@ -305,6 +332,14 @@ export async function finishShoppingList(id: string, nestId?: string): Promise<v
 
 export async function unfinishShoppingList(id: string, nestId?: string): Promise<void> {
   if (DATA_MODE === 'mock') {
+    if (_mockDetails[id]) {
+      _mockDetails[id].items = _mockDetails[id].items.map((i) =>
+        i.status === 3 ? { ...i, status: 0 } : i
+      );
+      _mockDetails[id].finished = false;
+      _mockDetails[id].finishedAt = null;
+      _recomputeSummary(id);
+    }
     return new Promise((resolve) => setTimeout(resolve, 100));
   }
 
@@ -329,6 +364,7 @@ export async function addShoppingItem(
       shoppingCategoryId: data.shoppingCategoryId ?? null,
       categoryName: catName,
       isPurchased: false,
+      status: 0,
       price: null,
       estimatedPrice: data.estimatedPrice != null ? Number(data.estimatedPrice) : null,
       purchasedAt: null,
@@ -336,8 +372,8 @@ export async function addShoppingItem(
     };
     if (_mockDetails[data.shoppingListId]) {
       _mockDetails[data.shoppingListId].items = [
-        ..._mockDetails[data.shoppingListId].items,
         newItem,
+        ..._mockDetails[data.shoppingListId].items,
       ];
       _recomputeSummary(data.shoppingListId);
     }
@@ -429,6 +465,7 @@ export async function markItemAsPurchased(
             ? {
                 ...item,
                 isPurchased: true,
+                status: 1,
                 quantity: Number(data.quantity),
                 price: Number(data.price),
                 purchasedAt: data.purchasedAt,
@@ -455,7 +492,7 @@ export async function unmarkItemAsPurchased(
     const idx = _mockDetails[listId]?.items.findIndex((i) => i.shoppingItemId === itemId) ?? -1;
     if (idx !== -1) {
       _mockDetails[listId].items = _mockDetails[listId].items.map((item, n) =>
-        n === idx ? { ...item, isPurchased: false, price: null, purchasedAt: null } : item
+        n === idx ? { ...item, isPurchased: false, status: 0, price: null, purchasedAt: null } : item
       );
       _recomputeSummary(listId);
     }
@@ -464,6 +501,52 @@ export async function unmarkItemAsPurchased(
 
   await httpClient.patch<void>(
     ENDPOINTS.shoppingItems.unmarkAsPurchased(listId, itemId),
+    undefined,
+    nestId
+  );
+}
+
+export async function ignoreShoppingItem(
+  listId: string,
+  itemId: string,
+  nestId?: string
+): Promise<void> {
+  if (DATA_MODE === 'mock') {
+    const idx = _mockDetails[listId]?.items.findIndex((i) => i.shoppingItemId === itemId) ?? -1;
+    if (idx !== -1) {
+      _mockDetails[listId].items = _mockDetails[listId].items.map((item, n) =>
+        n === idx ? { ...item, isPurchased: false, status: 2, price: null, purchasedAt: null } : item
+      );
+      _recomputeSummary(listId);
+    }
+    return new Promise((resolve) => setTimeout(resolve, 100));
+  }
+
+  await httpClient.patch<void>(
+    ENDPOINTS.shoppingItems.ignoreItem(listId, itemId),
+    undefined,
+    nestId
+  );
+}
+
+export async function unignoreShoppingItem(
+  listId: string,
+  itemId: string,
+  nestId?: string
+): Promise<void> {
+  if (DATA_MODE === 'mock') {
+    const idx = _mockDetails[listId]?.items.findIndex((i) => i.shoppingItemId === itemId) ?? -1;
+    if (idx !== -1) {
+      _mockDetails[listId].items = _mockDetails[listId].items.map((item, n) =>
+        n === idx ? { ...item, isPurchased: false, status: 0, price: null, purchasedAt: null } : item
+      );
+      _recomputeSummary(listId);
+    }
+    return new Promise((resolve) => setTimeout(resolve, 100));
+  }
+
+  await httpClient.patch<void>(
+    ENDPOINTS.shoppingItems.unignoreItem(listId, itemId),
     undefined,
     nestId
   );

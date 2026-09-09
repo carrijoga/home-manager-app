@@ -116,7 +116,11 @@ function applyMockFilter(
       !t.description.toLowerCase().includes(filter.description.toLowerCase())
     )
       return false;
-    if (filter.categoryIds?.length && !filter.categoryIds.includes(t.categoryId)) return false;
+    if (
+      filter.categoryIds?.length &&
+      (!t.categoryId || !filter.categoryIds.includes(t.categoryId))
+    )
+      return false;
     if (filter.paymentStatuses?.length && !filter.paymentStatuses.includes(t.paymentStatus))
       return false;
     if (filter.isOverdue != null && t.isOverdue !== filter.isOverdue) return false;
@@ -223,7 +227,7 @@ export async function getFinancialDashboard(
       .forEach((t) => {
         const key = t.categoryName || 'Outros';
         if (!categoryTotals[key])
-          categoryTotals[key] = { categoryId: t.categoryId, totalAmount: 0 };
+          categoryTotals[key] = { categoryId: t.categoryId ?? '', totalAmount: 0 };
         categoryTotals[key].totalAmount += Number(t.value);
       });
     const expensesByCategory = Object.entries(categoryTotals)
@@ -287,6 +291,7 @@ export async function createTransaction(
       payments: [],
       paymentStatus: PaymentStatus.Open,
       isOverdue: false,
+      shoppingListId: null,
     });
     mockStore = [created, ...mockStore];
     return delay(created);

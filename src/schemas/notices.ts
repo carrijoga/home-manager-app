@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { ApiPrioritySchema } from './enums';
 import { DateTimeSchema, UuidSchema } from './shared';
 
 // ── Response ──────────────────────────────────────────────────────────────────
@@ -8,6 +9,9 @@ export const NoticeReactionResponseSchema = z.object({
   noticeReactionId: UuidSchema,
   noticeId: UuidSchema,
   userId: UuidSchema,
+  userName: z.union([z.string(), z.null()]).optional(),
+  userProfilePictureUrl: z.union([z.string(), z.null()]).optional(),
+  userAvatar: z.union([z.string(), z.null()]).optional(),
   emoji: z.string(),
   createdAt: DateTimeSchema,
 });
@@ -18,9 +22,14 @@ export const NoticeResponseSchema = z.object({
   message: z.string(),
   date: DateTimeSchema,
   isPinned: z.boolean(),
+  priority: z.union([ApiPrioritySchema, z.null(), z.undefined()]).transform((val) => val ?? 3),
   expiresAt: z.union([DateTimeSchema, z.null()]),
   isActive: z.boolean(),
   createdBy: UuidSchema,
+  createdByName: z.union([z.string(), z.null()]).optional(),
+  createdByProfilePictureUrl: z.union([z.string(), z.null()]).optional(),
+  authorName: z.union([z.string(), z.null()]).optional(),
+  authorAvatar: z.union([z.string(), z.null()]).optional(),
   createdAt: DateTimeSchema,
   reactions: z.array(NoticeReactionResponseSchema),
 });
@@ -38,11 +47,13 @@ export type NoticeHistoryResponse = z.infer<typeof NoticeHistoryResponseSchema>;
 
 export interface CreateNoticeRequest {
   message: string;
-  date: string;
+  priority?: number;
+  date?: string;
   expiresAt?: string | null;
 }
 
 export interface UpdateNoticeRequest {
   message: string;
+  priority?: number;
   expiresAt?: string | null;
 }

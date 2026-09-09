@@ -24,11 +24,20 @@ export const ENDPOINTS = {
     meWeather: '/api/dashboard/weather',
     meConfiguration: '/api/users/me/configuration',
     meNotifications: '/api/users/me/notification',
+    markNotificationAsRead: (notificationId: string) =>
+      `/api/users/me/notification/${notificationId}/read`,
+    deleteNotification: (notificationId: string) =>
+      `/api/users/me/notification/${notificationId}`,
     meNests: '/api/users/me/nests',
     usernamePreview: '/api/users/username/preview',
     avatarOptions: '/api/users/avatar-options',
     changeAvatarSlug: '/api/users/me/avatar-slug',
     profilePicture: '/api/users/me/profile-picture',
+    onboardingCompleteInitial: '/api/users/me/onboarding/complete-initial',
+    onboardingCompleteTour: (tourKey: string) =>
+      `/api/users/me/onboarding/complete-tour/${encodeURIComponent(tourKey)}`,
+    onboardingResetTour: (tourKey: string) =>
+      `/api/users/me/onboarding/complete-tour/${encodeURIComponent(tourKey)}`,
   },
 
   // Nest (grupo/família)
@@ -43,6 +52,9 @@ export const ENDPOINTS = {
     resendInvite: (inviteId: string) => `/api/nests/resend-invite/${inviteId}`,
     acceptInvite: (tokenHash: string) =>
       `/api/nests/accept-invite/${encodeURIComponent(tokenHash)}`,
+    getCode: '/api/nests/code',
+    regenerateCode: '/api/nests/regenerate-code',
+    joinByCode: (code: string) => `/api/nests/join/${encodeURIComponent(code)}`,
     configuration: '/api/nests/configuration',
     removeMember: (userId: string) => `/api/nests/remove-member/${userId}`,
     members: (nestId: string) => `/api/nests/members/${nestId}`,
@@ -78,6 +90,7 @@ export const ENDPOINTS = {
     create: '/api/bank-account',
     getById: (id: string) => `/api/bank-account/${id}`,
     update: (id: string) => `/api/bank-account/${id}`,
+    adjustBalance: (id: string) => `/api/bank-account/${id}/adjust-balance`,
     delete: (id: string) => `/api/bank-account/${id}`,
     canDelete: (id: string) => `/api/bank-account/${id}/can-delete`,
     inactivate: (id: string) => `/api/bank-account/${id}/inactivate`,
@@ -123,6 +136,10 @@ export const ENDPOINTS = {
     markAsPurchased: (id: string) => `/api/shopping-item/${id}/purchase`,
     unmarkAsPurchased: (listId: string, itemId: string) =>
       `/api/shopping-item/${listId}/unpurchase/${itemId}`,
+    ignoreItem: (listId: string, itemId: string) =>
+      `/api/shopping-item/${listId}/ignore/${itemId}`,
+    unignoreItem: (listId: string, itemId: string) =>
+      `/api/shopping-item/${listId}/unignore/${itemId}`,
     upload: (listId: string) => `/api/shopping-item/${listId}/upload`,
   },
 
@@ -145,6 +162,12 @@ export const ENDPOINTS = {
   dashboardHub: (nestId: string) => {
     const base = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
     return `${base}/hubs/dashboard?nestId=${nestId}`;
+  },
+
+  // Hub SignalR — Notificações do Usuário
+  notificationsHub: () => {
+    const base = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+    return `${base}/hubs/notifications`;
   },
 
   // Avisos (Notices)

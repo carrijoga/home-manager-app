@@ -5,12 +5,13 @@ import { z } from 'zod';
  * Os valores comentados são estimativas — confirmar com o backend.
  */
 
-// Tipo da transação financeira (backend: enum TransactionType { Receipt, Expense }): 0 = Receita, 1 = Despesa
+// Tipo da transação financeira (backend: enum TransactionType { Receipt, Expense, Adjustment }): 0 = Receita, 1 = Despesa, 2 = Ajuste
 export const TransactionTypeSchema = z.number().int();
 export type TransactionType = z.infer<typeof TransactionTypeSchema>;
 export const TransactionType = {
   Income: 0,
   Expense: 1,
+  Adjustment: 2,
 } as const;
 
 // Método de pagamento: 0 = Dinheiro, 1 = Débito, 2 = Crédito, 3 = PIX, 4 = Boleto, 5 = Outro
@@ -129,6 +130,23 @@ export const UNIT_TYPE_FULL_LABELS: Record<number, string> = {
   5: 'Dúzia — dz',
   6: 'Caixa — cx',
   7: 'Pacote — pct',
+};
+
+// Status de item de compra: 0 = Pending, 1 = Purchased, 2 = Ignored, 3 = NotPurchased
+export const ShoppingItemStatusSchema = z.number().int();
+export type ShoppingItemStatus = z.infer<typeof ShoppingItemStatusSchema>;
+export const ShoppingItemStatus = {
+  Pending: 0,
+  Purchased: 1,
+  Ignored: 2,
+  NotPurchased: 3,
+} as const;
+
+export const SHOPPING_ITEM_STATUS_LABELS: Record<number, string> = {
+  0: 'Pendente',
+  1: 'Comprado',
+  2: 'Ignorado',
+  3: 'Não comprado',
 };
 
 // Prioridade de tarefa: 0 = Urgente, 1 = Alta, 2 = Media, 3 = Baixa

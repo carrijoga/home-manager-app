@@ -22,6 +22,10 @@ const config: Config = {
 	darkMode: 'class',
 	theme: {
     	extend: {
+    		screens: {
+    			'short': { 'raw': '(max-height: 800px)' },
+    			'compact': { 'raw': '(max-height: 700px)' },
+    		},
     		/**
     		 * Valores de opacidade fora da escala padrão do Tailwind
     		 * (que vai de 5 em 5, e pula de 10 para 20).
@@ -94,6 +98,7 @@ const config: Config = {
     				'700': '#285839',
     				'800': '#1a4028',
     				'900': '#0e2a19',
+    				'950': '#08170e',
     			},
     			linen: {
     				'50':  '#fffefb',
@@ -165,6 +170,13 @@ const config: Config = {
     				ring:                alphaToken('--sidebar-ring'),
     			},
     		},
+    		boxShadow: {
+    			'subtle': 'var(--shadow-subtle)',
+    			'card': 'var(--shadow-card)',
+    			'card-hover': 'var(--shadow-card-hover)',
+    			'popover': 'var(--shadow-popover)',
+    			'modal': 'var(--shadow-modal)',
+    		},
     		fontSize: {
     			xs:   'var(--text-xs)',
     			sm:   'var(--text-sm)',
@@ -176,10 +188,12 @@ const config: Config = {
     			'4xl':'var(--text-4xl)',
     		},
     		borderRadius: {
+    			'xs': 'var(--radius-xs)',
     			sm:   'var(--radius-sm)',
     			md:   'var(--radius-md)',
     			lg:   'var(--radius-lg)',
     			xl:   'var(--radius-xl)',
+    			'2xl':'var(--radius-2xl)',
     			full: 'var(--radius-full)',
     			DEFAULT: 'var(--radius)',
     		},

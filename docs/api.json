@@ -359,6 +359,123 @@
         }
       }
     },
+    "/api/users/me/onboarding/complete-initial": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Marks the initial onboarding flow as completed for the currently authenticated user.",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/me/onboarding/complete-tour/{tourKey}": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Marks a specific onboarding tour as completed for the currently authenticated user.",
+        "parameters": [
+          {
+            "name": "tourKey",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Resets a previously completed onboarding tour for the currently authenticated user.",
+        "parameters": [
+          {
+            "name": "tourKey",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/users/me/notification": {
       "get": {
         "tags": [
@@ -5425,6 +5542,60 @@
         }
       }
     },
+    "/api/bank-account/transfer": {
+      "post": {
+        "tags": [
+          "BankAccount"
+        ],
+        "summary": "Transfers a specified amount from one bank account to another within the same nest",
+        "requestBody": {
+          "description": "The source account, destination account, amount, and optional observation",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransferBetweenBankAccountsRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransferBetweenBankAccountsRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransferBetweenBankAccountsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Transfer completed successfully"
+          },
+          "400": {
+            "description": "Invalid request, accounts not found, or insufficient balance",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/bank-account/{id}/can-delete": {
       "get": {
         "tags": [
@@ -8265,6 +8436,39 @@
       "TransactionType": {
         "type": "integer"
       },
+      "TransferBetweenBankAccountsRequest": {
+        "required": [
+          "sourceBankAccountId",
+          "destinationBankAccountId",
+          "amount",
+          "observation"
+        ],
+        "type": "object",
+        "properties": {
+          "sourceBankAccountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "destinationBankAccountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "observation": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "UnitType": {
         "type": "integer"
       },
@@ -8426,6 +8630,9 @@
               "string"
             ],
             "format": "date-time"
+          },
+          "priority": {
+            "$ref": "#/components/schemas/Priority"
           }
         }
       },
@@ -8691,6 +8898,15 @@
           },
           "shareDataForAnalytics": {
             "type": "boolean"
+          },
+          "hasCompletedInitialOnboarding": {
+            "type": "boolean"
+          },
+          "completedOnboardingTours": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "profileId": {
             "type": "string",

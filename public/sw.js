@@ -1,24 +1,24 @@
-const CACHE_NAME = 'ninho-v3'; // Incrementa versão para forçar atualização
-const RUNTIME_CACHE = 'ninho-runtime-v3';
+const CACHE_NAME = 'ninho-v4'; // Incrementa versão para forçar atualização e limpar cache anterior
+const RUNTIME_CACHE = 'ninho-runtime-v4';
 
-// Assets essenciais para cache durante a instalação
+// Assets estáticos essenciais para cache durante a instalação (apenas arquivos que realmente existem no deploy)
 const PRECACHE_URLS = [
   '/',
   '/index.html',
-  '/src/main.jsx',
-  '/src/App.jsx',
-  '/src/index.css',
   '/manifest.json',
+  '/favicon.svg',
+  '/logo.svg',
   '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png'
+  '/icons/icon-512x512.png',
 ];
 
 // Instalação do Service Worker
 self.addEventListener('install', (event) => {
   console.log('[Service Worker] Installing...');
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
+    caches
+      .open(CACHE_NAME)
+      .then((cache) => {
         console.log('[Service Worker] Precaching app shell');
         return cache.addAll(PRECACHE_URLS);
       })
@@ -30,16 +30,19 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   console.log('[Service Worker] Activating...');
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheName !== CACHE_NAME && cacheName !== RUNTIME_CACHE) {
-            console.log('[Service Worker] Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    }).then(() => self.clients.claim())
+    caches
+      .keys()
+      .then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cacheName) => {
+            if (cacheName !== CACHE_NAME && cacheName !== RUNTIME_CACHE) {
+              console.log('[Service Worker] Deleting old cache:', cacheName);
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      })
+      .then(() => self.clients.claim())
   );
 });
 
@@ -59,8 +62,14 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // IMPORTANTE: Ignora requisições de API - deixa passar direto para a rede
-  if (url.pathname.startsWith('/api/') || url.port === '5026' || (url.hostname.includes('localhost') && url.port !== '')) {
+  // IMPORTANTE: Ignora requisições de API, SignalR Hubs e WebSockets - deixa passar direto para a rede
+  if (
+    url.pathname.startsWith('/api/') ||
+    url.pathname.startsWith('/hubs/') ||
+    url.pathname.includes('/negotiate') ||
+    url.port === '5026' ||
+    (url.hostname.includes('localhost') && url.port !== '' && url.port !== '3000')
+  ) {
     return; // Não intercepta, deixa o fetch normal acontecer
   }
 

@@ -172,12 +172,12 @@ function Register() {
   const currentSlide = SLIDES[activeSlide];
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-muted/40 p-4 antialiased sm:p-6 lg:p-10 selection:bg-primary/20">
+    <div className="flex min-h-screen w-full items-center justify-center bg-muted/40 p-3 sm:p-4 lg:px-8 lg:py-4 xl:py-5 antialiased selection:bg-primary/20">
       {/* Main Split-Screen Container Card */}
-      <div className="grid min-h-[680px] w-full max-w-5xl overflow-hidden rounded-3xl border border-border/70 bg-card shadow-2xl lg:grid-cols-12">
+      <div className="grid min-h-0 w-full max-w-5xl overflow-hidden rounded-3xl border border-border/70 bg-card shadow-2xl lg:grid-cols-12 max-h-[min(680px,calc(100dvh-2rem))]">
         
         {/* Left Column: Visual Showcase & Brand Essence (Hidden on mobile, 6 cols on lg) */}
-        <div className="relative hidden flex-col justify-between overflow-hidden bg-neutral-900 p-8 sm:p-12 lg:col-span-6 lg:flex">
+        <div className="relative hidden flex-col justify-between overflow-hidden bg-neutral-900 p-6 sm:p-8 lg:col-span-6 lg:flex lg:p-8 xl:p-10">
           {/* Animated Background Image */}
           <AnimatePresence mode="wait">
             <motion.img
@@ -196,9 +196,9 @@ function Register() {
           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/25" />
 
           {/* Top Subtle Brand Watermark */}
-          <div className="relative z-10 flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/25 bg-white/20 text-white backdrop-blur-md">
-              <svg viewBox="0 0 60 60" className="h-5 w-5 fill-none" xmlns="http://www.w3.org/2000/svg">
+          <div className="relative z-10 flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/25 bg-white/20 text-white backdrop-blur-md">
+              <svg viewBox="0 0 60 60" className="h-4.5 w-4.5 fill-none" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="30" cy="30" r="28" fill="#ffffff" fillOpacity="0.2" />
                 <ellipse cx="30" cy="36" rx="16" ry="7" fill="#f8fafc" />
                 <ellipse cx="26" cy="34" rx="3.5" ry="4.5" fill="#facc15" />
@@ -207,11 +207,11 @@ function Register() {
                 <path d="M 15 28 Q 12 26 14 24" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" />
               </svg>
             </div>
-            <span className="font-display text-lg font-semibold tracking-tight text-white">Ninho</span>
+            <span className="font-display text-base font-semibold tracking-tight text-white">Ninho</span>
           </div>
 
           {/* Bottom Editorial Content */}
-          <div className="relative z-10 mt-auto pt-10">
+          <div className="relative z-10 mt-auto pt-4 sm:pt-6">
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeSlide}
@@ -220,17 +220,17 @@ function Register() {
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
               >
-                <h2 className="font-display text-2xl font-semibold leading-snug tracking-tight text-white sm:text-3xl">
+                <h2 className="font-display text-xl font-semibold leading-snug tracking-tight text-white sm:text-2xl lg:text-3xl">
                   {currentSlide.headline}
                 </h2>
-                <p className="mt-2.5 max-w-md text-sm leading-relaxed text-neutral-200">
+                <p className="mt-2 max-w-md text-xs leading-relaxed text-neutral-200 sm:text-sm">
                   {currentSlide.subheadline}
                 </p>
               </motion.div>
             </AnimatePresence>
 
             {/* Minimalist Dash Pagination Indicators */}
-            <div className="mt-8 flex items-center gap-2">
+            <div className="mt-4 flex items-center gap-1.5 sm:mt-6">
               {SLIDES.map((_, idx) => (
                 <button
                   key={idx}
@@ -238,8 +238,8 @@ function Register() {
                   onClick={() => setActiveSlide(idx)}
                   className={`h-1 rounded-full transition-all duration-300 ${
                     idx === activeSlide
-                      ? 'w-8 bg-white'
-                      : 'w-3 bg-white/40 hover:bg-white/70'
+                      ? 'w-7 bg-white'
+                      : 'w-2.5 bg-white/40 hover:bg-white/70'
                   }`}
                   aria-label={`Slide ${idx + 1}`}
                 />
@@ -249,59 +249,59 @@ function Register() {
         </div>
 
         {/* Right Column: Registration Form (12 cols on mobile, 6 cols on lg) */}
-        <div className="flex flex-col justify-between bg-card p-7 sm:p-12 lg:col-span-6 lg:p-12">
+        <div className="flex flex-col justify-between bg-card p-5 sm:p-7 lg:col-span-6 lg:px-10 lg:py-5 xl:py-7">
           <div className="mx-auto my-auto w-full max-w-sm">
             {/* Logo & Header */}
-            <div className="mb-6 flex flex-col items-center text-center">
-              <div className="mb-2">
+            <div className="mb-3 flex flex-col items-center text-center sm:mb-4">
+              <div className="mb-1">
                 <Logo size="default" showText={false} />
               </div>
-              <h1 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+              <h1 className="font-display text-xl font-bold tracking-tight text-foreground sm:text-2xl">
                 Criar sua conta
               </h1>
-              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+              <p className="mt-0.5 text-xs text-muted-foreground">
                 Comece a organizar seu lar com o Ninho.
               </p>
             </div>
 
             {/* Form */}
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-3.5" noValidate>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-2 sm:space-y-2.5" noValidate>
               {/* First Name & Last Name Grid */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label htmlFor="firstName" className="text-xs font-medium text-foreground">
+              <div className="grid grid-cols-2 gap-2.5">
+                <div className="space-y-0.5">
+                  <Label htmlFor="firstName" className="text-[11px] font-medium text-foreground">
                     Nome
                   </Label>
                   <Input
                     id="firstName"
                     placeholder="João"
                     {...register('firstName')}
-                    className="h-10 border-border bg-background text-sm text-foreground focus:ring-1 focus:ring-primary"
+                    className="h-9 border-border bg-background text-sm text-foreground focus:ring-1 focus:ring-primary"
                   />
                   {errors.firstName && (
-                    <p className="text-[11px] text-destructive">{errors.firstName.message}</p>
+                    <p className="text-[10px] text-destructive">{errors.firstName.message}</p>
                   )}
                 </div>
 
-                <div className="space-y-1">
-                  <Label htmlFor="lastName" className="text-xs font-medium text-foreground">
+                <div className="space-y-0.5">
+                  <Label htmlFor="lastName" className="text-[11px] font-medium text-foreground">
                     Sobrenome
                   </Label>
                   <Input
                     id="lastName"
                     placeholder="Silva"
                     {...register('lastName')}
-                    className="h-10 border-border bg-background text-sm text-foreground focus:ring-1 focus:ring-primary"
+                    className="h-9 border-border bg-background text-sm text-foreground focus:ring-1 focus:ring-primary"
                   />
                   {errors.lastName && (
-                    <p className="text-[11px] text-destructive">{errors.lastName.message}</p>
+                    <p className="text-[10px] text-destructive">{errors.lastName.message}</p>
                   )}
                 </div>
               </div>
 
               {/* Username Field */}
-              <div className="space-y-1">
-                <Label htmlFor="username" className="text-xs font-medium text-foreground">
+              <div className="space-y-0.5">
+                <Label htmlFor="username" className="text-[11px] font-medium text-foreground">
                   Nome de usuário
                 </Label>
                 <div className="relative">
@@ -312,7 +312,7 @@ function Register() {
                     {...register('username', {
                       onChange: () => setUsernameManuallyEdited(true),
                     })}
-                    className="h-10 border-border bg-background pl-9 pr-9 text-sm text-foreground focus:ring-1 focus:ring-primary"
+                    className="h-9 border-border bg-background pl-9 pr-9 text-sm text-foreground focus:ring-1 focus:ring-primary"
                   />
                   {isUsernameLoading && (
                     <span className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -321,13 +321,13 @@ function Register() {
                   )}
                 </div>
                 {errors.username && (
-                  <p className="text-[11px] text-destructive">{errors.username.message}</p>
+                  <p className="text-[10px] text-destructive">{errors.username.message}</p>
                 )}
               </div>
 
               {/* Email Field */}
-              <div className="space-y-1">
-                <Label htmlFor="email" className="text-xs font-medium text-foreground">
+              <div className="space-y-0.5">
+                <Label htmlFor="email" className="text-[11px] font-medium text-foreground">
                   E-mail
                 </Label>
                 <div className="relative">
@@ -338,17 +338,17 @@ function Register() {
                     placeholder="joao@exemplo.com"
                     autoComplete="email"
                     {...register('email')}
-                    className="h-10 border-border bg-background pl-9 text-sm text-foreground focus:ring-1 focus:ring-primary"
+                    className="h-9 border-border bg-background pl-9 text-sm text-foreground focus:ring-1 focus:ring-primary"
                   />
                 </div>
                 {errors.email && (
-                  <p className="text-[11px] text-destructive">{errors.email.message}</p>
+                  <p className="text-[10px] text-destructive">{errors.email.message}</p>
                 )}
               </div>
 
               {/* Password Field */}
-              <div className="space-y-1">
-                <Label htmlFor="password" className="text-xs font-medium text-foreground">
+              <div className="space-y-0.5">
+                <Label htmlFor="password" className="text-[11px] font-medium text-foreground">
                   Senha
                 </Label>
                 <div className="relative">
@@ -359,7 +359,7 @@ function Register() {
                     placeholder="Mínimo de 6 caracteres"
                     autoComplete="new-password"
                     {...register('password')}
-                    className="h-10 border-border bg-background pl-9 pr-9 text-sm text-foreground focus:ring-1 focus:ring-primary"
+                    className="h-9 border-border bg-background pl-9 pr-9 text-sm text-foreground focus:ring-1 focus:ring-primary"
                   />
                   <button
                     type="button"
@@ -376,13 +376,13 @@ function Register() {
                   </button>
                 </div>
                 {errors.password && (
-                  <p className="text-[11px] text-destructive">{errors.password.message}</p>
+                  <p className="text-[10px] text-destructive">{errors.password.message}</p>
                 )}
               </div>
 
               {/* Confirm Password Field */}
-              <div className="space-y-1">
-                <Label htmlFor="confirmPassword" className="text-xs font-medium text-foreground">
+              <div className="space-y-0.5">
+                <Label htmlFor="confirmPassword" className="text-[11px] font-medium text-foreground">
                   Confirmar Senha
                 </Label>
                 <div className="relative">
@@ -393,7 +393,7 @@ function Register() {
                     placeholder="Repita a senha"
                     autoComplete="new-password"
                     {...register('confirmPassword')}
-                    className="h-10 border-border bg-background pl-9 pr-9 text-sm text-foreground focus:ring-1 focus:ring-primary"
+                    className="h-9 border-border bg-background pl-9 pr-9 text-sm text-foreground focus:ring-1 focus:ring-primary"
                   />
                   <button
                     type="button"
@@ -410,7 +410,7 @@ function Register() {
                   </button>
                 </div>
                 {errors.confirmPassword && (
-                  <p className="text-[11px] text-destructive">{errors.confirmPassword.message}</p>
+                  <p className="text-[10px] text-destructive">{errors.confirmPassword.message}</p>
                 )}
               </div>
 
@@ -418,7 +418,7 @@ function Register() {
               <Button
                 type="submit"
                 disabled={!isValid || isSubmitting}
-                className="mt-3 h-11 w-full text-sm font-semibold transition-opacity disabled:opacity-50"
+                className="mt-2.5 h-9.5 sm:h-10 w-full text-sm font-semibold transition-opacity disabled:opacity-50"
               >
                 {isSubmitting ? (
                   <div className="flex items-center justify-center gap-2">
@@ -435,7 +435,7 @@ function Register() {
             </form>
 
             {/* Back to Login Link */}
-            <div className="mt-6 text-center text-xs text-muted-foreground">
+            <div className="mt-3 text-center text-xs text-muted-foreground">
               <p>
                 Já possui uma conta?{' '}
                 <Link to="/login" className="font-semibold text-foreground hover:underline">

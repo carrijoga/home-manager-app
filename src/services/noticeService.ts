@@ -7,6 +7,7 @@ import type { CreateNoticeRequest, UpdateNoticeRequest } from '@/schemas/notices
 import { NoticeHistoryResponseSchema, NoticeResponseSchema } from '@/schemas/notices';
 import type { Notice, NoticeReaction, PaginatedResponse } from '@/types';
 import { ApiPriority } from '@/types';
+import { resolveUserAvatar } from '@/constants/koboyoAvatars';
 
 import { MOCK_USER_ID, mockNotices } from '../mocks/data';
 import { DATA_MODE } from './api/config';
@@ -72,13 +73,13 @@ function apiToNotice(raw: unknown): Notice {
             ? rec.userName
             : undefined,
         userAvatar:
-          typeof rec.userProfilePictureUrl === 'string'
-            ? rec.userProfilePictureUrl
-            : typeof rec.userAvatar === 'string'
-              ? rec.userAvatar
-              : typeof rec.authorAvatar === 'string'
-                ? rec.authorAvatar
-                : undefined,
+          resolveUserAvatar(
+            typeof rec.userProfilePictureUrl === 'string' ? rec.userProfilePictureUrl
+              : typeof rec.userAvatar === 'string' ? rec.userAvatar
+              : typeof rec.authorAvatar === 'string' ? rec.authorAvatar
+              : undefined,
+            undefined
+          ),
         emoji,
         createdAt: String(rec.createdAt ?? new Date().toISOString()),
       });
@@ -106,11 +107,14 @@ function apiToNotice(raw: unknown): Notice {
         (r.authorName as string) ??
         undefined,
       authorAvatar:
-        parsed.data.createdByProfilePictureUrl ??
-        parsed.data.authorAvatar ??
-        (r.createdByProfilePictureUrl as string) ??
-        (r.authorAvatar as string) ??
-        undefined,
+        resolveUserAvatar(
+          parsed.data.createdByProfilePictureUrl ??
+          parsed.data.authorAvatar ??
+          (r.createdByProfilePictureUrl as string) ??
+          (r.authorAvatar as string) ??
+          undefined,
+          undefined
+        ),
       color: (r.color as string) ?? undefined,
       reactions: normalizeReactions(parsed.data.reactions),
     };
@@ -131,7 +135,10 @@ function apiToNotice(raw: unknown): Notice {
     authorName:
       (r.createdByName as string) ?? (r.authorName as string) ?? undefined,
     authorAvatar:
-      (r.createdByProfilePictureUrl as string) ?? (r.authorAvatar as string) ?? undefined,
+      resolveUserAvatar(
+        (r.createdByProfilePictureUrl as string) ?? (r.authorAvatar as string) ?? undefined,
+        undefined
+      ),
     color: (r.color as string) ?? undefined,
     reactions: normalizeReactions(r.reactions),
   };

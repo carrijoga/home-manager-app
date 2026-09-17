@@ -1,16 +1,22 @@
 import {
   AlertCircle,
-  ArrowDownRight,
-  ArrowUpRight,
   CheckCircle2,
-  Clock,
-  HelpCircle,
   TrendingDown,
   TrendingUp,
   Wallet,
 } from 'lucide-react';
 
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui';
+import {
+  SpringProgress,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui';
+import {
+  AnimatedCurrency,
+  AnimatedPercent,
+} from '@/components/common/AnimatedNumber';
 import { PaymentStatus, TransactionType } from '@/schemas/enums';
 import type {
   FinancialTransactionMonthSummary,
@@ -26,9 +32,9 @@ interface FinancialSummaryCardV2Props {
 }
 
 /**
- * FinancialSummaryCardV2 — Card de Resumo de Caixa e Saúde Financeira V2.
- * Apresenta Saldo Efetivado vs Saldo Previsto, taxa de liquidação de despesas,
- * análise de tendência frente ao mês anterior e detalhamento claro.
+ * FinancialSummaryCardV2 — Card de Resumo de Liquidez e Inteligência Financeira V2.
+ * Focado na taxa de quitação de despesas, contas vencidas, contas a liquidar e
+ * comparativo com o mês anterior, sem redundância com os KPIs de topo.
  */
 export function FinancialSummaryCardV2({
   currentMonth,
@@ -44,20 +50,23 @@ export function FinancialSummaryCardV2({
     .filter((t) => t.transactionType === TransactionType.Expense)
     .reduce((sum, t) => sum + getEffectiveAmount(t), 0);
 
-  const overdueExpense = transactions
-    .filter(
-      (t) =>
-        t.transactionType === TransactionType.Expense &&
-        t.isOverdue &&
-        t.paymentStatus !== PaymentStatus.Paid
-    )
-    .reduce((sum, t) => sum + (Number(t.value) - getEffectiveAmount(t)), 0);
+  const overdueExpenses = transactions.filter(
+    (t) =>
+      t.transactionType === TransactionType.Expense &&
+      t.isOverdue &&
+      t.paymentStatus !== PaymentStatus.Paid
+  );
 
-  const realBalance = paidIncome - paidExpense;
-  const projectedBalance = Number(currentMonth.balance);
+  const overdueExpense = overdueExpenses.reduce(
+    (sum, t) => sum + (Number(t.value) - getEffectiveAmount(t)),
+    0
+  );
+  const overdueCount = overdueExpenses.length;
+
   const totalExpense = Number(currentMonth.totalExpenses);
   const totalIncome = Number(currentMonth.totalIncome);
   const pendingExpense = Math.max(0, totalExpense - paidExpense);
+  const pendingIncome = Math.max(0, totalIncome - paidIncome);
   const paidExpenseRatio = totalExpense > 0 ? Math.min(1, paidExpense / totalExpense) : 0;
   const paidExpensePercent = Math.round(paidExpenseRatio * 100);
 
@@ -68,18 +77,18 @@ export function FinancialSummaryCardV2({
     prevExpense > 0 ? Math.round((deltaExpense / prevExpense) * 100) : null;
 
   return (
-    <div className="flex flex-col gap-4.5 rounded-3xl border border-border/80 bg-card p-5 shadow-xs transition-all sm:p-6">
+    <div className="flex flex-col gap-4 rounded-3xl border border-border/80 bg-card p-5 shadow-xs transition-all sm:p-6">
       {/* Cabeçalho */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
             <Wallet size={20} strokeWidth={2.2} aria-hidden="true" />
           </div>
           <div>
             <h3 className="font-editorial text-lg font-bold leading-tight text-foreground">
-              Resumo de Caixa
+              Liquidez e Quitação
             </h3>
-            <p className="font-ui text-xs text-muted-foreground">Efetivado vs. Previsto no Mês</p>
+            <p className="font-ui text-xs text-muted-foreground">Compromissos e pendências do mês</p>
           </div>
         </div>
 
@@ -88,7 +97,7 @@ export function FinancialSummaryCardV2({
             <Tooltip>
               <TooltipTrigger asChild>
                 <div
-                  className={`font-ui flex cursor-help items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-bold ${
+                  className={`font-ui flex cursor-help items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-colors ${
                     deltaExpense > 0
                       ? 'border-destructive/25 bg-destructive/10 text-destructive'
                       : 'border-chart-2/25 bg-chart-2/10 text-chart-2'
@@ -100,15 +109,13 @@ export function FinancialSummaryCardV2({
                     <TrendingDown size={13} strokeWidth={2.5} />
                   )}
                   <span>
-                    {deltaExpense >= 0 ? '+' : ''}
-                    {deltaPercent}% vs ant.
+                    <AnimatedPercent value={Number(deltaPercent)} showSign /> vs ant.
                   </span>
                 </div>
               </TooltipTrigger>
-              <TooltipContent side="top" className="text-xs">
+              <TooltipContent side="top" className="max-w-[240px] text-xs">
                 <p>
-                  Comparação de despesas: {formatCurrency(totalExpense)} neste mês vs.{' '}
-                  {formatCurrency(prevExpense)} no mês anterior.
+                  {deltaExpense > 0 ? 'Aumento' : 'Redução'} de {formatCurrency(Math.abs(deltaExpense))} nas despesas previstas em relação ao mês anterior ({formatCurrency(prevExpense)}).
                 </p>
               </TooltipContent>
             </Tooltip>
@@ -116,136 +123,84 @@ export function FinancialSummaryCardV2({
         )}
       </div>
 
-      {/* Grid de Hero KPIs: Saldo Real vs Previsto */}
-      <div className="grid grid-cols-2 gap-3 rounded-2xl border border-border/60 bg-muted/30 p-3.5 sm:p-4">
-        {/* Saldo Real */}
-        <div className="flex flex-col gap-1">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="font-ui flex cursor-help items-center gap-1 text-[11px] font-semibold text-muted-foreground hover:text-foreground">
-                  <CheckCircle2 size={13} className="text-chart-2" />
-                  Saldo em Caixa
-                  <HelpCircle size={10} className="text-muted-foreground/60" />
-                </span>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-[220px] text-xs">
-                <p>Receitas já recebidas menos despesas já pagas efetivamente até agora.</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          <span
-            className="font-ui text-lg font-extrabold tracking-tight sm:text-xl"
-            style={{ color: realBalance >= 0 ? 'var(--chart-2)' : 'var(--destructive)' }}
-          >
-            {formatCurrency(realBalance)}
-          </span>
-          <span className="font-ui text-[10px] text-muted-foreground">
-            {paidIncome >= paidExpense ? 'Superávit realizado' : 'Déficit no caixa'}
-          </span>
-        </div>
-
-        {/* Saldo Previsto */}
-        <div className="flex flex-col gap-1 border-l border-border/60 pl-3.5 sm:pl-4">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="font-ui flex cursor-help items-center gap-1 text-[11px] font-semibold text-muted-foreground hover:text-foreground">
-                  <Clock size={13} className="text-primary" />
-                  Saldo Previsto
-                  <HelpCircle size={10} className="text-muted-foreground/60" />
-                </span>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-[220px] text-xs">
-                <p>
-                  Projeção final do mês considerando 100% das receitas e despesas cadastradas.
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          <span
-            className="font-ui text-lg font-extrabold tracking-tight sm:text-xl"
-            style={{ color: projectedBalance >= 0 ? 'var(--foreground)' : 'var(--destructive)' }}
-          >
-            {formatCurrency(projectedBalance)}
-          </span>
-          <span className="font-ui text-[10px] text-muted-foreground">
-            {projectedBalance >= 0 ? 'Projeção positiva' : 'Projeção negativa'}
-          </span>
-        </div>
-      </div>
-
-      {/* Barra de Progresso de Quitação de Despesas */}
-      <div className="font-ui flex flex-col gap-2 rounded-2xl border border-border/50 bg-muted/20 p-3 text-xs">
-        <div className="flex items-center justify-between text-[11px] font-semibold">
-          <span className="flex items-center gap-1.5 text-muted-foreground">
-            <span className="h-2 w-2 rounded-full bg-chart-2" />
+      {/* Destaque: Taxa e Barra de Quitação de Despesas */}
+      <div className="flex flex-col gap-2.5 rounded-2xl border border-border/60 bg-muted/30 p-4">
+        <div className="flex items-baseline justify-between">
+          <span className="font-ui text-xs font-semibold text-muted-foreground">
             Despesas Quitadas no Mês
           </span>
-          <span className="font-bold text-foreground">
-            {paidExpensePercent}% ({formatCurrency(paidExpense)})
-          </span>
-        </div>
-
-        <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted">
-          <div
-            className="h-full rounded-full bg-chart-2 transition-all duration-600 ease-out"
-            style={{ width: `${paidExpensePercent}%` }}
+          <AnimatedPercent
+            value={paidExpensePercent}
+            className="font-ui text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl"
           />
         </div>
 
-        {overdueExpense > 0 && (
-          <div className="flex items-center gap-1 text-[10px] font-semibold text-destructive">
-            <AlertCircle size={11} />
-            <span>Atenção: {formatCurrency(overdueExpense)} em contas vencidas</span>
+        <SpringProgress
+          value={paidExpensePercent}
+          className="h-3 bg-muted/80"
+          indicatorClassName="bg-chart-2"
+        />
+
+        <div className="flex items-center justify-between font-ui text-[11px] text-muted-foreground">
+          <span><AnimatedCurrency value={paidExpense} /> quitados</span>
+          <span>de <AnimatedCurrency value={totalExpense} /> total</span>
+        </div>
+
+        {paidExpensePercent === 100 && totalExpense > 0 && (
+          <div className="flex items-center gap-1.5 pt-0.5 text-[11px] font-semibold text-chart-2">
+            <CheckCircle2 size={13} />
+            <span>Todos os compromissos do mês estão 100% quitados!</span>
           </div>
         )}
       </div>
 
-      {/* Detalhamento de Fluxo (Receitas e Despesas) */}
-      <div className="font-ui flex flex-col gap-1.5 text-xs">
-        <div className="flex items-center justify-between rounded-xl px-2.5 py-1.5 transition-colors hover:bg-muted/40">
-          <span className="flex items-center gap-2 font-medium text-muted-foreground">
-            <div className="flex h-5 w-5 items-center justify-center rounded-md bg-chart-2/15 text-chart-2">
-              <ArrowUpRight size={13} strokeWidth={2.5} />
-            </div>
-            Total de Receitas
-          </span>
-          <div className="text-right">
-            <span className="font-bold text-chart-2">{formatCurrency(totalIncome)}</span>
-            {paidIncome < totalIncome && (
-              <span className="block text-[10px] text-muted-foreground">
-                ({formatCurrency(paidIncome)} recebido)
-              </span>
-            )}
+      {/* Alerta Visual em Caso de Contas Vencidas */}
+      {overdueExpense > 0 && (
+        <div className="flex items-start gap-3 rounded-2xl border border-destructive/30 bg-destructive/10 p-3.5 text-destructive transition-all">
+          <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-destructive/20 text-destructive">
+            <AlertCircle size={16} strokeWidth={2.5} />
+          </div>
+          <div className="flex flex-col gap-0.5">
+            <span className="font-ui text-xs font-bold text-destructive">
+              Atenção: <AnimatedCurrency value={overdueExpense} /> em atraso
+            </span>
+            <span className="font-ui text-[11px] text-destructive/90">
+              {overdueCount === 1
+                ? '1 conta vencida aguardando pagamento.'
+                : `${overdueCount} contas vencidas aguardando pagamento.`}
+            </span>
           </div>
         </div>
+      )}
 
-        <div className="flex items-center justify-between rounded-xl px-2.5 py-1.5 transition-colors hover:bg-muted/40">
-          <span className="flex items-center gap-2 font-medium text-muted-foreground">
-            <div className="flex h-5 w-5 items-center justify-center rounded-md bg-destructive/15 text-destructive">
-              <ArrowDownRight size={13} strokeWidth={2.5} />
-            </div>
-            Total de Despesas
+      {/* Detalhamento de Contas a Liquidar no Mês */}
+      <div className="flex flex-col gap-2 rounded-2xl border border-border/60 bg-muted/20 p-3.5">
+        <div className="flex items-center justify-between">
+          <span className="font-ui text-xs font-semibold text-muted-foreground">
+            Ainda a liquidar neste mês
           </span>
-          <div className="text-right">
-            <span className="font-bold text-destructive">{formatCurrency(totalExpense)}</span>
-            {pendingExpense > 0 && (
-              <span className="block text-[10px] text-muted-foreground">
-                ({formatCurrency(pendingExpense)} restante)
-              </span>
-            )}
-          </div>
+          <AnimatedCurrency
+            value={pendingExpense}
+            className="font-ui text-base font-extrabold text-foreground tabular-nums"
+          />
         </div>
 
-        {pendingExpense > 0 && (
-          <div className="mt-1 flex items-center justify-between border-t border-dashed border-border/80 px-2.5 pt-2 text-[11px] text-muted-foreground">
-            <span className="font-medium">Ainda a liquidar neste mês</span>
-            <span className="font-bold text-foreground">{formatCurrency(pendingExpense)}</span>
+        <div className="flex flex-col gap-1.5 border-t border-border/40 pt-2 font-ui text-xs">
+          <div className="flex items-center justify-between text-muted-foreground">
+            <span>Total de despesas previstas</span>
+            <AnimatedCurrency value={totalExpense} className="font-medium text-foreground" />
           </div>
-        )}
+          <div className="flex items-center justify-between text-muted-foreground">
+            <span>Já pago no período</span>
+            <span className="font-medium text-chart-2">− <AnimatedCurrency value={paidExpense} /></span>
+          </div>
+          {pendingIncome > 0 && (
+            <div className="flex items-center justify-between text-muted-foreground">
+              <span>Receitas ainda a receber</span>
+              <span className="font-medium text-chart-2">+<AnimatedCurrency value={pendingIncome} /></span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

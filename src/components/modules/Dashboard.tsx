@@ -1,34 +1,45 @@
 import { motion } from 'framer-motion';
 import { Calendar, CheckCircle2, DollarSign, ShoppingCart, Sparkles } from 'lucide-react';
+import type { FC } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
+import {
+  AnimatedCurrency,
+  AnimatedNumber,
+  AnimatedPercent,
+} from '@/components/common/AnimatedNumber';
+import BulletinBoard, { type BulletinNote } from '@/components/common/BulletinBoard';
+import DashboardHeader from '@/components/common/DashboardHeader';
+import ModuleMetricWidget, { type FooterItem } from '@/components/common/ModuleMetricWidget';
+import UpcomingEvents from '@/components/common/UpcomingEvents';
+import { CreateNoteModal } from '@/components/modals/CreateNoteModal';
+import { NoticeHistoryModal } from '@/components/modals/NoticeHistoryModal';
 import { useApp } from '@/contexts/AppContext';
 import { useDashboardRealtime } from '@/hooks/useDashboardRealtime';
+import { useNestPresence } from '@/hooks/useNestPresence';
 import { useSignalR } from '@/hooks/useSignalR';
 import {
   getWeatherPreferences,
   saveWeatherPreferences,
   WEATHER_PREFERENCES_UPDATED_EVENT,
 } from '@/lib/weatherPreferences';
+import type { DashboardResponse } from '@/schemas/dashboard';
+import type { NestMember } from '@/schemas/nest';
 import { DATA_MODE } from '@/services/api/config';
 import { ENDPOINTS } from '@/services/api/endpoints';
 import * as calendarService from '@/services/calendarService';
+import type { CalendarEventPreview } from '@/services/calendarService';
 import * as dashboardService from '@/services/dashboardService';
+import * as nestService from '@/services/nestService';
 import * as noticeService from '@/services/noticeService';
 import * as weatherService from '@/services/weatherService';
+import type { Notice } from '@/types';
 import { ApiPriority } from '@/types';
-import { formatCurrency } from '@/utils/dashboardMetrics';
 
-import BulletinBoard from '../common/BulletinBoard';
-import DashboardHeader from '../common/DashboardHeader';
-import ModuleMetricWidget from '../common/ModuleMetricWidget';
-import UpcomingEvents from '../common/UpcomingEvents';
-import { CreateNoteModal } from '../modals/CreateNoteModal';
-import { NoticeHistoryModal } from '../modals/NoticeHistoryModal';
-
-function formatRelativeNoticeTime(dateValue) {
+function formatRelativeNoticeTime(dateValue: string | Date | undefined): string | undefined {
+  if (!dateValue) return undefined;
   const createdAt = new Date(dateValue);
 
   if (Number.isNaN(createdAt.getTime())) return undefined;
@@ -74,17 +85,34 @@ function formatRelativeNoticeTime(dateValue) {
 
 const isMockMode = DATA_MODE === 'mock';
 
+interface WeatherState {
+  loading: boolean;
+  error: boolean;
+  city: string;
+  description: string;
+  temperatureLabel: string;
+  conditionCode: string | null | undefined;
+  temperature: number | null;
+  visible: boolean;
+}
+
+interface EditingNoteState {
+  id: string;
+  message: string;
+  priority: ApiPriority;
+}
+
 /**
  * Dashboard — Visão geral da casa (Domestic Sanctuary design)
  */
-const Dashboard = () => {
+export const Dashboard: FC = () => {
   const navigate = useNavigate();
   const { user, activeNestId } = useApp();
   const [createNoteOpen, setCreateNoteOpen] = useState(false);
-  const [editingNote, setEditingNote] = useState(null);
+  const [editingNote, setEditingNote] = useState<EditingNoteState | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [notices, setNotices] = useState([]);
-  const [weatherState, setWeatherState] = useState({
+  const [notices, setNotices] = useState<Notice[]>([]);
+  const [weatherState, setWeatherState] = useState<WeatherState>({
     loading: false,
     error: false,
     city: '',
@@ -95,9 +123,20 @@ const Dashboard = () => {
     visible: false,
   });
   const [weatherOnboardingKey, setWeatherOnboardingKey] = useState(0);
-  const [calendarEvents, setCalendarEvents] = useState([]);
-  const [apiDashboard, setApiDashboard] = useState(null);
+  const [calendarEvents, setCalendarEvents] = useState<CalendarEventPreview[]>([]);
+  const [members, setMembers] = useState<NestMember[]>([]);
+  const [apiDashboard, setApiDashboard] = useState<DashboardResponse | null>(null);
+  const [isLoadingDashboard, setIsLoadingDashboard] = useState(!isMockMode);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const { presence: onlinePresences } = useNestPresence({
+    nestId: activeNestId,
+    intervalMs: 30000,
+  });
+
+  const displayMembers = useMemo(() => {
+    return nestService.mergeMembersPresence(members, onlinePresences);
+  }, [members, onlinePresences]);
 
   const currentNest = user?.nests?.find((n) => n.nestId === activeNestId);
   const currentUserRole = currentNest?.role ?? (isMockMode ? 1 : 3);
@@ -109,14 +148,17 @@ const Dashboard = () => {
     try {
       const data = await noticeService.getActiveNotices(activeNestId ?? undefined);
       setNotices(data);
-    } catch {}
+    } catch (_err) {
+      // Silencioso em caso de erro ao buscar recados locais
+    }
   }, [activeNestId]);
 
   useEffect(() => {
     refreshNotices();
   }, [refreshNotices]);
 
-  const formatEventDateLabel = useCallback((startsAt) => {
+  const formatEventDateLabel = useCallback((startsAt?: string | null) => {
+    if (!startsAt) return 'Em breve';
     const date = new Date(startsAt);
     if (Number.isNaN(date.getTime())) return 'Em breve';
 
@@ -159,7 +201,7 @@ const Dashboard = () => {
       const weather = await weatherService.getMyWeather(
         manualCity
           ? { city: manualCity, source: 'manual' }
-          : canUseGeo
+          : canUseGeo && prefs.coords
             ? {
                 latitude: prefs.coords.latitude,
                 longitude: prefs.coords.longitude,
@@ -175,10 +217,10 @@ const Dashboard = () => {
         city: weather.city,
         description: weather.description,
         temperatureLabel: `${Math.round(weather.temperature)}°C`,
-        conditionCode: weather.conditionCode,
+        conditionCode: weather.conditionCode ?? null,
         temperature: weather.temperature,
       });
-    } catch {
+    } catch (_err) {
       setWeatherState((prev) => ({ ...prev, loading: false, error: true }));
     }
   }, []);
@@ -239,8 +281,12 @@ const Dashboard = () => {
   }, []);
 
   useEffect(() => {
-    if (!activeNestId && !isMockMode) return;
+    if (!activeNestId && !isMockMode) {
+      setIsLoadingDashboard(false);
+      return;
+    }
     let isMounted = true;
+    setIsLoadingDashboard(true);
 
     dashboardService
       .getDashboard(activeNestId ?? undefined)
@@ -251,7 +297,27 @@ const Dashboard = () => {
         if (import.meta.env.DEV) {
           console.error('[Dashboard] Erro ao carregar dados do dashboard:', err);
         }
+      })
+      .finally(() => {
+        if (isMounted) setIsLoadingDashboard(false);
       });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [activeNestId]);
+
+  // Carrega membros do ninho
+  useEffect(() => {
+    if (!activeNestId && !isMockMode) return;
+    let isMounted = true;
+
+    nestService
+      .getNestMembers(activeNestId ?? '')
+      .then((data) => {
+        if (isMounted && data) setMembers(data);
+      })
+      .catch(() => {});
 
     return () => {
       isMounted = false;
@@ -272,24 +338,24 @@ const Dashboard = () => {
   const handleRefreshDashboard = useCallback(async () => {
     setIsRefreshing(true);
     try {
-      const promises = [
+      const [dashData, noticesData, eventsData, membersData] = await Promise.all([
         dashboardService.getDashboard(activeNestId ?? undefined).catch((err) => {
           if (import.meta.env.DEV) console.error('[Dashboard] Erro ao carregar dashboard:', err);
           return null;
         }),
         noticeService.getActiveNotices(activeNestId ?? undefined).catch(() => null),
         calendarService.getUpcomingEvents(4).catch(() => null),
-        loadWeather().catch(() => {}),
-      ];
-
-      const [dashData, noticesData, eventsData] = await Promise.all(promises);
+        activeNestId ? nestService.getNestMembers(activeNestId).catch(() => null) : null,
+      ]);
+      await loadWeather().catch(() => {});
 
       if (dashData) setApiDashboard(dashData);
       if (noticesData) setNotices(noticesData);
       if (eventsData) setCalendarEvents(eventsData);
+      if (membersData) setMembers(membersData);
 
       toast.success('Dashboard atualizado com sucesso!');
-    } catch {
+    } catch (_err) {
       toast.error('Erro ao atualizar o dashboard.');
     } finally {
       setIsRefreshing(false);
@@ -331,8 +397,28 @@ const Dashboard = () => {
     };
   }, [apiDashboard]);
 
-  const bulletinNotes = useMemo(() => {
-    const rawList = notices && notices.length > 0 ? notices : (apiDashboard?.notices ?? []);
+  const bulletinNotes = useMemo((): BulletinNote[] => {
+    const rawList: Notice[] =
+      notices && notices.length > 0
+        ? notices
+        : (apiDashboard?.notices ?? []).map((n) => ({
+            noticeId: n.noticeId,
+            message: n.message,
+            date: n.date,
+            isPinned: Boolean(n.isPinned),
+            priority: ApiPriority.Baixa,
+            expiresAt: n.expiresAt ?? null,
+            isActive: n.isActive,
+            createdBy: n.createdBy ?? '',
+            createdAt: n.createdAt,
+            reactions: (n.reactions ?? []).map((r) => ({
+              reactionId: r.noticeReactionId,
+              noticeId: r.noticeId,
+              userId: r.userId,
+              emoji: r.emoji,
+              createdAt: r.createdAt,
+            })),
+          }));
 
     const activeList = rawList.filter(
       (n) =>
@@ -362,7 +448,7 @@ const Dashboard = () => {
       return apiDashboard.events.map((event, index) => ({
         id: `api-event-${index}`,
         title: event.title,
-        location: event.description,
+        location: event.description ?? undefined,
         dateLabel: formatEventDateLabel(event.date),
         isNext: index === 0,
       }));
@@ -389,7 +475,7 @@ const Dashboard = () => {
       : null;
 
   // ── Notice actions locais ──────────────────────────────────────────────────
-  const handleSaveNotice = async (message, noteId, priority) => {
+  const handleSaveNotice = async (message: string, noteId?: string, priority: ApiPriority = ApiPriority.Baixa) => {
     if (noteId) {
       await noticeService.updateNotice(noteId, { message, priority }, activeNestId ?? undefined);
     } else {
@@ -400,7 +486,7 @@ const Dashboard = () => {
           ? {
               id: user.id,
               name: user.name,
-              avatar: user.profilePictureUrl || user.avatar,
+              avatar: user.avatar,
             }
           : undefined
       );
@@ -409,7 +495,7 @@ const Dashboard = () => {
     await refreshNotices();
   };
 
-  const handleEditNotice = (bulletinNote) => {
+  const handleEditNotice = (bulletinNote: BulletinNote) => {
     setEditingNote({
       id: bulletinNote.id,
       message: String(bulletinNote.content),
@@ -418,17 +504,17 @@ const Dashboard = () => {
     setCreateNoteOpen(true);
   };
 
-  const handleDeleteNotice = async (noteId) => {
+  const handleDeleteNotice = async (noteId: string) => {
     try {
       await noticeService.deleteNotice(noteId, activeNestId ?? undefined);
       await refreshNotices();
       toast.success('Recado excluído com sucesso!');
-    } catch {
+    } catch (_err) {
       toast.error('Erro ao excluir recado.');
     }
   };
 
-  const handleTogglePin = async (noteId, isPinned) => {
+  const handleTogglePin = async (noteId: string, isPinned: boolean) => {
     try {
       if (isPinned) {
         await noticeService.unpinNotice(noteId, activeNestId ?? undefined);
@@ -436,12 +522,12 @@ const Dashboard = () => {
         await noticeService.pinNotice(noteId, activeNestId ?? undefined);
       }
       await refreshNotices();
-    } catch {
+    } catch (_err) {
       // silencioso se a API falhar
     }
   };
 
-  const handleReactToNotice = async (noteId, emoji) => {
+  const handleReactToNotice = async (noteId: string, emoji: string) => {
     try {
       await noticeService.reactToNotice(
         noteId,
@@ -451,12 +537,12 @@ const Dashboard = () => {
           ? {
               id: user.id,
               name: user.name,
-              avatar: user.profilePictureUrl || user.avatar,
+              avatar: user.avatar,
             }
           : undefined
       );
       await refreshNotices();
-    } catch {
+    } catch (_err) {
       // silencioso
     }
   };
@@ -502,6 +588,9 @@ const Dashboard = () => {
       <div data-tour="dashboard-header">
         <DashboardHeader
           userName={user?.callmeby || user?.name || 'Família'}
+          currentUserId={user?.id}
+          activeNest={currentNest}
+          members={displayMembers}
           pendingTasksCount={taskMetrics.pending}
           showWeather={weatherState.visible}
           weatherCity={weatherState.city || 'São Paulo'}
@@ -519,7 +608,7 @@ const Dashboard = () => {
         />
       </div>
 
-      {/* ── Row 1: Module Metric Widgets ── */}
+      {/* ── Row 1: Module Metric Widgets com Ícones 3D Personalizados ── */}
       <motion.div
         data-tour="dashboard-metrics"
         className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:gap-6 xl:grid-cols-4"
@@ -530,58 +619,84 @@ const Dashboard = () => {
         <motion.div variants={cardSlide}>
           <ModuleMetricWidget
             onClick={() => navigate('/financial')}
+            iconImage="/icons/clay-optimized/financial_wallet.webp"
+            iconAlt="Finanças"
             icon={<DollarSign size={20} strokeWidth={1.5} />}
             iconColor="var(--primary)"
             category="Finanças"
             label="Gasto este mês"
-            value={formatCurrency(expenseMetrics.current)}
-            footer={[
-              { label: 'Mês anterior', value: formatCurrency(expenseMetrics.previous) },
-              expenseMetrics.previous > 0
-                ? {
-                    label: 'Variação',
-                    value: `${expenseMetrics.delta >= 0 ? '+' : ''}${(expenseMetrics.deltaPercent * 100).toFixed(0)}%`,
-                    valueColor: expenseMetrics.delta > 0 ? 'var(--destructive)' : 'var(--chart-2)',
-                  }
-                : undefined,
-            ].filter(Boolean)}
+            value={<AnimatedCurrency value={expenseMetrics.current} />}
+            isLoading={isLoadingDashboard}
+            footer={(
+              [
+                { label: 'Mês anterior', value: <AnimatedCurrency value={expenseMetrics.previous} /> },
+                expenseMetrics.previous > 0
+                  ? {
+                      label: 'Variação',
+                      value: (
+                        <AnimatedPercent
+                          value={expenseMetrics.deltaPercent * 100}
+                          showSign
+                        />
+                      ),
+                      valueColor: expenseMetrics.delta > 0 ? 'var(--destructive)' : 'var(--chart-2)',
+                    }
+                  : undefined,
+              ] as (FooterItem | undefined)[]
+            ).filter((item): item is FooterItem => Boolean(item))}
           />
         </motion.div>
 
         <motion.div variants={cardSlide}>
           <ModuleMetricWidget
             onClick={() => navigate('/shopping')}
+            iconImage="/icons/clay-optimized/shopping_basket.webp"
+            iconAlt="Lista de Compras"
             icon={<ShoppingCart size={20} strokeWidth={1.5} />}
             iconColor="var(--secondary)"
             category="Lista de Compras"
             label="Itens para comprar"
-            value={`${shoppingMetrics.pending} Itens`}
-            footer={[
-              { label: 'Custo Est.', value: formatCurrency(shoppingMetrics.estimatedValue) },
-              shoppingMetrics.outOfStockAlerts > 0
-                ? {
-                    label: 'Alertas',
-                    value: `${shoppingMetrics.outOfStockAlerts} SEM ESTOQUE`,
-                    valueColor: 'var(--destructive)',
-                  }
-                : undefined,
-            ].filter(Boolean)}
+            value={<AnimatedNumber value={shoppingMetrics.pending} suffix=" Itens" />}
+            isLoading={isLoadingDashboard}
+            footer={(
+              [
+                { label: 'Custo Est.', value: <AnimatedCurrency value={shoppingMetrics.estimatedValue} /> },
+                shoppingMetrics.outOfStockAlerts > 0
+                  ? {
+                      label: 'Alertas',
+                      value: (
+                        <AnimatedNumber
+                          value={shoppingMetrics.outOfStockAlerts}
+                          suffix=" SEM ESTOQUE"
+                        />
+                      ),
+                      valueColor: 'var(--destructive)',
+                    }
+                  : undefined,
+              ] as (FooterItem | undefined)[]
+            ).filter((item): item is FooterItem => Boolean(item))}
           />
         </motion.div>
 
         <motion.div variants={cardSlide}>
           <ModuleMetricWidget
             onClick={() => navigate('/tasks')}
+            iconImage="/icons/clay-optimized/tasks_clipboard.webp"
+            iconAlt="Tarefas"
             icon={<CheckCircle2 size={20} strokeWidth={1.5} />}
             iconColor="var(--chart-2)"
             category="Tarefas"
             label="Tarefas de hoje"
-            value={`${taskMetrics.pending} Pendentes`}
+            value={<AnimatedNumber value={taskMetrics.pending} suffix=" Pendentes" />}
+            isLoading={isLoadingDashboard}
             footer={[
-              { label: 'Finalizadas', value: `${taskMetrics.completed} Tarefas` },
+              {
+                label: 'Finalizadas',
+                value: <AnimatedNumber value={taskMetrics.completed} suffix=" Tarefas" />,
+              },
               {
                 label: 'Ritmo',
-                value: `${taskMetrics.completionRate}%`,
+                value: <AnimatedPercent value={taskMetrics.completionRate} />,
                 valueColor: 'var(--chart-2)',
               },
             ]}
@@ -591,11 +706,14 @@ const Dashboard = () => {
         <motion.div variants={cardSlide}>
           <ModuleMetricWidget
             onClick={() => navigate('/calendar')}
+            iconImage="/icons/clay-optimized/calendar_desk.webp"
+            iconAlt="Agenda"
             icon={<Calendar size={20} strokeWidth={1.5} />}
             iconColor="var(--chart-5)"
             category="Agenda"
             label="Esta semana"
-            value={`${agendaCount} Eventos`}
+            value={<AnimatedNumber value={agendaCount} suffix=" Eventos" />}
+            isLoading={isLoadingDashboard}
             footer={nextEventPreview ? [{ label: 'Próximo', value: nextEventPreview }] : undefined}
           />
         </motion.div>
@@ -641,7 +759,7 @@ const Dashboard = () => {
           setEditingNote(null);
         }}
         onSave={handleSaveNotice}
-        initialData={editingNote}
+        initialData={editingNote ? { message: editingNote.message, priority: editingNote.priority } : undefined}
       />
 
       <NoticeHistoryModal

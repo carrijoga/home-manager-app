@@ -16,6 +16,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  Button,
 } from '@/components/ui';
 import { useApp } from '@/contexts/AppContext';
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
@@ -40,7 +41,7 @@ import * as categoryService from '@/services/categoryService';
 import * as financialService from '@/services/financialService';
 import * as nestService from '@/services/nestService';
 import * as paymentCardService from '@/services/paymentCardService';
-import { formatCurrency } from '@/utils/dashboardMetrics';
+import { AnimatedCurrency, AnimatedPercent } from '@/components/common/AnimatedNumber';
 import { getEffectiveAmount, getMonthLabel, getMonthRange } from '@/utils/financialUtils';
 
 import { MonthNavigator } from './financial/MonthNavigator';
@@ -194,9 +195,18 @@ export function FinancialV2() {
       result = result.filter((t) => t.transactionType === TransactionType.Expense);
     if (filters.type === 'income')
       result = result.filter((t) => t.transactionType === TransactionType.Income);
+    if (filters.type === 'transfer')
+      result = result.filter(
+        (t) => t.transactionType === TransactionType.Transfer || t.transactionType === 3
+      );
     if (filters.status === 'unpaid')
-      result = result.filter((t) => t.paymentStatus !== PaymentStatus.Paid);
-    if (filters.status === 'overdue') result = result.filter((t) => t.isOverdue);
+      result = result.filter(
+        (t) => t.transactionType === TransactionType.Expense && t.paymentStatus !== PaymentStatus.Paid
+      );
+    if (filters.status === 'overdue')
+      result = result.filter(
+        (t) => t.transactionType === TransactionType.Expense && t.isOverdue
+      );
     if (filters.categoryId) result = result.filter((t) => t.categoryId === filters.categoryId);
     if (filters.responsibleUserId)
       result = result.filter((t) => t.responsibleUserId === filters.responsibleUserId);
@@ -204,7 +214,9 @@ export function FinancialV2() {
       const q = debouncedSearch.trim().toLowerCase();
       result = result.filter((t) => t.description.toLowerCase().includes(q));
     }
-    return result;
+    return [...result].sort(
+      (a, b) => new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime()
+    );
   }, [
     monthTransactions,
     filters.type,
@@ -306,11 +318,27 @@ export function FinancialV2() {
     }
   };
 
-  const handlePayBill = (bill: FinancialTransactionUpcomingBillResponse) => {
+  const handlePayBill = async (bill: FinancialTransactionUpcomingBillResponse) => {
     const tx = monthTransactions.find(
       (t) => t.financialTransactionId === bill.financialTransactionId
     );
-    if (tx) setPayingTx(tx);
+    if (tx) {
+      setPayingTx(tx);
+      return;
+    }
+    try {
+      const loadedTx = await financialService.getTransactionById(
+        bill.financialTransactionId,
+        nestId
+      );
+      if (loadedTx) {
+        setPayingTx(loadedTx);
+      } else {
+        showError('Não foi possível carregar os detalhes desta conta para pagamento.');
+      }
+    } catch {
+      showError('Não foi possível carregar os detalhes desta conta para pagamento.');
+    }
   };
 
   const openCreate = () => {
@@ -404,93 +432,98 @@ export function FinancialV2() {
         <MonthNavigator month={month} onChange={setMonth} />
 
         <div className="flex items-center gap-3">
-          <button
-            type="button"
+          <Button
             onClick={openCreate}
-            className="font-ui inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-xs font-bold text-primary-foreground shadow-sm transition-all hover:brightness-105 active:scale-[0.98]"
+            className="h-9 items-center gap-1.5 rounded-xl font-bold shadow-xs active:scale-[0.98]"
           >
             <Plus size={16} strokeWidth={2.5} /> Nova Transação
-          </button>
+          </Button>
         </div>
       </div>
 
       {/* Grade Superior de 4 KPIs Analíticos */}
       <div data-tour="financial-summary" className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {/* KPI 1: Saldo em Caixa (Efetivado) */}
-        <div className="flex flex-col gap-1 rounded-2xl border border-border/80 bg-card p-4 shadow-xs">
+        <div className="flex flex-col gap-1 rounded-xl border border-border/60 bg-card p-4 shadow-card hover:shadow-card-hover transition-all duration-150">
           <div className="flex items-center justify-between">
             <span className="font-ui text-[11px] font-semibold text-muted-foreground">
               Saldo em Caixa
             </span>
-            <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-chart-2/15 text-chart-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-chart-2/15 text-chart-2">
               <CheckCircle2 size={15} strokeWidth={2.5} />
             </div>
           </div>
-          <span
-            className="font-ui text-lg font-extrabold tracking-tight sm:text-xl"
+          <AnimatedCurrency
+            value={realBalance}
+            className="font-ui text-lg font-extrabold tracking-tight sm:text-xl tabular-nums"
             style={{ color: realBalance >= 0 ? 'var(--chart-2)' : 'var(--destructive)' }}
-          >
-            {formatCurrency(realBalance)}
-          </span>
+          />
           <span className="font-ui text-[10px] text-muted-foreground">
             {paidIncome >= paidExpense ? 'Receitas − Despesas quitadas' : 'Déficit realizado'}
           </span>
         </div>
 
         {/* KPI 2: Saldo Previsto */}
-        <div className="flex flex-col gap-1 rounded-2xl border border-border/80 bg-card p-4 shadow-xs">
+        <div className="flex flex-col gap-1 rounded-xl border border-border/60 bg-card p-4 shadow-card hover:shadow-card-hover transition-all duration-150">
           <div className="flex items-center justify-between">
             <span className="font-ui text-[11px] font-semibold text-muted-foreground">
               Saldo Previsto
             </span>
-            <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-primary/15 text-primary">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/15 text-primary">
               <Clock size={15} strokeWidth={2.5} />
             </div>
           </div>
-          <span
-            className="font-ui text-lg font-extrabold tracking-tight sm:text-xl"
+          <AnimatedCurrency
+            value={projectedBalance}
+            className="font-ui text-lg font-extrabold tracking-tight sm:text-xl tabular-nums"
             style={{ color: projectedBalance >= 0 ? 'var(--foreground)' : 'var(--destructive)' }}
-          >
-            {formatCurrency(projectedBalance)}
-          </span>
+          />
           <span className="font-ui text-[10px] text-muted-foreground">
             Projeção ao fim do mês
           </span>
         </div>
 
         {/* KPI 3: Receitas Totais */}
-        <div className="flex flex-col gap-1 rounded-2xl border border-border/80 bg-card p-4 shadow-xs">
+        <div className="flex flex-col gap-1 rounded-xl border border-border/60 bg-card p-4 shadow-card hover:shadow-card-hover transition-all duration-150">
           <div className="flex items-center justify-between">
             <span className="font-ui text-[11px] font-semibold text-muted-foreground">
               Receitas do Mês
             </span>
-            <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-chart-2/15 text-chart-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-chart-2/15 text-chart-2">
               <ArrowUpRight size={15} strokeWidth={2.5} />
             </div>
           </div>
-          <span className="font-ui text-lg font-extrabold tracking-tight text-chart-2 sm:text-xl">
-            {formatCurrency(totalIncome)}
-          </span>
+          <AnimatedCurrency
+            value={totalIncome}
+            className="font-ui text-lg font-extrabold tracking-tight text-chart-2 sm:text-xl tabular-nums"
+          />
           <span className="font-ui text-[10px] text-muted-foreground">
-            {paidIncome > 0 ? `${formatCurrency(paidIncome)} já recebido` : 'Aguardando recebimentos'}
+            {paidIncome > 0 ? (
+              <>
+                <AnimatedCurrency value={paidIncome} /> já recebido
+              </>
+            ) : (
+              'Aguardando recebimentos'
+            )}
           </span>
         </div>
 
         {/* KPI 4: Despesas Totais */}
-        <div className="flex flex-col gap-1 rounded-2xl border border-border/80 bg-card p-4 shadow-xs">
+        <div className="flex flex-col gap-1 rounded-xl border border-border/60 bg-card p-4 shadow-card hover:shadow-card-hover transition-all duration-150">
           <div className="flex items-center justify-between">
             <span className="font-ui text-[11px] font-semibold text-muted-foreground">
               Despesas do Mês
             </span>
-            <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-destructive/15 text-destructive">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-destructive/15 text-destructive">
               <ArrowDownRight size={15} strokeWidth={2.5} />
             </div>
           </div>
-          <span className="font-ui text-lg font-extrabold tracking-tight text-destructive sm:text-xl">
-            {formatCurrency(totalExpenses)}
-          </span>
+          <AnimatedCurrency
+            value={totalExpenses}
+            className="font-ui text-lg font-extrabold tracking-tight text-destructive sm:text-xl tabular-nums"
+          />
           <span className="font-ui text-[10px] text-muted-foreground">
-            {paidExpensePercent}% quitadas ({formatCurrency(paidExpense)})
+            <AnimatedPercent value={paidExpensePercent} /> quitadas (<AnimatedCurrency value={paidExpense} />)
           </span>
         </div>
       </div>
@@ -503,7 +536,7 @@ export function FinancialV2() {
         animate="show"
       >
         {/* Coluna Lateral — cards de análise e contas a vencer */}
-        <div className="order-1 flex flex-col gap-4 lg:order-2 lg:col-span-1">
+        <div className="order-2 flex flex-col gap-4 lg:order-2 lg:col-span-1">
           <motion.div variants={cardSlide}>
             <FinancialSummaryCardV2
               currentMonth={
@@ -538,7 +571,7 @@ export function FinancialV2() {
         {/* Coluna Principal — barra de filtros + lista de transações */}
         <motion.div
           variants={cardSlide}
-          className="order-2 flex flex-col gap-4 lg:order-1 lg:col-span-2"
+          className="order-1 flex flex-col gap-4 lg:order-1 lg:col-span-2"
         >
           <TransactionFiltersV2
             value={filters}
@@ -588,14 +621,19 @@ export function FinancialV2() {
       </motion.div>
 
       {/* FAB Mobile para Nova Transação */}
-      <button
-        type="button"
-        aria-label="Nova Transação"
-        onClick={openCreate}
-        className="fixed bottom-20 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform active:scale-95 sm:hidden"
+      <motion.div
+        className="fixed bottom-6 right-6 z-40 sm:hidden pb-[env(safe-area-inset-bottom)]"
+        whileTap={{ scale: 0.92 }}
       >
-        <Plus size={24} strokeWidth={2.5} />
-      </button>
+        <button
+          type="button"
+          aria-label="Nova Transação"
+          onClick={openCreate}
+          className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-2xl transition-transform"
+        >
+          <Plus size={26} strokeWidth={3} />
+        </button>
+      </motion.div>
 
       {/* Modais Integrados */}
       <CreateCategoryModal

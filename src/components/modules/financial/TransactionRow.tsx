@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   ArrowDownRight,
+  ArrowLeftRight,
   ArrowUpRight,
   MoreHorizontal,
   Pencil,
@@ -52,11 +53,20 @@ function StatusBadge({
   status,
   paidRatio,
   isIncome,
+  isTransfer,
 }: {
   status: TransactionStatus;
   paidRatio: number;
   isIncome: boolean;
+  isTransfer?: boolean;
 }) {
+  if (isTransfer) {
+    return (
+      <span className="font-ui rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold tracking-[0.4px] text-primary">
+        TRANSFERÊNCIA
+      </span>
+    );
+  }
   const styles: Record<TransactionStatus, { label: string; className: string }> = {
     paid: { label: isIncome ? 'RECEBIDO' : 'PAGA', className: 'bg-chart-2/15 text-chart-2' },
     open: { label: 'EM ABERTO', className: 'bg-muted text-muted-foreground' },
@@ -90,15 +100,19 @@ export function TransactionRow({
   const payIconRef = useRef<CheckIconHandle>(null);
 
   const isIncome = t.transactionType === TransactionType.Income;
+  const isTransfer = t.transactionType === TransactionType.Transfer || t.transactionType === 3;
   const isAdjustment =
-    t.transactionType === TransactionType.Adjustment ||
-    t.transactionType === 2 ||
-    (!t.categoryId && !t.categoryName);
+    !isTransfer &&
+    (t.transactionType === TransactionType.Adjustment ||
+      t.transactionType === 2 ||
+      (!t.categoryId && !t.categoryName));
   const status = getTransactionStatus(t);
   const paidRatio = Number(t.value) > 0 ? getPaidAmount(t) / Number(t.value) : 0;
-  const canPay = !isIncome && !isAdjustment && t.paymentStatus !== PaymentStatus.Paid;
-  // Backend bloqueia edição de transação com pagamentos vinculados ou de ajuste.
-  const canEdit = !isAdjustment && (t.payments ?? []).length === 0;
+  const canPay = !isIncome && !isAdjustment && !isTransfer && t.paymentStatus !== PaymentStatus.Paid;
+  // Backend bloqueia edição e exclusão de transferência ou com pagamentos vinculados / ajuste.
+  const canEdit = !isAdjustment && !isTransfer && (t.payments ?? []).length === 0;
+  const canDelete = !isTransfer;
+  const hasActions = canEdit || canDelete;
 
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card">
@@ -113,18 +127,26 @@ export function TransactionRow({
             setExpanded((v) => !v);
           }
         }}
-        className="duration-[length:var(--dur-base)] flex cursor-pointer items-center gap-3 p-3.5 outline-none transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring"
+        className="group duration-[length:var(--dur-base)] flex cursor-pointer items-center gap-3 p-3.5 outline-none transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring"
       >
         <div
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
           style={{
-            background: isIncome
-              ? 'color-mix(in srgb, var(--chart-2) 15%, transparent)'
-              : 'color-mix(in srgb, var(--destructive) 10%, transparent)',
-            color: isIncome ? 'var(--chart-2)' : 'var(--destructive)',
+            background: isTransfer
+              ? 'color-mix(in srgb, var(--primary) 12%, transparent)'
+              : isIncome
+                ? 'color-mix(in srgb, var(--chart-2) 15%, transparent)'
+                : 'color-mix(in srgb, var(--destructive) 10%, transparent)',
+            color: isTransfer
+              ? 'var(--primary)'
+              : isIncome
+                ? 'var(--chart-2)'
+                : 'var(--destructive)',
           }}
         >
-          {isIncome ? (
+          {isTransfer ? (
+            <ArrowLeftRight size={17} strokeWidth={1.8} />
+          ) : isIncome ? (
             <ArrowUpRight size={17} strokeWidth={1.8} />
           ) : (
             <ArrowDownRight size={17} strokeWidth={1.8} />
@@ -155,40 +177,84 @@ export function TransactionRow({
         <div className="flex shrink-0 flex-col items-end gap-1">
           <span
             className="font-ui text-sm font-bold"
-            style={{ color: isIncome ? 'var(--chart-2)' : 'var(--destructive)' }}
+            style={{
+              color: isTransfer
+                ? 'var(--foreground)'
+                : isIncome
+                  ? 'var(--chart-2)'
+                  : 'var(--destructive)',
+            }}
           >
-            {isIncome ? '+' : '−'} {formatCurrency(Number(t.value))}
+            {isTransfer ? '' : isIncome ? '+ ' : '− '}
+            {formatCurrency(Number(t.value))}
           </span>
           <div className="flex items-center gap-1.5">
-            <StatusBadge status={status} paidRatio={paidRatio} isIncome={isIncome} />
+            <StatusBadge
+              status={status}
+              paidRatio={paidRatio}
+              isIncome={isIncome}
+              isTransfer={isTransfer}
+            />
           </div>
         </div>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              type="button"
-              aria-label="Mais ações"
-              onClick={(e) => e.stopPropagation()}
-              className="rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            >
-              <MoreHorizontal size={16} strokeWidth={1.5} />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {canEdit && (
-              <DropdownMenuItem onClick={() => onEdit(t)}>
-                <Pencil size={14} className="mr-2" /> Editar
-              </DropdownMenuItem>
+        {/* Grupo de Ações (Baixa Rápida + Menu de Opções) */}
+        {(hasActions || canPay) && (
+          <div className="ml-1 flex shrink-0 items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+            {canPay && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      aria-label="Registrar pagamento"
+                      onClick={() => onPay(t)}
+                      className="font-ui shadow-2xs flex items-center gap-1 rounded-xl border border-chart-2/30 bg-chart-2/10 px-2.5 py-1 text-xs font-bold text-chart-2 transition-all hover:bg-chart-2/20 active:scale-95"
+                    >
+                      <CheckIcon size={13} />
+                      <span className="hidden text-[11px] sm:inline">Pagar</span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    <p className="font-ui text-xs font-semibold">Registrar pagamento</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
-            <DropdownMenuItem
-              onClick={() => onDelete(t)}
-              className="text-destructive focus:text-destructive"
-            >
-              <Trash2 size={14} className="mr-2" /> Excluir
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  aria-label="Mais ações"
+                  className="rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
+                >
+                  <MoreHorizontal size={17} strokeWidth={1.5} />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="font-ui w-44 text-xs">
+                {canPay && (
+                  <DropdownMenuItem onClick={() => onPay(t)}>
+                    <CheckIcon size={14} className="mr-2 text-chart-2" /> Registrar Pagamento
+                  </DropdownMenuItem>
+                )}
+                {canEdit && (
+                  <DropdownMenuItem onClick={() => onEdit(t)}>
+                    <Pencil size={14} className="mr-2 text-muted-foreground" /> Editar Lançamento
+                  </DropdownMenuItem>
+                )}
+                {canDelete && (
+                  <DropdownMenuItem
+                    onClick={() => onDelete(t)}
+                    className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                  >
+                    <Trash2 size={14} className="mr-2" /> Excluir
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )}
       </div>
 
       <AnimatePresence initial={false}>
@@ -233,7 +299,7 @@ export function TransactionRow({
                   }}
                   onMouseEnter={() => payIconRef.current?.startAnimation()}
                   onMouseLeave={() => payIconRef.current?.stopAnimation()}
-                  className="font-ui duration-[length:var(--dur-base)] flex items-center gap-1.5 self-end rounded-lg border border-chart-2/30 bg-chart-2/10 px-3 py-1.5 text-xs font-bold text-chart-2 transition-colors hover:bg-chart-2/20"
+                  className="font-ui duration-[length:var(--dur-base)] flex items-center gap-1.5 self-end rounded-xl border border-chart-2/30 bg-chart-2/10 px-3 py-1.5 text-xs font-bold text-chart-2 shadow-2xs transition-all hover:bg-chart-2/20 active:scale-[0.98]"
                 >
                   <CheckIcon ref={payIconRef} size={14} />
                   Registrar Pagamento

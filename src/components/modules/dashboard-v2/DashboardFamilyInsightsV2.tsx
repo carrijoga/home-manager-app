@@ -9,6 +9,9 @@ import {
 import { useNavigate } from 'react-router-dom';
 
 import { RoleBadge } from '@/components/common/RoleBadge';
+import { AvatarWithPresence } from '@/components/common/OnlineStatusBadge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { resolveUserAvatar } from '@/constants/koboyoAvatars';
 import { cn } from '@/lib/utils';
 import type { NestMember } from '@/schemas/nest';
 
@@ -120,28 +123,34 @@ export function DashboardFamilyInsightsV2({
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            {members.map((member) => (
-              <div
-                key={member.userId}
-                className="flex items-center gap-1.5 rounded-full border border-border/70 bg-muted/30 py-1 pl-1 pr-2.5 text-xs"
-              >
-                {member.photoUrl ? (
-                  <img
-                    src={member.photoUrl}
-                    alt={member.name}
-                    className="size-5 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="flex size-5 items-center justify-center rounded-full bg-primary/20 text-[9px] font-bold text-primary">
-                    {member.name.charAt(0).toUpperCase()}
-                  </div>
-                )}
-                <span className="font-medium text-foreground truncate max-w-[100px]">
-                  {member.name.split(' ')[0]}
-                </span>
-                <RoleBadge role={member.role} className="h-3.5 px-1 text-[8px] py-0 ml-0.5" />
-              </div>
-            ))}
+            {members.map((member) => {
+              const avatarSrc = resolveUserAvatar(member.photoUrl, member.avatarSlug);
+              return (
+                <div
+                  key={member.userId}
+                  className="flex items-center gap-1.5 rounded-full border border-border/70 bg-muted/30 py-1 pl-1 pr-2.5 text-xs"
+                >
+                  <AvatarWithPresence isOnline={member.isOnline} badgeSize="xs">
+                    <Avatar className="size-5 rounded-full bg-white">
+                      {avatarSrc && (
+                        <AvatarImage
+                          src={avatarSrc}
+                          alt={member.name}
+                          className="size-full object-contain filter contrast-125 dark:brightness-105"
+                        />
+                      )}
+                      <AvatarFallback className="bg-primary/20 text-[9px] font-bold text-primary">
+                        {member.name.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </AvatarWithPresence>
+                  <span className="font-medium text-foreground truncate max-w-[100px]">
+                    {member.name.split(' ')[0]}
+                  </span>
+                  <RoleBadge role={member.role} className="h-3.5 px-1 text-[8px] py-0 ml-0.5" />
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

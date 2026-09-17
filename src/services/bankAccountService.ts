@@ -5,6 +5,7 @@ import type {
   CanDeleteBankAccountResponse,
   CreateBankAccountRequest,
   InactivateBankAccountResponse,
+  TransferBankAccountRequest,
   UpdateBankAccountRequest,
 } from '@/schemas/bank-account';
 import {
@@ -99,6 +100,33 @@ export async function adjustBankAccountBalance(
     return;
   }
   await httpClient.patch<unknown>(ENDPOINTS.bankAccounts.adjustBalance(id), payload, nestId);
+}
+
+/** Transfere um valor entre duas contas bancárias do mesmo nest */
+export async function transferBetweenBankAccounts(
+  payload: TransferBankAccountRequest,
+  nestId?: string
+): Promise<void> {
+  if (DATA_MODE === 'mock') {
+    const source = mockBankAccounts.find((a) => a.bankAccountId === payload.sourceBankAccountId);
+    const dest = mockBankAccounts.find((a) => a.bankAccountId === payload.destinationBankAccountId);
+    if (!source) throw new Error('Conta de origem não encontrada.');
+    if (!dest) throw new Error('Conta de destino não encontrada.');
+    if (source.bankAccountId === dest.bankAccountId) {
+      throw new Error('A conta de origem e de destino não podem ser a mesma.');
+    }
+    if (payload.amount <= 0) {
+      throw new Error('O valor da transferência deve ser maior que zero.');
+    }
+    if (Number(source.balance) < payload.amount) {
+      throw new Error('Saldo insuficiente na conta de origem para completar a transferência.');
+    }
+    source.balance = Number(source.balance) - payload.amount;
+    dest.balance = Number(dest.balance) + payload.amount;
+    await delay(null);
+    return;
+  }
+  await httpClient.post<void>(ENDPOINTS.bankAccounts.transfer, payload, { nestId });
 }
 
 /** Verifica se a conta pode ser excluída (e quantas transações estão vinculadas) */

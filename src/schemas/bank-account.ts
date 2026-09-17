@@ -27,6 +27,14 @@ export const AdjustBalanceRequestSchema = z.object({
 });
 export type AdjustBalanceRequest = z.infer<typeof AdjustBalanceRequestSchema>;
 
+export const TransferBankAccountRequestSchema = z.object({
+  sourceBankAccountId: UuidSchema,
+  destinationBankAccountId: UuidSchema,
+  amount: MoneyRequestSchema,
+  observation: z.string().nullable().optional(),
+});
+export type TransferBankAccountRequest = z.infer<typeof TransferBankAccountRequestSchema>;
+
 // ── Responses ─────────────────────────────────────────────────────────────────
 
 export const PaymentCardSummaryResponseSchema = z.object({

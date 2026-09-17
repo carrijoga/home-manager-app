@@ -8,7 +8,23 @@ export interface KoboyoAvatarOption {
  * Lista oficial de ícones de rostos Hand-drawn do Koboyo.
  * Baseado nos slugs fornecidos e suportados pela plataforma Koboyo.
  */
-export const KOBOYO_FACE_SLUGS: string[] = [
+// Lista de slugs adicionais suportados pelo backend (AvatarSlugs.cs)
+const BACKEND_EXTRA_SLUGS = [
+  'face',
+  'face-bandage',
+  'face-eyepatch',
+  'face-headphones',
+  'face-halo',
+  'face-goggles',
+  'face-headset',
+  'face-monocle',
+  'face-snorkel',
+  'face-pulling-tongue',
+  'face-tongue-out',
+  'silly-tongue-face-2',
+];
+
+const KOBOYO_DEFAULT_FACE_SLUGS = [
   'angry-face',
   'anxious-face',
   'blushing-face',
@@ -71,9 +87,22 @@ export const KOBOYO_FACE_SLUGS: string[] = [
   'surprised-face',
 ];
 
+export const KOBOYO_FACE_SLUGS: string[] = Array.from(
+  new Set([...BACKEND_EXTRA_SLUGS, ...KOBOYO_DEFAULT_FACE_SLUGS])
+);
+
 /** Rótulos amigáveis em português para cada slug de ícone */
 export const KOBOYO_AVATAR_NAMES: Record<string, string> = {
+  face: 'Rosto neutro',
+  'face-bandage': 'Machucado',
+  'face-eyepatch': 'Tapa-olho pirata',
   'angry-face': 'Bravo',
+  'face-headphones': 'Com fones',
+  'face-halo': 'Anjinho',
+  'face-goggles': 'Óculos de proteção',
+  'face-headset': 'Headset gamer',
+  'face-monocle': 'Monóculo refinado',
+  'face-snorkel': 'Mergulhador',
   'anxious-face': 'Ansioso',
   'blushing-face': 'Coreado',
   'bored-face': 'Tedioso',
@@ -105,7 +134,7 @@ export const KOBOYO_AVATAR_NAMES: Record<string, string> = {
   'face-wincing': 'Contorcendo',
   'face-yawning': 'Bocejando',
   'furious-face': 'Furioso',
-  'ghost-face': 'Assustado',
+  'ghost-face': 'Fantasma',
   'grateful-face': 'Grato',
   'grinning-face': 'Sorridente',
   'hopeful-face': 'Esperançoso',
@@ -133,20 +162,24 @@ export const KOBOYO_AVATAR_NAMES: Record<string, string> = {
   'sobbing-face': 'Choro intenso',
   'starstruck-face': 'Estrelas nos olhos',
   'surprised-face': 'Surpreso',
+  'face-pulling-tongue': 'Mostrando a língua',
+  'face-tongue-out': 'Língua para fora',
+  'silly-tongue-face-2': 'Boba alegre',
 };
 
 /**
- * Retorna a URL direta do SVG hospedado no CDN oficial do Koboyo.
+ * Retorna a URL direta do SVG local (com fallback para Koboyo se necessário).
  */
 export function getKoboyoAvatarUrl(slug: string): string {
-  return `https://koboyo.com/icons/svg/${slug}.svg`;
+  const cleanSlug = slug.replace(/^koboyo:/, '').replace('.svg', '');
+  return `/icons/koboyo/${cleanSlug}.svg`;
 }
 
 /**
  * Resolve o avatar do usuário.
  * 1. Foto personalizada (`profilePictureUrl` / `photoUrl`) se houver.
- *    - Se for URL (http, https, data URI, blob, /), retorna o próprio link.
- *    - Se for um slug do Koboyo (ex: "sceptical-face", "scared-face"), converte para a URL do CDN do Koboyo.
+ *    - Se for URL externa (http, https, data URI, blob) ou caminho absoluto iniciado em '/', retorna o próprio link.
+ *    - Se for um slug do Koboyo (ex: "sceptical-face", "face-eyepatch"), converte para a URL local.
  * 2. Ícone Hand-drawn do Koboyo (`avatarSlug`) se houver.
  * 3. `undefined` (faz fallback para iniciais do usuário).
  */
@@ -158,23 +191,23 @@ export function resolveUserAvatar(
   const slug = avatarSlug?.trim();
 
   if (photo && photo.length > 0) {
-    // Se for URL completa, caminho relativo, data URI ou blob
+    // Se for URL externa, data URI ou blob
     if (
       photo.startsWith('http://') ||
       photo.startsWith('https://') ||
-      photo.startsWith('/') ||
       photo.startsWith('data:') ||
       photo.startsWith('blob:')
     ) {
       return photo;
     }
 
-    // Se o backend enviar um slug Koboyo no campo photoUrl (ex: "sceptical-face", "scared-face")
-    if (KOBOYO_FACE_SLUGS.includes(photo) || (!photo.includes('/') && !photo.includes('.'))) {
-      return getKoboyoAvatarUrl(photo);
+    // Se já for um path relativo servido do public
+    if (photo.startsWith('/')) {
+      return photo;
     }
 
-    return photo;
+    // Se o backend enviar um slug Koboyo no campo photoUrl (ex: "sceptical-face", "face-eyepatch")
+    return getKoboyoAvatarUrl(photo);
   }
 
   if (slug && slug.length > 0) {
@@ -182,4 +215,17 @@ export function resolveUserAvatar(
   }
 
   return undefined;
+}
+
+/**
+ * Verifica se a URL resolvida ou slug corresponde a um avatar do Koboyo.
+ */
+export function isKoboyoAvatar(
+  avatarUrlOrSlug?: string | null,
+  avatarSlug?: string | null
+): boolean {
+  if (!avatarUrlOrSlug && !avatarSlug) return false;
+  const target = (avatarUrlOrSlug || avatarSlug || '').trim();
+  if (target.includes('/icons/koboyo/') || target.startsWith('koboyo:')) return true;
+  return target in KOBOYO_AVATAR_NAMES;
 }

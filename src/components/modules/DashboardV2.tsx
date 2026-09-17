@@ -10,9 +10,10 @@ import { NoticeHistoryModal } from '@/components/modals/NoticeHistoryModal';
 import { TaskFormModal, type TaskFormPayload } from '@/components/modals/TaskFormModal';
 import { TransactionSheet } from '@/components/modals/TransactionSheet';
 import { useApp } from '@/contexts/AppContext';
-import { useDashboardRealtime } from '@/hooks/useDashboardRealtime';
-import { useSignalR } from '@/hooks/useSignalR';
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
+import { useDashboardRealtime } from '@/hooks/useDashboardRealtime';
+import { useNestPresence } from '@/hooks/useNestPresence';
+import { useSignalR } from '@/hooks/useSignalR';
 import {
   getWeatherPreferences,
   saveWeatherPreferences,
@@ -35,12 +36,11 @@ import * as weatherService from '@/services/weatherService';
 import type { Task } from '@/types';
 import { ApiPriority } from '@/types';
 
-import { DashboardBulletinBoardV2, type BulletinNoteV2 } from './dashboard-v2/DashboardBulletinBoardV2';
+import { type BulletinNoteV2,DashboardBulletinBoardV2 } from './dashboard-v2/DashboardBulletinBoardV2';
 import { DashboardDailyTasksV2 } from './dashboard-v2/DashboardDailyTasksV2';
-import { DashboardFamilyInsightsV2 } from './dashboard-v2/DashboardFamilyInsightsV2';
 import { DashboardHeaderV2 } from './dashboard-v2/DashboardHeaderV2';
-import { DashboardHeroKpisV2 } from './dashboard-v2/DashboardHeroKpisV2';
-import { DashboardUpcomingEventsV2, type UpcomingEventV2 } from './dashboard-v2/DashboardUpcomingEventsV2';
+import { DashboardHeroWidgetsV2 } from './dashboard-v2/DashboardHeroWidgetsV2';
+import { DashboardPantryShoppingV2 } from './dashboard-v2/DashboardPantryShoppingV2';
 
 function formatRelativeNoticeTime(dateValue?: string) {
   if (!dateValue) return undefined;
@@ -94,6 +94,7 @@ export function DashboardV2() {
 
   // ── Estado do Dashboard Endpoint ──────────────────────────────────────────
   const [apiDashboard, setApiDashboard] = useState<DashboardResponse | null>(null);
+  const [isLoadingData, setIsLoadingData] = useState(!isMockMode);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // ── Estado de Tarefas, Recados, Eventos & Moradores ────────────────────────
@@ -102,6 +103,15 @@ export function DashboardV2() {
   const [calendarEvents, setCalendarEvents] = useState<any[]>([]);
   const [members, setMembers] = useState<NestMember[]>([]);
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
+
+  const { presence: onlinePresences } = useNestPresence({
+    nestId,
+    intervalMs: 30000,
+  });
+
+  const displayMembers = useMemo(() => {
+    return nestService.mergeMembersPresence(members, onlinePresences);
+  }, [members, onlinePresences]);
 
   // ── Estado de Clima ───────────────────────────────────────────────────────
   const [weatherState, setWeatherState] = useState({
@@ -212,7 +222,10 @@ export function DashboardV2() {
 
   // ── Carregamento Principal de Dados ───────────────────────────────────────
   const refreshAllData = useCallback(async () => {
-    if (!activeNestId && !isMockMode) return;
+    if (!activeNestId && !isMockMode) {
+      setIsLoadingData(false);
+      return;
+    }
 
     try {
       const [dashData, noticesData, eventsData, tasksData] = await Promise.all([
@@ -228,8 +241,10 @@ export function DashboardV2() {
       if (tasksData?.items) setTasksList(tasksData.items);
     } catch {
       // Silencioso se já estiver em fallback
+    } finally {
+      setIsLoadingData(false);
     }
-  }, [nestId]);
+  }, [nestId, activeNestId]);
 
   useEffect(() => {
     refreshAllData();
@@ -268,16 +283,6 @@ export function DashboardV2() {
   };
 
   // ── Derivação de Métricas ──────────────────────────────────────────────────
-  const financialMetrics = useMemo(() => {
-    const spent = apiDashboard?.financial?.totalMonthSpent ?? 0;
-    const lastSpent = apiDashboard?.financial?.totalLastMonthSpent ?? 0;
-    const variation = apiDashboard?.financial?.monthVariation ?? 0;
-    return {
-      totalMonthSpent: spent,
-      totalLastMonthSpent: lastSpent,
-      monthVariation: variation,
-    };
-  }, [apiDashboard]);
 
   const taskMetrics = useMemo(() => {
     const total = apiDashboard?.task?.totalDayTasks ?? tasksList.length;
@@ -330,43 +335,7 @@ export function DashboardV2() {
     }));
   }, [notices, apiDashboard]);
 
-  // ── Derivação de Eventos ──────────────────────────────────────────────────
-  const formatEventDateLabel = useCallback((startsAt?: string) => {
-    if (!startsAt) return 'Em breve';
-    const date = new Date(startsAt);
-    if (Number.isNaN(date.getTime())) return 'Em breve';
 
-    const today = new Date();
-    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const startOfEvent = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    const dayDiff = Math.round((startOfEvent.getTime() - startOfToday.getTime()) / (24 * 60 * 60 * 1000));
-
-    const timeLabel = new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' }).format(date);
-
-    if (dayDiff === 0) return `Hoje • ${timeLabel}`;
-    if (dayDiff === 1) return `Amanhã • ${timeLabel}`;
-    const weekday = new Intl.DateTimeFormat('pt-BR', { weekday: 'short' }).format(date).replace('.', '');
-    return `${weekday} • ${timeLabel}`;
-  }, []);
-
-  const upcomingEvents: UpcomingEventV2[] = useMemo(() => {
-    if (!isMockMode && apiDashboard?.events?.length) {
-      return apiDashboard.events.map((event, index) => ({
-        id: `api-event-${index}`,
-        title: event.title ?? 'Sem título',
-        location: event.description ?? undefined,
-        dateLabel: formatEventDateLabel(event.date),
-        isNext: index === 0,
-      }));
-    }
-    return calendarEvents.map((event, index) => ({
-      id: event.id,
-      title: event.title,
-      location: event.location,
-      dateLabel: formatEventDateLabel(event.startsAt),
-      isNext: index === 0,
-    }));
-  }, [calendarEvents, apiDashboard, formatEventDateLabel]);
 
   // ── Ações de Tarefas ───────────────────────────────────────────────────────
   const handleQuickAddTask = async (title: string) => {
@@ -434,7 +403,7 @@ export function DashboardV2() {
             ? {
                 id: user.id,
                 name: user.name,
-                avatar: user.profilePictureUrl || user.avatar,
+                avatar: user.avatar,
               }
             : undefined
         );
@@ -467,7 +436,9 @@ export function DashboardV2() {
       }
       const data = await noticeService.getActiveNotices(nestId);
       setNotices(data);
-    } catch {}
+    } catch {
+      // Silencioso em caso de erro na ação de fixar
+    }
   };
 
   const handleReactNotice = async (noteId: string, emoji: string) => {
@@ -480,13 +451,15 @@ export function DashboardV2() {
           ? {
               id: user.id,
               name: user.name,
-              avatar: user.profilePictureUrl || user.avatar,
+              avatar: user.avatar,
             }
           : undefined
       );
       const data = await noticeService.getActiveNotices(nestId);
       setNotices(data);
-    } catch {}
+    } catch {
+      // Silencioso em caso de erro na reação
+    }
   };
 
   // ── Ações de Transação Financeira ─────────────────────────────────────────
@@ -534,7 +507,9 @@ export function DashboardV2() {
       <div data-tour="dashboard-header">
         <DashboardHeaderV2
           userName={user?.callmeby || user?.name || 'Família'}
+          currentUserId={user?.id}
           activeNest={currentNest}
+          members={displayMembers}
           pendingTasksCount={taskMetrics.totalDayTasks - taskMetrics.totalDayFinishedTasks}
           showWeather={weatherState.visible}
           weatherCity={weatherState.city || 'São Paulo'}
@@ -553,81 +528,100 @@ export function DashboardV2() {
         />
       </div>
 
-      {/* ── Row 2: 4 Hero Bento Cards (Finanças, Tarefas, Compras, Agenda) ── */}
+      {/* ── Row 2: 3 Living Widgets (Tarefas, Despensa, Agenda) com Ícones 3D ── */}
       <div data-tour="dashboard-metrics">
-        <DashboardHeroKpisV2
-          financial={financialMetrics}
+        <DashboardHeroWidgetsV2
           tasks={taskMetrics}
           shopping={shoppingMetrics}
           events={eventsMetrics}
+          isLoading={isLoadingData}
+          onTasksClick={() => {
+            const el = document.getElementById('dashboard-tasks-block');
+            if (el) el.scrollIntoView({ behavior: 'smooth' });
+            else navigate('/tasks');
+          }}
+          onShoppingClick={() => {
+            const el = document.getElementById('dashboard-pantry-block');
+            if (el) el.scrollIntoView({ behavior: 'smooth' });
+            else navigate('/shopping');
+          }}
+          onCalendarClick={() => navigate('/calendar')}
         />
       </div>
 
-      {/* ── Row 3: Grid Principal (Mural de Recados + Quadro de Tarefas + Agenda) ── */}
+      {/* ── Row 3: Grid Central Mobile-First (Tarefas, Compras, Mural de Recados) ── */}
       <motion.div
-        className="grid grid-cols-1 items-start gap-4 md:gap-6 lg:grid-cols-3"
+        className="grid grid-cols-1 items-stretch gap-5 lg:grid-cols-3"
         variants={{ hidden: {}, show: { transition: { staggerChildren: 0.08 } } }}
         initial="hidden"
         animate="show"
       >
-        {/* Coluna Esquerda / Principal: Mural de Recados (topo) + Tarefas do Dia (abaixo) */}
-        <div className="flex flex-col gap-4 md:gap-6 lg:col-span-2">
-          {/* Mural de Recados da Família (Sempre no topo para visibilidade imediata) */}
-          <motion.div variants={cardSlide} data-tour="dashboard-bulletin">
-            <DashboardBulletinBoardV2
-              notes={bulletinNotes}
-              currentUserId={currentUserId}
-              isOwnerOrAdmin={isOwnerOrAdmin}
-              onCreateNote={() => {
-                setEditingNote(null);
-                setCreateNoteOpen(true);
-              }}
-              onEditNote={(note) => {
-                setEditingNote({
-                  id: note.id,
-                  message: String(note.content),
-                  priority: note.priority,
-                });
-                setCreateNoteOpen(true);
-              }}
-              onDeleteNote={handleDeleteNotice}
-              onTogglePin={handleTogglePinNotice}
-              onReactNote={handleReactNotice}
-              onViewHistory={() => setHistoryOpen(true)}
-            />
-          </motion.div>
+        {/* Bloco 1: Quadro de Tarefas (Caderno Espiral) */}
+        <motion.div
+          id="dashboard-tasks-block"
+          variants={cardSlide}
+          data-tour="dashboard-tasks"
+          className="flex flex-col h-full"
+        >
+          <DashboardDailyTasksV2
+            tasks={tasksList}
+            members={displayMembers}
+            onAddTask={() => {
+              setEditingTask(null);
+              setTaskModalOpen(true);
+            }}
+            onQuickAddTask={handleQuickAddTask}
+            onCompleteTask={handleCompleteTask}
+            onEditTask={(task) => {
+              setEditingTask(task);
+              setTaskModalOpen(true);
+            }}
+            onDeleteTask={handleDeleteTask}
+          />
+        </motion.div>
 
-          {/* Quadro Interativo de Tarefas */}
-          <motion.div variants={cardSlide} data-tour="dashboard-tasks">
-            <DashboardDailyTasksV2
-              tasks={tasksList}
-              onAddTask={() => {
-                setEditingTask(null);
-                setTaskModalOpen(true);
-              }}
-              onQuickAddTask={handleQuickAddTask}
-              onCompleteTask={handleCompleteTask}
-              onEditTask={(task) => {
-                setEditingTask(task);
-                setTaskModalOpen(true);
-              }}
-              onDeleteTask={handleDeleteTask}
-            />
-          </motion.div>
-        </div>
+        {/* Bloco 2: Lista de Compras / Despensa do Lar */}
+        <motion.div
+          id="dashboard-pantry-block"
+          variants={cardSlide}
+          data-tour="dashboard-pantry"
+          className="flex flex-col h-full"
+        >
+          <DashboardPantryShoppingV2
+            nestId={nestId}
+            onOpenFullList={() => navigate('/shopping')}
+          />
+        </motion.div>
 
-        {/* Coluna Lateral Direita: Timeline de Eventos + Atalhos do Ninho */}
-        <div className="flex flex-col gap-4 md:gap-6 lg:col-span-1">
-          {/* Timeline de Próximos Eventos */}
-          <motion.div variants={cardSlide}>
-            <DashboardUpcomingEventsV2 events={upcomingEvents} />
-          </motion.div>
-
-          {/* Atalhos Rápidos & Moradores do Ninho */}
-          <motion.div variants={cardSlide}>
-            <DashboardFamilyInsightsV2 members={members} />
-          </motion.div>
-        </div>
+        {/* Bloco 3: Mural de Recados (Post-its com Washi Tape) */}
+        <motion.div
+          id="dashboard-bulletin-block"
+          variants={cardSlide}
+          data-tour="dashboard-bulletin"
+          className="flex flex-col h-full"
+        >
+          <DashboardBulletinBoardV2
+            notes={bulletinNotes}
+            currentUserId={currentUserId}
+            isOwnerOrAdmin={isOwnerOrAdmin}
+            onCreateNote={() => {
+              setEditingNote(null);
+              setCreateNoteOpen(true);
+            }}
+            onEditNote={(note) => {
+              setEditingNote({
+                id: note.id,
+                message: String(note.content),
+                priority: note.priority,
+              });
+              setCreateNoteOpen(true);
+            }}
+            onDeleteNote={handleDeleteNotice}
+            onTogglePin={handleTogglePinNotice}
+            onReactNote={handleReactNotice}
+            onViewHistory={() => setHistoryOpen(true)}
+          />
+        </motion.div>
       </motion.div>
 
       {/* ── Modais Integrados ── */}
@@ -654,7 +648,7 @@ export function DashboardV2() {
           setEditingTask(null);
         }}
         initialTask={editingTask}
-        members={members}
+        members={displayMembers}
         onSubmit={handleTaskSubmit}
       />
 

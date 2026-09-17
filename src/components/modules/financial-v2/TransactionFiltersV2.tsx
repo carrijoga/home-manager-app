@@ -1,15 +1,23 @@
+import { motion } from 'framer-motion';
 import { Download, RotateCcw, Search, Tag, User, X } from 'lucide-react';
 import { useMemo } from 'react';
 
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui';
+import {
+  AnimatedNumber,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui';
 import type { CategoryResponse } from '@/schemas/category';
-import { TransactionType } from '@/schemas/enums';
+import { PaymentStatus, TransactionType } from '@/schemas/enums';
 import type { FinancialTransactionResponse } from '@/schemas/financial';
 import type { NestMember } from '@/schemas/nest';
 import { calculateFilterCounts } from '@/utils/financialUtils';
 
 export interface TransactionFiltersV2State {
-  type: 'all' | 'expense' | 'income';
+  type: 'all' | 'expense' | 'income' | 'transfer';
   status: 'all' | 'unpaid' | 'overdue';
   search: string;
   categoryId: string | null;
@@ -42,18 +50,36 @@ function Pill({
   label,
   count,
   variant = 'default',
+  layoutId = 'pill-filter-group',
   onClick,
 }: {
   active: boolean;
   label: string;
   count?: number;
   variant?: 'default' | 'destructive' | 'amber';
+  layoutId?: string;
   onClick: () => void;
 }) {
   const badgeColors = {
-    default: active ? 'bg-primary-foreground/20 text-primary-foreground' : 'bg-muted text-muted-foreground',
+    default: active
+      ? 'bg-primary-foreground/20 text-primary-foreground'
+      : 'bg-muted text-muted-foreground',
     destructive: active ? 'bg-white/20 text-white' : 'bg-destructive/15 text-destructive',
-    amber: active ? 'bg-white/20 text-white' : 'bg-amber-500/15 text-amber-600 dark:text-amber-400',
+    amber: active
+      ? 'bg-white/20 text-white'
+      : 'bg-amber-500/15 text-amber-600 dark:text-amber-400',
+  };
+
+  const bgActiveColors = {
+    default: 'bg-primary shadow-xs ring-2 ring-primary/30',
+    destructive: 'bg-destructive shadow-xs ring-2 ring-destructive/30',
+    amber: 'bg-amber-500 shadow-xs ring-2 ring-amber-500/30',
+  };
+
+  const textActiveColors = {
+    default: 'text-primary-foreground',
+    destructive: 'text-destructive-foreground',
+    amber: 'text-white',
   };
 
   return (
@@ -61,26 +87,67 @@ function Pill({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`font-ui inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all duration-200 active:scale-95 ${
-        active
-          ? variant === 'destructive'
-            ? 'bg-destructive text-destructive-foreground shadow-xs ring-2 ring-destructive/30'
-            : variant === 'amber'
-              ? 'bg-amber-500 text-white shadow-xs ring-2 ring-amber-500/30'
-              : 'bg-primary text-primary-foreground shadow-xs ring-2 ring-primary/30 hover:brightness-105'
-          : 'bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground'
+      className={`font-ui relative inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors duration-150 active:scale-95 select-none ${
+        active ? textActiveColors[variant] : 'text-muted-foreground hover:text-foreground'
       }`}
     >
-      <span>{label}</span>
+      {active && (
+        <motion.div
+          layoutId={layoutId}
+          className={`absolute inset-0 rounded-full ${bgActiveColors[variant]}`}
+          transition={{
+            type: 'spring',
+            stiffness: 450,
+            damping: 32,
+            mass: 0.8,
+          }}
+          style={{ zIndex: 0 }}
+        />
+      )}
+      {!active && (
+        <span className="absolute inset-0 -z-10 rounded-full bg-muted/60 transition-colors hover:bg-muted" />
+      )}
+      <span className="relative z-10">{label}</span>
       {count !== undefined && (
         <span
-          className={`rounded-full px-1.5 py-0.2 text-[10px] font-bold ${badgeColors[variant]}`}
+          className={`relative z-10 rounded-full px-1.5 py-0.2 text-[10px] font-bold transition-colors ${badgeColors[variant]}`}
         >
-          {count}
+          <AnimatedNumber value={count} animateOnMount={false} />
         </span>
       )}
     </button>
   );
+}
+
+function formatCSVDate(dateStr?: string | null): string {
+  if (!dateStr) return '';
+  const match = dateStr.slice(0, 10).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (match) {
+    const [, y, m, d] = match;
+    return `${d}/${m}/${y}`;
+  }
+  return dateStr;
+}
+
+function getCSVTransactionType(type: number): string {
+  switch (type) {
+    case TransactionType.Income:
+      return 'Receita';
+    case TransactionType.Expense:
+      return 'Despesa';
+    case TransactionType.Transfer:
+      return 'Transferência';
+    case TransactionType.Adjustment:
+      return 'Ajuste';
+    default:
+      return 'Outro';
+  }
+}
+
+function getCSVPaymentStatus(status?: number): string {
+  if (status === PaymentStatus.Paid) return 'Pago';
+  if (status === PaymentStatus.PartiallyPaid) return 'Parcial';
+  return 'Em Aberto';
 }
 
 /**
@@ -102,14 +169,14 @@ function exportToCSV(transactions: FinancialTransactionResponse[], monthLabel: s
     'Observação',
   ];
   const rows = transactions.map((t) => [
-    `"${t.transactionDate.slice(0, 10)}"`,
-    `"${t.transactionType === TransactionType.Income ? 'Receita' : 'Despesa'}"`,
+    `"${formatCSVDate(t.transactionDate)}"`,
+    `"${getCSVTransactionType(t.transactionType)}"`,
     `"${t.description.replace(/"/g, '""')}"`,
     `"${t.categoryName || ''}"`,
     `"${t.responsibleUserName || ''}"`,
     `"${Number(t.value).toFixed(2).replace('.', ',')}"`,
-    `"${t.paymentStatus === 2 ? 'Pago' : t.paymentStatus === 1 ? 'Parcial' : 'Em Aberto'}"`,
-    `"${t.dueDate ? t.dueDate.slice(0, 10) : ''}"`,
+    `"${getCSVPaymentStatus(t.paymentStatus)}"`,
+    `"${formatCSVDate(t.dueDate)}"`,
     `"${t.originName || ''}"`,
     `"${(t.observation || '').replace(/"/g, '""')}"`,
   ]);
@@ -154,12 +221,14 @@ export function TransactionFiltersV2({
             active={isAll}
             label="Todas"
             count={counts.total}
+            layoutId="pill-type-filter"
             onClick={() => onChange({ ...value, type: 'all', status: 'all' })}
           />
           <Pill
             active={value.type === 'expense'}
             label="Despesas"
             count={counts.expense}
+            layoutId="pill-type-filter"
             onClick={() =>
               onChange({ ...value, type: value.type === 'expense' ? 'all' : 'expense' })
             }
@@ -168,16 +237,37 @@ export function TransactionFiltersV2({
             active={value.type === 'income'}
             label="Receitas"
             count={counts.income}
-            onClick={() => onChange({ ...value, type: value.type === 'income' ? 'all' : 'income' })}
+            layoutId="pill-type-filter"
+            onClick={() => {
+              const nextType = value.type === 'income' ? 'all' : 'income';
+              const nextStatus =
+                nextType === 'income' && (value.status === 'unpaid' || value.status === 'overdue')
+                  ? 'all'
+                  : value.status;
+              onChange({ ...value, type: nextType, status: nextStatus });
+            }}
+          />
+          <Pill
+            active={value.type === 'transfer'}
+            label="Transferências"
+            count={counts.transfer}
+            layoutId="pill-type-filter"
+            onClick={() =>
+              onChange({ ...value, type: value.type === 'transfer' ? 'all' : 'transfer' })
+            }
           />
           <Pill
             active={value.status === 'unpaid'}
             label="A pagar"
             count={counts.unpaid}
             variant="amber"
-            onClick={() =>
-              onChange({ ...value, status: value.status === 'unpaid' ? 'all' : 'unpaid' })
-            }
+            layoutId="pill-status-filter"
+            onClick={() => {
+              const nextStatus = value.status === 'unpaid' ? 'all' : 'unpaid';
+              const nextType =
+                nextStatus !== 'all' && value.type === 'income' ? 'all' : value.type;
+              onChange({ ...value, status: nextStatus, type: nextType });
+            }}
           />
           {counts.overdue > 0 && (
             <Pill
@@ -185,9 +275,13 @@ export function TransactionFiltersV2({
               label="Vencidas"
               count={counts.overdue}
               variant="destructive"
-              onClick={() =>
-                onChange({ ...value, status: value.status === 'overdue' ? 'all' : 'overdue' })
-              }
+              layoutId="pill-status-filter"
+              onClick={() => {
+                const nextStatus = value.status === 'overdue' ? 'all' : 'overdue';
+                const nextType =
+                  nextStatus !== 'all' && value.type === 'income' ? 'all' : value.type;
+                onChange({ ...value, status: nextStatus, type: nextType });
+              }}
             />
           )}
         </div>

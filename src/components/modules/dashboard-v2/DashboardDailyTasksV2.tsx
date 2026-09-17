@@ -4,7 +4,6 @@ import {
   ArrowRight,
   CheckCircle2,
   Circle,
-  ClipboardList,
   MoreVertical,
   Pencil,
   Plus,
@@ -19,11 +18,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { resolveUserAvatar } from '@/constants/koboyoAvatars';
+import { AnimatedNumber } from '@/components/common/AnimatedNumber';
 import { cn } from '@/lib/utils';
+import type { NestMember } from '@/schemas/nest';
 import type { Task } from '@/types';
 
 interface DashboardDailyTasksV2Props {
   tasks?: Task[];
+  members?: NestMember[];
   onAddTask?: () => void;
   onQuickAddTask?: (title: string) => Promise<void>;
   onCompleteTask?: (taskId: string) => Promise<void>;
@@ -64,6 +68,7 @@ const PRIORITY_BADGES: Record<
 
 export function DashboardDailyTasksV2({
   tasks = [],
+  members = [],
   onAddTask,
   onQuickAddTask,
   onCompleteTask,
@@ -111,24 +116,40 @@ export function DashboardDailyTasksV2({
   return (
     <div
       className={cn(
-        'flex h-full flex-col justify-between rounded-3xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs',
+        'relative flex h-full flex-col justify-between overflow-hidden rounded-3xl border border-border/70 bg-card p-5 sm:p-6 shadow-card',
         className
       )}
     >
       <div>
+        {/* Furos do espiral decorativos no topo (estilo caderno de anotações do lar) */}
+        <div className="flex items-center justify-around pb-3.5 border-b border-dashed border-border/70 -mt-1" aria-hidden="true">
+          <div className="size-2 sm:size-2.5 rounded-full bg-muted/80 shadow-inner" />
+          <div className="size-2 sm:size-2.5 rounded-full bg-muted/80 shadow-inner" />
+          <div className="size-2 sm:size-2.5 rounded-full bg-muted/80 shadow-inner" />
+          <div className="size-2 sm:size-2.5 rounded-full bg-muted/80 shadow-inner" />
+          <div className="size-2 sm:size-2.5 rounded-full bg-muted/80 shadow-inner" />
+          <div className="size-2 sm:size-2.5 rounded-full bg-muted/80 shadow-inner" />
+        </div>
+
         {/* Header da Seção */}
-        <div className="flex flex-wrap items-center justify-between gap-2.5 pb-4">
+        <div className="flex flex-wrap items-center justify-between gap-2.5 pt-3 pb-4">
           <div className="flex items-center gap-2.5">
-            <div className="flex size-8 items-center justify-center rounded-xl bg-chart-2/15 text-chart-2">
-              <ClipboardList size={16} strokeWidth={2.5} />
+            <div className="relative flex size-10 shrink-0 items-center justify-center rounded-2xl bg-emerald-50/80 p-1 dark:bg-emerald-950/30">
+              <img
+                src="/icons/clay-optimized/tasks_pencil.webp"
+                alt="Quadro de Tarefas"
+                className="size-full object-contain"
+                style={{ filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08))' }}
+                loading="lazy"
+              />
             </div>
             <div>
-              <h3 className="font-editorial text-lg font-bold text-foreground">
+              <h3 className="font-display font-bold text-base text-foreground">
                 Quadro de Tarefas
               </h3>
               <p className="font-ui text-xs text-muted-foreground">
-                {totalPending === 1 ? '1 tarefa pendente' : `${totalPending} tarefas pendentes`} •{' '}
-                {totalCompleted} concluídas
+                <AnimatedNumber value={totalPending} /> {totalPending === 1 ? 'restante' : 'restantes'} •{' '}
+                <AnimatedNumber value={totalCompleted} /> concluídas
               </p>
             </div>
           </div>
@@ -179,7 +200,7 @@ export function DashboardDailyTasksV2({
                 type="button"
                 onClick={onAddTask}
                 aria-label="Criar nova tarefa"
-                className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-primary transition-all hover:bg-primary hover:text-primary-foreground active:scale-95"
+                className="flex size-8 items-center justify-center rounded-xl bg-primary/10 text-primary transition-all hover:bg-primary hover:text-primary-foreground active:scale-95"
               >
                 <Plus size={16} strokeWidth={2.5} />
               </button>
@@ -239,6 +260,7 @@ export function DashboardDailyTasksV2({
                 <TaskRowItem
                   key={task.taskId}
                   task={task}
+                  members={members}
                   onComplete={onCompleteTask}
                   onEdit={onEditTask}
                   onDelete={onDeleteTask}
@@ -270,16 +292,23 @@ export function DashboardDailyTasksV2({
 const TaskRowItem = memo(
   ({
     task,
+    members = [],
     onComplete,
     onEdit,
     onDelete,
   }: {
     task: Task;
+    members?: NestMember[];
     onComplete?: (id: string) => Promise<void>;
     onEdit?: (task: Task) => void;
     onDelete?: (id: string) => Promise<void>;
   }) => {
     const priority = PRIORITY_BADGES[task.priority ?? 3] ?? PRIORITY_BADGES[3];
+
+    const assignedMember = useMemo(() => {
+      if (!task.assignedTo || !members?.length) return null;
+      return members.find((m) => m.userId === task.assignedTo);
+    }, [task.assignedTo, members]);
 
     return (
       <motion.div
@@ -289,23 +318,23 @@ const TaskRowItem = memo(
         exit={{ opacity: 0, x: -16 }}
         transition={{ duration: 0.2 }}
         className={cn(
-          'group flex items-center justify-between gap-3 rounded-2xl border p-3 transition-all',
+          'group flex items-center justify-between gap-2.5 sm:gap-3 rounded-2xl border p-2.5 sm:p-3 transition-all duration-150',
           task.isCompleted
             ? 'border-transparent bg-muted/40'
-            : 'border-border/60 bg-card hover:border-border hover:shadow-xs'
+            : 'border-border/60 bg-card shadow-subtle hover:border-border/90 hover:shadow-card'
         )}
       >
-        <div className="flex min-w-0 flex-1 items-center gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-2.5 sm:gap-3">
           {/* Checkbox customizado */}
           <button
             type="button"
             onClick={() => !task.isCompleted && onComplete?.(task.taskId)}
             disabled={task.isCompleted}
             className={cn(
-              'flex size-5 shrink-0 items-center justify-center rounded-lg border transition-all',
+              'flex size-5 shrink-0 items-center justify-center rounded-lg border transition-all cursor-pointer',
               task.isCompleted
-                ? 'border-chart-2 bg-chart-2 text-white'
-                : 'border-border/80 bg-muted/40 hover:border-chart-2 hover:bg-chart-2/10'
+                ? 'border-emerald-600 bg-emerald-600 text-white'
+                : 'border-border/80 bg-muted/40 hover:border-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30'
             )}
             title={task.isCompleted ? 'Tarefa concluída' : 'Marcar como concluída'}
           >
@@ -338,6 +367,30 @@ const TaskRowItem = memo(
             </div>
 
             <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[10px]">
+              {/* Badge {Avatar} + Nome */}
+              {assignedMember && (() => {
+                const avatarSrc = resolveUserAvatar(assignedMember.photoUrl, assignedMember.avatarSlug);
+                return (
+                  <div className="flex items-center gap-1 rounded-full border border-amber-200/70 bg-amber-50/90 pl-1 pr-2 py-0.2 shadow-2xs dark:border-amber-800/40 dark:bg-amber-950/40">
+                    <Avatar className="size-3.5 rounded-full bg-white">
+                      {avatarSrc && (
+                        <AvatarImage
+                          src={avatarSrc}
+                          alt={assignedMember.name}
+                          className="size-full object-contain filter contrast-125 dark:brightness-105"
+                        />
+                      )}
+                      <AvatarFallback className="bg-primary/20 text-[7px] font-bold text-primary">
+                        {assignedMember.name.slice(0, 1).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="font-ui text-[9px] font-bold text-amber-900 dark:text-amber-200">
+                      {assignedMember.name.split(' ')[0]}
+                    </span>
+                  </div>
+                );
+              })()}
+
               <span
                 className={cn(
                   'rounded-md px-1.5 py-0.5 font-bold uppercase tracking-wider',

@@ -3,6 +3,7 @@ import type {
   NestConfigurationResponse,
   NestInvite,
   NestMember,
+  NestMemberPresence,
   UpdateNestConfigurationRequest,
   UpdateNestRequest,
 } from '@/schemas/nest';
@@ -234,6 +235,55 @@ export async function removeMember(userId: string, nestId: string): Promise<void
     return;
   }
   await httpClient.post<void>(ENDPOINTS.nests.removeMember(userId), undefined, { nestId });
+}
+
+// ── Presence ──────────────────────────────────────────────────────────────────
+
+export async function getOnlineNestMembers(nestId?: string): Promise<NestMemberPresence[]> {
+  if (DATA_MODE === 'mock') {
+    await delay(80);
+    const members = nestId ? MOCK_MEMBERS.filter((m) => m.nestId === nestId) : MOCK_MEMBERS;
+    return members.map((m, idx) => ({
+      userId: m.userId,
+      name: m.name,
+      photoUrl: m.photoUrl ?? null,
+      isOnline: idx === 0 || idx % 2 === 0,
+    }));
+  }
+
+  try {
+    const raw = await httpClient.get<unknown>(ENDPOINTS.nests.presenceOnline, nestId);
+    const items = extractArray(raw);
+    return items.map((item) => {
+      const obj = (item && typeof item === 'object' ? item : {}) as Record<string, unknown>;
+      return {
+        userId: String(obj.userId || obj.id || ''),
+        name: String(obj.name || obj.fullName || '').trim(),
+        photoUrl: (obj.photoUrl as string) || (obj.profilePictureUrl as string) || null,
+        isOnline: Boolean(obj.isOnline),
+      };
+    });
+  } catch (error) {
+    if (import.meta.env.DEV) {
+      console.warn(`[nestService] getOnlineNestMembers erro para nestId=${nestId}:`, error);
+    }
+    return [];
+  }
+}
+
+export function mergeMembersPresence(
+  members: NestMember[],
+  presence: NestMemberPresence[]
+): NestMember[] {
+  if (!presence || presence.length === 0) return members;
+  const presenceMap = new Map<string, boolean>();
+  for (const p of presence) {
+    if (p.userId) presenceMap.set(p.userId, p.isOnline);
+  }
+  return members.map((m) => ({
+    ...m,
+    isOnline: presenceMap.get(m.userId) ?? m.isOnline ?? false,
+  }));
 }
 
 // ── Invites ───────────────────────────────────────────────────────────────────

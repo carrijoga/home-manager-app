@@ -4,7 +4,7 @@
  * dentro de uma janela de tempo ou enquanto uma ação assíncrona estiver pendente.
  */
 
-const DEFAULT_DEBOUNCE_MS = 600;
+const DEFAULT_DEBOUNCE_MS = 200;
 const lastClickMap = new WeakMap<Element, number>();
 const lastFormSubmitMap = new WeakMap<HTMLFormElement, number>();
 
@@ -23,8 +23,16 @@ export function initGlobalClickProtection(debounceMs: number = DEFAULT_DEBOUNCE_
     );
     if (!button) return;
 
-    // Se o elemento permite cliques múltiplos expressamente (ex: steppers de quantidade)
+    // Elementos interativos de controle ou abas não devem sofrer supressão de clique
+    const role = button.getAttribute('role');
     if (
+      role === 'tab' ||
+      role === 'checkbox' ||
+      role === 'radio' ||
+      role === 'switch' ||
+      role === 'menuitem' ||
+      role === 'combobox' ||
+      button.hasAttribute('data-state') ||
       button.dataset.allowDoubleClick === 'true' ||
       button.dataset.allowRapidClicks === 'true' ||
       button.dataset.stepper === 'true'

@@ -140,7 +140,7 @@ export function getIconComponent(
     const slug = extractKoboyoSlug(name);
     const KoboyoIconComponent = ({ className }: { className?: string }) => (
       <img
-        src={`https://koboyo.com/icons/svg/${slug}.svg`}
+        src={`/icons/koboyo/${slug}.svg`}
         alt=""
         className={cn(
           'rounded-xs inline-block shrink-0 border border-slate-200 bg-white object-contain p-[1px]',

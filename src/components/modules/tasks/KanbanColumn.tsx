@@ -37,34 +37,34 @@ export function KanbanColumn({ status, tasks, onEdit, onDelete, onInlineAdd }: K
   };
 
   return (
-    <div className="flex w-[280px] min-w-[280px] flex-col lg:w-auto lg:min-w-0 lg:flex-1">
+    <div className="flex w-[300px] min-w-[280px] sm:w-[320px] flex-col flex-1 shrink-0">
       {/* Column header */}
       <div className={`flex items-center justify-between rounded-t-2xl px-4 py-3 ${col.headerBg}`}>
         <div className="flex items-center gap-2">
-          <span className={`font-ui text-sm font-bold ${col.color}`}>{col.label}</span>
-          <span className="font-ui rounded-full bg-background/60 px-2 py-0.5 text-xs font-semibold text-foreground">
+          <span className={`text-sm font-bold ${col.color}`}>{col.label}</span>
+          <span className="inline-flex h-5 items-center justify-center rounded-full bg-background/60 px-2 text-xs font-semibold text-foreground">
             {tasks.length}
           </span>
         </div>
         <button
           onClick={() => setInputActive(true)}
-          className="rounded p-1 text-muted-foreground transition-colors hover:bg-background/60 hover:text-foreground"
+          className="rounded-lg p-1.5 text-muted-foreground/80 transition-colors hover:bg-background/60 hover:text-foreground"
           title="Adicionar tarefa"
         >
-          <Plus size={15} />
+          <Plus size={15} strokeWidth={2.5} />
         </button>
       </div>
 
       {/* Column body */}
       <div
         ref={setNodeRef}
-        className={`min-h-[200px] flex-1 space-y-2 rounded-b-2xl border border-t-0 border-border p-2 transition-colors ${
-          isOver ? 'bg-primary/5' : 'bg-muted/20'
+        className={`min-h-[200px] flex-1 space-y-3 rounded-b-2xl border border-t-0 border-border p-3 transition-colors ${
+          isOver ? 'bg-primary/5' : 'bg-muted/30'
         }`}
       >
         {/* Inline add input */}
         {inputActive && (
-          <div className="rounded-xl border border-border bg-card p-2">
+          <div className="rounded-xl border border-border/80 bg-card p-3 shadow-sm animate-in fade-in zoom-in-95">
             <input
               autoFocus
               type="text"
@@ -79,24 +79,24 @@ export function KanbanColumn({ status, tasks, onEdit, onDelete, onInlineAdd }: K
               }}
               placeholder="Nome da tarefa..."
               maxLength={200}
-              className="font-ui w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
+              className="w-full bg-transparent text-sm font-medium text-foreground outline-none placeholder:text-muted-foreground/70"
             />
-            <div className="mt-2 flex gap-2">
-              <button
-                onClick={handleAdd}
-                disabled={adding || !addValue.trim()}
-                className="font-ui rounded-lg bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground transition-colors disabled:opacity-50"
-              >
-                Adicionar
-              </button>
+            <div className="mt-3 flex items-center justify-end gap-2">
               <button
                 onClick={() => {
                   setAddValue('');
                   setInputActive(false);
                 }}
-                className="font-ui text-xs text-muted-foreground transition-colors hover:text-foreground"
+                className="text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground px-2"
               >
                 Cancelar
+              </button>
+              <button
+                onClick={handleAdd}
+                disabled={adding || !addValue.trim()}
+                className="rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground shadow-xs transition-colors hover:bg-primary/90 disabled:opacity-50"
+              >
+                Adicionar
               </button>
             </div>
           </div>
@@ -109,7 +109,9 @@ export function KanbanColumn({ status, tasks, onEdit, onDelete, onInlineAdd }: K
         </SortableContext>
 
         {tasks.length === 0 && !inputActive && (
-          <p className="font-ui py-6 text-center text-xs text-muted-foreground">Sem tarefas</p>
+          <div className="flex flex-col items-center justify-center py-8 opacity-60">
+            <p className="text-xs font-medium text-muted-foreground">Arraste tarefas para cá</p>
+          </div>
         )}
       </div>
     </div>

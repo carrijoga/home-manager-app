@@ -6,7 +6,8 @@ import { DateTimeSchema, UuidSchema } from './shared';
 export const UserConfigurationResponseSchema = z.object({
   userConfigurationId: UuidSchema,
   theme: z.number().int(),
-  language: z.number().int(),
+  language: z.number().int().optional(),
+  locale: z.union([z.string(), z.number()]).optional(),
   city: z.string().nullable().optional(),
   allowLocationByIp: z.boolean(),
   allowLocationByGps: z.boolean(),

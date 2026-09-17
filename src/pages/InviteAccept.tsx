@@ -111,7 +111,7 @@ export default function InviteAccept() {
       <Card className="w-full max-w-md border-border bg-card p-8 text-center shadow-xl sm:p-10">
         <div className="mb-6 flex justify-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
-            <Logo size="medium" showText={false} />
+            <Logo size="default" showText={false} />
           </div>
         </div>
 

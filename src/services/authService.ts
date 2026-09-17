@@ -34,10 +34,10 @@ export { ApiError } from './api/httpClient';
 
 export const MOCK_USER_PROFILE: UserProfileResponse = {
   userId: 'user-mock-0001',
-  firstName: 'Usuário',
+  firstName: 'João',
   lastName: 'Mock',
-  fullName: 'Usuário Mock',
-  callbyName: 'Usuário',
+  fullName: 'João Mock',
+  callbyName: 'João',
   username: 'usuario_mock',
   email: 'mock@ninho.local',
   profilePictureUrl: null,
@@ -219,10 +219,7 @@ export async function requestPasswordRecovery(
   );
 }
 
-
-export async function resetPassword(
-  payload: ResetPasswordRequest
-): Promise<{ message?: string }> {
+export async function resetPassword(payload: ResetPasswordRequest): Promise<{ message?: string }> {
   if (DATA_MODE === 'mock') {
     return new Promise((resolve) =>
       setTimeout(() => resolve({ message: 'Senha redefinida com sucesso!' }), 200)
@@ -256,8 +253,6 @@ export async function resetPassword(
     { skipRefresh: true }
   );
 }
-
-
 
 // ── Perfil do usuário ─────────────────────────────────────────────────────────
 

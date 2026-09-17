@@ -2,16 +2,22 @@ import { motion } from 'framer-motion';
 import { Calendar, RefreshCw } from 'lucide-react';
 import { useMemo } from 'react';
 
+import { AvatarWithPresence } from '@/components/common/OnlineStatusBadge';
 import { RoleBadge } from '@/components/common/RoleBadge';
 import WeatherWidget from '@/components/common/WeatherWidget';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { resolveUserAvatar } from '@/constants/koboyoAvatars';
 import { getIconComponent } from '@/lib/nestIcons';
 import { cn } from '@/lib/utils';
+import type { NestMember } from '@/schemas/nest';
 import type { AppUserNest } from '@/types';
 
 interface DashboardHeaderV2Props {
   userName?: string;
+  currentUserId?: string;
   activeNest?: AppUserNest | null;
+  members?: NestMember[];
   pendingTasksCount?: number;
   showWeather?: boolean;
   weatherCity?: string;
@@ -32,7 +38,9 @@ interface DashboardHeaderV2Props {
 
 export function DashboardHeaderV2({
   userName = 'Família',
+  currentUserId,
   activeNest,
+  members = [],
   pendingTasksCount = 0,
   showWeather = false,
   weatherCity = 'São Paulo',
@@ -58,30 +66,98 @@ export function DashboardHeaderV2({
     return { text: 'Boa noite', icon: '🌙' };
   }, []);
 
-  // Data formatada em português
+  // Data formatada completa em português: ex "Quarta-Feira, 9 de Setembro"
   const formattedDate = useMemo(() => {
-    return new Intl.DateTimeFormat('pt-BR', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-    }).format(new Date());
+    const now = new Date();
+    const weekday = new Intl.DateTimeFormat('pt-BR', { weekday: 'long' }).format(now);
+    const day = now.getDate();
+    const month = new Intl.DateTimeFormat('pt-BR', { month: 'long' }).format(now);
+    const capitalizedWeekday = weekday.charAt(0).toUpperCase() + weekday.slice(1);
+    const capitalizedMonth = month.charAt(0).toUpperCase() + month.slice(1);
+    return `${capitalizedWeekday}, ${day} de ${capitalizedMonth}`;
   }, []);
-
-  const capitalizedDate =
-    formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1);
 
   const NestIcon = activeNest ? getIconComponent(activeNest.icon) : null;
 
   return (
     <div className={cn('flex w-full flex-col gap-4 sm:gap-6', className)}>
-      {/* Top Meta Bar: Data Atual, Ninho Ativo & Status Realtime */}
+      {/* Top Meta Bar: Data Atual, Moradores, Ninho Ativo & Status Realtime */}
       <div className="flex flex-wrap items-center justify-between gap-2.5">
         <div className="flex flex-wrap items-center gap-2">
-          {/* Data Atual */}
-          <div className="flex items-center gap-1.5 rounded-full border border-border/70 bg-card/80 px-3 py-1 text-xs font-medium text-muted-foreground shadow-xs backdrop-blur-xs">
+          {/* Data Atual por extenso */}
+          <div className="flex items-center gap-1.5 rounded-full border border-border/70 bg-card/80 px-3 py-1 text-xs font-semibold text-foreground shadow-xs backdrop-blur-xs">
             <Calendar size={13} className="text-primary" />
-            <span className="capitalize">{capitalizedDate}</span>
+            <span>{formattedDate}</span>
           </div>
+
+          {/* Moradores do Ninho (Avatares sobrepostos com usuário logado à frente) */}
+          {members && members.length > 0 && (() => {
+            const sortedMembers = currentUserId
+              ? [...members.filter((m) => m.userId === currentUserId), ...members.filter((m) => m.userId !== currentUserId)]
+              : members;
+            const visibleMembers = sortedMembers.slice(0, 4);
+            const extraCount = Math.max(0, sortedMembers.length - 4);
+
+            return (
+              <div
+                className="flex items-center -space-x-1.5 pl-1"
+                title={`${members.length} moradores no ninho`}
+              >
+                {visibleMembers.map((m, idx) => {
+                  const initials = m.name
+                    ? m.name
+                        .split(' ')
+                        .map((n) => n[0])
+                        .join('')
+                        .toUpperCase()
+                        .slice(0, 2)
+                    : '👤';
+                  const avatarSrc = resolveUserAvatar(m.photoUrl, m.avatarSlug);
+                  const isCurrentUser = Boolean(currentUserId && m.userId === currentUserId);
+                  const statusSuffix = m.isOnline ? ' (Online)' : '';
+                  const zIndex = (visibleMembers.length - idx) * 10;
+
+                  return (
+                    <AvatarWithPresence
+                      key={m.userId}
+                      isOnline={m.isOnline}
+                      badgeSize="xs"
+                      badgeClassName="right-0 -bottom-0.5 ring-2 ring-background"
+                      style={{ zIndex }}
+                      className="transition-transform hover:scale-110 hover:!z-50"
+                    >
+                      <Avatar
+                        title={`${m.name}${statusSuffix}${isCurrentUser ? ' (Você)' : ''}`}
+                        className={cn(
+                          'size-6 rounded-full border border-background bg-white shadow-xs',
+                          isCurrentUser && 'ring-1.5 ring-primary/50'
+                        )}
+                      >
+                        {avatarSrc && (
+                          <AvatarImage
+                            src={avatarSrc}
+                            alt={m.name}
+                            className="size-full object-contain filter contrast-125 dark:brightness-105"
+                          />
+                        )}
+                        <AvatarFallback className="bg-primary/20 text-[9px] font-bold text-primary">
+                          {initials}
+                        </AvatarFallback>
+                      </Avatar>
+                    </AvatarWithPresence>
+                  );
+                })}
+                {extraCount > 0 && (
+                  <div
+                    title={`+${extraCount} outros moradores`}
+                    className="flex size-6 items-center justify-center rounded-full bg-muted text-[9px] font-bold text-muted-foreground ring-2 ring-background shadow-xs"
+                  >
+                    +{extraCount}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* Ninho Ativo */}
           {activeNest && (
@@ -131,37 +207,61 @@ export function DashboardHeaderV2({
         )}
       </div>
 
-      {/* Hero Greeting & Weather Widget Row */}
+      {/* Hero Greeting Row com Ícone 3D Oficial & Weather Widget */}
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-col gap-1.5">
-          <motion.h1
-            className="font-editorial font-extrabold leading-tight tracking-tight text-foreground flex flex-wrap items-center gap-2"
-            style={{ fontSize: 'clamp(1.75rem, 3.5vw, 2.75rem)', letterSpacing: '-0.02em' }}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, ease: [0.25, 1, 0.5, 1] }}
-          >
-            <span>
-              {greeting.text},{' '}
-              <span className="inline-block max-w-[340px] truncate align-bottom text-primary">
-                {userName}
-              </span>
-            </span>
-            <span className="text-2xl sm:text-3xl" aria-hidden="true">
-              {greeting.icon}
-            </span>
-          </motion.h1>
+        <div className="flex items-center gap-3.5 sm:gap-4">
+          {/* Ícone 3D Soft Clay Oficial do Ninho */}
+          <div className="relative flex size-14 sm:size-16 shrink-0 items-center justify-center rounded-2xl border border-amber-200/60 bg-gradient-to-br from-amber-50 to-orange-50/40 p-1.5 shadow-sm dark:border-amber-900/40 dark:from-amber-950/30 dark:to-orange-950/20">
+            <img
+              src="/icons/clay-optimized/nest_eggs.webp"
+              alt="Ninho"
+              className="size-full object-contain transition-transform duration-300 hover:scale-105"
+              style={{ filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.08))' }}
+              loading="eager"
+            />
+            <span
+              className={cn(
+                'absolute -bottom-1 -right-1 size-3.5 rounded-full ring-2 ring-background',
+                isRealtimeConnected ? 'bg-emerald-500' : 'bg-chart-2'
+              )}
+              title={isRealtimeConnected ? 'Sincronizado' : 'Conectado'}
+            />
+          </div>
 
-          <p className="font-ui text-sm text-muted-foreground">
-            {pendingTasksCount > 0 ? (
+          <div className="flex flex-col gap-1">
+            <motion.h1
+              className="font-editorial font-extrabold leading-tight tracking-tight text-foreground flex flex-wrap items-center gap-2"
+              style={{ fontSize: 'clamp(1.5rem, 3.2vw, 2.5rem)', letterSpacing: '-0.02em' }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, ease: [0.25, 1, 0.5, 1] }}
+            >
               <span>
-                Você tem <strong className="font-semibold text-foreground">{pendingTasksCount}</strong>{' '}
-                {pendingTasksCount === 1 ? 'tarefa pendente' : 'tarefas pendentes'} para hoje no seu Ninho.
+                {greeting.text},{' '}
+                <span className="inline-block max-w-[280px] sm:max-w-[340px] truncate align-bottom text-primary">
+                  {userName}
+                </span>
               </span>
-            ) : (
-              <span>Tudo em ordem por aqui hoje! Aproveite o seu dia. ✨</span>
-            )}
-          </p>
+              <span className="text-xl sm:text-2xl" aria-hidden="true">
+                {greeting.icon}
+              </span>
+            </motion.h1>
+
+            <p className="font-ui text-xs sm:text-sm text-muted-foreground">
+              {pendingTasksCount > 0 ? (
+                <span>
+                  Você tem{' '}
+                  <strong className="font-semibold text-foreground tabular-nums">
+                    {pendingTasksCount}
+                  </strong>{' '}
+                  {pendingTasksCount === 1 ? 'tarefa pendente' : 'tarefas pendentes'} para hoje no
+                  seu Ninho.
+                </span>
+              ) : (
+                <span>Tudo em ordem por aqui hoje! Aproveite o seu dia. ✨</span>
+              )}
+            </p>
+          </div>
         </div>
 
         {/* Weather card */}

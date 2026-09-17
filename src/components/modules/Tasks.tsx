@@ -1,66 +1,63 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { AlertCircle, CheckCircle2, ChevronLeft, ChevronRight, History, KanbanSquare, List, Plus } from 'lucide-react';
+import { History, CheckSquare } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import type { TaskFormPayload } from '@/components/modals/TaskFormModal';
 import { TaskFormModal } from '@/components/modals/TaskFormModal';
 import { TaskHistoryModal } from '@/components/modals/TaskHistoryModal';
-import { Button } from '@/components/ui';
+import { TaskListSkeleton } from '@/components/skeletons';
 import { useApp } from '@/contexts/AppContext';
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
 import { usePolling } from '@/hooks/usePolling';
-import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import type { NestMember } from '@/schemas/nest';
 import * as nestService from '@/services/nestService';
 import * as taskService from '@/services/taskService';
-import type { Task } from '@/types';
+import type { Task, ApiCategory } from '@/types';
 import { TaskStatus } from '@/types';
+import { cn } from '@/lib/utils';
 
 import { KanbanBoard } from './tasks/KanbanBoard';
+import { QuickAddTaskBar } from './tasks/QuickAddTaskBar';
 import { TaskListView } from './tasks/TaskListView';
+import { TaskSideSummary } from './tasks/TaskSideSummary';
+import { TaskFilterBar, TaskStatusFilter, TaskSortOrder } from './tasks/TaskFilterBar';
+import { TaskBulkActionsBar } from './tasks/TaskBulkActionsBar';
 
 type ViewMode = 'list' | 'kanban';
 
 function Tasks() {
   const { activeNestId } = useApp();
   const { showSuccess, showError } = useToastNotifications();
-  const prefersReducedMotion = usePrefersReducedMotion();
 
   // ── Data ───────────────────────────────────────────────────────────────────
   const [tasks, setTasks] = useState<Task[]>([]);
   const [tasksLoading, setTasksLoading] = useState(true);
   const [members, setMembers] = useState<NestMember[]>([]);
-  const [page, setPage] = useState(1);
-  const [pageSize] = useState(10);
-  const [totalCount, setTotalCount] = useState(0);
-
+  
+  // Since we don't have server-side pagination for filtering yet, we load a large chunk or rely on the existing pagination if needed.
+  // For the sake of this redesign following the Shopping List pattern (which loads all active lists), we will load active tasks.
   const loadTasks = useCallback(
-    async (targetPage: number, silent = false) => {
+    async (silent = false) => {
       if (!activeNestId) return;
       if (!silent) setTasksLoading(true);
       try {
-        const res = await taskService.getActiveTasks(targetPage, pageSize, activeNestId);
+        const res = await taskService.getActiveTasks(1, 500, activeNestId); // Fetch a large number to support client-side filtering
         setTasks(res.items);
-        setTotalCount(res.totalCount);
-        setPage(res.page);
       } catch {
-        if (!silent) {
-          setTasks([]);
-          setTotalCount(0);
-        }
+        if (!silent) setTasks([]);
       } finally {
         if (!silent) setTasksLoading(false);
       }
     },
-    [activeNestId, pageSize]
+    [activeNestId]
   );
 
   useEffect(() => {
-    loadTasks(page);
-  }, [loadTasks, page]);
+    loadTasks();
+  }, [loadTasks]);
 
   usePolling(
-    useCallback(() => loadTasks(page, true), [loadTasks, page]),
+    useCallback(() => loadTasks(true), [loadTasks]),
     { intervalMs: 10000, enabled: Boolean(activeNestId) }
   );
 
@@ -73,10 +70,7 @@ function Tasks() {
         if (active) setMembers(m);
       })
       .catch(() => {});
-
-    return () => {
-      active = false;
-    };
+    return () => { active = false; };
   }, [activeNestId]);
 
   // ── UI state ───────────────────────────────────────────────────────────────
@@ -84,9 +78,17 @@ function Tasks() {
   const [modalOpen, setModalOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(null);
+  const [initialTaskTitle, setInitialTaskTitle] = useState('');
 
-  // ── Derived metrics for rich header ────────────────────────────────────────
+  // ── Filters & Bulk State ───────────────────────────────────────────────────
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<TaskStatusFilter>('all');
+  const [categoryFilter, setCategoryFilter] = useState<ApiCategory | null>(null);
+  const [sortOrder, setSortOrder] = useState<TaskSortOrder>('dueDate');
+  const [isBulkMode, setIsBulkMode] = useState(false);
+  const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
+
+  // ── Derived metrics for Hero Summary ───────────────────────────────────────
   const pending = useMemo(() => tasks.filter((t) => !t.isCompleted), [tasks]);
   const completedToday = useMemo(() => {
     const today = new Date().toDateString();
@@ -95,9 +97,53 @@ function Tasks() {
     );
   }, [tasks]);
   const overdue = useMemo(() => tasks.filter((t) => t.isOverdue && !t.isCompleted), [tasks]);
-  const total = pending.length + completedToday.length;
-  const progressPct = total > 0 ? Math.round((completedToday.length / total) * 100) : 0;
-  const totalPages = Math.ceil(totalCount / pageSize) || 1;
+  const urgentCount = useMemo(() => pending.filter(t => t.priority === 0).length, [pending]);
+  const dueThisWeek = useMemo(() => {
+    const limit = new Date();
+    limit.setDate(limit.getDate() + 7);
+    return pending.filter((t) => t.dueDate && new Date(t.dueDate) <= limit).length;
+  }, [pending]);
+  
+  const totalActive = pending.length + completedToday.length;
+
+  // ── Filter Data for View ───────────────────────────────────────────────────
+  const filteredTasks = useMemo(() => {
+    let result = tasks;
+
+    // Search filter
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(t => 
+        t.title.toLowerCase().includes(q) || 
+        (t.description && t.description.toLowerCase().includes(q))
+      );
+    }
+
+    // Status filter
+    if (statusFilter === 'pending') {
+      result = result.filter(t => !t.isCompleted);
+    } else if (statusFilter === 'in_progress') {
+      result = result.filter(t => !t.isCompleted && t.status === TaskStatus.EmAndamento);
+    } else if (statusFilter === 'overdue') {
+      result = result.filter(t => t.isOverdue && !t.isCompleted);
+    } else if (statusFilter === 'completed_today') {
+      const today = new Date().toDateString();
+      result = result.filter(t => t.isCompleted && t.completedAt && new Date(t.completedAt).toDateString() === today);
+    }
+
+    // Category filter
+    if (categoryFilter !== null) {
+      result = result.filter(t => t.category === categoryFilter);
+    }
+
+    return result;
+  }, [tasks, searchQuery, statusFilter, categoryFilter]);
+
+  // Categories in view
+  const categoriesInView = useMemo(() => {
+    const set = new Set(filteredTasks.map(t => t.category));
+    return Array.from(set).sort();
+  }, [filteredTasks]);
 
   // ── Mutations ──────────────────────────────────────────────────────────────
   const restoreTask = useCallback((task: Task) => {
@@ -111,12 +157,11 @@ function Tasks() {
         setTasks((prev) =>
           prev.map((t) => (t.taskId === taskId ? { ...updated, status: TaskStatus.Concluido } : t))
         );
-        showSuccess('Tarefa concluída!');
       } catch {
         showError('Erro ao concluir');
       }
     },
-    [activeNestId, showSuccess, showError]
+    [activeNestId, showError]
   );
 
   const handleUncomplete = useCallback(
@@ -126,30 +171,11 @@ function Tasks() {
         setTasks((prev) =>
           prev.map((t) => (t.taskId === taskId ? { ...updated, status: TaskStatus.AFazer } : t))
         );
-        showSuccess('Tarefa reaberta.');
       } catch {
         showError('Erro ao reabrir tarefa');
       }
     },
-    [activeNestId, showSuccess, showError]
-  );
-
-  const handleTaskUncompletedFromHistory = useCallback(
-    (uncompletedTask: Task) => {
-      setTasks((prev) => {
-        const exists = prev.find((t) => t.taskId === uncompletedTask.taskId);
-        if (exists) {
-          return prev.map((t) =>
-            t.taskId === uncompletedTask.taskId
-              ? { ...uncompletedTask, status: TaskStatus.AFazer }
-              : t
-          );
-        }
-        return [{ ...uncompletedTask, status: TaskStatus.AFazer }, ...prev];
-      });
-      showSuccess('Tarefa reaberta!');
-    },
-    [showSuccess]
+    [activeNestId, showError]
   );
 
   const handleDelete = useCallback(
@@ -208,244 +234,225 @@ function Tasks() {
     [editingTask, activeNestId, showSuccess]
   );
 
-  const handleInlineAdd = useCallback(
-    async (title: string, priority: number) => {
-      try {
-        const newTask = await taskService.createQuickTask(title, activeNestId ?? undefined);
-        setTasks((prev) => [{ ...newTask, priority: priority as Task['priority'] }, ...prev]);
-        showSuccess('Tarefa criada!');
-      } catch {
-        showError('Erro ao criar tarefa');
-      }
-    },
-    [activeNestId, showSuccess, showError]
-  );
-
-  const handleKanbanInlineAdd = useCallback(
-    async (title: string, status: TaskStatus) => {
-      try {
-        const newTask = await taskService.createQuickTask(title, activeNestId ?? undefined);
-        setTasks((prev) => [{ ...newTask, status }, ...prev]);
-        showSuccess('Tarefa criada!');
-      } catch {
-        showError('Erro ao criar tarefa');
-      }
-    },
-    [activeNestId, showSuccess, showError]
-  );
-
-  const handleMoveTask = useCallback(
-    async (taskId: string, newStatus: TaskStatus) => {
-      setTasks((prev) =>
-        prev.map((t) =>
-          t.taskId === taskId
-            ? {
-                ...t,
-                status: newStatus,
-                isCompleted: newStatus === TaskStatus.Concluido,
-                completedAt:
-                  newStatus === TaskStatus.Concluido ? new Date().toISOString() : t.completedAt,
-              }
-            : t
-        )
-      );
-      if (newStatus === TaskStatus.Concluido) {
-        await taskService.completeTask(taskId, activeNestId ?? undefined).catch(() => {});
-      } else {
-        await taskService.uncompleteTask(taskId, activeNestId ?? undefined).catch(() => {});
-      }
-    },
-    [activeNestId]
-  );
-
-  const handleReorderTasks = useCallback((reordered: Task[]) => {
-    setTasks(reordered);
-  }, []);
-
-  const handleUrgentClick = useCallback((taskId: string) => {
-    setHighlightedTaskId(taskId);
-    setTimeout(() => setHighlightedTaskId(null), 2000);
-  }, []);
-
   const openNewTask = useCallback(() => {
     setEditingTask(null);
+    setInitialTaskTitle('');
     setModalOpen(true);
   }, []);
 
+  // ── Bulk Actions ───────────────────────────────────────────────────────────
+  const toggleSelection = (taskId: string) => {
+    setSelectedTaskIds(prev => 
+      prev.includes(taskId) ? prev.filter(id => id !== taskId) : [...prev, taskId]
+    );
+  };
+
+  const handleBulkComplete = async () => {
+    for (const id of selectedTaskIds) {
+      await handleComplete(id);
+    }
+    showSuccess(`${selectedTaskIds.length} tarefas concluídas!`);
+    setSelectedTaskIds([]);
+    setIsBulkMode(false);
+  };
+
+  const handleBulkReopen = async () => {
+    for (const id of selectedTaskIds) {
+      await handleUncomplete(id);
+    }
+    showSuccess(`${selectedTaskIds.length} tarefas reabertas!`);
+    setSelectedTaskIds([]);
+    setIsBulkMode(false);
+  };
+
+  const handleBulkDelete = async () => {
+    const snaps = tasks.filter(t => selectedTaskIds.includes(t.taskId));
+    for (const snap of snaps) {
+      await taskService.deleteTask(snap.taskId, activeNestId ?? undefined).catch(() => {});
+    }
+    setTasks(prev => prev.filter(t => !selectedTaskIds.includes(t.taskId)));
+    showSuccess(`${selectedTaskIds.length} tarefas excluídas!`);
+    setSelectedTaskIds([]);
+    setIsBulkMode(false);
+  };
+
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="flex max-w-full flex-col gap-6 overflow-x-hidden">
-      {/* Rich header — only in list mode */}
-      <AnimatePresence mode="wait">
-        {viewMode === 'list' && (
-          <motion.div
-            key="list-header"
-            data-tour="tasks-header"
-            initial={prefersReducedMotion ? false : { opacity: 0, y: -12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.25, ease: [0.25, 1, 0.5, 1] }}
-            className="flex flex-wrap items-start justify-between gap-4 rounded-3xl border border-border bg-card p-5"
-          >
-            <div className="min-w-0 flex-1 space-y-3">
-              <h1 className="font-editorial text-2xl font-bold text-foreground">
-                Quadro de Tarefas
-              </h1>
-
-              {/* Progress bar */}
-              <div className="max-w-sm space-y-1.5">
-                <div className="font-ui flex justify-between text-xs text-muted-foreground">
-                  <span>
-                    {completedToday.length} de {total} concluídas hoje
-                  </span>
-                  <span>{progressPct}%</span>
-                </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                  <motion.div
-                    className="h-full rounded-full bg-primary"
-                    initial={prefersReducedMotion ? false : { width: 0 }}
-                    animate={{ width: `${progressPct}%` }}
-                    transition={{ duration: 0.6, ease: [0.25, 1, 0.5, 1] }}
-                  />
-                </div>
-              </div>
-
-              {/* Alert chips */}
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="font-ui inline-flex items-center gap-1 rounded-full bg-honey-100 px-2 py-0.5 text-xs font-medium text-honey-700 dark:bg-honey-900/30 dark:text-honey-300">
-                  <List size={11} /> {pending.length} pendentes
-                </span>
-                {overdue.length > 0 && (
-                  <span className="font-ui inline-flex items-center gap-1 rounded-full bg-terracotta-100 px-2 py-0.5 text-xs font-medium text-terracotta-700 dark:bg-terracotta-900/30 dark:text-terracotta-300">
-                    <AlertCircle size={11} /> {overdue.length} atrasada
-                    {overdue.length > 1 ? 's' : ''}
-                  </span>
-                )}
-                {completedToday.length > 0 && (
-                  <span className="font-ui inline-flex items-center gap-1 rounded-full bg-sage-100 px-2 py-0.5 text-xs font-medium text-sage-700 dark:bg-sage-900/30 dark:text-sage-300">
-                    <CheckCircle2 size={11} /> {completedToday.length} hoje
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* Controls */}
-            <div className="flex shrink-0 items-center gap-2" data-tour="tasks-filters">
-              <button
-                onClick={() => setHistoryOpen(true)}
-                className="font-ui flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                title="Ver histórico de tarefas concluídas"
-              >
-                <History size={14} /> <span className="hidden sm:inline">Histórico</span>
-              </button>
-
-              <div className="font-ui flex overflow-hidden rounded-lg border border-border text-sm">
-                <button
-                  onClick={() => setViewMode('list')}
-                  className="flex items-center gap-1.5 bg-primary px-3 py-1.5 text-primary-foreground"
-                >
-                  <List size={14} /> <span className="hidden sm:inline">Lista</span>
-                </button>
-                <button
-                  onClick={() => setViewMode('kanban')}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                >
-                  <KanbanSquare size={14} /> <span className="hidden sm:inline">Kanban</span>
-                </button>
-              </div>
-              <button
-                data-tour="tasks-create-button"
-                onClick={openNewTask}
-                className="font-ui hidden items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-all hover:brightness-105 active:scale-[0.98] sm:inline-flex"
-              >
-                <Plus size={16} strokeWidth={2} /> Nova Tarefa
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Main content */}
-      <AnimatePresence mode="wait">
-        {viewMode === 'list' ? (
-          <motion.div
-            key="list-view"
-            data-tour="tasks-board"
-            initial={prefersReducedMotion ? false : { opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            <TaskListView
-              tasks={tasks}
-              onComplete={handleComplete}
-              onUncomplete={handleUncomplete}
-              onDelete={handleDelete}
-              onEdit={handleEdit}
-              onInlineAdd={handleInlineAdd}
-              onUrgentClick={handleUrgentClick}
-              highlightedTaskId={highlightedTaskId}
-            />
-          </motion.div>
-        ) : (
-          <motion.div
-            key="kanban-view"
-            initial={prefersReducedMotion ? false : { opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="-mx-4 -mb-4 sm:-mx-6 sm:-mb-6 lg:-mx-8 lg:-mb-8"
-          >
-            <KanbanBoard
-              tasks={tasks}
-              onMoveTask={handleMoveTask}
-              onReorderTasks={handleReorderTasks}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              onNewTask={openNewTask}
-              onSwitchToList={() => setViewMode('list')}
-              onInlineAdd={handleKanbanInlineAdd}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Pagination controls */}
-      {totalPages > 1 && (
-        <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-card p-4">
-          <span className="font-ui text-xs text-muted-foreground">
-            Página {page} de {totalPages} ({totalCount} {totalCount === 1 ? 'tarefa' : 'tarefas'})
-          </span>
+    <motion.div
+      key="tasks-module"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
+      transition={{ duration: 0.25, ease: 'easeOut' }}
+      className="max-w-5xl mx-auto space-y-6 pb-28 px-1 sm:px-4"
+    >
+      {/* ── App Bar / Header Mobile ────────────────────────────────────────── */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-0.5">
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page <= 1 || tasksLoading}
+            <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-primary/15 text-primary">
+              <CheckSquare size={14} />
+            </span>
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Módulo de Tarefas
+            </span>
+          </div>
+          <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+            Quadro de Tarefas
+          </h1>
+        </div>
+
+        {/* View Switcher and History */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setHistoryOpen(true)}
+            className="flex items-center gap-1.5 rounded-xl border border-border/70 bg-card px-3 py-1.5 text-xs font-semibold text-muted-foreground shadow-subtle transition-colors hover:bg-muted hover:text-foreground"
+            title="Ver histórico de tarefas concluídas"
+          >
+            <History size={14} /> <span className="hidden sm:inline">Histórico</span>
+          </button>
+
+          <div className="flex overflow-hidden rounded-xl border border-border/70 bg-card p-0.5 shadow-subtle text-xs font-semibold">
+            <button
+              onClick={() => setViewMode('list')}
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-1 transition-colors ${
+                viewMode === 'list' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+              }`}
             >
-              <ChevronLeft className="mr-1 h-4 w-4" /> Anterior
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page >= totalPages || tasksLoading}
+              Lista
+            </button>
+            <button
+              onClick={() => setViewMode('kanban')}
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-1 transition-colors ${
+                viewMode === 'kanban' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+              }`}
             >
-              Próxima <ChevronRight className="ml-1 h-4 w-4" />
-            </Button>
+              Kanban
+            </button>
           </div>
         </div>
-      )}
+      </div>
 
-      {/* FAB mobile */}
-      <button
-        type="button"
-        aria-label="Nova tarefa"
-        onClick={openNewTask}
-        className="fixed bottom-20 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform active:scale-95 sm:hidden"
-      >
-        <Plus size={24} strokeWidth={2} />
-      </button>
+      {/* ── Main Layout (Sidebar + Content) ────────────────────────── */}
+      <div className={cn("items-start gap-6", viewMode === 'list' ? "grid grid-cols-1 lg:grid-cols-3" : "flex flex-col")}>
+        {/* Sidebar */}
+        {viewMode === 'list' && (
+          <div className="order-1 flex w-full flex-col gap-4 lg:order-2 lg:col-span-1">
+            <TaskSideSummary 
+              totalActive={totalActive}
+              completedToday={completedToday.length}
+              overdue={overdue.length}
+              totalPending={pending.length}
+              urgentCount={urgentCount}
+              weekCount={dueThisWeek}
+            />
+          </div>
+        )}
+
+        {/* Main Column */}
+        <div className={cn("order-2 flex min-w-0 w-full flex-col gap-4 lg:order-1", viewMode === 'list' ? "lg:col-span-2" : "")}>
+          {/* ── Task Filter Bar ────────────────────────────────────────── */}
+          <TaskFilterBar
+            isBulkMode={isBulkMode}
+            selectedCount={selectedTaskIds.length}
+            sortOrder={sortOrder}
+            setSortOrder={setSortOrder}
+            statusFilter={statusFilter}
+            setStatusFilter={setStatusFilter}
+            categoryFilter={categoryFilter}
+            setCategoryFilter={setCategoryFilter}
+            categoriesInView={categoriesInView}
+            searchTerm={searchQuery}
+            setSearchTerm={setSearchQuery}
+            isSearchPending={false}
+            onExitBulkMode={() => { setIsBulkMode(false); setSelectedTaskIds([]); }}
+            onEnterBulkMode={() => setIsBulkMode(true)}
+          />
+
+          {/* ── Quick Add Bar ──────────────────────────────────────────── */}
+          <QuickAddTaskBar
+            onAddTask={async (title, cat, pri) => {
+              const newTask = await taskService.createQuickTask(title, activeNestId ?? undefined);
+              if (cat !== null || pri !== null) {
+                await taskService.updateTask(newTask.taskId, {
+                  ...newTask,
+                  category: cat ?? newTask.category,
+                  priority: pri ?? newTask.priority
+                }, activeNestId ?? undefined);
+                setTasks(prev => [{
+                  ...newTask,
+                  category: cat ?? newTask.category,
+                  priority: pri ?? newTask.priority
+                }, ...prev]);
+              } else {
+                setTasks(prev => [newTask, ...prev]);
+              }
+              showSuccess('Tarefa criada!');
+            }}
+            onOpenDetailedForm={(title) => {
+              setInitialTaskTitle(title || '');
+              setEditingTask(null);
+              setModalOpen(true);
+            }}
+          />
+
+          {/* ── Main content ───────────────────────────────────────────── */}
+          <AnimatePresence mode="wait">
+            {tasksLoading && tasks.length === 0 ? (
+              <motion.div key="tasks-skeleton" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                <TaskListSkeleton items={6} />
+              </motion.div>
+            ) : viewMode === 'list' ? (
+              <motion.div key="list-view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                <TaskListView
+                  tasks={filteredTasks}
+                  isBulkMode={isBulkMode}
+                  selectedTaskIds={selectedTaskIds}
+                  sortOrder={sortOrder}
+                  onToggleSelection={toggleSelection}
+                  onComplete={handleComplete}
+                  onUncomplete={handleUncomplete}
+                  onDelete={handleDelete}
+                  onEdit={handleEdit}
+                  onNewTaskClick={openNewTask}
+                />
+              </motion.div>
+            ) : (
+              <motion.div key="kanban-view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full">
+                <KanbanBoard
+                  tasks={filteredTasks}
+                  onMoveTask={async (taskId, newStatus) => {
+                    setTasks(prev => prev.map(t => t.taskId === taskId ? { ...t, status: newStatus, isCompleted: newStatus === TaskStatus.Concluido, completedAt: newStatus === TaskStatus.Concluido ? new Date().toISOString() : t.completedAt } : t));
+                    if (newStatus === TaskStatus.Concluido) {
+                      await taskService.completeTask(taskId, activeNestId ?? undefined).catch(() => {});
+                    } else {
+                      await taskService.uncompleteTask(taskId, activeNestId ?? undefined).catch(() => {});
+                    }
+                  }}
+                  onReorderTasks={(reordered) => setTasks(reordered)}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                  onInlineAdd={async (title, status) => {
+                    const newTask = await taskService.createQuickTask(title, activeNestId ?? undefined);
+                    setTasks(prev => [{ ...newTask, status }, ...prev]);
+                    showSuccess('Tarefa criada!');
+                  }}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+
+      {/* Bulk Actions Bar */}
+      <TaskBulkActionsBar
+        isVisible={isBulkMode}
+        selectedCount={selectedTaskIds.length}
+        onClose={() => { setIsBulkMode(false); setSelectedTaskIds([]); }}
+        onCompleteSelected={handleBulkComplete}
+        onReopenSelected={handleBulkReopen}
+        onDeleteSelected={handleBulkDelete}
+      />
 
       {/* Form Modal */}
       <TaskFormModal
@@ -453,8 +460,10 @@ function Tasks() {
         onClose={() => {
           setModalOpen(false);
           setEditingTask(null);
+          setInitialTaskTitle('');
         }}
         initialTask={editingTask}
+        initialTitle={initialTaskTitle}
         members={members}
         onSubmit={handleModalSubmit}
       />
@@ -465,9 +474,16 @@ function Tasks() {
         onClose={() => setHistoryOpen(false)}
         nestId={activeNestId ?? undefined}
         members={members}
-        onTaskUncompleted={handleTaskUncompletedFromHistory}
+        onTaskUncompleted={(uncompletedTask) => {
+          setTasks(prev => {
+            const exists = prev.find(t => t.taskId === uncompletedTask.taskId);
+            if (exists) return prev.map(t => t.taskId === uncompletedTask.taskId ? { ...uncompletedTask, status: TaskStatus.AFazer } : t);
+            return [{ ...uncompletedTask, status: TaskStatus.AFazer }, ...prev];
+          });
+          showSuccess('Tarefa reaberta!');
+        }}
       />
-    </div>
+    </motion.div>
   );
 }
 

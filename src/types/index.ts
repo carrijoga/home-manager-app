@@ -87,7 +87,26 @@ export interface AppUserNest {
   role: number;
 }
 
-/** Notificação do usuário (derivado de UserNotificationResponse da API) */
+export type NotificationModule = 'financial' | 'shopping' | 'tasks' | 'system' | 'calendar';
+
+export interface NotificationAction {
+  id: string;
+  label: string;
+  variant?: 'primary' | 'secondary' | 'outline' | 'destructive';
+  actionType: 'navigate' | 'api_call' | 'open_modal' | 'complete_task';
+  url?: string;
+  payload?: Record<string, unknown>;
+}
+
+export interface NotificationAttachment {
+  id: string;
+  name: string;
+  url: string;
+  size?: string;
+  fileType: 'pdf' | 'image' | 'doc' | 'other';
+}
+
+/** Notificação do usuário (derivado de UserNotificationResponse da API e enriquecido) */
 export interface AppNotification {
   notificationId: string;
   title: string;
@@ -95,6 +114,15 @@ export interface AppNotification {
   type: number; // NotificationType: 0=Info, 1=Warning, 2=Error, 3=Success
   isRead: boolean;
   isEnabled: boolean;
+  createdAt?: string | Date;
+  module?: NotificationModule;
+  actions?: NotificationAction[];
+  attachments?: NotificationAttachment[];
+  author?: {
+    name: string;
+    avatarUrl?: string | null;
+  };
+  data?: Record<string, unknown>;
 }
 
 /** Representação interna do usuário autenticado */
@@ -114,6 +142,8 @@ export interface AppUser {
 export interface AppWeather {
   city: string;
   temperature: number;
+  temperatureMin?: number;
+  temperatureMax?: number;
   description: string;
   source?: 'gps' | 'ip' | 'manual';
   conditionCode?: string | null;
@@ -130,6 +160,8 @@ export interface NoticeReaction {
   emoji: string;
   createdAt: string;
 }
+
+export type { CalendarEventPreview } from '@/services/calendarService';
 
 /** Aviso do quadro (módulo Notices) */
 export interface Notice {
@@ -230,28 +262,6 @@ export interface AppShoppingListSummary {
   finishedAt?: string | null;
   finishedBy?: string | null;
   isFinished?: boolean;
-}
-
-/** Informações de compra de item futuro */
-export interface FuturePurchase {
-  expenseId: string;
-  actualValue: number;
-  purchasedAt: string;
-}
-
-/** Item de compra futura (módulo FutureItems, mock-only por enquanto) */
-export interface FutureItem {
-  id: string;
-  name: string;
-  priority: Priority;
-  estimatedCost: string; // ex: 'R$ 2.500'
-  estimatedValue?: number;
-  description?: string;
-  category?: string;
-  link?: string;
-  notes?: string;
-  status?: FutureItemStatus;
-  purchase?: FuturePurchase;
 }
 
 import { resolveUserAvatar } from '@/constants/koboyoAvatars';

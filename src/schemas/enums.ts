@@ -5,13 +5,14 @@ import { z } from 'zod';
  * Os valores comentados são estimativas — confirmar com o backend.
  */
 
-// Tipo da transação financeira (backend: enum TransactionType { Receipt, Expense, Adjustment }): 0 = Receita, 1 = Despesa, 2 = Ajuste
+// Tipo da transação financeira (backend: enum TransactionType { Receipt, Expense, Adjustment, Transfer }): 0 = Receita, 1 = Despesa, 2 = Ajuste, 3 = Transferência
 export const TransactionTypeSchema = z.number().int();
 export type TransactionType = z.infer<typeof TransactionTypeSchema>;
 export const TransactionType = {
   Income: 0,
   Expense: 1,
   Adjustment: 2,
+  Transfer: 3,
 } as const;
 
 // Método de pagamento: 0 = Dinheiro, 1 = Débito, 2 = Crédito, 3 = PIX, 4 = Boleto, 5 = Outro

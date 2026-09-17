@@ -9,13 +9,33 @@ import { ApiError, httpClient } from './api/httpClient';
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function toRequestBody(query: WeatherQuery): Record<string, unknown> {
-  const body: Record<string, unknown> = {};
-  if (query.city) body.city = query.city.trim();
-  if (query.state) body.state = query.state;
-  if (typeof query.latitude === 'number') body.latitude = query.latitude;
-  if (typeof query.longitude === 'number') body.longitude = query.longitude;
-  if (query.source) body.source = query.source;
-  return body;
+  const source =
+    query.source ||
+    (query.city
+      ? 'manual'
+      : typeof query.latitude === 'number' && typeof query.longitude === 'number'
+        ? 'gps'
+        : 'ip');
+
+  if (source === 'ip') {
+    return { source: 'ip' };
+  }
+
+  if (source === 'manual') {
+    const body: Record<string, unknown> = { source: 'manual' };
+    if (query.city) body.city = query.city.trim();
+    if (query.state) body.state = query.state;
+    return body;
+  }
+
+  if (source === 'gps') {
+    const body: Record<string, unknown> = { source: 'gps' };
+    if (typeof query.latitude === 'number') body.latitude = query.latitude;
+    if (typeof query.longitude === 'number') body.longitude = query.longitude;
+    return body;
+  }
+
+  return { source };
 }
 
 function coerceWeather(raw: unknown): AppWeather {
@@ -24,18 +44,38 @@ function coerceWeather(raw: unknown): AppWeather {
     return parsed.data;
   }
 
-  const record = raw as Record<string, unknown>;
+  const record = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
   const city = String(record.city ?? record.locationName ?? mockWeather.city);
   const description = String(record.description ?? record.summary ?? mockWeather.description);
 
   const tempCandidate = record.temperature ?? record.temperatureCelsius ?? record.temp;
   const temperature = Number(tempCandidate);
 
+  const tempMinCandidate = record.temperatureMin ?? record.tempMin;
+  const temperatureMin =
+    typeof tempMinCandidate === 'number' && Number.isFinite(tempMinCandidate)
+      ? tempMinCandidate
+      : undefined;
+
+  const tempMaxCandidate = record.temperatureMax ?? record.tempMax;
+  const temperatureMax =
+    typeof tempMaxCandidate === 'number' && Number.isFinite(tempMaxCandidate)
+      ? tempMaxCandidate
+      : undefined;
+
+  const rawSource = String(record.source ?? '');
+  const source =
+    rawSource === 'manual' || rawSource === 'gps' || rawSource === 'ip'
+      ? (rawSource as AppWeather['source'])
+      : undefined;
+
   return {
     city,
     description,
     temperature: Number.isFinite(temperature) ? temperature : mockWeather.temperature,
-    source: (record.source as AppWeather['source']) ?? undefined,
+    temperatureMin,
+    temperatureMax,
+    source,
     conditionCode: (record.conditionCode as string) ?? null,
     observedAt: (record.observedAt as string) ?? null,
   };
@@ -51,6 +91,8 @@ export async function getMyWeather(query?: WeatherQuery): Promise<AppWeather> {
     return {
       city: validQuery.city?.trim() || mockWeather.city,
       temperature: mockWeather.temperature,
+      temperatureMin: mockWeather.temperatureMin,
+      temperatureMax: mockWeather.temperatureMax,
       description: mockWeather.description,
       source: validQuery.source ?? mockWeather.source,
       conditionCode: mockWeather.conditionCode,

@@ -32,6 +32,7 @@ export const UpdateUserConfigurationRequestSchema = z.object({
   userId: z.string().uuid().optional(),
   theme: z.number().int().optional(),
   language: z.number().int().optional(),
+  locale: z.number().int().optional(),
   city: z.string().nullable().optional(),
   allowLocationByIp: z.boolean().optional(),
   allowLocationByGps: z.boolean().optional(),

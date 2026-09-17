@@ -15,6 +15,14 @@ export const NestInviteSchema = z.object({
 });
 export type NestInvite = z.infer<typeof NestInviteSchema>;
 
+export const NestMemberPresenceSchema = z.object({
+  userId: UuidSchema,
+  name: z.string(),
+  photoUrl: z.string().nullable().optional(),
+  isOnline: z.boolean(),
+});
+export type NestMemberPresence = z.infer<typeof NestMemberPresenceSchema>;
+
 export const NestMemberSchema = z.object({
   userId: UuidSchema,
   name: z.string(),
@@ -22,6 +30,7 @@ export const NestMemberSchema = z.object({
   role: NestRoleSchema,
   photoUrl: z.string().nullable().optional(),
   avatarSlug: z.string().nullable().optional(),
+  isOnline: z.boolean().optional(),
 });
 export type NestMember = z.infer<typeof NestMemberSchema>;
 

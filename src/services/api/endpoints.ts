@@ -58,6 +58,7 @@ export const ENDPOINTS = {
     configuration: '/api/nests/configuration',
     removeMember: (userId: string) => `/api/nests/remove-member/${userId}`,
     members: (nestId: string) => `/api/nests/members/${nestId}`,
+    presenceOnline: '/api/nests/presence/online',
   },
 
   // Transações financeiras
@@ -88,6 +89,7 @@ export const ENDPOINTS = {
   bankAccounts: {
     list: '/api/bank-account',
     create: '/api/bank-account',
+    transfer: '/api/bank-account/transfer',
     getById: (id: string) => `/api/bank-account/${id}`,
     update: (id: string) => `/api/bank-account/${id}`,
     adjustBalance: (id: string) => `/api/bank-account/${id}/adjust-balance`,

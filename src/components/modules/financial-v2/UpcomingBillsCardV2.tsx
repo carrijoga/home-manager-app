@@ -7,6 +7,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 
+import { AnimatedCurrency, AnimatedNumber } from '@/components/common/AnimatedNumber';
 import type { FinancialTransactionUpcomingBillResponse } from '@/schemas/financial';
 import { formatCurrency } from '@/utils/dashboardMetrics';
 import { getDueLabel } from '@/utils/financialUtils';
@@ -70,18 +71,18 @@ export function UpcomingBillsCardV2({
               </h3>
               {bills.length > 0 && (
                 <span className="font-ui rounded-full bg-muted px-2 py-0.5 text-[11px] font-bold text-muted-foreground">
-                  {bills.length}
+                  <AnimatedNumber value={bills.length} />
                 </span>
               )}
             </div>
             {overdueCount > 0 ? (
               <p className="font-ui text-xs font-semibold text-destructive">
-                {overdueCount} {overdueCount === 1 ? 'conta vencida' : 'contas vencidas'} (
-                {formatCurrency(overdueTotal)})
+                <AnimatedNumber value={overdueCount} /> {overdueCount === 1 ? 'conta vencida' : 'contas vencidas'} (
+                <AnimatedCurrency value={overdueTotal} />)
               </p>
             ) : (
               <p className="font-ui text-xs text-muted-foreground">
-                Total pendente: {formatCurrency(totalUpcomingValue)}
+                Total pendente: <AnimatedCurrency value={totalUpcomingValue} />
               </p>
             )}
           </div>

@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import type { CategoryResponse } from '@/schemas/category';
 
 export interface TransactionFiltersState {
-  type: 'all' | 'expense' | 'income';
+  type: 'all' | 'expense' | 'income' | 'transfer';
   status: 'all' | 'unpaid' | 'overdue';
   search: string;
   categoryId: string | null;
@@ -66,6 +66,13 @@ export function TransactionFilters({ value, onChange, categories }: TransactionF
           active={value.type === 'income'}
           label="Receitas"
           onClick={() => onChange({ ...value, type: value.type === 'income' ? 'all' : 'income' })}
+        />
+        <Pill
+          active={value.type === 'transfer'}
+          label="Transferências"
+          onClick={() =>
+            onChange({ ...value, type: value.type === 'transfer' ? 'all' : 'transfer' })
+          }
         />
         <Pill
           active={value.status === 'unpaid'}

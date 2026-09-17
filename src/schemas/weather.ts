@@ -5,6 +5,8 @@ export const WeatherSourceSchema = z.enum(['gps', 'ip', 'manual']);
 export const WeatherResponseSchema = z.object({
   city: z.string(),
   temperature: z.number(),
+  temperatureMin: z.number().optional(),
+  temperatureMax: z.number().optional(),
   description: z.string(),
   source: WeatherSourceSchema.optional(),
   conditionCode: z.string().nullable().optional(),

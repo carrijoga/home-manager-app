@@ -6,7 +6,6 @@ import {
   Clock,
   EyeOff,
   FileText,
-  ListChecks,
   Loader2,
   Pencil,
   Plus,
@@ -141,6 +140,7 @@ interface ShoppingDetailViewProps {
   onBulkDelete: () => Promise<void>;
   onCreateCategory: (name: string) => Promise<void>;
   onDeleteCategory: (id: string) => Promise<void>;
+  onStartMarketMode?: () => void;
 }
 
 export function ShoppingDetailView(props: ShoppingDetailViewProps) {
@@ -226,6 +226,7 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
     onBulkDelete,
     onCreateCategory,
     onDeleteCategory,
+    onStartMarketMode,
   } = props;
 
   const [addItemInitialData, setAddItemInitialData] = React.useState<ItemFormData | undefined>(
@@ -247,6 +248,67 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
       .reduce((s, i) => s + getItemSpentTotal(i.price, i.quantity, i.unitType), 0) ?? 0;
   const remaining = Math.max(0, totalEstimated - totalSpent);
 
+  if (isLoadingDetail || !detailData) {
+    return (
+      <div
+        className="max-w-5xl mx-auto space-y-5 pb-32 px-1 sm:px-4"
+        aria-busy="true"
+        aria-live="polite"
+        aria-label="Carregando lista de compras"
+      >
+        {/* Header Skeleton */}
+        <div className="flex flex-col gap-4 rounded-3xl border border-border/60 bg-card p-5 sm:p-6 shadow-card">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-9 w-9 rounded-xl" />
+              <div className="space-y-1.5">
+                <Skeleton className="h-6 w-44 rounded-lg" />
+                <Skeleton className="h-3.5 w-24 rounded-md" />
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-9 w-24 rounded-xl" />
+              <Skeleton className="h-9 w-9 rounded-xl" />
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-3 pt-2 border-t border-border/40">
+            <Skeleton className="h-12 w-full rounded-xl" />
+            <Skeleton className="h-12 w-full rounded-xl" />
+            <Skeleton className="h-12 w-full rounded-xl" />
+          </div>
+        </div>
+
+        {/* Categories / items skeleton */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-6 w-36 rounded-md" />
+            <Skeleton className="h-8 w-28 rounded-lg" />
+          </div>
+          <div className="space-y-2.5">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div
+                key={i}
+                className="flex items-center justify-between rounded-2xl border border-border/60 bg-card p-3.5 shadow-subtle"
+              >
+                <div className="flex items-center gap-3">
+                  <Skeleton className="h-5 w-5 rounded-md" />
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-4 w-40 rounded-md" />
+                    <Skeleton className="h-3 w-20 rounded-md" />
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-5 w-16 rounded-md" />
+                  <Skeleton className="h-7 w-7 rounded-lg" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <motion.div
       key="detail"
@@ -254,7 +316,7 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 24 }}
       transition={{ duration: 0.25, ease: [0.25, 1, 0.5, 1] }}
-      className="max-w-full space-y-5 pb-32"
+      className="max-w-5xl mx-auto space-y-5 pb-32 px-1 sm:px-4"
     >
       {/* ── Page header ─────────────────────────────────────────────────────── */}
       <DetailHeader
@@ -265,6 +327,7 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
         onBack={onBack}
         onEditList={() => setShowEditList(true)}
         onDeleteList={() => setShowDeleteAlert(true)}
+        onStartMarketMode={onStartMarketMode}
       />
 
       {/* ── Quick Add Item Bar Mobile-First ─────────────────────────────────── */}
@@ -341,20 +404,25 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
           ))}
         </div>
       ) : detailData && detailData.items.length === 0 ? (
-        <div className="flex flex-col items-center justify-center space-y-4 py-16 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full border border-honey-200/60 bg-gradient-to-br from-honey-100 to-linen-200 dark:border-honey-800/30 dark:from-honey-900/30 dark:to-muted">
-            <ListChecks size={24} className="text-honey-600 dark:text-honey-400" />
+        <div className="flex flex-col items-center justify-center space-y-4 rounded-3xl border border-dashed border-border/80 py-16 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <ShoppingCart size={28} />
           </div>
-          <div>
-            <p className="font-medium text-foreground">Lista vazia</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Adicione o primeiro item para começar.
+          <div className="space-y-1">
+            <p className="font-display text-base font-bold text-foreground">
+              Sua lista de compras está vazia
+            </p>
+            <p className="text-xs text-muted-foreground max-w-xs mx-auto">
+              Adicione os primeiros itens pelo campo rápido acima ou toque em Adicionar.
             </p>
           </div>
           {!isFinished && (
-            <Button variant="outline" className="gap-1.5" onClick={() => setShowAddItem(true)}>
-              <Plus size={15} />
-              Adicionar item
+            <Button
+              onClick={() => setShowAddItem(true)}
+              className="h-10 rounded-xl px-4 font-bold shadow-xs gap-1.5"
+            >
+              <Plus size={15} strokeWidth={2.5} />
+              Adicionar Item
             </Button>
           )}
         </div>
@@ -433,13 +501,13 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
           >
             <SheetContent
               side="bottom"
-              className="rounded-t-3xl border-t border-border bg-card px-6 pb-8 pt-6 sm:max-w-lg sm:mx-auto sm:rounded-3xl sm:border sm:bottom-6 dark:bg-[#1e1e1e]"
+              className="rounded-t-3xl border-t border-border/70 bg-card px-6 pb-8 pt-6 sm:max-w-lg sm:mx-auto sm:rounded-3xl sm:border sm:bottom-6"
             >
               <SheetHeader className="mb-5 space-y-2 text-left">
                 {/* Badges: Status + Category */}
                 <div className="flex flex-wrap items-center gap-2">
                   {selectedItem.status === ShoppingItemStatus.Purchased || selectedItem.isPurchased ? (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[#78dc77]/15 px-3 py-1 text-xs font-semibold text-[#78dc77]">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-400">
                       <Check size={12} strokeWidth={3} />
                       Comprado
                     </span>
@@ -454,31 +522,31 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
                       Não comprado
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
                       <Clock size={12} />
                       Pendente
                     </span>
                   )}
                   {selectedItem.categoryName && (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-accent/40 px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                    <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-muted/50 px-2.5 py-1 text-xs font-medium text-muted-foreground">
                       <Tag size={11} />
                       {selectedItem.categoryName}
                     </span>
                   )}
                 </div>
 
-                <SheetTitle className="text-xl font-bold text-foreground">
+                <SheetTitle className="font-display text-xl font-bold text-foreground">
                   {selectedItem.name}
                 </SheetTitle>
               </SheetHeader>
 
               {/* Informações consolidadas sem redundância */}
               <div className="space-y-4">
-                <div className="space-y-3 rounded-2xl border border-border/70 bg-accent/20 p-4">
+                <div className="space-y-3 rounded-2xl border border-border/70 bg-muted/20 p-4">
                   {/* Quantidade */}
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Quantidade</span>
-                    <span className="font-semibold text-foreground">
+                    <span className="font-bold text-foreground">
                       {quantityLabel(selectedItem.quantity, selectedItem.unitType)}
                     </span>
                   </div>
@@ -490,7 +558,7 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
                       <div className="flex items-center justify-between border-t border-border/40 pt-2.5 text-sm">
                         <span className="text-muted-foreground">Valor pago</span>
                         <div className="text-right">
-                          <span className="text-base font-bold text-[#78dc77]">
+                          <span className="text-base font-bold text-emerald-600 dark:text-emerald-400">
                             {itemSpent != null ? formatCurrency(itemSpent) : '---'}
                           </span>
                           {isMultiQty && selectedItem.price != null && (
@@ -520,7 +588,7 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
 
                       {/* Variação / Economia */}
                       {itemSavings && itemSavings.type === 'savings' && (
-                        <div className="flex items-center justify-between rounded-xl bg-[#78dc77]/10 px-3 py-2 text-xs font-semibold text-[#78dc77]">
+                        <div className="flex items-center justify-between rounded-xl bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
                           <span className="flex items-center gap-1.5">
                             <TrendingDown size={14} /> Economia
                           </span>
@@ -597,7 +665,7 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
                       </button>
 
                       <button
-                        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border/80 bg-card py-3 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground active:scale-98 dark:bg-[#222]"
+                        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border/80 bg-card py-3 text-sm font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:scale-98"
                         onClick={() => {
                           onIgnoreItem(selectedItem);
                           setShowMobileEditSheet(false);
@@ -610,7 +678,7 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
                       </button>
 
                       <button
-                        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border/80 bg-card py-3 text-sm font-semibold text-foreground transition-colors hover:bg-accent active:scale-98 dark:bg-[#222]"
+                        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border/80 bg-card py-3 text-sm font-semibold text-foreground transition-colors hover:bg-muted active:scale-98"
                         onClick={() => {
                           setShowMobileEditSheet(false);
                           setShowEditItem(true);
@@ -639,7 +707,7 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
                   {!isFinished && selectedItem.status === ShoppingItemStatus.Ignored && (
                     <>
                       <button
-                        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border/80 bg-card py-3.5 text-sm font-semibold text-foreground transition-colors hover:bg-accent active:scale-98 dark:bg-[#222]"
+                        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border/80 bg-card py-3.5 text-sm font-semibold text-foreground transition-colors hover:bg-muted active:scale-98"
                         onClick={() => {
                           onUnignoreItem(selectedItem);
                           setShowMobileEditSheet(false);
@@ -822,7 +890,7 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
       {detailData && !isBulkMode && (
         <div
           className={cn(
-            'fixed bottom-0 left-0 right-0 z-40 flex items-center justify-between gap-6 border-t border-border/20 bg-card/90 px-6 py-4 backdrop-blur-md transition-[left] duration-200 ease-linear dark:bg-[rgba(28,28,28,0.92)]',
+            'fixed bottom-0 left-0 right-0 z-40 flex items-center justify-between gap-4 sm:gap-6 border-t border-border/60 bg-card/90 px-4 sm:px-6 py-3 sm:py-3.5 backdrop-blur-md shadow-modal transition-[left] duration-200 ease-linear',
             !isMobile &&
               (sidebarState === 'collapsed'
                 ? 'md:left-[var(--sidebar-width-icon,3rem)]'
@@ -830,55 +898,53 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
           )}
         >
           {/* Left: remaining balance */}
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border/30 bg-background">
-              <ShoppingCart size={16} className="text-muted-foreground" />
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <div className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl border border-border/50 bg-muted/50 text-foreground">
+              <ShoppingCart size={16} />
             </div>
             <div>
-              <p className="font-display text-xl font-bold text-foreground">
+              <p className="font-display text-base sm:text-xl font-bold text-foreground tabular-nums leading-tight">
                 {totalEstimated > 0 ? formatCurrency(remaining) : '—'}
               </p>
-              <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
-                Restante para finalizar
+              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                Restante estimado
               </p>
             </div>
           </div>
 
           {/* Center: progress bar */}
-          <div className="hidden flex-1 items-center gap-3 md:flex">
-            <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
-              Progresso
+          <div className="hidden flex-1 items-center gap-3 md:flex max-w-xs lg:max-w-md mx-auto">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground shrink-0">
+              {detailPct}%
             </span>
-            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+            <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted/60">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-[rgba(255,202,217,0.6)] to-[#ffcad9] transition-all duration-500"
+                className={cn(
+                  'h-full rounded-full transition-all duration-500',
+                  isFinished ? 'bg-emerald-500' : 'bg-primary'
+                )}
                 style={{ width: `${detailPct}%` }}
               />
             </div>
-            <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
-              {detailPct}%
-            </span>
           </div>
 
           {/* Right: finish / reopen button */}
           {isFinished ? (
             <button
-              className="flex shrink-0 items-center gap-2 rounded-2xl px-6 py-3 text-sm font-bold uppercase tracking-widest text-[#131313] shadow-lg transition-opacity hover:opacity-90 active:scale-95 disabled:pointer-events-none disabled:opacity-50"
-              style={{ background: 'linear-gradient(90deg, #ffd6a5 0%, #ffb347 100%)' }}
+              className="flex shrink-0 items-center gap-2 rounded-xl bg-card border border-border/80 px-4 sm:px-5 py-2.5 text-xs sm:text-sm font-bold text-foreground shadow-subtle transition-all hover:bg-muted active:scale-95 disabled:pointer-events-none disabled:opacity-50"
               onClick={onUnfinishList}
               disabled={isUnfinishingList}
             >
               {isUnfinishingList ? (
                 <Loader2 size={14} className="animate-spin" />
               ) : (
-                <Undo2 size={14} strokeWidth={3} />
+                <Undo2 size={14} strokeWidth={2.5} />
               )}
-              {isUnfinishingList ? 'Reabrindo...' : 'Reabrir Lista'}
+              <span>{isUnfinishingList ? 'Reabrindo...' : 'Reabrir Lista'}</span>
             </button>
           ) : (
             <button
-              className="flex shrink-0 items-center gap-2 rounded-2xl px-6 py-3 text-sm font-bold uppercase tracking-widest text-[#131313] shadow-lg transition-opacity hover:opacity-90 active:scale-95 disabled:pointer-events-none disabled:opacity-50"
-              style={{ background: 'linear-gradient(90deg, #adc6ff 0%, #8cafff 100%)' }}
+              className="flex shrink-0 items-center gap-2 rounded-xl bg-primary px-4 sm:px-6 py-2.5 text-xs sm:text-sm font-bold text-primary-foreground shadow-card transition-all hover:bg-primary/90 active:scale-95 disabled:pointer-events-none disabled:opacity-40"
               onClick={onFinishList}
               disabled={detailTotalItems === 0 || isFinishingList}
             >
@@ -887,7 +953,7 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
               ) : (
                 <Check size={14} strokeWidth={3} />
               )}
-              {isFinishingList ? 'Finalizando...' : 'Finalizar Compra'}
+              <span>{isFinishingList ? 'Finalizando...' : 'Finalizar Compra'}</span>
             </button>
           )}
         </div>
@@ -896,7 +962,7 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
       {/* ── Mobile FAB Principal para Adicionar Item ────────────────────────── */}
       {!isFinished && !isBulkMode && (
         <motion.div
-          className="fixed bottom-24 right-5 z-40 sm:hidden pb-[env(safe-area-inset-bottom)]"
+          className="fixed bottom-20 right-4 z-40 sm:hidden pb-[env(safe-area-inset-bottom)]"
           whileTap={{ scale: 0.92 }}
         >
           <button
@@ -904,10 +970,10 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
               setAddItemInitialData(undefined);
               setShowAddItem(true);
             }}
-            className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-2xl transition-transform active:scale-95"
+            className="flex h-13 w-13 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-modal transition-transform active:scale-95"
             aria-label="Adicionar item"
           >
-            <Plus size={26} strokeWidth={3} />
+            <Plus size={24} strokeWidth={2.5} />
           </button>
         </motion.div>
       )}

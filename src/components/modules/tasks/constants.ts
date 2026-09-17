@@ -42,6 +42,14 @@ export const CATEGORIES = [
   { value: '4', label: 'Outros' },
 ] as const;
 
+export const TASK_CATEGORY_LABELS: Record<number, string> = {
+  0: 'Geral',
+  1: 'Limpeza',
+  2: 'Manutenção',
+  3: 'Finanças',
+  4: 'Outros',
+};
+
 export const KANBAN_COLUMNS = [
   {
     status: TaskStatus.AFazer,

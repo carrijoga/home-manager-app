@@ -73,13 +73,13 @@ export function CategorySection(props: CategorySectionProps) {
   const isNoneCategory = category === 'Sem categoria';
 
   return (
-    <div className="overflow-hidden rounded-3xl border border-border/80 bg-card shadow-sm transition-all dark:bg-[#181818]">
+    <div className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-subtle transition-all duration-200 hover:border-border/90 hover:shadow-card">
       {/* Category header - Tappable with thumb */}
       <div
         onClick={() => onToggleCollapse(category)}
-        className="flex cursor-pointer items-center justify-between border-b border-border/40 bg-muted/20 px-4 py-3 select-none transition-colors hover:bg-muted/40 active:bg-muted/60 dark:bg-[#1f1f1f]/50"
+        className="flex cursor-pointer items-center justify-between border-b border-border/40 bg-muted/25 px-4 py-3 sm:px-5 sm:py-3.5 select-none transition-colors hover:bg-muted/40 active:bg-muted/60"
       >
-        <div className="flex items-center gap-2.5 min-w-0">
+        <div className="flex items-center gap-3 min-w-0">
           {isBulkMode && unpurchased.length > 0 && (
             <div onClick={(e) => e.stopPropagation()}>
               <Checkbox
@@ -95,14 +95,14 @@ export function CategorySection(props: CategorySectionProps) {
                     return next;
                   });
                 }}
-                className="shrink-0 rounded-lg h-5 w-5 mr-1"
+                className="shrink-0 rounded-lg h-5 w-5 mr-0.5"
               />
             </div>
           )}
 
           <div
             className={cn(
-              'flex h-8 w-8 shrink-0 items-center justify-center rounded-xl',
+              'flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-colors',
               allPurchased
                 ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
                 : 'bg-primary/10 text-primary'
@@ -111,18 +111,18 @@ export function CategorySection(props: CategorySectionProps) {
             {isNoneCategory ? <FolderMinus size={15} /> : <Tag size={15} />}
           </div>
 
-          <span className="truncate text-sm font-bold tracking-tight text-foreground">
+          <span className="truncate text-sm sm:text-base font-bold tracking-tight text-foreground font-display">
             {category}
           </span>
 
-          <span className="inline-flex items-center rounded-lg bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground shrink-0">
+          <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[11px] font-bold text-muted-foreground shrink-0 tabular-nums">
             {purchasedCount}/{items.length}
           </span>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
           {allPurchased && (
-            <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+            <span className="hidden sm:inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-400">
               <CheckCircle2 size={11} /> Concluída
             </span>
           )}

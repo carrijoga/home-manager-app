@@ -1,4 +1,9 @@
-import { formatCurrency } from '@utils/formatters';
+import {
+  AnimatedCurrency,
+  AnimatedNumber,
+  AnimatedPercent,
+} from '@/components/common/AnimatedNumber';
+import { motion } from 'framer-motion';
 import {
   ArrowLeft,
   CheckCircle2,
@@ -16,6 +21,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { SpringProgress } from '@/components/ui/spring-progress';
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
 import { cn } from '@/lib/utils';
 import { UNIT_TYPE_LABELS } from '@/schemas/enums';
@@ -29,6 +35,7 @@ interface DetailHeaderProps {
   onBack: () => void;
   onEditList?: () => void;
   onDeleteList?: () => void;
+  onStartMarketMode?: () => void;
 }
 
 export function DetailHeader(props: DetailHeaderProps) {
@@ -40,6 +47,7 @@ export function DetailHeader(props: DetailHeaderProps) {
     onBack,
     onEditList,
     onDeleteList,
+    onStartMarketMode,
   } = props;
   const { showSuccess } = useToastNotifications();
 
@@ -48,6 +56,7 @@ export function DetailHeader(props: DetailHeaderProps) {
     detailData?.items.filter((i) => i.status === 1 || i.isPurchased).length ?? 0;
   const pct = totalItems > 0 ? Math.round((purchasedItems / totalItems) * 100) : 0;
   const isComplete = Boolean(detailData?.finished);
+  const pendingCount = Math.max(0, totalItems - purchasedItems);
 
   const handleShareList = () => {
     if (!detailData) return;
@@ -82,62 +91,73 @@ export function DetailHeader(props: DetailHeaderProps) {
 
   return (
     <div className="space-y-4">
-      {/* ── Top Bar Mobile: Voltar, Título e Menu ────────────────────────── */}
+      {/* ── Barra Superior: Navegação e Ações da Lista ────────────────────── */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
-          <button
+          <motion.button
+            whileTap={{ scale: 0.92 }}
             onClick={onBack}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-border/80 bg-card text-foreground shadow-sm transition-all hover:bg-accent active:scale-90 dark:bg-[#181818]"
-            title="Voltar para listas"
-            aria-label="Voltar para listas"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border/70 bg-card text-foreground shadow-subtle transition-colors hover:bg-muted active:bg-muted/80"
+            title="Voltar para Minhas Listas"
+            aria-label="Voltar para Minhas Listas"
           >
-            <ArrowLeft size={20} />
-          </button>
+            <ArrowLeft size={18} />
+          </motion.button>
 
-          <div className="min-w-0">
+          <div className="min-w-0 space-y-0.5">
             <div className="flex items-center gap-2">
-              <h1 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-foreground truncate">
-                {detailData?.name ?? 'Carregando lista...'}
-              </h1>
+              <span className="flex h-5 w-5 items-center justify-center rounded-md bg-primary/15 text-primary">
+                <ShoppingCart size={11} />
+              </span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                Lista de Compras
+              </span>
               {isComplete ? (
-                <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
-                  <CheckCircle2 size={11} /> Finalizada
+                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.2 text-[10px] font-bold text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-400">
+                  <CheckCircle2 size={10} /> Finalizada
                 </span>
               ) : (
-                <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-primary/15 px-2.5 py-0.5 text-[10px] font-bold text-primary shrink-0">
-                  <Clock size={11} /> Em aberto
+                <span className="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary/10 px-2 py-0.2 text-[10px] font-bold text-primary">
+                  <Clock size={10} /> Em aberto
                 </span>
               )}
             </div>
 
-            {detailData && (
-              <p className="text-[11px] font-medium text-muted-foreground capitalize">
-                {new Date(detailData.monthYear).toLocaleDateString('pt-BR', {
-                  month: 'long',
-                  year: 'numeric',
-                  timeZone: 'UTC',
-                })}
-              </p>
-            )}
+            <h1 className="font-display text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-foreground truncate">
+              {detailData?.name ?? 'Carregando lista...'}
+            </h1>
           </div>
         </div>
 
-        {/* Botão de Compartilhar + Menu da Lista */}
+        {/* Botão Modo Mercado + Compartilhar + Menu da Lista */}
         <div className="flex items-center gap-1.5 shrink-0">
-          <button
+          {onStartMarketMode && !isComplete && totalItems > 0 && (
+            <motion.button
+              whileTap={{ scale: 0.94 }}
+              onClick={onStartMarketMode}
+              className="flex h-9 items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-3 text-xs font-bold text-white shadow-xs hover:brightness-105 active:scale-95 transition-all"
+              title="Abrir o Modo Mercado para compras no supermercado"
+            >
+              <ShoppingCart size={13} />
+              <span>Modo Mercado</span>
+            </motion.button>
+          )}
+
+          <motion.button
+            whileTap={{ scale: 0.94 }}
             onClick={handleShareList}
-            className="flex h-9 items-center gap-1.5 rounded-xl border border-border/80 bg-card px-2.5 sm:px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground active:scale-95 dark:bg-[#181818]"
+            className="flex h-9 items-center gap-1.5 rounded-xl border border-border/70 bg-card px-2.5 sm:px-3 text-xs font-semibold text-muted-foreground shadow-subtle transition-colors hover:bg-muted hover:text-foreground"
             title="Copiar lista formatada para WhatsApp"
           >
             <Share2 size={14} />
             <span className="hidden sm:inline">Compartilhar</span>
-          </button>
+          </motion.button>
 
           {(onEditList || onDeleteList) && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
-                  className="flex h-9 w-9 items-center justify-center rounded-xl border border-border/80 bg-card text-muted-foreground transition-colors hover:bg-accent hover:text-foreground dark:bg-[#181818]"
+                  className="flex h-9 w-9 items-center justify-center rounded-xl border border-border/70 bg-card text-muted-foreground shadow-subtle transition-colors hover:bg-muted hover:text-foreground"
                   aria-label="Opções da lista"
                 >
                   <MoreVertical size={16} />
@@ -165,84 +185,92 @@ export function DetailHeader(props: DetailHeaderProps) {
         </div>
       </div>
 
-      {/* ── Unified Hero Budget & Progress Card ──────────────────────────── */}
+      {/* ── Hero Card de Resumo de Orçamento e Progresso ─────────────────── */}
       {detailData && (
-        <div className="overflow-hidden rounded-3xl border border-border/80 bg-gradient-to-br from-card via-card to-muted/20 p-4 sm:p-5 shadow-sm dark:bg-[#181818]">
-          <div className="space-y-3">
-            {/* Top Row: Progress status info */}
+        <div className="relative overflow-hidden rounded-2xl border border-border/70 bg-card p-5 sm:p-6 shadow-card">
+          <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div
-                  className={cn(
-                    'flex h-9 w-9 items-center justify-center rounded-2xl',
-                    isComplete
-                      ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
-                      : 'bg-primary/15 text-primary'
-                  )}
-                >
-                  {isComplete ? <CheckCircle2 size={18} /> : <ShoppingCart size={18} />}
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-foreground">
-                    {purchasedItems} de {totalItems} itens no carrinho
-                  </p>
-                  <p className="text-[11px] text-muted-foreground">
-                    {totalItems - purchasedItems === 0
-                      ? 'Todos os itens foram comprados!'
-                      : `${totalItems - purchasedItems} item(ns) pendente(s)`}
-                  </p>
-                </div>
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  Gasto Real no Carrinho
+                </span>
+                <p className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-foreground tabular-nums">
+                  <AnimatedCurrency value={totalSpent} />
+                </p>
               </div>
 
-              <span
-                className={cn(
-                  'rounded-xl px-2.5 py-1 text-xs font-extrabold',
-                  isComplete
-                    ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
-                    : 'bg-primary/10 text-primary'
-                )}
-              >
-                {pct}%
-              </span>
+              <div className="flex gap-2">
+                <div className="flex flex-col items-end">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                    Pendentes
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary tabular-nums">
+                    <Clock size={12} />
+                    <AnimatedNumber value={pendingCount} />
+                  </span>
+                </div>
+                <div className="flex flex-col items-end">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                    No Carrinho
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-400 tabular-nums">
+                    <CheckCircle2 size={12} />
+                    <AnimatedNumber value={purchasedItems} />
+                  </span>
+                </div>
+              </div>
             </div>
 
-            {/* Smooth Progress Bar */}
-            <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted/60">
-              <div
-                className={cn(
-                  'h-full rounded-full transition-all duration-500',
-                  isComplete ? 'bg-emerald-500' : 'bg-primary'
-                )}
-                style={{ width: `${pct}%` }}
-              />
-            </div>
+            {/* Progresso de itens comprados */}
+            {totalItems > 0 && (
+              <div className="space-y-1.5 pt-1">
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span className="font-medium">Progresso de itens comprados</span>
+                  <span className="font-bold text-foreground tabular-nums">
+                    <AnimatedNumber value={purchasedItems} /> de <AnimatedNumber value={totalItems} /> (<AnimatedPercent value={pct} />)
+                  </span>
+                </div>
+                <SpringProgress
+                  value={pct}
+                  variant={isComplete ? 'sage' : 'primary'}
+                  className="h-2 bg-muted/60"
+                />
+              </div>
+            )}
 
-            {/* Bottom Row: 3 Metrics */}
-            <div className="grid grid-cols-3 gap-2 border-t border-border/40 pt-3 text-xs">
+            {/* 3 Métricas: Estimado, Pago, Restante */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 border-t border-border/50 pt-3 text-xs">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                   Estimado
                 </span>
-                <p className="font-bold text-foreground sm:text-sm">
-                  {totalEstimated > 0 ? formatCurrency(totalEstimated) : '—'}
+                <p className="font-semibold text-foreground tabular-nums">
+                  {totalEstimated > 0 ? <AnimatedCurrency value={totalEstimated} /> : '—'}
                 </p>
               </div>
 
-              <div className="text-center sm:text-left border-x border-border/40 px-1 sm:px-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                  Pago até agora
-                </span>
-                <p className="font-bold text-emerald-600 dark:text-emerald-400 sm:text-sm">
-                  {totalSpent > 0 ? formatCurrency(totalSpent) : '—'}
-                </p>
-              </div>
-
-              <div className="text-right sm:text-left">
+              <div>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                  Restante
+                  Gasto Real
                 </span>
-                <p className="font-bold text-foreground sm:text-sm">
-                  {totalEstimated > 0 ? formatCurrency(remaining) : '—'}
+                <p
+                  className={cn(
+                    'font-bold tabular-nums',
+                    totalSpent > 0
+                      ? 'text-emerald-600 dark:text-emerald-400'
+                      : 'text-foreground'
+                  )}
+                >
+                  {totalSpent > 0 ? <AnimatedCurrency value={totalSpent} /> : '—'}
+                </p>
+              </div>
+
+              <div className="col-span-2 sm:col-span-1 sm:text-right">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  Restante Estimado
+                </span>
+                <p className="font-semibold text-foreground tabular-nums">
+                  {totalEstimated > 0 ? <AnimatedCurrency value={remaining} /> : '—'}
                 </p>
               </div>
             </div>

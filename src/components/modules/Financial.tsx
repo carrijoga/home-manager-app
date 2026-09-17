@@ -15,6 +15,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  Button,
 } from '@/components/ui';
 import { useApp } from '@/contexts/AppContext';
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
@@ -37,7 +38,7 @@ import * as bankAccountService from '@/services/bankAccountService';
 import * as categoryService from '@/services/categoryService';
 import * as financialService from '@/services/financialService';
 import * as paymentCardService from '@/services/paymentCardService';
-import { formatCurrency } from '@/utils/dashboardMetrics';
+import { AnimatedCurrency } from '@/components/common/AnimatedNumber';
 import { getMonthRange } from '@/utils/financialUtils';
 
 import { CategoryBreakdownCard } from './financial/CategoryBreakdownCard';
@@ -177,6 +178,10 @@ const Financial = () => {
       result = result.filter((t) => t.transactionType === TransactionType.Expense);
     if (filters.type === 'income')
       result = result.filter((t) => t.transactionType === TransactionType.Income);
+    if (filters.type === 'transfer')
+      result = result.filter(
+        (t) => t.transactionType === TransactionType.Transfer || t.transactionType === 3
+      );
     if (filters.status === 'unpaid')
       result = result.filter((t) => t.paymentStatus !== PaymentStatus.Paid);
     if (filters.status === 'overdue') result = result.filter((t) => t.isOverdue);
@@ -326,16 +331,18 @@ const Financial = () => {
                     : 'var(--destructive)',
               }}
             >
-              {formatCurrency(Number(dashboardData?.currentMonth.balance ?? 0))}
+              <AnimatedCurrency
+                value={Number(dashboardData?.currentMonth.balance ?? 0)}
+              />
             </b>
           </span>
-          <button
+          <Button
             type="button"
             onClick={openCreate}
-            className="font-ui duration-[length:var(--dur-base)] hidden items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-all hover:brightness-105 active:scale-[0.98] sm:inline-flex"
+            className="hidden sm:inline-flex h-9 items-center gap-1.5 rounded-xl font-bold shadow-xs active:scale-[0.98]"
           >
-            <Plus size={16} strokeWidth={2} /> Nova transação
-          </button>
+            <Plus size={16} strokeWidth={2.5} /> Nova transação
+          </Button>
         </div>
       </div>
 
@@ -398,14 +405,19 @@ const Financial = () => {
       </motion.div>
 
       {/* FAB mobile */}
-      <button
-        type="button"
-        aria-label="Nova transação"
-        onClick={openCreate}
-        className="fixed bottom-20 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform active:scale-95 sm:hidden"
+      <motion.div
+        className="fixed bottom-6 right-6 z-40 sm:hidden pb-[env(safe-area-inset-bottom)]"
+        whileTap={{ scale: 0.92 }}
       >
-        <Plus size={24} strokeWidth={2} />
-      </button>
+        <button
+          type="button"
+          aria-label="Nova transação"
+          onClick={openCreate}
+          className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-2xl transition-transform"
+        >
+          <Plus size={26} strokeWidth={3} />
+        </button>
+      </motion.div>
 
       {/* Modais */}
       <TransactionSheet

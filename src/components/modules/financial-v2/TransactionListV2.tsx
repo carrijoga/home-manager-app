@@ -1,7 +1,9 @@
 import { motion } from 'framer-motion';
 import { ArrowDownRight, ArrowUpRight, Receipt, RotateCcw, Scale } from 'lucide-react';
 
+import { AnimatedCurrency, AnimatedNumber } from '@/components/common/AnimatedNumber';
 import EmptyState from '@/components/common/EmptyState';
+import { Skeleton } from '@/components/ui/skeleton';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { TransactionType } from '@/schemas/enums';
 import type { FinancialTransactionResponse } from '@/schemas/financial';
@@ -62,12 +64,27 @@ export function TransactionListV2({
 
   if (loading) {
     return (
-      <div className="flex flex-col gap-3" aria-busy="true">
+      <div className="flex flex-col gap-3" aria-busy="true" aria-label="Carregando lançamentos">
         {Array.from({ length: 6 }).map((_, i) => (
           <div
             key={i}
-            className="h-18 animate-pulse rounded-2xl border border-border/40 bg-muted/40"
-          />
+            className="flex items-center justify-between rounded-2xl border border-border/60 bg-card p-3.5 sm:p-4 shadow-subtle"
+          >
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-10 w-10 shrink-0 rounded-xl" />
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-36 sm:w-48" />
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-3 w-20 rounded-md" />
+                  <Skeleton className="h-3 w-16 rounded-md" />
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col items-end gap-1.5">
+              <Skeleton className="h-5 w-24" />
+              <Skeleton className="h-3 w-14 rounded-full" />
+            </div>
+          </div>
         ))}
       </div>
     );
@@ -96,26 +113,25 @@ export function TransactionListV2({
       {/* Fita de Estatísticas e Subtotais da Exibição Atual */}
       <div className="font-ui flex flex-wrap items-center justify-between gap-2.5 rounded-2xl border border-border/80 bg-card px-4 py-3 text-xs shadow-xs">
         <span className="flex items-center gap-1.5 font-semibold text-muted-foreground">
-          Exibindo <b className="font-bold text-foreground">{transactions.length}</b>{' '}
+          Exibindo <b className="font-bold text-foreground"><AnimatedNumber value={transactions.length} /></b>{' '}
           {transactions.length === 1 ? 'lançamento' : 'lançamentos'}
         </span>
 
         <div className="flex flex-wrap items-center gap-3 font-semibold sm:gap-4">
           <span className="flex items-center gap-1 text-chart-2">
-            <ArrowUpRight size={14} strokeWidth={2.5} /> {formatCurrency(filteredIncome)}
+            <ArrowUpRight size={14} strokeWidth={2.5} /> <AnimatedCurrency value={filteredIncome} />
           </span>
           <span className="flex items-center gap-1 text-destructive">
-            <ArrowDownRight size={14} strokeWidth={2.5} /> {formatCurrency(filteredExpense)}
+            <ArrowDownRight size={14} strokeWidth={2.5} /> <AnimatedCurrency value={filteredExpense} />
           </span>
           <span className="flex items-center gap-1 border-l border-border/80 pl-3 font-bold text-foreground">
             <Scale size={13} className="text-primary" /> Balanço:{' '}
-            <span
+            <AnimatedCurrency
+              value={filteredBalance}
               style={{
                 color: filteredBalance >= 0 ? 'var(--chart-2)' : 'var(--destructive)',
               }}
-            >
-              {formatCurrency(filteredBalance)}
-            </span>
+            />
           </span>
         </div>
       </div>

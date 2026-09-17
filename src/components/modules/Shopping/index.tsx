@@ -1,5 +1,5 @@
 import { AnimatePresence } from 'framer-motion';
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 
 import { useApp } from '@/contexts/AppContext';
 import { usePolling } from '@/hooks/usePolling';
@@ -12,6 +12,7 @@ import { useShoppingActions } from './hooks/useShoppingActions';
 import { useShoppingData } from './hooks/useShoppingData';
 import { useShoppingNavigation } from './hooks/useShoppingNavigation';
 import { useShoppingRealtime } from './hooks/useShoppingRealtime';
+import { MarketModeView } from './MarketMode/MarketModeView';
 import { ShoppingDetailView } from './ShoppingDetailView';
 import { ShoppingListsView } from './ShoppingListsView';
 
@@ -96,11 +97,31 @@ const Shopping = memo(function Shopping() {
     [nav.detailData, actions.selectedItemIds]
   );
 
+  const [isMarketMode, setIsMarketMode] = useState(false);
+
   return (
     <AnimatePresence mode="wait">
-      {nav.viewMode === 'lists' ? (
+      {isMarketMode && nav.detailData ? (
+        <MarketModeView
+          key="market"
+          detailData={nav.detailData}
+          uniqueCategories={actions.uniqueCategories}
+          onExit={() => setIsMarketMode(false)}
+          onMarkAsPurchased={actions.handleMarkItemAsPurchased}
+          onUnmarkAsPurchased={actions.handleUnmarkAsPurchased}
+          onAddItem={actions.handleAddItem}
+          onEditItem={actions.handleEditSpecificItem}
+          onFinishList={async () => {
+            await actions.handleFinishList(nav.selectedListId!, () => {
+              setIsMarketMode(false);
+              nav.backToLists();
+            });
+          }}
+        />
+      ) : nav.viewMode === 'lists' ? (
         <ShoppingListsView
           key="lists"
+          isLoading={data.loading && data.shoppingLists.length === 0}
           filteredLists={nav.filteredLists}
           filterMonth={nav.filterMonth}
           monthNavDir={nav.monthNavDir}
@@ -212,6 +233,7 @@ const Shopping = memo(function Shopping() {
           onDeleteCategory={async (id) => {
             await actions.deleteShoppingCategory(id);
           }}
+          onStartMarketMode={() => setIsMarketMode(true)}
         />
       )}
     </AnimatePresence>

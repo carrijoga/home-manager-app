@@ -1,10 +1,10 @@
 import { motion } from 'framer-motion';
 import { Check, Filter, Lightbulb, Plus, TrendingUp } from 'lucide-react';
 
+import { AnimatedCurrency, AnimatedPercent } from '@/components/common/AnimatedNumber';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import type { CategoryResponse } from '@/schemas/category';
 import type { FinancialTransactionCategoryExpenseResponse } from '@/schemas/financial';
-import { formatCurrency } from '@/utils/dashboardMetrics';
 
 interface CategoryBreakdownCardV2Props {
   expensesByCategory: FinancialTransactionCategoryExpenseResponse[];
@@ -15,14 +15,11 @@ interface CategoryBreakdownCardV2Props {
 }
 
 const PALETTE = [
-  '#3b82f6', // blue
-  '#10b981', // emerald
-  '#f59e0b', // amber
-  '#8b5cf6', // purple
-  '#ec4899', // pink
-  '#06b6d4', // cyan
-  '#f97316', // orange
-  '#6366f1', // indigo
+  'var(--chart-1)',
+  'var(--chart-2)',
+  'var(--chart-3)',
+  'var(--chart-4)',
+  'var(--chart-5)',
 ];
 
 /**
@@ -39,18 +36,26 @@ export function CategoryBreakdownCardV2({
 }: CategoryBreakdownCardV2Props) {
   const prefersReducedMotion = usePrefersReducedMotion();
 
-  const totalExpenseSum = expensesByCategory.reduce((sum, r) => sum + Number(r.totalAmount), 0);
-  const max = Math.max(...expensesByCategory.map((r) => Number(r.totalAmount)), 1);
+  // Ordena de forma decrescente pelo amount para que topCategory seja a maior despesa
+  const sortedExpenses = [...expensesByCategory].sort(
+    (a, b) => (Number(b.totalAmount) || 0) - (Number(a.totalAmount) || 0)
+  );
+
+  const totalExpenseSum = sortedExpenses.reduce(
+    (sum, r) => sum + (Number(r.totalAmount) || 0),
+    0
+  );
+  const max = Math.max(...sortedExpenses.map((r) => Number(r.totalAmount) || 0), 1);
 
   // Mapeia os dados da API para associar com o categoryId real
-  const rows = expensesByCategory.map((r, i) => {
+  const rows = sortedExpenses.map((r, i) => {
     const matchedCategory = categories.find(
       (c) => c.name.toLowerCase().trim() === r.categoryName.toLowerCase().trim()
     );
     const amount = Number(r.totalAmount);
     const percentage = totalExpenseSum > 0 ? Math.round((amount / totalExpenseSum) * 100) : 0;
     return {
-      categoryId: matchedCategory?.categoryId ?? null,
+      categoryId: r.categoryId || matchedCategory?.categoryId || null,
       label: r.categoryName,
       amount,
       ratio: amount / max,
@@ -144,11 +149,11 @@ export function CategoryBreakdownCardV2({
                     {isSelected && <Check size={13} className="shrink-0 text-primary" />}
                     <span className="truncate">{row.label}</span>
                     <span className="shrink-0 rounded-full bg-muted/80 px-1.5 py-0.2 text-[10px] font-normal text-muted-foreground">
-                      {row.percentage}%
+                      <AnimatedPercent value={row.percentage} />
                     </span>
                   </span>
                   <span className="shrink-0 pl-2 font-bold text-foreground">
-                    {formatCurrency(row.amount)}
+                    <AnimatedCurrency value={row.amount} />
                   </span>
                 </div>
 
@@ -157,7 +162,11 @@ export function CategoryBreakdownCardV2({
                     className="h-full rounded-full"
                     initial={prefersReducedMotion ? false : { width: 0 }}
                     animate={{ width: `${Math.max(row.ratio * 100, 4)}%` }}
-                    transition={{ duration: 0.5, ease: [0.25, 1, 0.5, 1] }}
+                    transition={
+                      prefersReducedMotion
+                        ? { duration: 0.2 }
+                        : { type: 'spring', stiffness: 140, damping: 22, mass: 0.8 }
+                    }
                     style={{ background: row.color }}
                   />
                 </div>

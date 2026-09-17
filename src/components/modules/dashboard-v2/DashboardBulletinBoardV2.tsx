@@ -45,33 +45,48 @@ interface DashboardBulletinBoardV2Props {
 
 const QUICK_EMOJIS = ['👍', '❤️', '🎉', '👏', '💡', '☕'];
 
-const PRIORITY_THEMES: Record<
+const POSTIT_THEMES: Record<
   ApiPriority,
-  { label: string; badgeBg: string; badgeText: string; borderAccent: string }
+  {
+    label: string;
+    bg: string;
+    border: string;
+    text: string;
+    badgeBg: string;
+    badgeText: string;
+  }
 > = {
   0: {
     label: 'Urgente',
-    badgeBg: 'bg-destructive/15',
-    badgeText: 'text-destructive',
-    borderAccent: 'border-l-destructive',
+    bg: 'bg-[#fef5cd] dark:bg-[#3d3312]/70',
+    border: 'border-[#f3de7f] dark:border-[#69541a]',
+    text: 'text-[#453305] dark:text-[#fcedb3]',
+    badgeBg: 'bg-amber-200/80 text-amber-950 dark:bg-amber-800/60 dark:text-amber-100',
+    badgeText: 'text-amber-950 dark:text-amber-100',
   },
   1: {
     label: 'Alta',
-    badgeBg: 'bg-amber-500/15',
-    badgeText: 'text-amber-600 dark:text-amber-400',
-    borderAccent: 'border-l-amber-500',
+    bg: 'bg-[#fde8df] dark:bg-[#3d1c14]/70',
+    border: 'border-[#f8c5b2] dark:border-[#6a3324]',
+    text: 'text-[#5e2617] dark:text-[#f8a892]',
+    badgeBg: 'bg-rose-200/80 text-rose-950 dark:bg-rose-800/60 dark:text-rose-100',
+    badgeText: 'text-rose-950 dark:text-rose-100',
   },
   2: {
     label: 'Média',
-    badgeBg: 'bg-primary/15',
-    badgeText: 'text-primary',
-    borderAccent: 'border-l-primary',
+    bg: 'bg-[#e6f4fb] dark:bg-[#152e3d]/70',
+    border: 'border-[#c3e5f7] dark:border-[#214b63]',
+    text: 'text-[#134563] dark:text-[#93d2f6]',
+    badgeBg: 'bg-sky-200/80 text-sky-950 dark:bg-sky-800/60 dark:text-sky-100',
+    badgeText: 'text-sky-950 dark:text-sky-100',
   },
   3: {
     label: 'Baixa',
-    badgeBg: 'bg-chart-2/15',
-    badgeText: 'text-chart-2',
-    borderAccent: 'border-l-chart-2',
+    bg: 'bg-[#eaf6eb] dark:bg-[#1b331a]/70',
+    border: 'border-[#c7e8ca] dark:border-[#2d562b]',
+    text: 'text-[#1c4d1b] dark:text-[#a0db9e]',
+    badgeBg: 'bg-emerald-200/80 text-emerald-950 dark:bg-emerald-800/60 dark:text-emerald-100',
+    badgeText: 'text-emerald-950 dark:text-emerald-100',
   },
 };
 
@@ -90,23 +105,29 @@ export function DashboardBulletinBoardV2({
   return (
     <div
       className={cn(
-        'flex h-full flex-col justify-between rounded-3xl border border-border/80 bg-card p-5 sm:p-6 shadow-xs',
+        'relative flex h-full flex-col justify-between rounded-3xl border border-border/70 bg-card p-5 sm:p-6 shadow-card',
         className
       )}
     >
       <div>
         {/* Cabeçalho */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pb-4">
+        <div className="flex flex-wrap items-center justify-between gap-2.5 pb-3 border-b border-border/60">
           <div className="flex items-center gap-2.5">
-            <div className="flex size-8 items-center justify-center rounded-xl bg-secondary/15 text-secondary">
-              <Pin size={16} strokeWidth={2.5} />
+            <div className="relative flex size-10 shrink-0 items-center justify-center rounded-2xl bg-amber-50/80 p-1 dark:bg-amber-950/30">
+              <img
+                src="/icons/clay-optimized/bulletin_board.webp"
+                alt="Mural de Recados"
+                className="size-full object-contain"
+                style={{ filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08))' }}
+                loading="lazy"
+              />
             </div>
             <div>
-              <h3 className="font-editorial text-lg font-bold text-foreground">
+              <h3 className="font-display font-bold text-base text-foreground">
                 Mural de Recados
               </h3>
               <p className="font-ui text-xs text-muted-foreground">
-                Avisos e comunicados da família
+                Post-its e bilhetes da família
               </p>
             </div>
           </div>
@@ -116,10 +137,11 @@ export function DashboardBulletinBoardV2({
               <button
                 type="button"
                 onClick={onViewHistory}
-                className="font-ui inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-muted/30 px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                className="flex size-8 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground active:scale-95 cursor-pointer"
+                title="Histórico de recados"
+                aria-label="Histórico de recados"
               >
-                <History size={13} />
-                <span>Histórico</span>
+                <History size={16} strokeWidth={1.75} />
               </button>
             )}
 
@@ -127,10 +149,10 @@ export function DashboardBulletinBoardV2({
               <button
                 type="button"
                 onClick={onCreateNote}
-                className="font-ui inline-flex items-center gap-1.5 rounded-full bg-secondary px-3.5 py-1.5 text-xs font-bold text-black shadow-xs transition-all hover:brightness-105 active:scale-95"
+                className="font-ui inline-flex items-center gap-1.5 rounded-full bg-amber-200/80 hover:bg-amber-300/80 text-amber-950 dark:bg-amber-800/60 dark:text-amber-100 px-3 py-1 text-xs font-bold shadow-xs transition-all active:scale-95 cursor-pointer"
               >
-                <Plus size={14} strokeWidth={2.5} />
-                <span>Criar Nota</span>
+                <Plus size={13} strokeWidth={2.5} />
+                <span>+ Post-it</span>
               </button>
             )}
           </div>
@@ -138,8 +160,8 @@ export function DashboardBulletinBoardV2({
 
         {/* Grid de Cartões de Recado */}
         {notes.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/70 bg-muted/20 py-10 text-center">
-            <div className="flex size-10 items-center justify-center rounded-full bg-secondary/10 text-secondary mb-2">
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/70 bg-muted/20 py-8 text-center mt-3">
+            <div className="flex size-10 items-center justify-center rounded-full bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 mb-2">
               <MessageSquare size={20} />
             </div>
             <p className="font-ui text-sm font-semibold text-foreground">
@@ -152,14 +174,14 @@ export function DashboardBulletinBoardV2({
               <button
                 type="button"
                 onClick={onCreateNote}
-                className="mt-3 font-ui text-xs font-bold text-primary hover:underline"
+                className="mt-3 font-ui text-xs font-bold text-primary hover:underline cursor-pointer"
               >
                 + Deixar primeiro recado
               </button>
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="space-y-3.5 mt-3.5">
             {notes.map((note) => (
               <NoticeCardV2
                 key={note.id}
@@ -179,8 +201,18 @@ export function DashboardBulletinBoardV2({
       {/* Footer informativo */}
       {notes.length > 0 && (
         <div className="mt-4 pt-3 border-t border-dashed border-border/70 flex items-center justify-between text-[11px] text-muted-foreground">
-          <span>{notes.length} {notes.length === 1 ? 'recado ativo' : 'recados ativos'}</span>
-          <span>Atualizado automaticamente</span>
+          <span>{notes.length} {notes.length === 1 ? 'recado no mural' : 'recados no mural'}</span>
+          {onViewHistory ? (
+            <button
+              type="button"
+              onClick={onViewHistory}
+              className="font-semibold text-primary hover:underline cursor-pointer"
+            >
+              Ver histórico &rarr;
+            </button>
+          ) : (
+            <span>Atualizado automaticamente</span>
+          )}
         </div>
       )}
     </div>
@@ -205,7 +237,7 @@ function NoticeCardV2({
   onReactNote?: (id: string, emoji: string) => void | Promise<void>;
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
-  const theme = PRIORITY_THEMES[note.priority ?? 3] ?? PRIORITY_THEMES[3];
+  const theme = POSTIT_THEMES[note.priority ?? 3] ?? POSTIT_THEMES[3];
 
   const canEdit = Boolean(currentUserId) && note.createdBy === currentUserId;
   const canDelete = isOwnerOrAdmin || (Boolean(currentUserId) && note.createdBy === currentUserId);
@@ -252,47 +284,54 @@ function NoticeCardV2({
       initial={{ opacity: 0, scale: 0.96 }}
       animate={{ opacity: 1, scale: 1 }}
       className={cn(
-        'group relative flex flex-col justify-between rounded-2xl border border-border/70 bg-muted/30 p-4 transition-all hover:bg-card hover:shadow-xs border-l-4',
-        theme.borderAccent
+        'group relative flex flex-col justify-between rounded-2xl border p-4 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md',
+        theme.bg,
+        theme.border,
+        theme.text
       )}
     >
+      {/* Washi Tape listrada no topo para bilhetes fixados */}
+      {note.isPinned && (
+        <div
+          className="pointer-events-none absolute -top-2 left-1/2 -translate-x-1/2 h-3.5 w-18 rounded-xs opacity-90 shadow-2xs"
+          style={{
+            background:
+              'repeating-linear-gradient(-45deg, rgba(235, 120, 90, 0.45), rgba(235, 120, 90, 0.45) 8px, rgba(255, 255, 255, 0.5) 8px, rgba(255, 255, 255, 0.5) 16px)',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+          }}
+          aria-hidden="true"
+        />
+      )}
+
       <div>
         {/* Top bar: Priority badge, Pinned tag & Actions */}
         <div className="flex items-center justify-between gap-1.5 pb-2">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <span
               className={cn(
-                'font-ui rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider',
-                theme.badgeBg,
-                theme.badgeText
+                'font-ui rounded-md px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider',
+                theme.badgeBg
               )}
             >
-              {theme.label}
+              {note.isPinned ? `📌 ${theme.label} • FIXADO` : theme.label}
             </span>
-
-            {note.isPinned && (
-              <span className="flex items-center gap-1 rounded-md bg-secondary/15 px-1.5 py-0.5 text-[10px] font-bold text-secondary">
-                <Pin size={10} className="fill-secondary" />
-                Fixado
-              </span>
-            )}
           </div>
 
           {/* Quick Note Actions */}
-          <div className="flex items-center gap-0.5 opacity-80 group-hover:opacity-100">
+          <div className="flex items-center gap-0.5 opacity-75 group-hover:opacity-100 transition-opacity">
             {canPin && onTogglePin && (
               <button
                 type="button"
                 onClick={() => onTogglePin(note.id, Boolean(note.isPinned))}
                 title={note.isPinned ? 'Desafixar nota' : 'Fixar no topo'}
                 className={cn(
-                  'flex size-6 items-center justify-center rounded-md transition-colors',
+                  'flex size-5.5 items-center justify-center rounded-md transition-colors cursor-pointer',
                   note.isPinned
-                    ? 'text-secondary hover:bg-secondary/10'
-                    : 'text-muted-foreground hover:bg-muted'
+                    ? 'text-amber-700 dark:text-amber-400'
+                    : 'text-muted-foreground hover:bg-black/5 dark:hover:bg-white/10'
                 )}
               >
-                <Pin size={12} className={note.isPinned ? 'fill-secondary' : ''} />
+                <Pin size={11} className={note.isPinned ? 'fill-current' : ''} />
               </button>
             )}
 
@@ -301,9 +340,9 @@ function NoticeCardV2({
                 type="button"
                 onClick={() => onEditNote(note)}
                 title="Editar recado"
-                className="flex size-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                className="flex size-5.5 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-black/5 hover:text-foreground dark:hover:bg-white/10 cursor-pointer"
               >
-                <Pencil size={12} />
+                <Pencil size={11} />
               </button>
             )}
 
@@ -312,40 +351,40 @@ function NoticeCardV2({
                 type="button"
                 onClick={() => onDeleteNote(note.id)}
                 title="Excluir recado"
-                className="flex size-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                className="flex size-5.5 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/15 hover:text-destructive cursor-pointer"
               >
-                <Trash2 size={12} />
+                <Trash2 size={11} />
               </button>
             )}
           </div>
         </div>
 
         {/* Message Content */}
-        <p className="font-ui text-xs font-normal leading-relaxed text-foreground/90 whitespace-pre-wrap line-clamp-4">
+        <p className="font-ui text-xs font-medium leading-relaxed whitespace-pre-wrap line-clamp-4 pt-0.5">
           {note.content}
         </p>
       </div>
 
       {/* Bottom bar: Author & Reactions */}
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-border/50 pt-2.5">
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-black/10 dark:border-white/10 pt-2.5">
         {/* Author info */}
         <div className="flex items-center gap-1.5 min-w-0">
           {note.authorAvatar ? (
             <img
               src={note.authorAvatar}
               alt={note.authorName || 'Membro'}
-              className="size-5 rounded-full object-cover shrink-0"
+              className="size-4.5 rounded-full object-cover shrink-0 ring-1 ring-black/10"
             />
           ) : (
-            <div className="flex size-5 items-center justify-center rounded-full bg-primary/20 text-[9px] font-bold text-primary shrink-0">
+            <div className="flex size-4.5 items-center justify-center rounded-full bg-black/10 dark:bg-white/10 text-[8px] font-bold shrink-0">
               {initials}
             </div>
           )}
-          <span className="truncate text-[11px] font-semibold text-foreground/80">
-            {note.authorName || 'Família'}
+          <span className="truncate text-[11px] font-bold">
+            {note.authorName?.split(' ')[0] || 'Família'}
           </span>
           {note.timeLabel && (
-            <span className="text-[10px] text-muted-foreground/70 shrink-0">
+            <span className="text-[10px] opacity-75 shrink-0">
               • {note.timeLabel}
             </span>
           )}
@@ -359,14 +398,14 @@ function NoticeCardV2({
               type="button"
               onClick={() => onReactNote?.(note.id, r.emoji)}
               className={cn(
-                'flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] transition-colors',
+                'flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold shadow-2xs transition-all active:scale-110 cursor-pointer',
                 r.userReacted
-                  ? 'bg-primary/20 text-primary font-bold border border-primary/30'
-                  : 'bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground'
+                  ? 'bg-white/95 text-foreground ring-1 ring-primary/40 dark:bg-black/80'
+                  : 'bg-white/70 hover:bg-white text-foreground/80 dark:bg-black/50 dark:hover:bg-black/70'
               )}
             >
               <span>{r.emoji}</span>
-              <span className="text-[10px]">{r.count}</span>
+              <span className="text-[10px] tabular-nums">{r.count}</span>
             </button>
           ))}
 
@@ -375,8 +414,8 @@ function NoticeCardV2({
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  title="Reagir"
-                  className="flex size-6 items-center justify-center rounded-full bg-muted/60 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  title="Reagir com emoji"
+                  className="flex size-5.5 items-center justify-center rounded-full bg-white/70 text-foreground/70 transition-colors hover:bg-white hover:text-foreground dark:bg-black/40 cursor-pointer"
                 >
                   <Smile size={12} />
                 </button>
@@ -391,7 +430,7 @@ function NoticeCardV2({
                         onReactNote(note.id, emoji);
                         setPickerOpen(false);
                       }}
-                      className="flex size-7 items-center justify-center rounded-md text-sm transition-colors hover:bg-muted"
+                      className="flex size-7 items-center justify-center rounded-md text-sm transition-colors hover:bg-muted cursor-pointer"
                     >
                       {emoji}
                     </button>

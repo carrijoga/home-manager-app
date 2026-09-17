@@ -454,19 +454,18 @@ export function useShoppingActions(
     [selectedListId, addShoppingItem, showSuccess, showError, setDetailData]
   );
 
-  const handleEditItem = useCallback(
-    async (data: ItemFormData) => {
-      if (!selectedItem || !selectedListId) {
-        showError('Nenhum item selecionado.');
-        return;
-      }
+  const handleEditSpecificItem = useCallback(
+    async (item: AppShoppingItem, data: ItemFormData) => {
+      if (!selectedListId) return;
       try {
+        const qty = parseFloat(data.quantity) || 1;
+        const unit = parseInt(data.unitType) || 0;
         await updateShoppingItem(
-          selectedItem.shoppingItemId,
+          item.shoppingItemId,
           selectedListId,
           data.name,
-          parseFloat(data.quantity) || 1,
-          parseInt(data.unitType) || 0,
+          qty,
+          unit,
           data.categoryId || null,
           data.estimatedPrice ?? null,
           data.notes || null
@@ -478,12 +477,12 @@ export function useShoppingActions(
           return {
             ...prev,
             items: prev.items.map((i) =>
-              i.shoppingItemId === selectedItem.shoppingItemId
+              i.shoppingItemId === item.shoppingItemId
                 ? {
                     ...i,
                     name: data.name,
-                    quantity: parseFloat(data.quantity) || 1,
-                    unitType: parseInt(data.unitType) || 0,
+                    quantity: qty,
+                    unitType: unit,
                     shoppingCategoryId: data.categoryId || null,
                     categoryName: catName,
                     estimatedPrice: data.estimatedPrice ?? null,
@@ -500,7 +499,6 @@ export function useShoppingActions(
       }
     },
     [
-      selectedItem,
       selectedListId,
       updateShoppingItem,
       shoppingCategories,
@@ -508,6 +506,17 @@ export function useShoppingActions(
       showError,
       setDetailData,
     ]
+  );
+
+  const handleEditItem = useCallback(
+    async (data: ItemFormData) => {
+      if (!selectedItem) {
+        showError('Nenhum item selecionado.');
+        return;
+      }
+      await handleEditSpecificItem(selectedItem, data);
+    },
+    [selectedItem, handleEditSpecificItem, showError]
   );
 
   const handleDeleteItem = useCallback(
@@ -538,19 +547,18 @@ export function useShoppingActions(
     [deleteShoppingItem, selectedListId, showSuccess, showError, setDetailData]
   );
 
-  const handleMarkAsPurchased = useCallback(
-    async (data: PurchaseFormData) => {
-      if (!selectedItem) return;
-      const qty = parseFloat(data.quantity) || selectedItem.quantity;
+  const handleMarkItemAsPurchased = useCallback(
+    async (item: AppShoppingItem, data: PurchaseFormData) => {
+      const qty = parseFloat(data.quantity) || item.quantity;
       const price = data.price ?? 0;
       const purchasedAt = `${data.purchasedAt}T12:00:00Z`;
-      setPendingId(selectedItem.shoppingItemId);
+      setPendingId(item.shoppingItemId);
       try {
         await markItemAsPurchased(
-          selectedItem.shoppingItemId,
+          item.shoppingItemId,
           selectedListId!,
           qty,
-          selectedItem.unitType,
+          item.unitType,
           price,
           purchasedAt
         );
@@ -559,7 +567,7 @@ export function useShoppingActions(
           return {
             ...prev,
             items: prev.items.map((i) =>
-              i.shoppingItemId === selectedItem.shoppingItemId
+              i.shoppingItemId === item.shoppingItemId
                 ? { ...i, quantity: qty, isPurchased: true, status: 1, price, purchasedAt }
                 : i
             ),
@@ -572,7 +580,15 @@ export function useShoppingActions(
         setPendingId(null);
       }
     },
-    [selectedItem, markItemAsPurchased, selectedListId, showSuccess, setDetailData]
+    [markItemAsPurchased, selectedListId, showSuccess, setDetailData]
+  );
+
+  const handleMarkAsPurchased = useCallback(
+    async (data: PurchaseFormData) => {
+      if (!selectedItem) return;
+      await handleMarkItemAsPurchased(selectedItem, data);
+    },
+    [selectedItem, handleMarkItemAsPurchased]
   );
 
   const handleUnmarkAsPurchased = useCallback(
@@ -820,8 +836,10 @@ export function useShoppingActions(
     handleDeleteListFromGrid,
     handleAddItem,
     handleEditItem,
+    handleEditSpecificItem,
     handleDeleteItem,
     handleMarkAsPurchased,
+    handleMarkItemAsPurchased,
     handleUnmarkAsPurchased,
     handleIgnoreItem,
     handleUnignoreItem,

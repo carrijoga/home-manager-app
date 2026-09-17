@@ -1,4 +1,4 @@
-import { MoreVertical, Pencil, Power, PowerOff, Trash2 } from 'lucide-react';
+import { CreditCard, MoreVertical, Pencil, Power, PowerOff, Trash2 } from 'lucide-react';
 
 import {
   DropdownMenu,
@@ -9,9 +9,7 @@ import {
 import { cn } from '@/lib/utils';
 import { CARD_TYPE_LABELS, CardType } from '@/schemas/enums';
 import type { PaymentCardResponse } from '@/schemas/payment-card';
-import { formatCurrency } from '@/utils/dashboardMetrics';
-
-import { CARD_TEXT_COLOR, cardGradient } from './gradient';
+import { formatCurrency } from '@/utils/formatters';
 
 interface PaymentCardTileProps {
   card: PaymentCardResponse;
@@ -36,9 +34,8 @@ export function PaymentCardTile({
 }: PaymentCardTileProps) {
   const isCredit = card.type === CardType.Credit;
   const limit = Number(card.creditLimit ?? 0);
-  const available = Math.max(0, limit - used);
-  const usedPct = limit > 0 ? Math.min(100, (used / limit) * 100) : 0;
-  const inactive = !card.isActive;
+  const closingDay = card.closingDay ? Number(card.closingDay) : null;
+  const dueDay = card.dueDay ? Number(card.dueDay) : null;
 
   return (
     <div
@@ -52,36 +49,106 @@ export function PaymentCardTile({
         }
       }}
       className={cn(
-        'relative cursor-pointer rounded-2xl p-4 text-left transition-all',
-        'flex min-h-[120px] flex-col justify-between',
-        selected ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : 'ring-0',
-        inactive && 'opacity-50 grayscale'
+        'group flex items-center justify-between gap-3.5 rounded-2xl p-3.5 sm:p-4 transition-all duration-150 cursor-pointer',
+        selected
+          ? 'border-2 border-primary bg-card shadow-md ring-1 ring-primary/20'
+          : 'border border-border/70 bg-card hover:border-primary/40 hover:bg-muted/30 shadow-subtle',
+        !card.isActive && 'opacity-60 grayscale-[40%]'
       )}
-      style={{ background: cardGradient(card.color ?? ''), color: CARD_TEXT_COLOR }}
     >
-      <div className="flex items-start justify-between">
-        <div className="flex flex-col">
-          <span className="text-sm font-semibold drop-shadow-sm">{card.name}</span>
-          <span className="text-[10px] uppercase tracking-wide opacity-80">
-            {CARD_TYPE_LABELS[card.type]}
-          </span>
+      {/* Esquerda: Squircle da Bandeira/Marca + Metadados */}
+      <div className="flex items-center gap-3.5 min-w-0 flex-1">
+        <div
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-white shadow-xs font-bold text-xs"
+          style={{ backgroundColor: card.color || '#C05621' }}
+        >
+          <CreditCard size={18} strokeWidth={2} />
         </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="text-sm sm:text-base font-bold text-foreground truncate">
+              {card.name}
+            </span>
+            {!card.isActive && (
+              <span className="rounded-full bg-muted px-2 py-0.2 text-[10px] font-semibold text-muted-foreground">
+                Inativo
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5 truncate">
+            <span className="font-semibold text-foreground/80">
+              {CARD_TYPE_LABELS[card.type]}
+            </span>
+            {isCredit && (closingDay != null || dueDay != null) && (
+              <>
+                <span className="text-muted-foreground/40 font-bold">·</span>
+                {closingDay != null && <span>Fecha dia {closingDay}</span>}
+                {closingDay != null && dueDay != null && (
+                  <span className="text-muted-foreground/40 font-bold">·</span>
+                )}
+                {dueDay != null && (
+                  <span className="text-amber-600 dark:text-amber-400 font-medium">
+                    Vence dia {dueDay}
+                  </span>
+                )}
+              </>
+            )}
+            {!isCredit && (
+              <>
+                <span className="text-muted-foreground/40 font-bold">·</span>
+                <span>{card.bankAccountId ? 'Vinculado à conta' : 'Débito avulso'}</span>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Direita: Métrica de Fatura/Limite e Ações */}
+      <div className="flex items-center gap-2 shrink-0 pl-2">
+        <div className="text-right">
+          {isCredit ? (
+            <>
+              <span className="text-sm sm:text-base font-bold tabular-nums block text-foreground">
+                {formatCurrency(used)}
+              </span>
+              <span className="text-[10px] text-muted-foreground block truncate">
+                de {formatCurrency(limit)} limite
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="text-sm sm:text-base font-bold text-emerald-600 dark:text-emerald-400 block">
+                Ativo
+              </span>
+              <span className="text-[10px] text-muted-foreground block">
+                débito
+              </span>
+            </>
+          )}
+        </div>
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
               onClick={(e) => e.stopPropagation()}
-              className="rounded-md p-1 transition-colors hover:bg-black/15"
+              className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
               aria-label="Ações do cartão"
             >
-              <MoreVertical size={16} />
+              <MoreVertical size={18} strokeWidth={1.8} />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-            <DropdownMenuItem onClick={onEdit} className="gap-2">
-              <Pencil size={14} /> Editar
+            <DropdownMenuItem onClick={onEdit} className="gap-2 cursor-pointer">
+              <Pencil size={14} strokeWidth={1.8} /> Editar
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={onToggleActive} className="gap-2">
-              {card.isActive ? <PowerOff size={14} /> : <Power size={14} />}
+            <DropdownMenuItem onClick={onToggleActive} className="gap-2 cursor-pointer">
+              {card.isActive ? (
+                <PowerOff size={14} strokeWidth={1.8} />
+              ) : (
+                <Power size={14} strokeWidth={1.8} />
+              )}
               {card.isActive ? 'Inativar' : 'Ativar'}
             </DropdownMenuItem>
             <DropdownMenuItem
@@ -93,31 +160,15 @@ export function PaymentCardTile({
                   : 'Este cartão possui lançamentos vinculados. Apenas inativação é permitida.'
               }
               className={cn(
-                'gap-2',
+                'gap-2 cursor-pointer',
                 canDelete ? 'text-destructive focus:text-destructive' : 'text-destructive/50'
               )}
             >
-              <Trash2 size={14} /> Excluir
+              <Trash2 size={14} strokeWidth={1.8} /> Excluir
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-
-      {isCredit ? (
-        <div>
-          <div className="text-[11px] opacity-85">Disponível</div>
-          <div className="text-lg font-bold drop-shadow-sm">{formatCurrency(available)}</div>
-          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/25">
-            <div className="h-full rounded-full bg-white/80" style={{ width: `${usedPct}%` }} />
-          </div>
-          <div className="mt-1 text-[10px] opacity-80">
-            {formatCurrency(used)} de {formatCurrency(limit)}
-            {inactive ? ' · Inativo' : ''}
-          </div>
-        </div>
-      ) : (
-        <div className="text-[10px] opacity-80">{inactive ? 'Inativo' : 'Ativo'}</div>
-      )}
     </div>
   );
 }

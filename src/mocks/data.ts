@@ -18,21 +18,22 @@ import type {
   AppShoppingItem,
   AppShoppingList,
   AppShoppingListSummary,
-  FutureItem,
   Notice,
   Task,
 } from '@/types';
-import { ApiCategory, ApiPriority, FutureItemStatus, Priority } from '@/types';
+import { ApiCategory, ApiPriority } from '@/types';
 
 export const MOCK_USER_ID = 'user-mock-0001';
 
 export const mockWeather = {
   city: 'São Paulo',
   temperature: 24,
+  temperatureMin: 20.1,
+  temperatureMax: 26.3,
   description: 'Parcialmente nublado',
   source: 'manual',
-  conditionCode: 'partly-cloudy',
-  observedAt: null,
+  conditionCode: '800',
+  observedAt: '2026-09-11T14:00:00Z',
 } as const;
 
 // ── Notificações ─────────────────────────────────────────────────────────────
@@ -1012,7 +1013,8 @@ function makeFinTx(seed: FinTxSeed): FinancialTransactionResponse {
     categoryName: category.name,
     origin: seed.origin ?? (seed.shoppingListId ? 2 : 0),
     originName: seed.originName ?? (seed.shoppingListId ? 'Lista de Compras' : 'Financeiro'),
-    observation: seed.observation ?? (seed.shoppingListId ? 'Gerado a partir da lista de compras' : null),
+    observation:
+      seed.observation ?? (seed.shoppingListId ? 'Gerado a partir da lista de compras' : null),
     // Income: aponta pra Conta Corrente mock; Expense: sempre null (fonte só via payments).
     sourceId: seed.type === 0 ? '11111111-1111-1111-1111-111111111111' : null,
     payments,
@@ -1231,38 +1233,6 @@ export const mockTransactions: FinancialTransactionResponse[] = (
   ] satisfies FinTxSeed[]
 ).map(makeFinTx);
 
-// ── Metas da família (dashboard) ─────────────────────────────────────────────
-
-export const mockGoals = [
-  {
-    id: 'goal-0001',
-    categoryLabel: 'FINANÇAS',
-    title: 'Reserva de emergência',
-    progress: 0.62,
-    remainingLabel: 'Faltam R$ 1.900 para concluir',
-  },
-  {
-    id: 'goal-0002',
-    categoryLabel: 'CASA',
-    title: 'Reforma da cozinha',
-    progress: 0.34,
-    remainingLabel: 'Planejamento e orçamento em andamento',
-  },
-  {
-    id: 'goal-0003',
-    categoryLabel: 'FAMÍLIA',
-    title: 'Viagem de férias',
-    progress: 0.8,
-    remainingLabel: 'Faltam 2 parcelas do pacote',
-  },
-] satisfies Array<{
-  id: string;
-  categoryLabel: string;
-  title: string;
-  progress: number;
-  remainingLabel: string;
-}>;
-
 // ── Cartões de crédito ───────────────────────────────────────────────────────
 
 export const mockPaymentCards: PaymentCardResponse[] = [
@@ -1452,48 +1422,3 @@ export const mockCalendarEvents = [
   startsAt: string;
   location?: string;
 }>;
-
-// ── Itens futuros ─────────────────────────────────────────────────────────────
-
-export const mockFutureItems = [
-  {
-    id: '1',
-    name: 'Sofá novo',
-    priority: Priority.MEDIUM,
-    estimatedCost: 'R$ 2.500',
-    estimatedValue: 2500,
-    status: FutureItemStatus.PLANNED,
-  },
-  {
-    id: '2',
-    name: 'Aspirador de pó',
-    priority: Priority.HIGH,
-    estimatedCost: 'R$ 800',
-    estimatedValue: 800,
-    status: FutureItemStatus.PLANNED,
-  },
-  {
-    id: '3',
-    name: 'TV 50 polegadas',
-    priority: Priority.LOW,
-    estimatedCost: 'R$ 2.000',
-    estimatedValue: 2000,
-    status: FutureItemStatus.PLANNED,
-  },
-  {
-    id: '4',
-    name: 'Geladeira nova',
-    priority: Priority.HIGH,
-    estimatedCost: 'R$ 3.500',
-    estimatedValue: 3500,
-    status: FutureItemStatus.PLANNED,
-  },
-  {
-    id: '5',
-    name: 'Mesa de jantar',
-    priority: Priority.MEDIUM,
-    estimatedCost: 'R$ 1.200',
-    estimatedValue: 1200,
-    status: FutureItemStatus.PLANNED,
-  },
-] satisfies FutureItem[];

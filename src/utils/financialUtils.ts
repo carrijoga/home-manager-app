@@ -99,6 +99,9 @@ export function getDueLabel(isoDateTime: string): string {
  * Retorna o valor efetivamente liquidado/pago de uma transação.
  */
 export function getEffectiveAmount(t: FinancialTransactionResponse): number {
+  if (t.transactionType === TransactionType.Income) {
+    return Number(t.value) || 0;
+  }
   if (t.paymentStatus === PaymentStatus.Paid) {
     return Math.max(getPaidAmount(t), Number(t.value) || 0);
   }
@@ -137,11 +140,13 @@ export function calculateFilterCounts(items: FinancialTransactionResponse[]): {
   total: number;
   expense: number;
   income: number;
+  transfer: number;
   unpaid: number;
   overdue: number;
 } {
   let expense = 0;
   let income = 0;
+  let transfer = 0;
   let unpaid = 0;
   let overdue = 0;
 
@@ -150,11 +155,13 @@ export function calculateFilterCounts(items: FinancialTransactionResponse[]): {
       income += 1;
     } else if (t.transactionType === TransactionType.Expense) {
       expense += 1;
+    } else if (t.transactionType === TransactionType.Transfer || t.transactionType === 3) {
+      transfer += 1;
     }
-    if (t.paymentStatus !== PaymentStatus.Paid) {
+    if (t.transactionType === TransactionType.Expense && t.paymentStatus !== PaymentStatus.Paid) {
       unpaid += 1;
     }
-    if (t.isOverdue) {
+    if (t.transactionType === TransactionType.Expense && t.isOverdue) {
       overdue += 1;
     }
   }
@@ -163,6 +170,7 @@ export function calculateFilterCounts(items: FinancialTransactionResponse[]): {
     total: items.length,
     expense,
     income,
+    transfer,
     unpaid,
     overdue,
   };

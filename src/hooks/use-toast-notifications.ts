@@ -181,6 +181,16 @@ interface ToastOptions {
   soundVariant?: 'add' | 'update' | 'delete';
 }
 
+export interface ToastPromiseOptions<T> {
+  loading: string;
+  success: string | ((data: T) => string);
+  error: string | ((error: any) => string);
+  description?: string | ((data: T) => string);
+  duration?: number;
+  playSound?: boolean;
+  soundVariant?: 'add' | 'update' | 'delete';
+}
+
 /**
  * Hook customizado para notificações toast com mensagens padrão em português
  */
@@ -248,6 +258,40 @@ export const useToastNotifications = () => {
     return toast.loading(message);
   }, []);
 
+  const showPromise = useCallback(
+    <T>(
+      promise: Promise<T> | (() => Promise<T>),
+      options: ToastPromiseOptions<T>
+    ) => {
+      const p = typeof promise === 'function' ? promise() : promise;
+      return toast.promise(p, {
+        loading: options.loading,
+        success: (data: T) => {
+          if (options.playSound !== false) {
+            const soundType = options.soundVariant
+              ? (`success-${options.soundVariant}` as const)
+              : 'success-add';
+            playSound(soundType);
+          }
+          return typeof options.success === 'function'
+            ? options.success(data)
+            : options.success;
+        },
+        error: (err: any) => {
+          if (options.playSound !== false) {
+            playSound('error');
+          }
+          return typeof options.error === 'function'
+            ? options.error(err)
+            : options.error;
+        },
+        description: options.description as any,
+        duration: options.duration ?? 4000,
+      });
+    },
+    []
+  );
+
   const dismissToast = useCallback((toastId: string | number) => {
     toast.dismiss(toastId);
   }, []);
@@ -271,6 +315,7 @@ export const useToastNotifications = () => {
       showWarning,
       showInfo,
       showLoading,
+      showPromise,
       dismissToast,
       enableSound,
       disableSound,
@@ -282,6 +327,7 @@ export const useToastNotifications = () => {
       showWarning,
       showInfo,
       showLoading,
+      showPromise,
       dismissToast,
       enableSound,
       disableSound,

@@ -6,10 +6,18 @@ import {
   History,
   RotateCcw,
   User,
+  X,
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
-import { Button, Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui';
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui';
 import type { NestMember } from '@/schemas/nest';
 import * as taskService from '@/services/taskService';
 import type { Task } from '@/types';
@@ -102,12 +110,26 @@ export function TaskHistoryModal({
         if (!o) onClose();
       }}
     >
-      <DialogContent className="sm:max-w-[580px]">
-        <DialogHeader>
-          <div className="flex items-center gap-2">
-            <History className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
-            <DialogTitle>Histórico de Tarefas Concluídas</DialogTitle>
+      <DialogContent hideBuiltinClose className="sm:max-w-[580px] rounded-2xl border border-border/60 p-6">
+        <DialogHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+          <div className="space-y-1 text-left">
+            <div className="flex items-center gap-2">
+              <History className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+              <DialogTitle>Histórico de Tarefas Concluídas</DialogTitle>
+            </div>
+            <DialogDescription className="text-xs text-muted-foreground">
+              Histórico de tarefas concluídas no ninho.
+            </DialogDescription>
           </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
+            aria-label="Fechar"
+          >
+            <X className="size-4" />
+            <span className="sr-only">Fechar</span>
+          </button>
         </DialogHeader>
 
         <div className="min-h-[260px] space-y-3 py-2">
@@ -152,14 +174,16 @@ export function TaskHistoryModal({
                         </div>
                       </div>
 
-                      <button
+                      <Button
                         type="button"
+                        variant="outline"
+                        size="sm"
                         onClick={() => handleUncomplete(item)}
-                        className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        className="h-7 shrink-0 gap-1 px-2.5 text-xs text-muted-foreground hover:text-foreground"
                         title="Reabrir tarefa"
                       >
                         <RotateCcw size={12} /> Reabrir
-                      </button>
+                      </Button>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2 border-t border-border/40 pt-1 text-xs">

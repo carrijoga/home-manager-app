@@ -1,6 +1,7 @@
 import { HelpCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
+import MoneyInput from '@/components/common/MoneyInput';
 import { cardGradient } from '@/components/modules/financial/payment-card/gradient';
 import {
   Button,
@@ -13,13 +14,14 @@ import {
   SelectValue,
   Sheet,
   SheetContent,
+  SheetHeader,
   SheetTitle,
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { Spinner } from '@/components/ui/spinner';
 import type { BankAccountResponse } from '@/schemas/bank-account';
 import { CARD_TYPE_LABELS, CardType } from '@/schemas/enums';
 import type {
@@ -55,14 +57,13 @@ export function PaymentCardSheet({
   onUpdateCreditSettings,
 }: PaymentCardSheetProps) {
   const isEdit = card !== null;
-  const isMobile = useIsMobile();
 
   const [cardType, setCardType] = useState<CardType>(CardType.Credit);
   const [name, setName] = useState('');
-  const [limit, setLimit] = useState<string>('');
+  const [limit, setLimit] = useState<number | null>(null);
   const [dueDay, setDueDay] = useState<string>('10');
   const [closingDay, setClosingDay] = useState<string>('3');
-  const [previousBalance, setPreviousBalance] = useState<string>('0');
+  const [previousBalance, setPreviousBalance] = useState<number | null>(0);
   const [color, setColor] = useState(DEFAULT_COLOR);
   const [bankAccountId, setBankAccountId] = useState<string>('');
   const [submitting, setSubmitting] = useState(false);
@@ -72,19 +73,19 @@ export function PaymentCardSheet({
     if (card) {
       setCardType(card.type);
       setName(card.name);
-      setLimit(card.creditLimit != null ? String(Number(card.creditLimit)) : '');
+      setLimit(card.creditLimit != null ? Number(card.creditLimit) : null);
       setDueDay(card.dueDay != null ? String(Number(card.dueDay)) : '10');
       setClosingDay(card.closingDay != null ? String(Number(card.closingDay)) : '3');
-      setPreviousBalance(card.previousBalance != null ? String(Number(card.previousBalance)) : '0');
+      setPreviousBalance(card.previousBalance != null ? Number(card.previousBalance) : 0);
       setColor(card.color || DEFAULT_COLOR);
       setBankAccountId(card.bankAccountId ?? '');
     } else {
       setCardType(CardType.Credit);
       setName('');
-      setLimit('');
+      setLimit(null);
       setDueDay('10');
       setClosingDay('3');
-      setPreviousBalance('0');
+      setPreviousBalance(0);
       setColor(DEFAULT_COLOR);
       setBankAccountId('');
     }
@@ -103,14 +104,14 @@ export function PaymentCardSheet({
   const createValid =
     name.trim().length > 0 &&
     (!bankRequired || bankAccountId.length > 0) &&
-    (!isCredit || (Number(limit) > 0 && (day(dueDay) || day(closingDay))));
+    (!isCredit || ((limit ?? 0) > 0 && (day(dueDay) || day(closingDay))));
 
   // Na edição, o nome é sempre obrigatório; se Credit, limite > 0 e ao menos
   // um dos dias (vencimento/fechamento) válido — espelha a regra da criação,
   // senão o update-credit-settings enviaria ambos os dias null e tomaria 400.
   const editValid =
     name.trim().length > 0 &&
-    (!isCredit || (Number(limit) > 0 && (day(dueDay) || day(closingDay))));
+    (!isCredit || ((limit ?? 0) > 0 && (day(dueDay) || day(closingDay))));
   const isValid = isEdit ? editValid : createValid;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -125,7 +126,7 @@ export function PaymentCardSheet({
         });
         if (card.type === CardType.Credit) {
           await onUpdateCreditSettings(card.paymentCardId, {
-            creditLimit: Number(limit),
+            creditLimit: limit ?? 0,
             dueDay: day(dueDay) ? Number(dueDay) : null,
             closingDay: day(closingDay) ? Number(closingDay) : null,
           });
@@ -136,10 +137,10 @@ export function PaymentCardSheet({
           name: name.trim(),
           color,
           bankAccountId: showBank ? bankAccountId || null : null,
-          creditLimit: isCredit ? Number(limit) : null,
+          creditLimit: isCredit ? (limit ?? 0) : null,
           dueDay: isCredit && day(dueDay) ? Number(dueDay) : null,
           closingDay: isCredit && day(closingDay) ? Number(closingDay) : null,
-          previousBalance: isCredit ? Number(previousBalance) || 0 : null,
+          previousBalance: isCredit ? (previousBalance ?? 0) : null,
         });
       }
       onClose();
@@ -156,24 +157,22 @@ export function PaymentCardSheet({
       }}
     >
       <SheetContent
-        side={isMobile ? 'bottom' : 'right'}
-        className={
-          isMobile
-            ? 'max-h-[92dvh] overflow-y-auto rounded-t-2xl px-5 pb-6 pt-3 focus:outline-none'
-            : 'w-full overflow-y-auto px-7 pb-7 pt-5 focus:outline-none sm:w-[500px] sm:max-w-xl md:w-[540px]'
-        }
+        side="bottom"
+        className="flex max-h-[92dvh] flex-col rounded-t-3xl border-t border-border bg-card p-0 sm:max-w-lg sm:mx-auto sm:rounded-3xl sm:border dark:bg-[#181818]"
       >
-        {isMobile && <div className="mx-auto mb-4 h-1 w-9 rounded-full bg-border" aria-hidden />}
+        <SheetHeader className="border-b border-border/40 px-6 py-4 text-left">
+          <SheetTitle className="text-lg font-bold text-foreground">
+            {isEdit ? 'Editar Cartão' : 'Novo Cartão'}
+          </SheetTitle>
+        </SheetHeader>
 
         <form
           onSubmit={(e) => {
             void handleSubmit(e).catch(() => {});
           }}
-          className="space-y-4"
+          className="flex flex-1 flex-col overflow-hidden"
         >
-          <SheetTitle className="text-lg font-semibold text-foreground">
-            {isEdit ? 'Editar cartão' : 'Novo cartão'}
-          </SheetTitle>
+          <div className="flex-1 space-y-4 overflow-y-auto overscroll-contain px-6 py-4">
 
           <div
             className="flex h-20 items-end rounded-2xl p-3 text-white"
@@ -235,14 +234,11 @@ export function PaymentCardSheet({
                 >
                   Limite (R$)
                 </Label>
-                <Input
+                <MoneyInput
                   id="pc-limit"
-                  type="number"
-                  min="0"
-                  step="0.01"
                   value={limit}
-                  onChange={(e) => setLimit(e.target.value)}
-                  placeholder="5000"
+                  onChange={setLimit}
+                  placeholder="R$ 5.000,00"
                   className="border-border/40 bg-muted/30"
                 />
               </div>
@@ -292,13 +288,11 @@ export function PaymentCardSheet({
                   >
                     Saldo anterior (R$)
                   </Label>
-                  <Input
+                  <MoneyInput
                     id="pc-prev"
-                    type="number"
-                    min="0"
-                    step="0.01"
                     value={previousBalance}
-                    onChange={(e) => setPreviousBalance(e.target.value)}
+                    onChange={setPreviousBalance}
+                    placeholder="R$ 0,00"
                     className="border-border/40 bg-muted/30"
                   />
                 </div>
@@ -376,10 +370,37 @@ export function PaymentCardSheet({
               <span className="text-sm text-muted-foreground">{color}</span>
             </div>
           </div>
+          </div>
 
-          <Button type="submit" disabled={submitting || !isValid} className="w-full font-semibold">
-            {submitting ? 'Salvando…' : isEdit ? 'Salvar alterações' : 'Criar cartão'}
-          </Button>
+          <div className="border-t border-border/40 bg-card p-4 pb-6 dark:bg-[#181818]">
+            <div className="flex gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                className="h-12 flex-1 rounded-2xl text-sm font-semibold transition-colors"
+                onClick={onClose}
+                disabled={submitting}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                disabled={submitting || !isValid}
+                className="h-12 flex-[2] rounded-2xl bg-primary text-primary-foreground text-sm font-bold shadow-md transition-all hover:bg-primary/90 active:scale-[0.98] disabled:opacity-50"
+              >
+                {submitting ? (
+                  <span className="flex items-center gap-2">
+                    <Spinner size="sm" />
+                    Salvando...
+                  </span>
+                ) : isEdit ? (
+                  'Salvar alterações'
+                ) : (
+                  'Criar cartão'
+                )}
+              </Button>
+            </div>
+          </div>
         </form>
       </SheetContent>
     </Sheet>

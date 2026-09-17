@@ -288,7 +288,7 @@ export function CategoriesPanel({ nest }: CategoriesPanelProps) {
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="size-7.5 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
+                        className="size-7 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
                         aria-label="Editar categoria"
                         onClick={() => handleStartEdit(cat)}
                       >
@@ -298,7 +298,7 @@ export function CategoriesPanel({ nest }: CategoriesPanelProps) {
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="size-7.5 rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                        className="size-7 rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                         aria-label="Excluir categoria"
                         onClick={() => setDeletingCategory(cat)}
                       >

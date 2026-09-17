@@ -1,5 +1,6 @@
 'use client';
 
+import type { Variants } from 'framer-motion';
 import { motion, useAnimation } from 'framer-motion';
 import type { HTMLAttributes } from 'react';
 import { forwardRef, useCallback, useImperativeHandle } from 'react';
@@ -14,6 +15,34 @@ export interface BellIconHandle {
 interface BellIconProps extends HTMLAttributes<HTMLDivElement> {
   size?: number;
 }
+
+const BELL_VARIANTS: Variants = {
+  normal: {
+    rotate: 0,
+    transition: { duration: 0.2 },
+  },
+  animate: {
+    rotate: [0, -22, 22, -16, 16, -9, 9, -4, 4, 0],
+    transition: {
+      duration: 0.7,
+      ease: 'easeInOut',
+    },
+  },
+};
+
+const CLAPPER_VARIANTS: Variants = {
+  normal: {
+    x: 0,
+    transition: { duration: 0.2 },
+  },
+  animate: {
+    x: [0, -3, 3, -2, 2, -1, 1, 0],
+    transition: {
+      duration: 0.7,
+      ease: 'easeInOut',
+    },
+  },
+};
 
 const BellIcon = forwardRef<BellIconHandle, BellIconProps>(
   ({ onMouseEnter, onMouseLeave, className, size = 20, ...props }, ref) => {
@@ -42,12 +71,16 @@ const BellIcon = forwardRef<BellIconHandle, BellIconProps>(
 
     return (
       <div
-        className={cn(className)}
+        className={cn('inline-flex items-center justify-center cursor-pointer', className)}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         {...props}
       >
-        <svg
+        <motion.svg
+          animate={controls}
+          whileHover="animate"
+          variants={BELL_VARIANTS}
+          style={{ transformOrigin: 'top center', originX: '50%', originY: '10%' }}
           width={size}
           height={size}
           viewBox="0 0 24 24"
@@ -57,34 +90,14 @@ const BellIcon = forwardRef<BellIconHandle, BellIconProps>(
           strokeLinecap="round"
           strokeLinejoin="round"
           xmlns="http://www.w3.org/2000/svg"
-          className="overflow-visible"
+          className="overflow-visible pointer-events-none"
         >
-          {/* Clapper (bottom dot) — bounces independently */}
-          <motion.path
-            d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"
-            animate={controls}
-            variants={{
-              normal: { rotate: 0, originX: '12px', originY: '2px' },
-              animate: {
-                rotate: [0, -20, 20, -14, 14, -8, 8, -4, 4, 0],
-                transition: { duration: 0.7, ease: 'easeInOut' },
-              },
-            }}
-            style={{ transformOrigin: '12px 2px' }}
-          />
+          <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
           <motion.path
             d="M10.3 21a1.94 1.94 0 0 0 3.4 0"
-            animate={controls}
-            variants={{
-              normal: { rotate: 0, y: 0 },
-              animate: {
-                rotate: [0, -20, 20, -14, 14, -8, 8, -4, 4, 0],
-                transition: { duration: 0.7, ease: 'easeInOut' },
-              },
-            }}
-            style={{ transformOrigin: '12px 2px' }}
+            variants={CLAPPER_VARIANTS}
           />
-        </svg>
+        </motion.svg>
       </div>
     );
   }

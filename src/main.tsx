@@ -30,10 +30,12 @@ if ('serviceWorker' in navigator) {
       .then((registration) => {
         console.log('✅ Service Worker registrado com sucesso:', registration.scope);
 
-        // Verificar atualizações periodicamente
-        setInterval(() => {
-          registration.update();
-        }, 60000); // Verifica a cada minuto
+        // Verificar atualizações quando o usuário retorna à aba
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') {
+            registration.update().catch(() => {});
+          }
+        });
       })
       .catch((error) => {
         console.error('❌ Falha ao registrar Service Worker:', error);

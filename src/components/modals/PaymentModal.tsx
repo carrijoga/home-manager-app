@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { CheckCircle2, ChevronDown } from 'lucide-react';
+import { CheckCircle2, ChevronDown, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import MoneyInput from '@/components/common/MoneyInput';
@@ -8,11 +8,6 @@ import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
   Input,
   Label,
   Select,
@@ -20,10 +15,17 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
   Textarea,
 } from '@/components/ui';
+import { Spinner } from '@/components/ui/spinner';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { checkmarkVariants } from '@/lib/animations';
+import { cn } from '@/lib/utils';
 import type { BankAccountResponse } from '@/schemas/bank-account';
 import { ApiPaymentMethod, CardType, FinancialSourceType } from '@/schemas/enums';
 import type { AddPaymentRequest, FinancialTransactionResponse } from '@/schemas/financial';
@@ -197,26 +199,42 @@ export function PaymentModal({
   };
 
   return (
-    <Dialog
+    <Sheet
       open={open}
       onOpenChange={(o) => {
         if (!o) onClose();
       }}
     >
-      <DialogContent className="font-ui rounded-3xl border border-border/80 p-6 shadow-lg sm:max-w-[460px]">
-        <DialogHeader className="flex flex-row items-center gap-3 space-y-0 pb-1">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-chart-2/15 text-chart-2">
-            <CheckCircle2 size={20} strokeWidth={2} />
+      <SheetContent
+        side="bottom"
+        hideBuiltinClose
+        className="max-h-[92dvh] overflow-y-auto rounded-t-3xl border-border bg-card p-5 sm:max-w-lg sm:rounded-3xl sm:p-6 mx-auto"
+      >
+        <div className="mx-auto -mt-1 mb-3 h-1.5 w-12 rounded-full bg-muted-foreground/25 sm:hidden" />
+        <SheetHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-chart-2/15 text-chart-2">
+              <CheckCircle2 size={20} strokeWidth={2} />
+            </div>
+            <div>
+              <SheetTitle className="text-lg font-bold text-foreground">
+                Registrar Pagamento
+              </SheetTitle>
+              <SheetDescription className="text-xs text-muted-foreground">
+                Baixa e liquidação de lançamento
+              </SheetDescription>
+            </div>
           </div>
-          <div>
-            <DialogTitle className="font-editorial text-xl font-bold text-foreground">
-              Registrar Pagamento
-            </DialogTitle>
-            <p className="font-ui text-xs text-muted-foreground">
-              Baixa e liquidação de lançamento
-            </p>
-          </div>
-        </DialogHeader>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
+            aria-label="Fechar"
+          >
+            <X className="size-4" />
+            <span className="sr-only">Fechar</span>
+          </button>
+        </SheetHeader>
 
         {/* Card do Lançamento & Restante */}
         <div className="my-1 flex items-center justify-between rounded-2xl border border-border/60 bg-muted/40 p-3.5">
@@ -256,7 +274,7 @@ export function PaymentModal({
                 type="date"
                 value={paymentDate}
                 onChange={(e) => setPaymentDate(e.target.value)}
-                className="rounded-xl text-xs"
+                className="h-12 rounded-2xl text-sm"
               />
             </div>
           </div>
@@ -269,7 +287,7 @@ export function PaymentModal({
               value={method !== null ? String(method) : undefined}
               onValueChange={(v) => handleMethodChange(Number(v))}
             >
-              <SelectTrigger id="pay-method" className="rounded-xl text-xs">
+              <SelectTrigger id="pay-method" className="h-12 rounded-2xl text-sm">
                 <SelectValue placeholder="Selecione o método (PIX, Dinheiro, Débito…)" />
               </SelectTrigger>
               <SelectContent>
@@ -339,24 +357,25 @@ export function PaymentModal({
             </CollapsibleContent>
           </Collapsible>
 
-          <DialogFooter className="gap-2 pt-2 sm:gap-0">
+          <div className="flex gap-3 pt-3 border-t border-border/40">
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
               disabled={status !== 'idle'}
-              className="rounded-xl text-xs font-semibold"
+              className="h-12 flex-1 rounded-2xl text-sm font-semibold transition-colors"
             >
               Cancelar
             </Button>
             <Button
               type="submit"
               disabled={status === 'submitting' || (status === 'idle' && !isValid)}
-              className={`rounded-xl text-xs font-semibold transition-all ${
+              className={cn(
+                'h-12 flex-[2] rounded-2xl text-sm font-bold shadow-md transition-all active:scale-[0.98] disabled:opacity-50',
                 status === 'success'
                   ? 'bg-chart-2 text-white hover:bg-chart-2'
                   : 'bg-primary text-primary-foreground hover:bg-primary/90'
-              }`}
+              )}
             >
               <AnimatePresence mode="wait" initial={false}>
                 {status === 'success' ? (
@@ -367,7 +386,7 @@ export function PaymentModal({
                     transition={{ duration: 0.4, ease: 'easeOut' }}
                     className="flex items-center gap-1.5"
                   >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                       <motion.path
                         d="M4 12.5L9.5 18L20 6"
                         stroke="currentColor"
@@ -381,16 +400,19 @@ export function PaymentModal({
                     </svg>
                     Pagamento Registrado!
                   </motion.span>
-                ) : (
-                  <motion.span key="label">
-                    {status === 'submitting' ? 'Registrando…' : 'Confirmar Pagamento'}
+                ) : status === 'submitting' ? (
+                  <motion.span key="submitting" className="flex items-center gap-2">
+                    <Spinner size="sm" />
+                    Registrando…
                   </motion.span>
+                ) : (
+                  <motion.span key="label">Confirmar Pagamento</motion.span>
                 )}
               </AnimatePresence>
             </Button>
-          </DialogFooter>
+          </div>
         </form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }

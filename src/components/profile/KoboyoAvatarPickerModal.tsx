@@ -92,13 +92,29 @@ export function KoboyoAvatarPickerModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[90vh] max-w-2xl flex-col gap-0 overflow-hidden rounded-3xl p-0">
+      <DialogContent
+        hideBuiltinClose
+        className="flex max-h-[90vh] max-w-2xl flex-col gap-0 overflow-hidden rounded-2xl border border-border/60 p-0"
+      >
         {/* Header */}
-        <DialogHeader className="border-b p-5 pb-3">
-          <DialogTitle className="text-xl font-semibold">Escolha seu avatar</DialogTitle>
-          <DialogDescription className="text-sm text-muted-foreground">
-            Selecione uma das ilustrações para o seu perfil no Ninho.
-          </DialogDescription>
+        <DialogHeader className="border-b p-5 pb-4">
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-1 text-left">
+              <DialogTitle className="text-xl font-semibold">Escolha seu avatar</DialogTitle>
+              <DialogDescription className="text-sm text-muted-foreground">
+                Selecione uma das ilustrações para o seu perfil no Ninho.
+              </DialogDescription>
+            </div>
+            <button
+              type="button"
+              onClick={() => onOpenChange(false)}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
+              aria-label="Fechar"
+            >
+              <X className="size-4" />
+              <span className="sr-only">Fechar</span>
+            </button>
+          </div>
 
           {/* Search bar */}
           <div className="relative mt-3">
@@ -114,6 +130,7 @@ export function KoboyoAvatarPickerModal({
                 type="button"
                 onClick={() => setSearchQuery('')}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label="Limpar busca"
               >
                 <X className="h-4 w-4" />
               </button>

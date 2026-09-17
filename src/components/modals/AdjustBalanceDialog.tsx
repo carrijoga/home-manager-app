@@ -1,18 +1,18 @@
-import { DollarSign, Info } from 'lucide-react';
+import { DollarSign, Info, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import MoneyInput from '@/components/common/MoneyInput';
 import {
   Button,
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
   Label,
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
   Textarea,
 } from '@/components/ui';
+import { Spinner } from '@/components/ui/spinner';
 import type { AdjustBalanceRequest, BankAccountResponse } from '@/schemas/bank-account';
 import { formatCurrency } from '@/utils/dashboardMetrics';
 
@@ -68,23 +68,39 @@ export function AdjustBalanceDialog({
   };
 
   return (
-    <Dialog
+    <Sheet
       open={open}
       onOpenChange={(o) => {
         if (!o) onClose();
       }}
     >
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <div className="flex items-center gap-2 text-primary">
-            <DollarSign className="size-5" />
-            <DialogTitle className="text-base font-semibold">Alterar Saldo</DialogTitle>
+      <SheetContent
+        side="bottom"
+        hideBuiltinClose
+        className="max-h-[92dvh] overflow-y-auto rounded-t-3xl border-border bg-card p-5 sm:max-w-md sm:rounded-3xl sm:p-6 mx-auto"
+      >
+        <div className="mx-auto -mt-1 mb-3 h-1.5 w-12 rounded-full bg-muted-foreground/25 sm:hidden" />
+        <SheetHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+          <div>
+            <div className="flex items-center gap-2 text-primary">
+              <DollarSign className="size-5" />
+              <SheetTitle className="text-lg font-bold text-foreground">Alterar Saldo</SheetTitle>
+            </div>
+            <SheetDescription className="mt-1 text-xs text-muted-foreground">
+              Defina manualmente um novo saldo para a conta{' '}
+              {account?.name ? `"${account.name}"` : ''}.
+            </SheetDescription>
           </div>
-          <DialogDescription className="text-xs text-muted-foreground">
-            Defina manualmente um novo saldo para a conta{' '}
-            {account?.name ? `"${account.name}"` : ''}.
-          </DialogDescription>
-        </DialogHeader>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
+            aria-label="Fechar"
+          >
+            <X className="size-4" />
+            <span className="sr-only">Fechar</span>
+          </button>
+        </SheetHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 py-2">
           {/* Saldo atual (somente leitura) */}
@@ -109,7 +125,10 @@ export function AdjustBalanceDialog({
 
           {/* Campo Novo Saldo */}
           <div className="space-y-1.5">
-            <Label htmlFor="adjust-new-balance" className="text-xs font-medium">
+            <Label
+              htmlFor="adjust-new-balance"
+              className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+            >
               Novo saldo desejado <span className="text-destructive">*</span>
             </Label>
             <MoneyInput
@@ -118,14 +137,17 @@ export function AdjustBalanceDialog({
               onChange={setNewBalance}
               allowNegative
               placeholder="R$ 0,00"
-              className="border-border/60 bg-muted/20 text-base font-semibold"
+              className="h-12 rounded-2xl border-border/60 bg-muted/20 text-base font-semibold"
             />
           </div>
 
           {/* Campo Observação */}
           <div className="space-y-1.5">
-            <Label htmlFor="adjust-observation" className="text-xs font-medium">
-              Observação <span className="text-muted-foreground font-normal">(opcional)</span>
+            <Label
+              htmlFor="adjust-observation"
+              className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+            >
+              Observação <span className="font-normal normal-case tracking-normal text-muted-foreground">(opcional)</span>
             </Label>
             <Textarea
               id="adjust-observation"
@@ -133,7 +155,7 @@ export function AdjustBalanceDialog({
               onChange={(e) => setObservation(e.target.value)}
               placeholder="Ex: Reconciliação com extrato do banco"
               rows={2}
-              className="resize-none border-border/60 bg-muted/20"
+              className="resize-none rounded-2xl border-border/60 bg-muted/20 text-sm"
             />
           </div>
 
@@ -152,16 +174,33 @@ export function AdjustBalanceDialog({
             </p>
           )}
 
-          <DialogFooter className="pt-2">
-            <Button type="button" variant="outline" size="sm" onClick={onClose} disabled={submitting}>
+          <div className="flex gap-3 pt-3 border-t border-border/40">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              disabled={submitting}
+              className="h-12 flex-1 rounded-2xl text-sm font-semibold transition-colors"
+            >
               Cancelar
             </Button>
-            <Button type="submit" size="sm" disabled={submitting || !isValid}>
-              {submitting ? 'Salvando…' : 'Confirmar Ajuste'}
+            <Button
+              type="submit"
+              disabled={submitting || !isValid}
+              className="h-12 flex-[2] rounded-2xl bg-primary text-primary-foreground text-sm font-bold shadow-md transition-all hover:bg-primary/90 active:scale-[0.98] disabled:opacity-50"
+            >
+              {submitting ? (
+                <span className="flex items-center gap-2">
+                  <Spinner size="sm" />
+                  Salvando…
+                </span>
+              ) : (
+                'Confirmar Ajuste'
+              )}
             </Button>
-          </DialogFooter>
+          </div>
         </form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }

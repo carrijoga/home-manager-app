@@ -1,11 +1,15 @@
+import type { ReactNode } from 'react';
 import { useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 
+import { DashboardSkeleton } from '@/components/skeletons';
 import { useApp } from '@/contexts/AppContext';
 
-import { DashboardSkeleton } from '../skeletons';
+interface RequireAuthProps {
+  children: ReactNode;
+}
 
-export default function RequireAuth({ children }) {
+export default function RequireAuth({ children }: RequireAuthProps) {
   const { user, sessionChecked, checkSession } = useApp();
 
   useEffect(() => {
@@ -22,5 +26,5 @@ export default function RequireAuth({ children }) {
     return <Navigate to="/login" replace />;
   }
 
-  return children;
+  return <>{children}</>;
 }

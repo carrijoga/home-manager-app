@@ -6,20 +6,21 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-[colors,transform] duration-[length:var(--dur-base)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-all duration-150 ease-out active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 select-none',
   {
     variants: {
       variant: {
         default:
-          'bg-terracotta-500 text-white shadow hover:bg-terracotta-600 dark:bg-terracotta-600 dark:hover:bg-terracotta-700',
-        destructive: 'bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90',
+          'bg-primary text-primary-foreground shadow-subtle hover:bg-primary/90 hover:shadow-card',
+        destructive:
+          'bg-destructive text-white shadow-subtle hover:bg-destructive/90',
         outline:
-          'border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground',
+          'border border-border/80 bg-background/80 shadow-subtle hover:bg-muted/60 hover:text-foreground hover:border-border',
         secondary:
-          'bg-honey-400 text-foreground shadow-sm hover:bg-honey-500 dark:bg-honey-600 dark:text-white dark:hover:bg-honey-700',
-        ghost: 'hover:bg-accent hover:text-accent-foreground',
+          'bg-secondary text-secondary-foreground shadow-subtle hover:bg-secondary/80',
+        ghost: 'hover:bg-muted/60 hover:text-foreground',
         link: 'text-primary underline-offset-4 hover:underline',
-        warm: 'border border-terracotta-300 bg-terracotta-50 text-terracotta-700 hover:bg-terracotta-100 dark:border-terracotta-700 dark:bg-terracotta-900/30 dark:text-terracotta-300 dark:hover:bg-terracotta-900/50',
+        warm: 'border border-primary/20 bg-primary/10 text-primary hover:bg-primary/15',
       },
       size: {
         default: 'h-9 px-4 py-2',

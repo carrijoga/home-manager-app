@@ -44,64 +44,75 @@ code {
 
 @layer base {
   :root {
-    /* ── Clean Modern + Subtle Warmth palette (oklch) ── */
-    --background: #f2f1ef; /* warm off-white */
-    --foreground: #1a1917; /* near-black warm */
-    --card: #ffffff; /* surface-container-low */
-    --card-foreground: #2d2d2d;
-    --popover: #f2f1ef;
-    --popover-foreground: #2d2d2d;
-    --primary: #adc6ff; /* primary blue */
-    --primary-foreground: #ffffff; /* white */
-    --secondary: #d4af37; /* secondary gold-dark */
-    --secondary-foreground: #000000;
-    --muted: #f2f1ef; /* surface-container-high */
-    --muted-foreground: #2d2d2d;
-    --accent: #f2f1ef;
-    --accent-foreground: #2d2d2d;
-    --destructive: #ef4444;
+    /* ── Sanctuary Warm Modern Palette (Light Mode) ── */
+    --background: #faf8f5; /* warm linen surface */
+    --foreground: #1c1917; /* stone-900 warm deep text */
+    --card: #ffffff; /* pure white content surface */
+    --card-foreground: #1c1917;
+    --popover: #ffffff;
+    --popover-foreground: #1c1917;
+    --primary: #c05621; /* Warm Terracotta — high contrast AA/AAA with white */
+    --primary-foreground: #ffffff; /* crisp white text */
+    --secondary: #f4efe6; /* soft linen secondary surface */
+    --secondary-foreground: #292524;
+    --muted: #f2ede4; /* distinguishable from background */
+    --muted-foreground: #736d65; /* legible muted tone */
+    --accent: #f2ede4;
+    --accent-foreground: #1c1917;
+    --destructive: #dc2626; /* clear red */
     --destructive-foreground: #ffffff;
-    --border: #d1d5db;
-    --input: #f9fafb; /* surface-container-highest */
-    --ring: #2e5bff;
-    --chart-1: oklch(0.42 0.14 265); /* primary blue */
-    --chart-2: oklch(0.42 0.14 148); /* tertiary green */
-    --chart-3: oklch(0.42 0.12 75); /* secondary gold */
-    --chart-4: oklch(0.42 0.19 22); /* error red */
-    --chart-5: oklch(0.48 0.012 250); /* neutral */
+    --border: #e8e3da; /* subtle warm structural border */
+    --input: #ffffff;
+    --ring: #c05621;
+    --success: #3d7a54; /* sage green */
+    --success-foreground: #ffffff;
+    --chart-1: #c05621; /* terracotta */
+    --chart-2: #3d7a54; /* sage green */
+    --chart-3: #d97706; /* honey amber */
+    --chart-4: #dc2626; /* danger red */
+    --chart-5: #78716c; /* warm slate neutral */
 
-    /* ── Border radius tokens ── */
-    --radius: 0.5rem;
-    --radius-sm: 0.25rem;
-    --radius-md: 0.5rem;
-    --radius-lg: 0.75rem;
-    --radius-xl: 1rem;
-    --radius-full: 9999px;
+    /* ── Multi-layer Elevation & Depth Shadows (Light Mode) ── */
+    --shadow-subtle: 0 1px 2px 0 rgba(28, 25, 23, 0.04);
+    --shadow-card: 0 1px 3px 0 rgba(28, 25, 23, 0.05), 0 1px 2px -1px rgba(28, 25, 23, 0.03);
+    --shadow-card-hover: 0 8px 20px -3px rgba(28, 25, 23, 0.08), 0 3px 6px -2px rgba(28, 25, 23, 0.04);
+    --shadow-popover: 0 12px 28px -4px rgba(28, 25, 23, 0.10), 0 4px 10px -2px rgba(28, 25, 23, 0.04);
+    --shadow-modal: 0 24px 44px -6px rgba(28, 25, 23, 0.14), 0 8px 18px -4px rgba(28, 25, 23, 0.06);
 
-    /* ── Sidebar (clean dark) ── */
-    --sidebar-background: oklch(0.18 0.008 250); /* clean dark blue-gray */
-    --sidebar-foreground: oklch(0.92 0.005 250);
-    --sidebar-primary: oklch(0.68 0.13 55); /* amber accent */
-    --sidebar-primary-foreground: oklch(0.1 0.01 250);
-    --sidebar-accent: oklch(0.24 0.01 250);
-    --sidebar-accent-foreground: oklch(0.92 0.005 250);
-    --sidebar-border: oklch(0.26 0.01 250);
-    --sidebar-ring: oklch(0.68 0.13 55);
+    /* ── Concentric Border Radius Tokens ── */
+    --radius-xs: 0.25rem;  /* 4px */
+    --radius-sm: 0.375rem; /* 6px */
+    --radius-md: 0.5rem;   /* 8px - controls, inputs, buttons */
+    --radius-lg: 0.75rem;  /* 12px - cards, inner panels */
+    --radius-xl: 1rem;     /* 16px - containers, sheets, dialogs */
+    --radius-2xl: 1.25rem; /* 20px - large modals, hero wrappers */
+    --radius-full: 9999px; /* badges, pills, avatars */
+    --radius: 0.75rem;
 
-    /* ── Surface tier tokens (light mode) ── */
-    --surface: oklch(1 0 0);
-    --surface-container-lowest: oklch(0.99 0 0);
-    --surface-container-low: oklch(1 0 0);
-    --surface-container: oklch(0.97 0.003 250);
-    --surface-container-high: oklch(0.94 0.004 250);
-    --surface-container-highest: oklch(0.91 0.004 250);
-    --on-surface: oklch(0.15 0.01 250);
-    --outline-variant: oklch(0.91 0.004 250);
+    /* ── Sidebar (Clean, Warm Dark) ── */
+    --sidebar-background: #141312;
+    --sidebar-foreground: #f5f5f4;
+    --sidebar-primary: #e07e59;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #22201e;
+    --sidebar-accent-foreground: #f5f5f4;
+    --sidebar-border: rgba(255, 255, 255, 0.08);
+    --sidebar-ring: #e07e59;
+
+    /* ── Surface tier tokens (Light Mode) ── */
+    --surface: #faf8f5;
+    --surface-container-lowest: #ffffff;
+    --surface-container-low: #faf8f5;
+    --surface-container: #f5f1ea;
+    --surface-container-high: #f0ebe2;
+    --surface-container-highest: #e9e3d8;
+    --on-surface: #1c1917;
+    --outline-variant: #e8e3da;
 
     /* ── Color-mix aliases ── */
-    --primary-subtle: color-mix(in oklch, var(--primary) 12%, var(--background));
-    --primary-subtle-hover: color-mix(in oklch, var(--primary) 20%, var(--background));
-    --secondary-subtle: color-mix(in oklch, var(--secondary) 15%, var(--background));
+    --primary-subtle: color-mix(in srgb, var(--primary) 12%, var(--background));
+    --primary-subtle-hover: color-mix(in srgb, var(--primary) 20%, var(--background));
+    --secondary-subtle: color-mix(in srgb, var(--secondary) 25%, var(--background));
 
     /* ── Fluid type scale ── */
     --text-xs: clamp(0.65rem, 0.6rem + 0.25vw, 0.75rem);
@@ -134,55 +145,64 @@ code {
   }
 
   .dark {
-    /* ── Domestic Sanctuary — Obsidian palette ── */
-    --background: #131313; /* surface */
-    --foreground: #e5e2e1; /* on-surface */
-    --card: #1c1b1b; /* surface-container-low */
-    --card-foreground: #e5e2e1;
-    --popover: #1c1b1b;
-    --popover-foreground: #e5e2e1;
-    --primary: #adc6ff; /* primary blue */
-    --primary-foreground: #0a1a40; /* dark text on primary */
-    --secondary: #ffdf9e; /* secondary gold */
-    --secondary-foreground: #2a1a00;
-    --muted: #2a2a2a; /* surface-container-high */
-    --muted-foreground: rgba(229, 226, 225, 0.5);
-    --accent: #2a2a2a;
-    --accent-foreground: #e5e2e1;
-    --destructive: #ffb4ab;
+    /* ── Sanctuary Warm Modern Palette (Dark Mode) ── */
+    --background: #141312; /* deep warm obsidian */
+    --foreground: #f5f5f4; /* stone-100 high contrast text */
+    --card: #1e1c1a; /* level 1 luminance card */
+    --card-foreground: #f5f5f4;
+    --popover: #252321; /* level 2 luminance popover */
+    --popover-foreground: #f5f5f4;
+    --primary: #e07e59; /* luminous warm terracotta */
+    --primary-foreground: #260f04; /* dark rich text for AAA contrast */
+    --secondary: #2a2724;
+    --secondary-foreground: #f5f5f4;
+    --muted: #262422; /* distinct from dark canvas */
+    --muted-foreground: #a8a29e;
+    --accent: #262422;
+    --accent-foreground: #f5f5f4;
+    --destructive: #f87171;
     --destructive-foreground: #3b0a07;
-    --border: rgba(64, 71, 82, 0.15); /* outline-variant @ 15% */
-    --input: #353534; /* surface-container-highest */
-    --ring: #adc6ff;
-    --chart-1: #adc6ff; /* primary blue */
-    --chart-2: #78dc77; /* tertiary green */
-    --chart-3: #ffdf9e; /* secondary gold */
-    --chart-4: #ffb4ab; /* error red */
-    --chart-5: #89919d; /* neutral */
+    --border: rgba(255, 255, 255, 0.09);
+    --input: #292724;
+    --ring: #e07e59;
+    --success: #4ade80;
+    --success-foreground: #052e16;
+    --chart-1: #e07e59;
+    --chart-2: #4ade80;
+    --chart-3: #fbbf24;
+    --chart-4: #f87171;
+    --chart-5: #a8a29e;
 
-    /* ── Domestic Sanctuary — surface tier tokens ── */
-    --surface: #131313;
-    --surface-container-lowest: #0d0d0d;
-    --surface-container-low: #1c1b1b;
-    --surface-container: #222121;
-    --surface-container-high: #2a2a2a;
-    --surface-container-highest: #353534;
-    --on-surface: #e5e2e1;
-    --outline-variant: rgba(64, 71, 82, 0.15);
+    /* ── Multi-layer Elevation & Depth Shadows (Dark Mode) ── */
+    --shadow-subtle: 0 1px 2px 0 rgba(0, 0, 0, 0.45);
+    --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.55), inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+    --shadow-card-hover: 0 8px 20px -3px rgba(0, 0, 0, 0.65), inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+    --shadow-popover: 0 12px 28px -4px rgba(0, 0, 0, 0.75), inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
+    --shadow-modal: 0 24px 44px -6px rgba(0, 0, 0, 0.85), inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+
+    /* ── Surface tier tokens (Dark Mode) ── */
+    --surface: #141312;
+    --surface-container-lowest: #0e0d0c;
+    --surface-container-low: #1e1c1a;
+    --surface-container: #22201e;
+    --surface-container-high: #282623;
+    --surface-container-highest: #32302c;
+    --on-surface: #f5f5f4;
+    --outline-variant: rgba(255, 255, 255, 0.09);
 
     /* ── Sidebar ── */
-    --sidebar-background: #0d0d0d;
-    --sidebar-foreground: #e5e2e1;
-    --sidebar-primary: #adc6ff;
-    --sidebar-primary-foreground: #0a1a40;
-    --sidebar-accent: #1c1b1b;
-    --sidebar-accent-foreground: #e5e2e1;
-    --sidebar-border: rgba(64, 71, 82, 0.15);
-    --sidebar-ring: #adc6ff;
+    --sidebar-background: #0e0d0c;
+    --sidebar-foreground: #f5f5f4;
+    --sidebar-primary: #e07e59;
+    --sidebar-primary-foreground: #260f04;
+    --sidebar-accent: #1e1c1a;
+    --sidebar-accent-foreground: #f5f5f4;
+    --sidebar-border: rgba(255, 255, 255, 0.08);
+    --sidebar-ring: #e07e59;
 
-    --primary-subtle: color-mix(in srgb, #adc6ff 18%, #131313);
-    --primary-subtle-hover: color-mix(in srgb, #adc6ff 28%, #131313);
-    --secondary-subtle: color-mix(in srgb, #ffdf9e 12%, #131313);
+    --primary-subtle: color-mix(in srgb, #e07e59 18%, #141312);
+    --primary-subtle-hover: color-mix(in srgb, #e07e59 28%, #141312);
+    --secondary-subtle: color-mix(in srgb, #f4efe6 12%, #141312);
 
     --text-xs: clamp(0.65rem, 0.6rem + 0.25vw, 0.75rem);
     --text-sm: clamp(0.8rem, 0.75rem + 0.25vw, 0.875rem);
@@ -204,7 +224,7 @@ code {
     /* ── Easing curves ── */
     --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
     --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-    --ease-spring: cubic-bezier(0.34, 1.2, 0.64, 1); /* subtle overshoot, no bounce */
+    --ease-spring: cubic-bezier(0.34, 1.2, 0.64, 1);
 
     /* ── Duration tokens ── */
     --dur-fast: 150ms;
@@ -241,8 +261,23 @@ code {
 
 /* ── Glassmorphism utility — floating/overlay elements ── */
 .glass {
-  backdrop-filter: blur(10px);
-  background: color-mix(in srgb, var(--surface-container-high) 40%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background: color-mix(in srgb, var(--card) 85%, transparent);
+}
+
+/* ── Elevation Utility Classes ── */
+.elevation-1 {
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--border);
+}
+.elevation-2 {
+  box-shadow: var(--shadow-popover);
+  border: 1px solid var(--border);
+}
+.elevation-3 {
+  box-shadow: var(--shadow-modal);
+  border: 1px solid var(--border);
 }
 
 /* ── Touch devices: PostIt action buttons always visible ── */
@@ -287,6 +322,119 @@ code {
   color: #f1f5f9 !important;
 }
 
+/* ── CreateUI Toast Progress Bar & Micro-interactions ── */
+@keyframes toast-progress-countdown {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+
+@keyframes toast-indeterminate-pulse {
+  0% {
+    left: -40%;
+    width: 40%;
+  }
+  50% {
+    left: 25%;
+    width: 60%;
+  }
+  100% {
+    left: 100%;
+    width: 40%;
+  }
+}
+
+[data-sonner-toast] {
+  overflow: hidden !important;
+  border-radius: 1rem !important;
+}
+
+/* Fix icon sizing and spacing so icon and title/content never overlap */
+[data-sonner-toast] [data-icon] {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+  margin-left: 0 !important;
+  margin-right: 0.625rem !important;
+  flex-shrink: 0 !important;
+}
+
+[data-sonner-toast] [data-content] {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+
+/* Auto-dismiss progress bar (only on the front active toast, or when stack is expanded) */
+[data-sonner-toast][data-front="true"]::before,
+[data-sonner-toast][data-expanded="true"]::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  width: 100%;
+  opacity: 0.85;
+  transition: opacity 150ms ease;
+  pointer-events: none;
+  z-index: 10;
+  animation: toast-progress-countdown var(--toast-duration, 4000ms) linear forwards;
+}
+
+/* Background stacked cards in the deck must NEVER display a progress bar */
+[data-sonner-toast][data-front="false"]:not([data-expanded="true"])::before,
+[data-sonner-toast][data-expanded="false"][data-front="false"]::before {
+  display: none !important;
+  content: none !important;
+  opacity: 0 !important;
+}
+
+/* Freeze progress countdown on hover (CreateUI behavior) */
+[data-sonner-toaster]:hover [data-sonner-toast]::before,
+[data-sonner-toast]:hover::before {
+  animation-play-state: paused !important;
+}
+
+/* Semantic colors for progress bar */
+[data-sonner-toast][data-type="success"]::before {
+  background: rgb(16 185 129);
+}
+
+[data-sonner-toast][data-type="error"]::before {
+  background: rgb(244 63 94);
+}
+
+[data-sonner-toast][data-type="warning"]::before {
+  background: rgb(245 158 11);
+}
+
+[data-sonner-toast][data-type="info"]::before {
+  background: rgb(59 130 246);
+}
+
+[data-sonner-toast][data-type="default"]::before {
+  background: rgb(99 102 241);
+}
+
+/* Indeterminate pulse for Promise loading state */
+[data-sonner-toast][data-type="loading"]::before {
+  animation: toast-indeterminate-pulse 1.5s infinite ease-in-out !important;
+  background: rgb(99 102 241);
+}
+
+/* Persistent toasts without auto-dismiss */
+[data-sonner-toast][data-duration="Infinity"]::before,
+[data-sonner-toast][data-duration="0"]::before {
+  display: none !important;
+}
+
 /* ── Mobile Responsive Toast Styles ── */
 @media (max-width: 639px) {
   [data-sonner-toaster] {
@@ -309,3 +457,11 @@ code {
     height: 1.75rem !important;
   }
 }
+
+/* ── Toast elevado para telas com Dock Flutuante Inferior (Modo Mercado) ── */
+body:has(.market-mode-active) [data-sonner-toaster],
+.market-mode-active [data-sonner-toaster] {
+  bottom: calc(5.75rem + env(safe-area-inset-bottom, 0.75rem)) !important;
+}
+
+

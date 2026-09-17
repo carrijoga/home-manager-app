@@ -7,6 +7,7 @@ import * as authService from '@/services/authService';
 import * as nestService from '@/services/nestService';
 import * as notificationService from '@/services/notificationService';
 import * as userService from '@/services/userService';
+import { apiLocaleToLanguage, setCurrentLanguage } from '@/i18n';
 import type { AppNotification, AppUser, AppUserNest } from '@/types';
 import { userProfileToAppUser } from '@/types';
 
@@ -163,6 +164,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       setUserLoading(true);
       const profileData = await authService.getUserProfile();
+      const serverLocale =
+        profileData?.profile?.configuration?.locale ??
+        profileData?.profile?.configuration?.language;
+      if (serverLocale !== undefined && serverLocale !== null) {
+        const lang = apiLocaleToLanguage(serverLocale);
+        setCurrentLanguage(lang);
+      }
       const appUser = userProfileToAppUser(profileData);
       setUser(appUser);
       setActiveNestId((prev) => prev ?? deriveDefaultNestId(appUser));

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 
+import MoneyInput from '@/components/common/MoneyInput';
 import { ACCOUNT_TYPE_OPTIONS } from '@/components/modules/financial/account/accountType';
 import {
   Button,
@@ -12,9 +13,10 @@ import {
   SelectValue,
   Sheet,
   SheetContent,
+  SheetHeader,
   SheetTitle,
 } from '@/components/ui';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { Spinner } from '@/components/ui/spinner';
 import type {
   BankAccountResponse,
   CreateBankAccountRequest,
@@ -40,11 +42,10 @@ export function BankAccountSheet({
   onUpdate,
 }: BankAccountSheetProps) {
   const isEdit = account !== null;
-  const isMobile = useIsMobile();
 
   const [name, setName] = useState('');
   const [type, setType] = useState<number>(AccountType.Checking);
-  const [balance, setBalance] = useState<string>('0');
+  const [balance, setBalance] = useState<number | null>(0);
   const [color, setColor] = useState(DEFAULT_COLOR);
   const [submitting, setSubmitting] = useState(false);
 
@@ -53,12 +54,12 @@ export function BankAccountSheet({
     if (account) {
       setName(account.name);
       setType(account.type);
-      setBalance(String(Number(account.balance)));
+      setBalance(Number(account.balance));
       setColor(account.color || DEFAULT_COLOR);
     } else {
       setName('');
       setType(AccountType.Checking);
-      setBalance('0');
+      setBalance(0);
       setColor(DEFAULT_COLOR);
     }
   }, [open, account]);
@@ -77,7 +78,7 @@ export function BankAccountSheet({
           color,
         });
       } else {
-        const balanceNum = Number(balance) || 0;
+        const balanceNum = balance ?? 0;
         await onCreate({
           name: name.trim(),
           type,
@@ -100,24 +101,22 @@ export function BankAccountSheet({
       }}
     >
       <SheetContent
-        side={isMobile ? 'bottom' : 'right'}
-        className={
-          isMobile
-            ? 'max-h-[92dvh] overflow-y-auto rounded-t-2xl px-5 pb-6 pt-3 focus:outline-none'
-            : 'w-full overflow-y-auto px-7 pb-7 pt-5 focus:outline-none sm:w-[500px] sm:max-w-xl md:w-[540px]'
-        }
+        side="bottom"
+        className="flex max-h-[90dvh] flex-col rounded-t-3xl border-t border-border bg-card p-0 sm:max-w-md sm:mx-auto sm:rounded-3xl sm:border dark:bg-[#181818]"
       >
-        {isMobile && <div className="mx-auto mb-4 h-1 w-9 rounded-full bg-border" aria-hidden />}
+        <SheetHeader className="border-b border-border/40 px-6 py-4 text-left">
+          <SheetTitle className="text-lg font-bold text-foreground">
+            {isEdit ? 'Editar Conta' : 'Nova Conta'}
+          </SheetTitle>
+        </SheetHeader>
 
         <form
           onSubmit={(e) => {
             void handleSubmit(e).catch(() => {});
           }}
-          className="space-y-4"
+          className="flex flex-1 flex-col overflow-hidden"
         >
-          <SheetTitle className="text-lg font-semibold text-foreground">
-            {isEdit ? 'Editar conta' : 'Nova conta'}
-          </SheetTitle>
+          <div className="flex-1 space-y-4 overflow-y-auto overscroll-contain px-6 py-4">
 
           <div className="space-y-1.5">
             <Label
@@ -171,13 +170,12 @@ export function BankAccountSheet({
               >
                 Saldo inicial (R$)
               </Label>
-              <Input
+              <MoneyInput
                 id="acc-balance"
-                type="number"
-                step="0.01"
                 value={balance}
-                onChange={(e) => setBalance(e.target.value)}
-                placeholder="0,00"
+                onChange={setBalance}
+                allowNegative
+                placeholder="R$ 0,00"
                 className="border-border/40 bg-muted/30"
               />
             </div>
@@ -201,10 +199,37 @@ export function BankAccountSheet({
               <span className="text-sm text-muted-foreground">{color}</span>
             </div>
           </div>
+          </div>
 
-          <Button type="submit" disabled={submitting || !isValid} className="w-full font-semibold">
-            {submitting ? 'Salvando…' : isEdit ? 'Salvar alterações' : 'Criar conta'}
-          </Button>
+          <div className="border-t border-border/40 bg-card p-4 pb-6 dark:bg-[#181818]">
+            <div className="flex gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                className="h-12 flex-1 rounded-2xl text-sm font-semibold transition-colors"
+                onClick={onClose}
+                disabled={submitting}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                disabled={submitting || !isValid}
+                className="h-12 flex-[2] rounded-2xl bg-primary text-primary-foreground text-sm font-bold shadow-md transition-all hover:bg-primary/90 active:scale-[0.98] disabled:opacity-50"
+              >
+                {submitting ? (
+                  <span className="flex items-center gap-2">
+                    <Spinner size="sm" />
+                    Salvando...
+                  </span>
+                ) : isEdit ? (
+                  'Salvar alterações'
+                ) : (
+                  'Criar conta'
+                )}
+              </Button>
+            </div>
+          </div>
         </form>
       </SheetContent>
     </Sheet>

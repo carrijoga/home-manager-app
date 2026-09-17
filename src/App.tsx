@@ -1,0 +1,359 @@
+import { AnimatePresence } from 'framer-motion';
+import type { FC, ReactNode } from 'react';
+import { lazy, Suspense } from 'react';
+import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
+
+import { AppSidebar } from './components/app-sidebar';
+import { FadeIn } from './components/common/FadeIn';
+import RequireAuth from './components/common/RequireAuth';
+import { SplashScreen } from './components/common/SplashScreen';
+import { TopNavbar } from './components/common/TopNavbar';
+import { SpotlightTour, WelcomeModal } from './components/onboarding';
+import {
+  AccountSkeleton,
+  AuthSkeleton,
+  CalendarSkeleton,
+  DashboardSkeleton,
+  FinancialSkeleton,
+  ListSkeleton,
+  PaymentCardSkeleton,
+  ShoppingListSkeleton,
+  TaskListSkeleton,
+} from './components/skeletons';
+import { SidebarInset, SidebarProvider } from './components/ui/sidebar';
+import { Toaster } from './components/ui/sonner';
+import { AppProvider, useApp } from './contexts/AppContext';
+import { LoadingProvider, useAppReady } from './contexts/LoadingContext';
+import { NotificationProvider } from './contexts/NotificationContext';
+import { OnboardingProvider } from './contexts/OnboardingContext';
+import { useTheme } from './contexts/ThemeContext';
+
+// Lazy loading dos módulos para code splitting
+const DashboardModule = lazy(() => import('./components/modules/Dashboard'));
+const DashboardV2Module = lazy(() => import('./components/modules/DashboardV2'));
+const TasksModule = lazy(() => import('./components/modules/Tasks'));
+const ShoppingListModule = lazy(() => import('./components/modules/Shopping'));
+const FinancialModule = lazy(() => import('./components/modules/Financial'));
+const FinancialV2Module = lazy(() => import('./components/modules/FinancialV2'));
+const CalendarModule = lazy(() => import('./components/modules/Calendar'));
+const PaymentCardModule = lazy(() => import('./components/modules/financial/PaymentCard'));
+const FinancialAccountModule = lazy(
+  () => import('./components/modules/financial/FinancialAccount')
+);
+const FinancialGoalsModule = lazy(() => import('./components/modules/financial/FinancialGoals'));
+const FinancialRecurrencesModule = lazy(
+  () => import('./components/modules/financial/FinancialRecurrences')
+);
+const NotificationCenterPageModule = lazy(
+  () => import('./components/modules/notifications/NotificationCenterPage')
+);
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
+const GoogleCallback = lazy(() => import('./pages/GoogleCallback'));
+const InviteAccept = lazy(() => import('./pages/InviteAccept'));
+const NotFound = lazy(() => import('./pages/NotFound'));
+
+// Componentes wrapper que conectam o context aos módulos
+const Dashboard: FC = () => {
+  return <DashboardModule />;
+};
+
+const DashboardV2: FC = () => {
+  return <DashboardV2Module />;
+};
+
+const Tasks: FC = () => {
+  return <TasksModule />;
+};
+
+const ShoppingList: FC = () => {
+  return <ShoppingListModule />;
+};
+
+const Financial: FC = () => {
+  return <FinancialModule />;
+};
+
+const FinancialV2: FC = () => {
+  return <FinancialV2Module />;
+};
+
+const FinancialGoals: FC = () => {
+  return <FinancialGoalsModule />;
+};
+
+const FinancialRecurrences: FC = () => {
+  return <FinancialRecurrencesModule />;
+};
+
+const Calendar: FC = () => {
+  return <CalendarModule />;
+};
+
+const NotificationCenter: FC = () => {
+  return <NotificationCenterPageModule />;
+};
+
+const AppShell: FC<{ children: ReactNode }> = ({ children }) => {
+  const appReady = useAppReady();
+  return (
+    <>
+      <AnimatePresence>{!appReady && <SplashScreen key="splash" />}</AnimatePresence>
+      {children}
+    </>
+  );
+};
+
+/**
+ * Layout principal para as páginas autenticadas
+ */
+const HomeLayout: FC = () => {
+  // Tema (necessário manter o ThemeContext ativo)
+  useTheme();
+
+  // User do contexto
+  const { user } = useApp();
+
+  return (
+    <SidebarProvider>
+      <AppSidebar user={user ?? undefined} />
+      <SidebarInset className="overflow-x-hidden">
+        <TopNavbar />
+        <div className="flex flex-1 flex-col gap-4 overflow-x-hidden p-3 sm:p-4 md:p-6">
+          <div className="max-w-full flex-1">
+            <Outlet />
+          </div>
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
+  );
+};
+
+/**
+ * Componente principal da aplicação Home Manager
+ * Gerencia o roteamento e a lógica principal da aplicação
+ */
+export const App: FC = () => {
+  return (
+    <AppProvider>
+      <NotificationProvider>
+        <LoadingProvider>
+          <OnboardingProvider>
+            <AppShell>
+              <WelcomeModal />
+              <SpotlightTour />
+              <Routes>
+                {/* Rota pública */}
+                <Route
+                  path="/login"
+                  element={
+                    <Suspense fallback={<AuthSkeleton />}>
+                      <Login />
+                    </Suspense>
+                  }
+                />
+                <Route
+                  path="/register"
+                  element={
+                    <Suspense fallback={<AuthSkeleton />}>
+                      <Register />
+                    </Suspense>
+                  }
+                />
+                <Route
+                  path="/reset-password"
+                  element={
+                    <Suspense fallback={<AuthSkeleton />}>
+                      <ResetPassword />
+                    </Suspense>
+                  }
+                />
+                <Route
+                  path="/recovery-password"
+                  element={
+                    <Suspense fallback={<AuthSkeleton />}>
+                      <ResetPassword />
+                    </Suspense>
+                  }
+                />
+
+                <Route
+                  path="/auth/google/callback"
+                  element={
+                    <Suspense fallback={<AuthSkeleton />}>
+                      <GoogleCallback />
+                    </Suspense>
+                  }
+                />
+
+                {/* Rota pública sem layout — aceite de convite */}
+                <Route
+                  path="/invite"
+                  element={
+                    <Suspense fallback={<AuthSkeleton />}>
+                      <InviteAccept />
+                    </Suspense>
+                  }
+                />
+
+                {/* Rotas privadas com layout compartilhado */}
+                <Route
+                  path="/"
+                  element={
+                    <RequireAuth>
+                      <HomeLayout />
+                    </RequireAuth>
+                  }
+                >
+                  <Route index element={<Navigate to="/dashboard" replace />} />
+                  <Route
+                    path="dashboard"
+                    element={
+                      <Suspense fallback={<DashboardSkeleton />}>
+                        <FadeIn>
+                          <Dashboard />
+                        </FadeIn>
+                      </Suspense>
+                    }
+                  />
+                  <Route
+                    path="dashboard-v2"
+                    element={
+                      <Suspense fallback={<DashboardSkeleton />}>
+                        <FadeIn>
+                          <DashboardV2 />
+                        </FadeIn>
+                      </Suspense>
+                    }
+                  />
+                  <Route
+                    path="notifications"
+                    element={
+                      <Suspense fallback={<ListSkeleton items={5} className="max-w-4xl mx-auto p-4" />}>
+                        <FadeIn>
+                          <NotificationCenter />
+                        </FadeIn>
+                      </Suspense>
+                    }
+                  />
+                  <Route
+                    path="tasks"
+                    element={
+                      <Suspense fallback={<TaskListSkeleton />}>
+                        <FadeIn>
+                          <Tasks />
+                        </FadeIn>
+                      </Suspense>
+                    }
+                  />
+                  <Route
+                    path="shopping"
+                    element={
+                      <Suspense fallback={<ShoppingListSkeleton />}>
+                        <FadeIn>
+                          <ShoppingList />
+                        </FadeIn>
+                      </Suspense>
+                    }
+                  />
+                  <Route
+                    path="financial"
+                    element={
+                      <Suspense fallback={<FinancialSkeleton />}>
+                        <FadeIn>
+                          <Financial />
+                        </FadeIn>
+                      </Suspense>
+                    }
+                  />
+                  <Route
+                    path="financial-v2"
+                    element={
+                      <Suspense fallback={<FinancialSkeleton />}>
+                        <FadeIn>
+                          <FinancialV2 />
+                        </FadeIn>
+                      </Suspense>
+                    }
+                  />
+                  <Route
+                    path="financial/goals"
+                    element={
+                      <Suspense fallback={<FinancialSkeleton />}>
+                        <FadeIn>
+                          <FinancialGoals />
+                        </FadeIn>
+                      </Suspense>
+                    }
+                  />
+                  <Route
+                    path="financial/recurrences"
+                    element={
+                      <Suspense fallback={<FinancialSkeleton />}>
+                        <FadeIn>
+                          <FinancialRecurrences />
+                        </FadeIn>
+                      </Suspense>
+                    }
+                  />
+                  <Route
+                    path="financial/account"
+                    element={
+                      <Suspense fallback={<AccountSkeleton />}>
+                        <FadeIn>
+                          <FinancialAccountModule />
+                        </FadeIn>
+                      </Suspense>
+                    }
+                  />
+                  <Route
+                    path="financial/card"
+                    element={
+                      <Suspense fallback={<PaymentCardSkeleton />}>
+                        <FadeIn>
+                          <PaymentCardModule />
+                        </FadeIn>
+                      </Suspense>
+                    }
+                  />
+                  <Route
+                    path="calendar"
+                    element={
+                      <Suspense fallback={<CalendarSkeleton />}>
+                        <FadeIn>
+                          <Calendar />
+                        </FadeIn>
+                      </Suspense>
+                    }
+                  />
+                </Route>
+
+                {/* Página 404 e Fallback para rotas não encontradas */}
+                <Route
+                  path="/404"
+                  element={
+                    <Suspense fallback={<DashboardSkeleton />}>
+                      <NotFound />
+                    </Suspense>
+                  }
+                />
+                <Route
+                  path="*"
+                  element={
+                    <Suspense fallback={<DashboardSkeleton />}>
+                      <NotFound />
+                    </Suspense>
+                  }
+                />
+              </Routes>
+              <Toaster />
+            </AppShell>
+          </OnboardingProvider>
+        </LoadingProvider>
+      </NotificationProvider>
+    </AppProvider>
+  );
+};
+
+export default App;

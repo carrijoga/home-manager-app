@@ -1,4 +1,5 @@
 import * as CheckboxPrimitive from '@radix-ui/react-checkbox';
+import { motion } from 'framer-motion';
 import { Check } from 'lucide-react';
 import * as React from 'react';
 
@@ -11,13 +12,21 @@ const Checkbox = React.forwardRef<
   <CheckboxPrimitive.Root
     ref={ref}
     className={cn(
-      'peer grid h-4 w-4 shrink-0 place-content-center rounded-sm border border-primary shadow focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground',
+      'peer grid h-4 w-4 shrink-0 place-content-center rounded-sm border border-primary shadow focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground transition-colors duration-150',
       className
     )}
     {...props}
   >
-    <CheckboxPrimitive.Indicator className={cn('grid place-content-center text-current')}>
-      <Check className="h-4 w-4" />
+    <CheckboxPrimitive.Indicator className={cn('grid place-content-center text-current')} asChild>
+      <motion.span
+        initial={{ scale: 0.3, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.3, opacity: 0 }}
+        transition={{ type: 'spring', stiffness: 500, damping: 28, bounce: 0.35 }}
+        className="grid place-content-center text-current"
+      >
+        <Check className="h-4 w-4" strokeWidth={2.5} />
+      </motion.span>
     </CheckboxPrimitive.Indicator>
   </CheckboxPrimitive.Root>
 ));

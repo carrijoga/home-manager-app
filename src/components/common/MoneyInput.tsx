@@ -1,4 +1,4 @@
-import { type NumberFormatValues, NumericFormat } from 'react-number-format';
+import { useState, useEffect, ChangeEvent } from 'react';
 
 import { Input } from '@/components/ui/input';
 
@@ -15,27 +15,64 @@ interface MoneyInputProps {
 export default function MoneyInput({
   value,
   onChange,
-  placeholder = '0,00',
+  placeholder = 'R$ 0,00',
   className,
   disabled,
   id,
   allowNegative = false,
 }: MoneyInputProps) {
+  const formatToBRL = (val: number | null) => {
+    if (val === null) return '';
+    const isNegative = val < 0;
+    const absoluteVal = Math.abs(val);
+    const formatted = new Intl.NumberFormat('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(absoluteVal);
+
+    return isNegative ? `-R$ ${formatted}` : `R$ ${formatted}`;
+  };
+
+  const [displayValue, setDisplayValue] = useState(() => formatToBRL(value));
+
+  useEffect(() => {
+    setDisplayValue(formatToBRL(value));
+  }, [value]);
+
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value;
+
+    if (!inputValue) {
+      onChange(null);
+      return;
+    }
+
+    const isNegative = allowNegative && inputValue.includes('-');
+    const numericString = inputValue.replace(/\D/g, '');
+
+    if (!numericString) {
+      onChange(null);
+      return;
+    }
+
+    let num = parseInt(numericString, 10) / 100;
+
+    if (isNegative) {
+      num = -num;
+    }
+
+    onChange(num);
+  };
+
   return (
-    <NumericFormat
+    <Input
       id={id}
-      prefix="R$ "
-      decimalSeparator=","
-      thousandSeparator="."
-      decimalScale={2}
-      fixedDecimalScale
-      allowNegative={allowNegative}
-      customInput={Input}
-      value={value ?? ''}
+      value={displayValue}
+      onChange={handleChange}
       placeholder={placeholder}
       className={className}
       disabled={disabled}
-      onValueChange={(v: NumberFormatValues) => onChange(v.floatValue ?? null)}
+      inputMode="numeric"
     />
   );
 }

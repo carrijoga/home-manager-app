@@ -1,3 +1,4 @@
+import { MessageSquare, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -5,6 +6,7 @@ import {
   Button,
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -69,14 +71,37 @@ export function CreateNoteModal({ open, onClose, onSave, initialData }: CreateNo
         if (!o) handleClose();
       }}
     >
-      <DialogContent className="sm:max-w-[440px]">
-        <DialogHeader>
-          <DialogTitle>{isEditing ? 'Editar recado' : 'Criar recado'}</DialogTitle>
+      <DialogContent hideBuiltinClose className="sm:max-w-[460px] rounded-2xl border border-border/60 p-6">
+        <DialogHeader className="flex flex-row items-start justify-between space-y-0 text-left">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2.5 text-primary">
+              <div className="flex size-8 items-center justify-center rounded-xl bg-primary/10 border border-primary/20">
+                <MessageSquare className="size-4" />
+              </div>
+              <DialogTitle className="text-base font-semibold">
+                {isEditing ? 'Editar recado' : 'Criar recado'}
+              </DialogTitle>
+            </div>
+            <DialogDescription className="text-xs text-muted-foreground pt-1">
+              Escreva um recado para a família ou fixe avisos importantes.
+            </DialogDescription>
+          </div>
+          <button
+            type="button"
+            onClick={handleClose}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground shrink-0"
+            aria-label="Fechar"
+          >
+            <X className="size-4" />
+            <span className="sr-only">Fechar</span>
+          </button>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-1">
-            <Label htmlFor="note-message">Mensagem</Label>
+        <form onSubmit={handleSubmit} className="space-y-4 pt-1">
+          <div className="space-y-1.5">
+            <Label htmlFor="note-message" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Mensagem <span className="text-destructive">*</span>
+            </Label>
             <Textarea
               id="note-message"
               placeholder="Escreva seu recado para a família..."
@@ -84,16 +109,22 @@ export function CreateNoteModal({ open, onClose, onSave, initialData }: CreateNo
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               autoFocus
+              className="rounded-xl bg-muted/30 border-border/40 hover:border-border/80 focus-visible:ring-1 focus-visible:ring-primary/50 transition-colors resize-none"
             />
           </div>
 
-          <div className="space-y-1">
-            <Label htmlFor="note-priority">Prioridade</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="note-priority" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Prioridade
+            </Label>
             <Select
               value={String(priority)}
               onValueChange={(val) => setPriority(Number(val) as ApiPriority)}
             >
-              <SelectTrigger id="note-priority">
+              <SelectTrigger
+                id="note-priority"
+                className="h-10 rounded-xl bg-muted/30 border-border/40 hover:border-border/80 focus-visible:ring-1 focus-visible:ring-primary/50 transition-colors"
+              >
                 <SelectValue placeholder="Selecione a prioridade" />
               </SelectTrigger>
               <SelectContent>
@@ -105,11 +136,23 @@ export function CreateNoteModal({ open, onClose, onSave, initialData }: CreateNo
             </Select>
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>
+          <DialogFooter className="pt-2 gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleClose}
+              disabled={isSubmitting}
+              className="h-9 rounded-xl border-border/60"
+            >
               Cancelar
             </Button>
-            <Button type="submit" disabled={isSubmitting || !message.trim()}>
+            <Button
+              type="submit"
+              size="sm"
+              disabled={isSubmitting || !message.trim()}
+              className="h-9 rounded-xl font-medium shadow-xs"
+            >
               {isSubmitting
                 ? isEditing
                   ? 'Salvando...'

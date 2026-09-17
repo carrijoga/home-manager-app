@@ -8,7 +8,7 @@ export interface CalendarEvent {
   /** Ex: "Amanhã • 10:00" */
   dateLabel: string;
   title: string;
-  location?: string;
+  location?: string | null;
   /** true = destaca com primary (próximo evento) */
   isNext?: boolean;
 }
@@ -39,12 +39,15 @@ export function UpcomingEvents({ events = [], className }: UpcomingEventsProps) 
     >
       {/* Section title */}
       <div className="flex shrink-0 items-center gap-3">
-        <Calendar
-          size={20}
-          className="shrink-0 text-foreground"
-          strokeWidth={1.5}
-          aria-hidden="true"
-        />
+        <div className="flex size-7 items-center justify-center rounded-lg bg-primary/10 p-0.5 shadow-2xs dark:bg-primary/20">
+          <img
+            src="/icons/clay-optimized/calendar_desk.webp"
+            alt="Próximos Eventos"
+            className="size-full object-contain"
+            style={{ filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.08))' }}
+            loading="lazy"
+          />
+        </div>
         <h3 className="font-editorial whitespace-nowrap text-xl font-bold text-foreground">
           Próximos Eventos
         </h3>

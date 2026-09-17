@@ -1,21 +1,27 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { Moon, Sun } from 'lucide-react';
+import type { FC } from 'react';
 
-import { useTheme } from '../../contexts/ThemeContext';
+import { useTheme } from '@/contexts/ThemeContext';
+
+export interface ThemeToggleProps {
+  className?: string;
+}
 
 /**
  * Componente de toggle entre tema claro e escuro com animações
  */
-const ThemeToggle = () => {
+export const ThemeToggle: FC<ThemeToggleProps> = ({ className = '' }) => {
   const { isDark, toggleTheme } = useTheme();
 
   return (
     <motion.button
+      type="button"
       onClick={toggleTheme}
       whileHover={{ scale: 1.1, rotate: 5 }}
       whileTap={{ scale: 0.95, rotate: -5 }}
       transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-      className="focus-ring rounded-lg border border-transparent bg-primary/10 p-2 text-primary transition-all duration-300 hover:bg-primary/20"
+      className={`focus-ring rounded-lg border border-transparent bg-primary/10 p-2 text-primary transition-all duration-300 hover:bg-primary/20 ${className}`}
       aria-label={`Alternar para tema ${isDark ? 'claro' : 'escuro'}`}
       title={`Tema ${isDark ? 'escuro' : 'claro'} ativo`}
     >

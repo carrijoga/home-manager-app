@@ -135,3 +135,19 @@ export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './tool
 
 // Collapsible Components
 export { Collapsible, CollapsibleContent, CollapsibleTrigger } from './collapsible';
+
+// Animated Numbers & Text
+export {
+  AnimatedNumber,
+  AnimatedCurrency,
+  AnimatedPercent,
+  AnimatedText,
+  type AnimatedNumberProps,
+  type AnimatedCurrencyProps,
+  type AnimatedPercentProps,
+  type AnimatedTextProps,
+  type AnimatedNumberVariant,
+} from './animated-number';
+
+// Spring Progress
+export { SpringProgress, type SpringProgressProps } from './spring-progress';

@@ -122,16 +122,27 @@ export function CreateNestModal({ open, onClose, mode = 'create', nest }: Create
         if (!open) handleClose();
       }}
     >
-      <DialogContent className="sm:max-w-[500px] border-border/60 rounded-2xl p-6">
-        <DialogHeader>
-          <DialogTitle className="text-base font-semibold">
-            {isEdit ? 'Editar Ninho 🪺' : 'Criar Novo Ninho 🪺'}
-          </DialogTitle>
-          <DialogDescription className="text-xs text-muted-foreground">
-            {isEdit
-              ? 'Atualize o nome, descrição ou ícone do ninho.'
-              : 'Ninhos são espaços para organizar a rotina familiar ou do seu grupo.'}
-          </DialogDescription>
+      <DialogContent hideBuiltinClose className="sm:max-w-[500px] rounded-2xl border border-border/60 p-6">
+        <DialogHeader className="flex flex-row items-start justify-between space-y-0 text-left">
+          <div className="space-y-1">
+            <DialogTitle className="text-base font-semibold">
+              {isEdit ? 'Editar Ninho 🪺' : 'Criar Novo Ninho 🪺'}
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground pt-1">
+              {isEdit
+                ? 'Atualize o nome, descrição ou ícone do ninho.'
+                : 'Ninhos são espaços para organizar a rotina familiar ou do seu grupo.'}
+            </DialogDescription>
+          </div>
+          <button
+            type="button"
+            onClick={handleClose}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground shrink-0"
+            aria-label="Fechar"
+          >
+            <X className="size-4" />
+            <span className="sr-only">Fechar</span>
+          </button>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-1">
@@ -163,7 +174,7 @@ export function CreateNestModal({ open, onClose, mode = 'create', nest }: Create
             <Input
               id="nest-name"
               placeholder="Ex: Casa Principal"
-              className="bg-muted/30 border-border/40 hover:border-border/80 focus-visible:ring-1 focus-visible:ring-primary/50 transition-colors"
+              className="h-10 rounded-xl bg-muted/30 border-border/40 hover:border-border/80 focus-visible:ring-1 focus-visible:ring-primary/50 transition-colors"
               {...register('name')}
             />
             {errors.name && <p className="text-xs font-medium text-destructive">{errors.name.message}</p>}
@@ -284,11 +295,23 @@ export function CreateNestModal({ open, onClose, mode = 'create', nest }: Create
             </div>
           </div>
 
-          <DialogFooter className="pt-2">
-            <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>
+          <DialogFooter className="pt-2 gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleClose}
+              disabled={isSubmitting}
+              className="h-9 rounded-xl border-border/60"
+            >
               Cancelar
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button
+              type="submit"
+              size="sm"
+              disabled={isSubmitting}
+              className="h-9 rounded-xl font-medium shadow-xs"
+            >
               {isSubmitting ? (
                 <span className="flex items-center gap-2">
                   <RefreshCw className="size-4 animate-spin" />

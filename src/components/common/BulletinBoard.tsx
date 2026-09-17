@@ -99,12 +99,15 @@ export function BulletinBoard({
       {/* Cabeçalho */}
       <div className="flex shrink-0 items-center justify-between">
         <div className="flex items-center gap-3">
-          <Pin
-            size={18}
-            className="shrink-0 text-foreground"
-            strokeWidth={1.5}
-            aria-hidden="true"
-          />
+          <div className="flex size-7 items-center justify-center rounded-lg bg-amber-500/10 p-0.5 shadow-2xs dark:bg-amber-500/20">
+            <img
+              src="/icons/clay-optimized/bulletin_board.webp"
+              alt="Mural de Recados"
+              className="size-full object-contain"
+              style={{ filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.08))' }}
+              loading="lazy"
+            />
+          </div>
           <h3 className="font-editorial whitespace-nowrap text-xl font-bold text-foreground">
             Mural de Recados
           </h3>
@@ -114,11 +117,11 @@ export function BulletinBoard({
             <button
               type="button"
               onClick={onViewHistory}
-              className="font-ui flex cursor-pointer items-center gap-1.5 border-none bg-transparent font-semibold uppercase tracking-[1.2px] text-muted-foreground transition-opacity hover:opacity-70"
-              style={{ fontSize: 'var(--text-xs)' }}
+              className="flex size-8 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground active:scale-95"
+              title="Histórico de recados"
+              aria-label="Histórico de recados"
             >
-              <History size={14} strokeWidth={1.75} aria-hidden="true" />
-              Histórico
+              <History size={16} strokeWidth={1.75} aria-hidden="true" />
             </button>
           )}
           {onCreateNote && (
@@ -143,7 +146,7 @@ export function BulletinBoard({
             Sem recados no mural no momento.
           </p>
           <p className="font-ui text-xs text-muted-foreground/70 mt-1">
-            Clique em "Criar Nota" para deixar um aviso para a família.
+            Clique em &ldquo;Criar Nota&rdquo; para deixar um aviso para a família.
           </p>
         </div>
       ) : (

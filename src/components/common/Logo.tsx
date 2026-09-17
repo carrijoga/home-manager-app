@@ -1,8 +1,15 @@
+import type { FC } from 'react';
+
+export interface LogoProps {
+  size?: 'small' | 'default' | 'large';
+  showText?: boolean;
+}
+
 /**
  * Componente de Logo do Ninho
  * Renderiza o ícone do ninho com o texto
  */
-const Logo = ({ size = 'default', showText = true }) => {
+export const Logo: FC<LogoProps> = ({ size = 'default', showText = true }) => {
   const sizes = {
     small: { icon: 32, text: 'text-xl', tagline: 'text-xs' },
     default: { icon: 48, text: 'text-3xl', tagline: 'text-sm' },

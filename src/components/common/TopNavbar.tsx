@@ -1,77 +1,165 @@
-import { Search } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-
-import { GlobalSearchModal } from '@/components/modals/GlobalSearchModal';
-import { NestManagerModal } from '@/components/modals/NestManagerModal';
-import { ProfileModal } from '@/components/modals/ProfileModal';
-import { SettingsModal } from '@/components/modals/SettingsModal';
-import { SidebarTrigger } from '@/components/ui/sidebar';
-import { useApp } from '@/contexts/AppContext';
-import { useTheme } from '@/contexts/ThemeContext';
-import { cn } from '@/lib/utils';
-import * as authService from '@/services/authService';
+import { ChevronRight, Moon, Search, Sun } from 'lucide-react';
+import { Fragment, lazy, Suspense, useEffect, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 
 import { TourHelpButton } from '@/components/onboarding';
+import { SidebarTrigger } from '@/components/ui/sidebar';
+import { useApp } from '@/contexts/AppContext';
+import { useNotifications } from '@/contexts/NotificationContext';
+import { useTheme } from '@/contexts/ThemeContext';
+import { useTranslation } from '@/hooks/useTranslation';
+import type { TranslationKey } from '@/i18n';
+import { cn } from '@/lib/utils';
 
 import NotificationsMenu from './NotificationsMenu';
-import ProfileMenu from './ProfileMenu';
 
-interface SearchBarProps {
-  className?: string;
-  onClick?: () => void;
+// Lazy loading dos modais sob demanda para reduzir o bundle inicial
+const GlobalSearchModal = lazy(() =>
+  import('@/components/modals/GlobalSearchModal').then((m) => ({ default: m.GlobalSearchModal }))
+);
+const ProfileModal = lazy(() =>
+  import('@/components/modals/ProfileModal').then((m) => ({ default: m.ProfileModal }))
+);
+const SettingsModal = lazy(() =>
+  import('@/components/modals/SettingsModal').then((m) => ({ default: m.SettingsModal }))
+);
+const NestManagerModal = lazy(() =>
+  import('@/components/modals/NestManagerModal').then((m) => ({ default: m.NestManagerModal }))
+);
+const NotificationCenterSheet = lazy(() =>
+  import('@/components/modules/notifications').then((m) => ({ default: m.NotificationCenterSheet }))
+);
+
+interface BreadcrumbItem {
+  label: string;
+  path?: string;
 }
 
-function NavSearchBar({ className, onClick }: SearchBarProps) {
+function getBreadcrumbs(
+  pathname: string,
+  t: (key: TranslationKey, params?: Record<string, string | number>) => string
+): BreadcrumbItem[] {
+  if (pathname === '/' || pathname === '/dashboard') {
+    return [{ label: t('nav.dashboard') }];
+  }
+  if (pathname.startsWith('/notifications')) {
+    return [{ label: 'Central de Notificações' }];
+  }
+  if (pathname.startsWith('/tasks')) {
+    return [{ label: t('nav.tasks') }];
+  }
+  if (pathname.startsWith('/shopping')) {
+    return [{ label: t('nav.shopping') }];
+  }
+  if (pathname.startsWith('/calendar')) {
+    return [{ label: t('nav.calendar') }];
+  }
+  if (pathname.startsWith('/financial')) {
+    const sub = pathname.replace('/financial', '');
+    if (!sub || sub === '/') {
+      return [{ label: t('nav.financial'), path: '/financial' }, { label: t('nav.financialTransactions') }];
+    }
+    if (sub.startsWith('/goals')) {
+      return [{ label: t('nav.financial'), path: '/financial' }, { label: t('nav.financialGoals') }];
+    }
+    if (sub.startsWith('/recurrences')) {
+      return [{ label: t('nav.financial'), path: '/financial' }, { label: t('nav.financialRecurrences') }];
+    }
+    if (sub.startsWith('/account')) {
+      return [{ label: t('nav.financial'), path: '/financial' }, { label: t('nav.financialAccounts') }];
+    }
+    if (sub.startsWith('/card')) {
+      return [{ label: t('nav.financial'), path: '/financial' }, { label: t('nav.financialCards') }];
+    }
+    return [{ label: t('nav.financial') }];
+  }
+  return [{ label: t('nav.overview') }];
+}
+
+function NavSearchBar({ onClick, className }: { onClick?: () => void; className?: string }) {
+  const { t } = useTranslation();
+
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
-        'group relative flex h-10 w-[220px] max-w-full items-center justify-between rounded-full border border-border bg-card px-4 text-sm text-muted-foreground shadow-none transition-all duration-200 hover:border-primary/50 hover:bg-accent/40 sm:w-[416px]',
+        'group flex h-9 w-[220px] sm:w-[280px] md:w-[340px] items-center justify-between rounded-xl border border-border/60 bg-muted/25 px-3 text-xs text-muted-foreground transition-all duration-150 hover:border-primary/40 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         className
       )}
+      aria-label={t('nav.searchInNestAria')}
     >
-      <div className="flex items-center gap-2.5 overflow-hidden">
+      <div className="flex items-center gap-2 overflow-hidden">
         <Search
-          size={16}
-          className="shrink-0 text-muted-foreground transition-colors group-hover:text-primary"
+          size={14}
+          className="shrink-0 text-muted-foreground/70 transition-colors group-hover:text-primary"
         />
-        <span className="truncate text-sm font-normal text-muted-foreground group-hover:text-foreground">
-          Buscar no Ninho…
+        <span className="truncate text-xs text-muted-foreground/80 group-hover:text-foreground">
+          {t('nav.searchInNest')}
         </span>
       </div>
 
-      <kbd className="hidden shrink-0 items-center gap-0.5 rounded border border-border bg-muted/60 px-2 py-0.5 text-[10px] font-medium text-muted-foreground shadow-xs sm:flex">
+      <kbd className="hidden shrink-0 items-center gap-0.5 rounded-md border border-border/60 bg-background/80 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground shadow-2xs group-hover:border-border sm:inline-flex">
         ⌘K
       </kbd>
     </button>
   );
 }
 
+function NavbarThemeToggle() {
+  const { isDark, toggleTheme } = useTheme();
+  const { t } = useTranslation();
+
+  const themeLabel = isDark ? t('common.dark') : t('common.light');
+  const toggleAria = t('nav.themeToggleTo', { theme: themeLabel });
+
+  return (
+    <button
+      type="button"
+      onClick={toggleTheme}
+      className="flex size-9 items-center justify-center rounded-xl border border-border/60 bg-background/60 text-muted-foreground transition-all hover:bg-accent/60 hover:text-primary active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      aria-label={toggleAria}
+      title={toggleAria}
+    >
+      {isDark ? (
+        <Sun size={17} className="text-primary transition-transform hover:rotate-45 duration-300" />
+      ) : (
+        <Moon size={17} className="text-primary transition-transform hover:-rotate-12 duration-300" />
+      )}
+    </button>
+  );
+}
+
 /**
- * TopNavbar — barra de navegação superior fixa.
+ * TopNavbar — Barra de navegação superior refinada e despoluída.
  *
- * Contém: SidebarTrigger (mobile) | SearchBar (⌘K) | Sino de notificações | Menu do usuário
- * Fundo: color-mix(background 80%) + backdrop-blur para sensação de profundidade
+ * Remove redundâncias com a AppSidebar (perfil duplicado, botões duplicados).
+ * Contém:
+ * - Esquerda: SidebarTrigger + Separador + Breadcrumb da rota atual
+ * - Centro: Busca Global unificada (⌘K)
+ * - Direita: Busca mobile + Tour/Guia + Notificações + Toggle de Tema rápido
  */
 export function TopNavbar({ className }: { className?: string }) {
+  const { t } = useTranslation();
+  const { user } = useApp();
   const {
-    user,
     notifications,
+    isCenterOpen,
+    openCenter,
+    closeCenter,
     markAsRead,
     markAllAsRead,
     clearNotification,
     clearAllNotifications,
-    clearUser,
-  } = useApp();
-  const { theme, setTheme } = useTheme();
-  const navigate = useNavigate();
+  } = useNotifications();
+  const location = useLocation();
 
   const [searchOpen, setSearchOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [nestManagerOpen, setNestManagerOpen] = useState(false);
+
+  const breadcrumbs = getBreadcrumbs(location.pathname, t);
 
   // Atalho global Cmd/Ctrl + K
   useEffect(() => {
@@ -87,76 +175,112 @@ export function TopNavbar({ className }: { className?: string }) {
 
   if (!user) return null;
 
-  const handleLogout = async () => {
-    await authService.logout();
-    clearUser();
-    navigate('/login');
-  };
-
   return (
     <header
       className={cn(
-        'sticky top-0 z-50 flex w-full items-center justify-between px-4 py-3 sm:px-6 md:px-12',
-        'border-b border-border',
-        'text-foreground',
+        'sticky top-0 z-40 flex h-14 w-full items-center justify-between border-b border-border/60 bg-background/80 px-4 backdrop-blur-md transition-colors duration-200 sm:px-6',
         className
       )}
-      style={{
-        background: 'color-mix(in srgb, var(--background) 80%, transparent)',
-        backdropFilter: 'blur(6px)',
-      }}
     >
-      {/* Esquerda: trigger da sidebar + search */}
-      <div className="flex items-center gap-3">
-        <SidebarTrigger className="-ml-1" />
-        <NavSearchBar onClick={() => setSearchOpen(true)} className="hidden sm:flex" />
+      {/* ── ESQUERDA: TRIGGER + BREADCRUMBS ── */}
+      <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+        <SidebarTrigger className="-ml-1 text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground" />
+        <div className="hidden h-4 w-px bg-border/60 sm:block" aria-hidden="true" />
+
+        <nav aria-label={t('nav.structuralNavAria')} className="hidden sm:flex items-center gap-1.5 text-xs font-medium min-w-0">
+          {breadcrumbs.map((crumb, idx) => {
+            const isLast = idx === breadcrumbs.length - 1;
+            return (
+              <Fragment key={crumb.label}>
+                {idx > 0 && (
+                  <ChevronRight size={13} className="shrink-0 text-muted-foreground/40" />
+                )}
+                {crumb.path && !isLast ? (
+                  <Link
+                    to={crumb.path}
+                    className="truncate text-muted-foreground/70 transition-colors hover:text-foreground"
+                  >
+                    {crumb.label}
+                  </Link>
+                ) : (
+                  <span
+                    className={cn(
+                      'truncate',
+                      isLast ? 'font-semibold text-foreground' : 'text-muted-foreground/70'
+                    )}
+                  >
+                    {crumb.label}
+                  </span>
+                )}
+              </Fragment>
+            );
+          })}
+        </nav>
       </div>
 
-      {/* Direita: busca mobile + sino + perfil */}
-      <div className="flex items-center gap-2 sm:gap-3">
-        {/* Botão de Busca Mobile */}
+      {/* ── CENTRO: BUSCA GLOBAL (DESKTOP) ── */}
+      <div className="hidden md:flex flex-1 justify-center px-4 max-w-md mx-auto">
+        <NavSearchBar onClick={() => setSearchOpen(true)} className="w-full" />
+      </div>
+
+      {/* ── DIREITA: AÇÕES UNIFICADAS ── */}
+      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        {/* Busca Mobile */}
         <button
           type="button"
           onClick={() => setSearchOpen(true)}
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground transition-colors hover:bg-accent hover:text-foreground sm:hidden"
-          aria-label="Buscar no Ninho"
+          className="flex size-9 items-center justify-center rounded-xl border border-border/60 bg-background/60 text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground active:scale-95 md:hidden"
+          aria-label={t('nav.searchInNest')}
+          title={t('nav.searchShortcut')}
         >
-          <Search size={18} />
+          <Search size={16} />
         </button>
 
-        <TourHelpButton />
+        {/* Guia / Tour da Tela */}
+        <TourHelpButton
+          className="rounded-xl border-border/60 bg-background/60 text-muted-foreground hover:bg-accent/60 hover:text-foreground active:scale-95"
+        />
 
+        {/* Notificações */}
         <NotificationsMenu
           notifications={notifications}
           onMarkAsRead={markAsRead}
           onMarkAllAsRead={markAllAsRead}
           onClearNotification={clearNotification}
           onClearAll={clearAllNotifications}
-        />
-        <ProfileMenu
-          user={user}
-          currentTheme={theme}
-          onThemeChange={setTheme}
-          onProfileClick={() => setProfileOpen(true)}
-          onSettingsClick={() => setSettingsOpen(true)}
-          onLogoutClick={handleLogout}
+          onOpenCenter={openCenter}
         />
 
-        {/* Modais Globais */}
-        <GlobalSearchModal
-          open={searchOpen}
-          onOpenChange={setSearchOpen}
-          onOpenProfile={() => setProfileOpen(true)}
-          onOpenSettings={() => setSettingsOpen(true)}
-          onOpenNestManager={() => setNestManagerOpen(true)}
-        />
-        <ProfileModal open={profileOpen} onOpenChange={setProfileOpen} />
-        <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
-        <NestManagerModal
-          open={nestManagerOpen}
-          onClose={() => setNestManagerOpen(false)}
-          onOpenChange={setNestManagerOpen}
-        />
+        {/* Toggle de Tema Rápido */}
+        <NavbarThemeToggle />
+
+        {/* Modais Globais sob demanda com Suspense */}
+        <Suspense fallback={null}>
+          {searchOpen && (
+            <GlobalSearchModal
+              open={searchOpen}
+              onOpenChange={setSearchOpen}
+              onOpenProfile={() => setProfileOpen(true)}
+              onOpenSettings={() => setSettingsOpen(true)}
+              onOpenNestManager={() => setNestManagerOpen(true)}
+            />
+          )}
+          {profileOpen && <ProfileModal open={profileOpen} onOpenChange={setProfileOpen} />}
+          {settingsOpen && <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />}
+          {nestManagerOpen && (
+            <NestManagerModal
+              open={nestManagerOpen}
+              onClose={() => setNestManagerOpen(false)}
+              onOpenChange={setNestManagerOpen}
+            />
+          )}
+          {isCenterOpen && (
+            <NotificationCenterSheet
+              open={isCenterOpen}
+              onOpenChange={(open) => (open ? openCenter() : closeCenter())}
+            />
+          )}
+        </Suspense>
       </div>
     </header>
   );

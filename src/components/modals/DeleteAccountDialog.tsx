@@ -1,3 +1,4 @@
+import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 import {
@@ -52,24 +53,29 @@ export function DeleteAccountDialog({
         if (!o) onClose();
       }}
     >
-      <AlertDialogContent>
+      <AlertDialogContent className="rounded-2xl sm:rounded-3xl border border-border/60 p-6">
         <AlertDialogHeader>
-          <AlertDialogTitle>Excluir conta</AlertDialogTitle>
+          <AlertDialogTitle className="flex items-center gap-2 text-destructive font-bold">
+            <Trash2 className="size-5" />
+            Excluir conta
+          </AlertDialogTitle>
           <AlertDialogDescription>
             {emptyCardsCount > 0
               ? `Tem certeza que deseja excluir "${account?.name ?? ''}"? ${emptyCardsCount} cartão(ões) vazio(s) vinculado(s) também será(ão) excluído(s). Esta ação não pode ser desfeita.`
               : `Tem certeza que deseja excluir "${account?.name ?? ''}"? Esta ação não pode ser desfeita.`}
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={submitting}>Cancelar</AlertDialogCancel>
+        <AlertDialogFooter className="flex gap-3 pt-3 border-t border-border/40 sm:space-x-0">
+          <AlertDialogCancel disabled={submitting} className="h-12 flex-1 rounded-2xl text-sm font-semibold transition-colors mt-0">
+            Cancelar
+          </AlertDialogCancel>
           <AlertDialogAction
             disabled={submitting}
             onClick={(e) => {
               e.preventDefault();
               void handleConfirm();
             }}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            className="h-12 flex-[2] rounded-2xl bg-destructive text-destructive-foreground text-sm font-bold shadow-md transition-all hover:bg-destructive/90 active:scale-[0.98]"
           >
             {submitting ? 'Excluindo…' : 'Excluir'}
           </AlertDialogAction>

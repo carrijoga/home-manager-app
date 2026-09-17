@@ -3,20 +3,24 @@ import { ReactNode } from 'react';
 
 import { cn } from '@/lib/utils';
 
-interface FooterItem {
+import { AnimatedNumber } from './AnimatedNumber';
+
+export interface FooterItem {
   label: string;
-  value: string;
+  value: ReactNode;
   valueColor?: string;
 }
 
 interface ModuleMetricWidgetProps {
-  icon: ReactNode;
-  iconColor: string;
+  icon?: ReactNode;
+  iconImage?: string;
+  iconAlt?: string;
+  iconColor?: string;
   category: string;
   label: string;
-  value: string;
+  value: ReactNode;
   /** Up to 2 footer stat pairs */
-  footer?: [FooterItem, FooterItem?];
+  footer?: (FooterItem | undefined)[];
   /** Progress bar fill 0–1 */
   progress?: number;
   progressColor?: string;
@@ -25,6 +29,7 @@ interface ModuleMetricWidgetProps {
   extra?: ReactNode;
   className?: string;
   onClick?: () => void;
+  isLoading?: boolean;
 }
 
 /**
@@ -39,6 +44,8 @@ interface ModuleMetricWidgetProps {
  */
 export function ModuleMetricWidget({
   icon,
+  iconImage,
+  iconAlt,
   iconColor,
   category,
   label,
@@ -51,6 +58,7 @@ export function ModuleMetricWidget({
   extra,
   className,
   onClick,
+  isLoading = false,
 }: ModuleMetricWidgetProps) {
   return (
     <div
@@ -67,7 +75,18 @@ export function ModuleMetricWidget({
     >
       {/* Icon + category label */}
       <div className="flex w-full items-center justify-between">
-        <div style={{ color: iconColor }}>{icon}</div>
+        {iconImage ? (
+          <div className="relative flex size-11 shrink-0 items-center justify-center rounded-2xl bg-white/95 p-0.5 shadow-2xs transition-transform duration-300 group-hover:scale-105 dark:bg-stone-900/90 overflow-hidden">
+            <img
+              src={iconImage}
+              alt={iconAlt || category}
+              className="size-full object-contain"
+              loading="lazy"
+            />
+          </div>
+        ) : (
+          <div style={{ color: iconColor }}>{icon}</div>
+        )}
         <span
           className="font-ui font-semibold uppercase tracking-[1px] text-muted-foreground/80"
           style={{ fontSize: 'var(--text-xs)' }}
@@ -81,13 +100,22 @@ export function ModuleMetricWidget({
         <p className="font-ui text-muted-foreground" style={{ fontSize: 'var(--text-xs)' }}>
           {label}
         </p>
-        <p className="font-ui truncate text-2xl font-semibold leading-tight text-foreground">
-          {value}
-        </p>
+        {isLoading ? (
+          <div className="my-1 h-7 w-28 animate-pulse rounded-md bg-muted/60" />
+        ) : (
+          <div className="font-ui truncate text-2xl font-semibold leading-tight text-foreground">
+            {typeof value === 'number' ? <AnimatedNumber value={value} /> : value}
+          </div>
+        )}
       </div>
 
       {/* Footer stats */}
-      {footer && (
+      {isLoading ? (
+        <div className="flex w-full items-end justify-between pt-1">
+          <div className="h-4 w-20 animate-pulse rounded bg-muted/50" />
+          <div className="h-4 w-16 animate-pulse rounded bg-muted/50" />
+        </div>
+      ) : footer ? (
         <div className="flex w-full items-end justify-between">
           {footer.map((item, i) =>
             item ? (
@@ -105,13 +133,13 @@ export function ModuleMetricWidget({
                     textAlign: i === 1 ? 'right' : 'left',
                   }}
                 >
-                  {item.value}
+                  {typeof item.value === 'number' ? <AnimatedNumber value={item.value} /> : item.value}
                 </span>
               </div>
             ) : null
           )}
         </div>
-      )}
+      ) : null}
 
       {/* Progress bar */}
       {progress !== undefined && (

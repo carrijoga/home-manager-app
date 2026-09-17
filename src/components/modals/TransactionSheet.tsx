@@ -3,10 +3,11 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ShoppingCart } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-import { Button, Sheet, SheetContent } from '@/components/ui';
+import { Button, Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui';
+import { Spinner } from '@/components/ui/spinner';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import type { BankAccountResponse } from '@/schemas/bank-account';
 import type { CategoryResponse } from '@/schemas/category';
 import { TransactionType } from '@/schemas/enums';
@@ -260,44 +261,44 @@ export function TransactionSheet({
         side={isMobile ? 'bottom' : 'right'}
         className={
           isMobile
-            ? 'max-h-[92dvh] overflow-y-auto rounded-t-2xl px-5 pb-6 pt-3 focus:outline-none'
-            : 'w-full overflow-y-auto px-7 pb-7 pt-5 focus:outline-none sm:w-[540px] sm:max-w-xl md:w-[560px]'
+            ? 'flex max-h-[92dvh] flex-col rounded-t-3xl border-t border-border bg-card p-0 focus:outline-none dark:bg-[#181818]'
+            : 'flex max-h-[92dvh] w-full flex-col overflow-hidden p-0 focus:outline-none sm:max-h-screen sm:w-[540px] sm:max-w-xl dark:bg-[#181818]'
         }
       >
-        {/* Handle — só no mobile */}
-        {isMobile && <div className="mx-auto mb-4 h-1 w-9 rounded-full bg-border" aria-hidden />}
-
-        <div className="font-ui mb-3 flex items-center justify-between border-b border-border/40 pb-3">
-          <h2 className="font-editorial text-xl font-bold text-foreground">
-            {isEditMode ? 'Editar Lançamento' : 'Novo Lançamento'}
-          </h2>
-          <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-semibold text-muted-foreground">
-            {isEditMode ? 'Edição' : 'Cadastro'}
-          </span>
-        </div>
-
-        {editingTransaction?.shoppingListId && (
-          <div className="font-ui mb-3 flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2 text-xs font-medium text-primary">
-            <ShoppingCart size={14} className="shrink-0" />
-            <span>Transação gerada automaticamente por uma Lista de Compras.</span>
+        <SheetHeader className="border-b border-border/40 px-6 py-4 text-left">
+          <div className="flex items-center justify-between">
+            <SheetTitle className="text-lg font-bold text-foreground">
+              {isEditMode ? 'Editar Lançamento' : 'Novo Lançamento'}
+            </SheetTitle>
+            <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
+              {isEditMode ? 'Edição' : 'Cadastro'}
+            </span>
           </div>
-        )}
+        </SheetHeader>
 
         <form
           onSubmit={(e) => {
             void handleSubmit(e).catch(() => {});
           }}
-          className="space-y-4"
+          className="flex flex-1 flex-col overflow-hidden"
         >
-          <TypeToggle value={type} onChange={handleTypeChange} />
+          <div className="flex-1 space-y-4 overflow-y-auto overscroll-contain px-6 py-4">
+            {editingTransaction?.shoppingListId && (
+              <div className="font-ui mb-1 flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2 text-xs font-medium text-primary">
+                <ShoppingCart size={14} className="shrink-0" />
+                <span>Transação gerada automaticamente por uma Lista de Compras.</span>
+              </div>
+            )}
 
-          <AmountHero
-            type={type}
-            amount={amount}
-            onAmountChange={setAmount}
-            description={description}
-            onDescriptionChange={setDescription}
-          />
+            <TypeToggle value={type} onChange={handleTypeChange} />
+
+            <AmountHero
+              type={type}
+              amount={amount}
+              onAmountChange={setAmount}
+              description={description}
+              onDescriptionChange={setDescription}
+            />
 
           <AnimatePresence mode="wait">
             {isExpense ? (
@@ -359,21 +360,36 @@ export function TransactionSheet({
               </motion.div>
             )}
           </AnimatePresence>
+          </div>
 
-          <motion.div
-            animate={{ backgroundColor: submitColor }}
-            transition={reduced ? { duration: 0 } : { duration: 0.2 }}
-            className="overflow-hidden rounded-xl"
-          >
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              loading={isSubmitting}
-              className="w-full bg-transparent font-semibold text-white hover:bg-black/10 disabled:opacity-50"
-            >
-              {submitLabel}
-            </Button>
-          </motion.div>
+          <div className="border-t border-border/40 bg-card p-4 pb-6 dark:bg-[#181818]">
+            <div className="flex gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                className="h-12 flex-1 rounded-2xl text-sm font-semibold transition-colors"
+                onClick={onClose}
+                disabled={isSubmitting}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                style={{ backgroundColor: submitColor }}
+                className="h-12 flex-[2] rounded-2xl text-white text-sm font-bold shadow-md transition-all hover:brightness-105 active:scale-[0.98] disabled:opacity-50"
+              >
+                {isSubmitting ? (
+                  <span className="flex items-center gap-2">
+                    <Spinner size="sm" />
+                    Salvando...
+                  </span>
+                ) : (
+                  submitLabel
+                )}
+              </Button>
+            </div>
+          </div>
         </form>
       </SheetContent>
     </Sheet>

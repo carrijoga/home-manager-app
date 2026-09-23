@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { toast } from 'sonner';
 
+import { clearCategoryCache } from '@/hooks/useCategories';
 import { useNotificationRealtime } from '@/hooks/useNotificationRealtime';
 import { apiLocaleToLanguage, setCurrentLanguage } from '@/i18n';
 import { DATA_MODE } from '@/services/api/config';
@@ -195,6 +196,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const clearUser = () => {
     setUser(null);
     setActiveNestId(null);
+    clearCategoryCache();
   };
 
   const refreshNests = async (): Promise<AppUserNest[]> => {

@@ -24,7 +24,7 @@ import { useCategories } from '@/hooks/useCategories';
 import { useDebounce } from '@/hooks/useDebounce';
 import { usePolling } from '@/hooks/usePolling';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
-import { toCategoryOptions } from '@/lib/categories';
+import { matchesCategoryFilter, toCategoryOptions } from '@/lib/categories';
 import type { BankAccountResponse } from '@/schemas/bank-account';
 import { CategoryScope } from '@/schemas/category';
 import { PaymentStatus, TransactionType } from '@/schemas/enums';
@@ -168,7 +168,9 @@ const Financial = () => {
     if (filters.status === 'unpaid')
       result = result.filter((t) => t.paymentStatus !== PaymentStatus.Paid);
     if (filters.status === 'overdue') result = result.filter((t) => t.isOverdue);
-    if (filters.categoryId) result = result.filter((t) => t.categoryId === filters.categoryId);
+    // Principal inclui as subs (mesma regra do backend para categoryIds).
+    if (filters.categoryId)
+      result = result.filter((t) => matchesCategoryFilter(t.category, filters.categoryId));
     if (debouncedSearch.trim()) {
       const q = debouncedSearch.trim().toLowerCase();
       result = result.filter((t) => t.description.toLowerCase().includes(q));

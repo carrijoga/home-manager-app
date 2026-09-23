@@ -123,7 +123,7 @@ export function TransactionSheet({
             : null;
       setAmount(rawVal);
       setTransactionDate(toInputDate(t.transactionDate));
-      setCategoryId(t.categoryId ?? '');
+      setCategoryId(t.category?.categoryId ?? '');
       setResponsibleUserId(t.responsibleUserId || currentUserId);
       setObservation(t.observation ?? '');
       setDueDate(t.dueDate ? toInputDate(t.dueDate) : todayIso());

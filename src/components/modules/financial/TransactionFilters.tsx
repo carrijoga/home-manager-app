@@ -120,7 +120,11 @@ export function TransactionFilters({ value, onChange, categories }: TransactionF
           <SelectContent>
             <SelectItem value={ALL_CATEGORIES}>Todas categorias</SelectItem>
             {categories.map((c) => (
-              <SelectItem key={c.categoryId} value={c.categoryId}>
+              <SelectItem
+                key={c.categoryId}
+                value={c.categoryId}
+                className={c.depth === 1 ? 'pl-6' : undefined}
+              >
                 {c.label}
               </SelectItem>
             ))}

@@ -24,7 +24,7 @@ import { useCategories } from '@/hooks/useCategories';
 import { useDebounce } from '@/hooks/useDebounce';
 import { usePolling } from '@/hooks/usePolling';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
-import { toCategoryOptions } from '@/lib/categories';
+import { matchesCategoryFilter, toCategoryOptions } from '@/lib/categories';
 import type { BankAccountResponse } from '@/schemas/bank-account';
 import { CategoryScope } from '@/schemas/category';
 import { PaymentStatus, TransactionType } from '@/schemas/enums';
@@ -192,7 +192,9 @@ export function FinancialV2() {
       result = result.filter(
         (t) => t.transactionType === TransactionType.Expense && t.isOverdue
       );
-    if (filters.categoryId) result = result.filter((t) => t.categoryId === filters.categoryId);
+    // Principal inclui as subs (mesma regra do backend para categoryIds).
+    if (filters.categoryId)
+      result = result.filter((t) => matchesCategoryFilter(t.category, filters.categoryId));
     if (filters.responsibleUserId)
       result = result.filter((t) => t.responsibleUserId === filters.responsibleUserId);
     if (debouncedSearch.trim()) {

@@ -4,7 +4,8 @@
  * Em modo mock usa dados locais de `mocks/data.ts`.
  */
 
-import { findCategory } from '@/lib/categories';
+import { findCategory, matchesCategoryFilter, toCategorySummary } from '@/lib/categories';
+import type { CategorySummaryResponse } from '@/schemas/category';
 import { ApiPaymentMethod, PaymentStatus, TransactionType } from '@/schemas/enums';
 import type {
   AddPaymentRequest,
@@ -22,18 +23,20 @@ import {
   FinancialTransactionListResponseSchema,
   FinancialTransactionResponseSchema,
 } from '@/schemas/financial';
+import * as categoryService from '@/services/categoryService';
 
-import { mockCategoryTree, mockExpenses, mockFinancialCategories, mockTransactions } from '../mocks/data';
+import { mockExpenses, mockTransactions } from '../mocks/data';
 import { DATA_MODE } from './api/config';
 import { ENDPOINTS } from './api/endpoints';
 import { httpClient } from './api/httpClient';
 
-// Resolve o nome da categoria escolhida via árvore unificada (mockCategoryTree);
-// cai para mockFinancialCategories (ids fincat-*) para transações seed antigas.
-function resolveMockCategoryName(categoryId: string): string | undefined {
-  const found = findCategory(mockCategoryTree, categoryId);
-  if (found) return found.category.name;
-  return mockFinancialCategories.find((c) => c.categoryId === categoryId)?.name;
+/**
+ * Mock: resolve o sumário a partir da árvore viva do categoryService (inclui
+ * categorias criadas na sessão pelo CategoryPicker).
+ */
+async function resolveMockCategory(categoryId: string): Promise<CategorySummaryResponse | null> {
+  const tree = await categoryService.listCategories(undefined);
+  return toCategorySummary(tree, categoryId);
 }
 
 // Tipo do mock — mantido para os stubs legados addExpense/deleteExpense
@@ -125,9 +128,10 @@ function applyMockFilter(
       !t.description.toLowerCase().includes(filter.description.toLowerCase())
     )
       return false;
+    // Regra do backend: id de principal casa a principal e as suas subs.
     if (
       filter.categoryIds?.length &&
-      (!t.categoryId || !filter.categoryIds.includes(t.categoryId))
+      !filter.categoryIds.some((id) => matchesCategoryFilter(t.category, id))
     )
       return false;
     if (filter.paymentStatuses?.length && !filter.paymentStatuses.includes(t.paymentStatus))
@@ -230,22 +234,38 @@ export async function getFinancialDashboard(
         isOverdue: t.dueDate !== null && String(t.dueDate).slice(0, 10) < today,
       }));
 
-    const categoryTotals: Record<string, { categoryId: string; totalAmount: number }> = {};
+    // Espelha o backend: gastos somados pela categoria PRINCIPAL, com ícone/cor dela.
+    const tree = await categoryService.listCategories(undefined);
+    const categoryTotals = new Map<
+      string,
+      {
+        categoryId: string;
+        categoryName: string;
+        categoryIcon: string;
+        categoryColor: string;
+        totalAmount: number;
+      }
+    >();
     inMonth
       .filter((t) => t.transactionType === TransactionType.Expense)
       .forEach((t) => {
-        const key = t.categoryName || 'Outros';
-        if (!categoryTotals[key])
-          categoryTotals[key] = { categoryId: t.categoryId ?? '', totalAmount: 0 };
-        categoryTotals[key].totalAmount += Number(t.value);
+        const summary = t.category;
+        if (!summary) return;
+        const rootId = summary.parentCategoryId ?? summary.categoryId;
+        const root = findCategory(tree, rootId)?.category;
+        const current = categoryTotals.get(rootId) ?? {
+          categoryId: rootId,
+          categoryName: root?.name ?? summary.parentName ?? summary.name,
+          categoryIcon: root?.icon ?? summary.icon,
+          categoryColor: root?.color ?? summary.color,
+          totalAmount: 0,
+        };
+        current.totalAmount += Number(t.value);
+        categoryTotals.set(rootId, current);
       });
-    const expensesByCategory = Object.entries(categoryTotals)
-      .sort(([, a], [, b]) => b.totalAmount - a.totalAmount)
-      .map(([categoryName, { categoryId, totalAmount }]) => ({
-        categoryId,
-        categoryName,
-        totalAmount,
-      }));
+    const expensesByCategory = [...categoryTotals.values()].sort(
+      (a, b) => b.totalAmount - a.totalAmount
+    );
 
     const balanceVariationPercent =
       prevExpenses > 0 ? Math.round(((curExpenses - prevExpenses) / prevExpenses) * 100) : 0;
@@ -279,7 +299,7 @@ export async function createTransaction(
   nestId?: string
 ): Promise<FinancialTransactionResponse> {
   if (DATA_MODE === 'mock') {
-    const categoryName = resolveMockCategoryName(payload.categoryId);
+    const category = await resolveMockCategory(payload.categoryId);
     const created = recomputeStatus({
       financialTransactionId: crypto.randomUUID(),
       nestId: nestId ?? 'nest-mock-0001',
@@ -290,8 +310,10 @@ export async function createTransaction(
       dueDate: payload.dueDate ?? null,
       responsibleUserId: payload.responsibleUserId,
       responsibleUserName: 'João (Você)',
+      category,
+      // Transitório (Tarefa 6 remove).
       categoryId: payload.categoryId,
-      categoryName: categoryName ?? 'Geral',
+      categoryName: category?.name ?? null,
       origin: 0,
       originName: 'Financeiro',
       observation: null,
@@ -316,11 +338,12 @@ export async function updateTransaction(
   nestId?: string
 ): Promise<void> {
   if (DATA_MODE === 'mock') {
+    const resolved = await resolveMockCategory(payload.categoryId);
     const idx = mockStore.findIndex(
       (t) => t.financialTransactionId === payload.financialTransactionId
     );
     if (idx === -1) throw new Error('Transação não encontrada');
-    const categoryName = resolveMockCategoryName(payload.categoryId);
+    const category = resolved ?? mockStore[idx].category;
     const updated = recomputeStatus({
       ...mockStore[idx],
       transactionType: payload.type,
@@ -328,8 +351,10 @@ export async function updateTransaction(
       value: Number(payload.amount),
       transactionDate: payload.transactionDate,
       dueDate: payload.dueDate ?? null,
+      category,
+      // Transitório (Tarefa 6 remove).
       categoryId: payload.categoryId,
-      categoryName: categoryName ?? mockStore[idx].categoryName,
+      categoryName: category?.name ?? null,
       responsibleUserId: payload.responsibleUserId,
       sourceId:
         payload.type === TransactionType.Income

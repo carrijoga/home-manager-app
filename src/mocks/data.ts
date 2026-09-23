@@ -5,6 +5,7 @@
  */
 
 import { getItemEstimatedTotal, getItemSpentTotal } from '@/components/modules/Shopping/helpers';
+import { toCategorySummary } from '@/lib/categories';
 import type { BankAccountResponse } from '@/schemas/bank-account';
 import {
   type CategoryResponse as UnifiedCategoryResponse,
@@ -1007,61 +1008,6 @@ export const mockExpenses: MockExpense[] = monthlyExpenseSeeds
     id: String(index + 1),
   }));
 
-// ── Transações financeiras (FinancialTransactionResponse — modo mock) ─────────────
-
-// IDs de mock não são UUIDs reais (convenção do arquivo: 'nest-mock-0001' etc.);
-// os branches mock dos services não passam por safeParse.
-export const mockFinancialCategories = [
-  {
-    categoryId: 'fincat-0000-0000-0000-000000000001',
-    nestId: 'nest-mock-0001',
-    name: 'Moradia',
-    type: 1,
-  },
-  {
-    categoryId: 'fincat-0000-0000-0000-000000000002',
-    nestId: 'nest-mock-0001',
-    name: 'Contas fixas',
-    type: 1,
-  },
-  {
-    categoryId: 'fincat-0000-0000-0000-000000000003',
-    nestId: 'nest-mock-0001',
-    name: 'Mercado',
-    type: 1,
-  },
-  {
-    categoryId: 'fincat-0000-0000-0000-000000000004',
-    nestId: 'nest-mock-0001',
-    name: 'Saúde',
-    type: 1,
-  },
-  {
-    categoryId: 'fincat-0000-0000-0000-000000000005',
-    nestId: 'nest-mock-0001',
-    name: 'Família',
-    type: 1,
-  },
-  {
-    categoryId: 'fincat-0000-0000-0000-000000000006',
-    nestId: 'nest-mock-0001',
-    name: 'Manutenção',
-    type: 1,
-  },
-  {
-    categoryId: 'fincat-0000-0000-0000-000000000007',
-    nestId: 'nest-mock-0001',
-    name: 'Pet',
-    type: 1,
-  },
-  {
-    categoryId: 'fincat-0000-0000-0000-000000000008',
-    nestId: 'nest-mock-0001',
-    name: 'Renda',
-    type: 0,
-  },
-] satisfies Array<{ categoryId: string; nestId: string; name: string; type: number }>;
-
 // ── Categorias unificadas (árvore por escopo) ─────────────────────────────────
 
 function mockCat(
@@ -1095,11 +1041,14 @@ export const mockCategoryTree: UnifiedCategoryResponse[] = [
   mockCat('c0000001-0000-4000-8000-000000000001', CategoryScope.Expense, 'Moradia', '🏠', '#3B82F6', [
     ['c0000001-0000-4000-8000-000000000011', 'Aluguel', '🔑'],
     ['c0000001-0000-4000-8000-000000000012', 'Energia', '💡'],
+    ['c0000001-0000-4000-8000-000000000013', 'Manutenção', '🛠️'],
   ]),
   mockCat('c0000001-0000-4000-8000-000000000002', CategoryScope.Expense, 'Alimentação', '🍽️', '#F97316', [
     ['c0000001-0000-4000-8000-000000000021', 'Mercado', '🛒'],
   ]),
   mockCat('c0000001-0000-4000-8000-000000000003', CategoryScope.Expense, 'Transporte', '🚗', '#6366F1'),
+  mockCat('c0000001-0000-4000-8000-000000000004', CategoryScope.Expense, 'Família', '👪', '#EC4899'),
+  mockCat('c0000001-0000-4000-8000-000000000005', CategoryScope.Expense, 'Pet', '🐾', '#A855F7'),
   mockCat('c0000002-0000-4000-8000-000000000001', CategoryScope.Income, 'Salário', '💼', '#22C55E'),
   mockCat('c0000002-0000-4000-8000-000000000002', CategoryScope.Income, 'Extras', '💸', '#14B8A6', [
     ['c0000002-0000-4000-8000-000000000021', 'Freelance', '🤝'],
@@ -1156,14 +1105,15 @@ function makeFinPayment(
 }
 
 interface FinTxSeed {
-  type: 0 | 1;
+  type: 0 | 1 | 2 | 3;
   description: string;
   value: number;
   monthsAgo: number;
   day: number;
   /** Dia do vencimento (default: mesmo dia da transação) */
   dueDay?: number;
-  categoryId: string;
+  /** null para Transferência (3) e Ajuste (2), que não têm categoria. */
+  categoryId: string | null;
   /** true = quitada; número = valor pago parcial */
   paid?: boolean | number;
   shoppingListId?: string | null;
@@ -1177,7 +1127,9 @@ function makeFinTx(seed: FinTxSeed): FinancialTransactionResponse {
   const id = `fintx-${String(finSeq).padStart(4, '0')}`;
   const dateIso = getDateInMonth(seed.monthsAgo, seed.day);
   const dueIso = getDateInMonth(seed.monthsAgo, seed.dueDay ?? seed.day);
-  const category = mockFinancialCategories.find((c) => c.categoryId === seed.categoryId)!;
+  const category = toCategorySummary(mockCategoryTree, seed.categoryId);
+  // Ajuste e transferência não geram cobrança: saem quitados e nunca vencidos.
+  const isMovement = seed.type === 2 || seed.type === 3;
   // Quitação total é datada no vencimento; pagamento parcial na data da transação.
   const payments =
     seed.paid === true
@@ -1186,7 +1138,7 @@ function makeFinTx(seed: FinTxSeed): FinancialTransactionResponse {
         ? [makeFinPayment(id, seed.paid, dateIso)]
         : [];
   const paidSum = payments.reduce((sum, p) => sum + p.amount, 0);
-  const paymentStatus = paidSum === 0 ? 0 : paidSum >= seed.value ? 2 : 1; // Open | Paid | PartiallyPaid
+  const paymentStatus = isMovement ? 2 : paidSum === 0 ? 0 : paidSum >= seed.value ? 2 : 1; // Open | Paid | PartiallyPaid
   const isPaid = paymentStatus === 2;
   return {
     financialTransactionId: id,
@@ -1198,8 +1150,10 @@ function makeFinTx(seed: FinTxSeed): FinancialTransactionResponse {
     dueDate: `${dueIso}T12:00:00.000Z`,
     responsibleUserId: FIN_JOAO.id,
     responsibleUserName: FIN_JOAO.name,
-    categoryId: category.categoryId,
-    categoryName: category.name,
+    category,
+    // Transitório (Tarefa 6 remove).
+    categoryId: category?.categoryId ?? null,
+    categoryName: category?.name ?? null,
     origin: seed.origin ?? (seed.shoppingListId ? 2 : 0),
     originName: seed.originName ?? (seed.shoppingListId ? 'Lista de Compras' : 'Financeiro'),
     observation:
@@ -1214,14 +1168,14 @@ function makeFinTx(seed: FinTxSeed): FinancialTransactionResponse {
 }
 
 const CAT = {
-  moradia: 'fincat-0000-0000-0000-000000000001',
-  contas: 'fincat-0000-0000-0000-000000000002',
-  mercado: 'fincat-0000-0000-0000-000000000003',
-  saude: 'fincat-0000-0000-0000-000000000004',
-  familia: 'fincat-0000-0000-0000-000000000005',
-  manutencao: 'fincat-0000-0000-0000-000000000006',
-  pet: 'fincat-0000-0000-0000-000000000007',
-  renda: 'fincat-0000-0000-0000-000000000008',
+  moradia: 'c0000001-0000-4000-8000-000000000001',
+  aluguel: 'c0000001-0000-4000-8000-000000000011',
+  energia: 'c0000001-0000-4000-8000-000000000012',
+  manutencao: 'c0000001-0000-4000-8000-000000000013',
+  mercado: 'c0000001-0000-4000-8000-000000000021',
+  familia: 'c0000001-0000-4000-8000-000000000004',
+  pet: 'c0000001-0000-4000-8000-000000000005',
+  salario: 'c0000002-0000-4000-8000-000000000001',
 };
 
 export const mockTransactions: FinancialTransactionResponse[] = (
@@ -1233,7 +1187,7 @@ export const mockTransactions: FinancialTransactionResponse[] = (
       value: 8500,
       monthsAgo: 0,
       day: 1,
-      categoryId: CAT.renda,
+      categoryId: CAT.salario,
       paid: true,
     },
     {
@@ -1243,7 +1197,7 @@ export const mockTransactions: FinancialTransactionResponse[] = (
       monthsAgo: 0,
       day: 5,
       dueDay: 15,
-      categoryId: CAT.moradia,
+      categoryId: CAT.aluguel,
     },
     {
       type: 1,
@@ -1252,7 +1206,7 @@ export const mockTransactions: FinancialTransactionResponse[] = (
       monthsAgo: 0,
       day: 2,
       dueDay: 5,
-      categoryId: CAT.contas,
+      categoryId: CAT.energia,
     },
     {
       type: 1,
@@ -1260,7 +1214,7 @@ export const mockTransactions: FinancialTransactionResponse[] = (
       value: 90,
       monthsAgo: 0,
       day: 12,
-      categoryId: CAT.contas,
+      categoryId: CAT.moradia,
       paid: true,
     },
     {
@@ -1270,7 +1224,7 @@ export const mockTransactions: FinancialTransactionResponse[] = (
       monthsAgo: 0,
       day: 3,
       dueDay: 20,
-      categoryId: CAT.contas,
+      categoryId: CAT.moradia,
     },
     {
       type: 1,
@@ -1282,6 +1236,22 @@ export const mockTransactions: FinancialTransactionResponse[] = (
       paid: 370,
       shoppingListId: 'list-0001',
     },
+    {
+      type: 3,
+      description: 'Transferência para poupança',
+      value: 500,
+      monthsAgo: 0,
+      day: 2,
+      categoryId: null,
+    },
+    {
+      type: 2,
+      description: 'Ajuste de saldo',
+      value: 35.9,
+      monthsAgo: 0,
+      day: 4,
+      categoryId: null,
+    },
     // ── Mês anterior: tudo quitado ───────────────────────────────────────────────
     {
       type: 0,
@@ -1289,7 +1259,7 @@ export const mockTransactions: FinancialTransactionResponse[] = (
       value: 8500,
       monthsAgo: 1,
       day: 1,
-      categoryId: CAT.renda,
+      categoryId: CAT.salario,
       paid: true,
     },
     {
@@ -1298,7 +1268,7 @@ export const mockTransactions: FinancialTransactionResponse[] = (
       value: 1850,
       monthsAgo: 1,
       day: 5,
-      categoryId: CAT.moradia,
+      categoryId: CAT.aluguel,
       paid: true,
     },
     {
@@ -1307,7 +1277,7 @@ export const mockTransactions: FinancialTransactionResponse[] = (
       value: 301,
       monthsAgo: 1,
       day: 10,
-      categoryId: CAT.contas,
+      categoryId: CAT.energia,
       paid: true,
     },
     {
@@ -1316,7 +1286,7 @@ export const mockTransactions: FinancialTransactionResponse[] = (
       value: 88,
       monthsAgo: 1,
       day: 12,
-      categoryId: CAT.contas,
+      categoryId: CAT.moradia,
       paid: true,
     },
     {
@@ -1325,7 +1295,7 @@ export const mockTransactions: FinancialTransactionResponse[] = (
       value: 129,
       monthsAgo: 1,
       day: 15,
-      categoryId: CAT.contas,
+      categoryId: CAT.moradia,
       paid: true,
     },
     {
@@ -1353,7 +1323,7 @@ export const mockTransactions: FinancialTransactionResponse[] = (
       value: 8500,
       monthsAgo: 2,
       day: 1,
-      categoryId: CAT.renda,
+      categoryId: CAT.salario,
       paid: true,
     },
     {
@@ -1362,7 +1332,7 @@ export const mockTransactions: FinancialTransactionResponse[] = (
       value: 1800,
       monthsAgo: 2,
       day: 5,
-      categoryId: CAT.moradia,
+      categoryId: CAT.aluguel,
       paid: true,
     },
     {
@@ -1371,7 +1341,7 @@ export const mockTransactions: FinancialTransactionResponse[] = (
       value: 264,
       monthsAgo: 2,
       day: 10,
-      categoryId: CAT.contas,
+      categoryId: CAT.energia,
       paid: true,
     },
     {
@@ -1380,7 +1350,7 @@ export const mockTransactions: FinancialTransactionResponse[] = (
       value: 82,
       monthsAgo: 2,
       day: 12,
-      categoryId: CAT.contas,
+      categoryId: CAT.moradia,
       paid: true,
     },
     {
@@ -1389,7 +1359,7 @@ export const mockTransactions: FinancialTransactionResponse[] = (
       value: 119,
       monthsAgo: 2,
       day: 15,
-      categoryId: CAT.contas,
+      categoryId: CAT.moradia,
       paid: true,
     },
     {

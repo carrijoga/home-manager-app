@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { CategorySummaryResponseSchema } from './category';
 import {
   ApiPaymentMethodSchema,
   FinancialSourceTypeSchema,
@@ -124,8 +125,12 @@ export const FinancialTransactionResponseSchema = z.object({
   dueDate: DateTimeSchema.nullable(),
   responsibleUserId: UuidSchema.nullable().optional(),
   responsibleUserName: z.string().nullable().optional(),
+  /** @deprecated Removido do contrato — use `category`. Some na Tarefa 6 do Bloco 4. */
   categoryId: UuidSchema.nullable().optional(),
+  /** @deprecated Removido do contrato — use `category`. Some na Tarefa 6 do Bloco 4. */
   categoryName: z.string().nullable().optional(),
+  // Transferência e ajuste de saldo vêm com category = null.
+  category: CategorySummaryResponseSchema.nullable(),
   origin: ModulesSchema.nullable().optional(),
   originName: z.string().nullable().optional(),
   observation: z.string().nullable().optional(),
@@ -168,9 +173,12 @@ export type FinancialTransactionUpcomingBillResponse = z.infer<
   typeof FinancialTransactionUpcomingBillResponseSchema
 >;
 
+// Contrato: DashboardFinancialCategoryExpenseResponse — somado pela categoria PRINCIPAL.
 export const FinancialTransactionCategoryExpenseResponseSchema = z.object({
   categoryId: UuidSchema,
   categoryName: z.string(),
+  categoryIcon: z.string(),
+  categoryColor: z.string(),
   totalAmount: MoneySchema,
 });
 export type FinancialTransactionCategoryExpenseResponse = z.infer<

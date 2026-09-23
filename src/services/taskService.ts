@@ -11,7 +11,7 @@ import { TaskHistoryResponseSchema, TaskPagedResponseSchema, TaskResponseSchema 
 import type { PaginatedResponse, Task } from '@/types';
 import { ApiPriority } from '@/types';
 
-import { mockCategoryTree, mockTasks } from '../mocks/data';
+import { MOCK_USER_ID, mockCategoryTree, mockTasks } from '../mocks/data';
 import { DATA_MODE } from './api/config';
 import { ENDPOINTS } from './api/endpoints';
 import { httpClient } from './api/httpClient';
@@ -91,6 +91,32 @@ export function taskToUpdateRequest(
 
 const _mockState = [...mockTasks];
 
+/** Espelha Task.RecalculateCompletion do backend: fecha só quando todos concluíram. */
+function recalcMockCompletion(task: Task): void {
+  const all = task.assignees.length > 0 && task.assignees.every((a) => a.isCompleted);
+  task.isCompleted = all;
+  task.completedAt = all
+    ? task.assignees.reduce<string>(
+        (max, a) => (a.completedAt && a.completedAt > max ? a.completedAt : max),
+        ''
+      ) || new Date().toISOString()
+    : null;
+  if (all) task.isOverdue = false;
+}
+
+/** Sem `assigneeId`, age sobre o usuário mock (como o backend age sobre quem chama). */
+function applyMockPart(task: Task, assigneeId: string | undefined, done: boolean): void {
+  const target = assigneeId ?? MOCK_USER_ID;
+  if (!task.assignees.some((a) => a.userId === target)) {
+    throw new Error('Você não é responsável por esta tarefa.');
+  }
+  const nowIso = new Date().toISOString();
+  task.assignees = task.assignees.map((a) =>
+    a.userId === target ? { ...a, isCompleted: done, completedAt: done ? nowIso : null } : a
+  );
+  recalcMockCompletion(task);
+}
+
 // ── API ───────────────────────────────────────────────────────────────────────
 
 export async function getActiveTasks(
@@ -158,9 +184,9 @@ export async function createTask(payload: CreateTaskRequest, nestId?: string): P
       isCompleted: false,
       completedAt: null,
       isOverdue: false,
-      createdBy: 'user-mock-0001',
+      createdBy: MOCK_USER_ID,
       createdAt: now,
-      assignees: (payload.assigneeIds ?? ['user-mock-0001']).map((id) => ({
+      assignees: (payload.assigneeIds?.length ? payload.assigneeIds : [MOCK_USER_ID]).map((id) => ({
         userId: id,
         name: 'Usuário Mock',
         photoUrl: null,
@@ -233,6 +259,7 @@ export async function updateTask(
             })
           : _mockState[idx].assignees,
       };
+      recalcMockCompletion(_mockState[idx]);
     }
     return new Promise((resolve) => setTimeout(resolve, 100));
   }
@@ -251,18 +278,16 @@ export async function deleteTask(id: string, nestId?: string): Promise<void> {
 export async function completeTask(id: string, nestId?: string, assigneeId?: string): Promise<Task> {
   if (DATA_MODE === 'mock') {
     const task = _mockState.find((t) => t.taskId === id);
-    if (task) {
-      task.isCompleted = true;
-      task.completedAt = new Date().toISOString();
-      task.isOverdue = false;
-      task.assignees = task.assignees.map((a) =>
-        !assigneeId || a.userId === assigneeId
-          ? { ...a, isCompleted: true, completedAt: new Date().toISOString() }
-          : a
-      );
-    }
     return new Promise((resolve, reject) =>
-      setTimeout(() => (task ? resolve({ ...task }) : reject(new Error('Task not found'))), 100)
+      setTimeout(() => {
+        if (!task) return reject(new Error('Task not found'));
+        try {
+          applyMockPart(task, assigneeId, true);
+          resolve({ ...task });
+        } catch (err) {
+          reject(err);
+        }
+      }, 100)
     );
   }
   const url = assigneeId
@@ -275,17 +300,16 @@ export async function completeTask(id: string, nestId?: string, assigneeId?: str
 export async function uncompleteTask(id: string, nestId?: string, assigneeId?: string): Promise<Task> {
   if (DATA_MODE === 'mock') {
     const task = _mockState.find((t) => t.taskId === id);
-    if (task) {
-      task.isCompleted = false;
-      task.completedAt = null;
-      task.assignees = task.assignees.map((a) =>
-        !assigneeId || a.userId === assigneeId
-          ? { ...a, isCompleted: false, completedAt: null }
-          : a
-      );
-    }
     return new Promise((resolve, reject) =>
-      setTimeout(() => (task ? resolve({ ...task }) : reject(new Error('Task not found'))), 100)
+      setTimeout(() => {
+        if (!task) return reject(new Error('Task not found'));
+        try {
+          applyMockPart(task, assigneeId, false);
+          resolve({ ...task });
+        } catch (err) {
+          reject(err);
+        }
+      }, 100)
     );
   }
   const url = assigneeId

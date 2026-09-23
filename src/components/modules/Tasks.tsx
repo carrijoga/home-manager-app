@@ -18,7 +18,7 @@ import { TaskStatus } from '@/types';
 import { useCategories } from '@/hooks/useCategories';
 import { buildCategoryChips, rootCategoryId } from '@/lib/taskCategories';
 import { CategoryScope } from '@/schemas/category';
-import { toErrorMessage } from './tasks/taskParts';
+import { getMyPart, NOT_ASSIGNEE_HINT, partitionForMyPart, partProgressMessage, skippedMessage, toErrorMessage } from './tasks/taskParts';
 
 import { KanbanBoard } from './tasks/KanbanBoard';
 import { QuickAddTaskBar } from './tasks/QuickAddTaskBar';
@@ -26,12 +26,15 @@ import { TaskBulkActionsBar } from './tasks/TaskBulkActionsBar';
 import { TaskFilterBar, TaskSortOrder,TaskStatusFilter } from './tasks/TaskFilterBar';
 import { TaskListView } from './tasks/TaskListView';
 import { TaskSideSummary } from './tasks/TaskSideSummary';
+import { TaskAssigneeActionsContext } from './tasks/TaskAssigneeActionsContext';
+import { useTaskViewer } from './tasks/useTaskViewer';
 
 type ViewMode = 'list' | 'kanban';
 
 function Tasks() {
   const { activeNestId } = useApp();
-  const { showSuccess, showError } = useToastNotifications();
+  const { showSuccess, showError, showInfo } = useToastNotifications();
+  const viewer = useTaskViewer();
 
   // ── Data ───────────────────────────────────────────────────────────────────
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -156,32 +159,56 @@ function Tasks() {
     setTasks((prev) => (prev.find((t) => t.taskId === task.taskId) ? prev : [task, ...prev]));
   }, []);
 
-  const handleComplete = useCallback(
-    async (taskId: string) => {
+  /** Troca a tarefa pela versão relida; a coluna "Concluído" só vale se a tarefa inteira fechou. */
+  const replaceTask = useCallback((updated: Task) => {
+    setTasks((prev) =>
+      prev.map((t) => {
+        if (t.taskId !== updated.taskId) return t;
+        const status = updated.isCompleted
+          ? TaskStatus.Concluido
+          : t.status === TaskStatus.Concluido
+            ? TaskStatus.AFazer
+            : t.status;
+        return { ...updated, status };
+      })
+    );
+  }, []);
+
+  /** Conclui/reabre a parte de `assigneeId` (ausente = minha parte). Devolve true em caso de sucesso. */
+  const setPart = useCallback(
+    async (taskId: string, done: boolean, assigneeId?: string, silent = false): Promise<boolean> => {
+      const nestId = activeNestId ?? undefined;
       try {
-        const updated = await taskService.completeTask(taskId, activeNestId ?? undefined);
-        setTasks((prev) =>
-          prev.map((t) => (t.taskId === taskId ? { ...updated, status: TaskStatus.Concluido } : t))
-        );
-      } catch {
-        showError('Erro ao concluir');
+        const updated = done
+          ? await taskService.completeTask(taskId, nestId, assigneeId)
+          : await taskService.uncompleteTask(taskId, nestId, assigneeId);
+        replaceTask(updated);
+        if (done && !silent && !assigneeId) {
+          const progress = partProgressMessage(updated);
+          if (progress) showSuccess(progress);
+        }
+        return true;
+      } catch (err) {
+        showError(toErrorMessage(err, done ? 'Erro ao concluir' : 'Erro ao reabrir tarefa'));
+        return false;
       }
     },
-    [activeNestId, showError]
+    [activeNestId, replaceTask, showSuccess, showError]
   );
 
-  const handleUncomplete = useCallback(
-    async (taskId: string) => {
-      try {
-        const updated = await taskService.uncompleteTask(taskId, activeNestId ?? undefined);
-        setTasks((prev) =>
-          prev.map((t) => (t.taskId === taskId ? { ...updated, status: TaskStatus.AFazer } : t))
-        );
-      } catch {
-        showError('Erro ao reabrir tarefa');
-      }
+  const handleComplete = useCallback((taskId: string) => {
+    void setPart(taskId, true);
+  }, [setPart]);
+
+  const handleUncomplete = useCallback((taskId: string) => {
+    void setPart(taskId, false);
+  }, [setPart]);
+
+  const handleToggleAssignee = useCallback(
+    (taskId: string, assigneeUserId: string, done: boolean) => {
+      void setPart(taskId, done, assigneeUserId === viewer.userId ? undefined : assigneeUserId);
     },
-    [activeNestId, showError]
+    [setPart, viewer.userId]
   );
 
   const handleDelete = useCallback(
@@ -219,31 +246,40 @@ function Tasks() {
       const { status, ...request } = payload;
       const nestId = activeNestId ?? undefined;
       try {
+        const boardStatus = status === TaskStatus.Concluido ? TaskStatus.AFazer : status;
+        let saved: Task;
         if (editingTask) {
           await taskService.updateTask(editingTask.taskId, request, nestId);
-          const saved = await taskService.getTaskById(editingTask.taskId, nestId);
+          saved = await taskService.getTaskById(editingTask.taskId, nestId);
+          const current = saved;
           setTasks((prev) =>
             prev.map((t) =>
-              t.taskId === saved.taskId
-                ? { ...saved, status: saved.isCompleted ? TaskStatus.Concluido : status }
+              t.taskId === current.taskId
+                ? { ...current, status: current.isCompleted ? TaskStatus.Concluido : boardStatus }
                 : t
             )
           );
           showSuccess('Tarefa atualizada!');
         } else {
-          const saved = await taskService.createTask(request, nestId);
+          saved = await taskService.createTask(request, nestId);
+          const current = saved;
           setTasks((prev) => [
-            { ...saved, status: saved.isCompleted ? TaskStatus.Concluido : status },
+            { ...current, status: current.isCompleted ? TaskStatus.Concluido : boardStatus },
             ...prev,
           ]);
           showSuccess('Tarefa criada!');
+        }
+        // "Concluído" no formulário segue a regra do checkbox: conclui a minha parte.
+        const myPart = getMyPart(saved, viewer.userId);
+        if (status === TaskStatus.Concluido && !saved.isCompleted && myPart && !myPart.isCompleted) {
+          await setPart(saved.taskId, true);
         }
       } catch (err) {
         showError(toErrorMessage(err, 'Erro ao salvar tarefa'));
         throw err;
       }
     },
-    [editingTask, activeNestId, showSuccess, showError]
+    [editingTask, activeNestId, viewer.userId, setPart, showSuccess, showError]
   );
 
   const openNewTask = useCallback(() => {
@@ -259,23 +295,26 @@ function Tasks() {
     );
   };
 
-  const handleBulkComplete = async () => {
-    for (const id of selectedTaskIds) {
-      await handleComplete(id);
+  const runBulkMyPart = async (done: boolean) => {
+    const selected = tasks.filter((t) => selectedTaskIds.includes(t.taskId));
+    const { actionable, notAssignee } = partitionForMyPart(selected, viewer.userId, done);
+    let ok = 0;
+    for (const t of actionable) {
+      if (await setPart(t.taskId, done, undefined, true)) ok++;
     }
-    showSuccess(`${selectedTaskIds.length} tarefas concluídas!`);
+    if (ok > 0) {
+      const noun = ok === 1 ? 'tarefa' : 'tarefas';
+      showSuccess(
+        done ? `Sua parte foi concluída em ${ok} ${noun}.` : `Sua parte foi reaberta em ${ok} ${noun}.`
+      );
+    }
+    if (notAssignee > 0) showInfo(skippedMessage(notAssignee));
     setSelectedTaskIds([]);
     setIsBulkMode(false);
   };
 
-  const handleBulkReopen = async () => {
-    for (const id of selectedTaskIds) {
-      await handleUncomplete(id);
-    }
-    showSuccess(`${selectedTaskIds.length} tarefas reabertas!`);
-    setSelectedTaskIds([]);
-    setIsBulkMode(false);
-  };
+  const handleBulkComplete = () => runBulkMyPart(true);
+  const handleBulkReopen = () => runBulkMyPart(false);
 
   const handleBulkDelete = async () => {
     const snaps = tasks.filter(t => selectedTaskIds.includes(t.taskId));
@@ -290,7 +329,8 @@ function Tasks() {
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <motion.div
+    <TaskAssigneeActionsContext.Provider value={handleToggleAssignee}>
+      <motion.div
       key="tasks-module"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
@@ -430,11 +470,27 @@ function Tasks() {
                 <KanbanBoard
                   tasks={filteredTasks}
                   onMoveTask={async (taskId, newStatus) => {
-                    setTasks(prev => prev.map(t => t.taskId === taskId ? { ...t, status: newStatus, isCompleted: newStatus === TaskStatus.Concluido, completedAt: newStatus === TaskStatus.Concluido ? new Date().toISOString() : t.completedAt } : t));
+                    const task = tasks.find((t) => t.taskId === taskId);
+                    if (!task) return;
+                    const touchesCompletion = newStatus === TaskStatus.Concluido || task.isCompleted;
+                    if (!touchesCompletion) {
+                      setTasks((prev) =>
+                        prev.map((t) => (t.taskId === taskId ? { ...t, status: newStatus } : t))
+                      );
+                      return;
+                    }
+                    if (!getMyPart(task, viewer.userId)) {
+                      showInfo(`${NOT_ASSIGNEE_HINT}.`);
+                      return;
+                    }
                     if (newStatus === TaskStatus.Concluido) {
-                      await taskService.completeTask(taskId, activeNestId ?? undefined).catch(() => {});
-                    } else {
-                      await taskService.uncompleteTask(taskId, activeNestId ?? undefined).catch(() => {});
+                      await setPart(taskId, true);
+                    } else if (await setPart(taskId, false)) {
+                      setTasks((prev) =>
+                        prev.map((t) =>
+                          t.taskId === taskId && !t.isCompleted ? { ...t, status: newStatus } : t
+                        )
+                      );
                     }
                   }}
                   onReorderTasks={(reordered) => setTasks(reordered)}
@@ -492,6 +548,7 @@ function Tasks() {
         }}
       />
     </motion.div>
+    </TaskAssigneeActionsContext.Provider>
   );
 }
 

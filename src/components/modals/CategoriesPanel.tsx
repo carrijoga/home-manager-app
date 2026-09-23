@@ -24,9 +24,9 @@ import {
   Textarea,
 } from '@/components/ui';
 import { cn } from '@/lib/utils';
-import type { CategoryResponse } from '@/schemas/category';
 import { TransactionType } from '@/schemas/enums';
-import * as categoryService from '@/services/categoryService';
+import type { CategoryResponse } from '@/schemas/legacyCategory';
+import * as categoryService from '@/services/legacyCategoryService';
 import type { AppUserNest } from '@/types';
 
 interface CategoriesPanelProps {

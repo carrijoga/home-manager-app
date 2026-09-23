@@ -3,8 +3,8 @@ import { useState } from 'react';
 
 import { CategoryCombobox } from '@/components/common/CategoryCombobox';
 import { Label } from '@/components/ui/label';
-import type { CategoryResponse } from '@/schemas/category';
 import { TransactionType } from '@/schemas/enums';
+import type { CategoryResponse } from '@/schemas/legacyCategory';
 
 const NEST_ID = '11111111-1111-4111-8111-111111111111';
 

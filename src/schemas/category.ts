@@ -1,66 +1,92 @@
 import { z } from 'zod';
 
-import { TransactionTypeSchema } from './enums';
 import { UuidSchema } from './shared';
+
+// ── Enum ──────────────────────────────────────────────────────────────────────
+
+export enum CategoryScope {
+  Expense = 1,
+  Income = 2,
+  Shopping = 3,
+  Task = 4,
+}
+
+export const CategoryScopeSchema = z
+  .union([z.number(), z.string()])
+  .transform(Number)
+  .pipe(z.nativeEnum(CategoryScope));
 
 // ── Requests ──────────────────────────────────────────────────────────────────
 
-export const CreateCategoryRequestSchema = z.object({
-  name: z.string().min(1, 'Nome é obrigatório'),
-  description: z.string().nullable().optional(),
-  color: z.string().nullable().optional(),
-  type: TransactionTypeSchema,
-});
-export type CreateCategoryRequest = z.infer<typeof CreateCategoryRequestSchema>;
+export interface CreateCategoryRequest {
+  scope: CategoryScope;
+  parentCategoryId: string | null;
+  name: string;
+  icon: string;
+  color: string | null;
+}
 
-export const UpdateCategoryRequestSchema = z.object({
-  name: z.string().min(1, 'Nome é obrigatório').optional(),
-  description: z.string().nullable().optional(),
-  color: z.string().nullable().optional(),
-  type: TransactionTypeSchema.optional(),
-});
-export type UpdateCategoryRequest = z.infer<typeof UpdateCategoryRequestSchema>;
+export interface UpdateCategoryRequest {
+  name: string;
+  icon: string;
+  color: string | null;
+}
 
-export const CategoryFilterSchema = z.object({
-  page: z.union([z.number().int(), z.string()]).optional(),
-  pageSize: z.union([z.number().int(), z.string()]).optional(),
-  ids: z.array(UuidSchema).nullable().optional(),
-  name: z.string().nullable().optional(),
-  description: z.string().nullable().optional(),
-  types: z.array(TransactionTypeSchema).nullable().optional(),
-});
-export type CategoryFilter = z.infer<typeof CategoryFilterSchema>;
-
-export const ListCategoryOptionsQuerySchema = z.object({
-  type: TransactionTypeSchema.nullable().optional(),
-  ids: z.array(UuidSchema).nullable().optional(),
-  description: z.string().nullable().optional(),
-});
-export type ListCategoryOptionsQuery = z.infer<typeof ListCategoryOptionsQuerySchema>;
+export interface MoveCategoryRequest {
+  parentCategoryId: string | null;
+  color: string | null;
+}
 
 // ── Responses ─────────────────────────────────────────────────────────────────
 
-export const CategoryResponseSchema = z.object({
-  categoryId: UuidSchema,
-  nestId: UuidSchema,
-  name: z.string(),
-  description: z.string().nullable().optional(),
-  type: TransactionTypeSchema,
-});
-export type CategoryResponse = z.infer<typeof CategoryResponseSchema>;
+export interface CategoryResponse {
+  categoryId: string;
+  scope: CategoryScope;
+  parentCategoryId: string | null;
+  name: string;
+  icon: string;
+  color: string;
+  children: CategoryResponse[];
+}
 
-// A API retorna um array puro de categorias (sem paginação) em /api/categories/list.
+export const CategoryResponseSchema: z.ZodType<CategoryResponse> = z.lazy(() =>
+  z.object({
+    categoryId: UuidSchema,
+    scope: CategoryScopeSchema,
+    parentCategoryId: UuidSchema.nullable(),
+    name: z.string(),
+    icon: z.string(),
+    color: z.string(),
+    children: z.array(CategoryResponseSchema).default([]),
+  })
+);
+
 export const CategoryListResponseSchema = z.array(CategoryResponseSchema);
-export type CategoryListResponse = z.infer<typeof CategoryListResponseSchema>;
 
-export const CategoryOptionResponseSchema = z.object({
+export const CategorySummaryResponseSchema = z.object({
   categoryId: UuidSchema,
   name: z.string(),
+  icon: z.string(),
+  color: z.string(),
+  parentCategoryId: UuidSchema.nullable(),
+  parentName: z.string().nullable(),
 });
-export type CategoryOptionResponse = z.infer<typeof CategoryOptionResponseSchema>;
+export type CategorySummaryResponse = z.infer<typeof CategorySummaryResponseSchema>;
 
-export const CategoryOptionListResponseSchema = z.array(CategoryOptionResponseSchema);
-export type CategoryOptionListResponse = z.infer<typeof CategoryOptionListResponseSchema>;
+export const CategoryModuleUsageResponseSchema = z.object({
+  module: z.string(),
+  count: z.union([z.number(), z.string()]).transform(Number),
+  blocksDeletion: z.boolean(),
+});
+export type CategoryModuleUsageResponse = z.infer<typeof CategoryModuleUsageResponseSchema>;
 
-// /api/categories/create retorna apenas o UUID da categoria criada (não o objeto completo).
+export const CategoryUsageResponseSchema = z.object({
+  children: z.union([z.number(), z.string()]).transform(Number),
+  usages: z.array(CategoryModuleUsageResponseSchema),
+  canDelete: z.boolean(),
+  blockingReason: z.string().nullable(),
+});
+export type CategoryUsageResponse = z.infer<typeof CategoryUsageResponseSchema>;
+
+/** POST /api/categories devolve apenas o UUID criado. */
 export const CreateCategoryResponseSchema = UuidSchema;

@@ -17,8 +17,8 @@ import {
   TooltipTrigger,
 } from '@/components/ui';
 import type { BankAccountResponse } from '@/schemas/bank-account';
-import type { CategoryResponse } from '@/schemas/category';
 import { TransactionType } from '@/schemas/enums';
+import type { CategoryResponse } from '@/schemas/legacyCategory';
 import type { NestMember } from '@/schemas/nest';
 
 import { MoreDetails } from './MoreDetails';

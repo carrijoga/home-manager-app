@@ -75,13 +75,24 @@ export const ENDPOINTS = {
     delete: (id: string) => `/api/financial-transactions/${id}`,
   },
 
-  // Categorias
-  categories: {
+  // Categorias (legado — TransactionType, sem árvore). Migrar para `categories` abaixo.
+  legacyCategories: {
     create: '/api/categories/create',
     list: '/api/categories/list',
     listOptions: '/api/categories/list-options',
     getById: '/api/categories/get-by-id',
     update: (id: string) => `/api/categories/${id}`,
+    delete: (id: string) => `/api/categories/${id}`,
+  },
+
+  // Categorias unificadas (árvore por escopo: Expense/Income/Shopping/Task)
+  categories: {
+    list: '/api/categories',
+    getById: (id: string) => `/api/categories/${id}`,
+    usage: (id: string) => `/api/categories/${id}/usage`,
+    create: '/api/categories',
+    update: (id: string) => `/api/categories/${id}`,
+    move: (id: string) => `/api/categories/${id}/parent`,
     delete: (id: string) => `/api/categories/${id}`,
   },
 

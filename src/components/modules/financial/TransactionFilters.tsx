@@ -1,7 +1,7 @@
 import { Search } from 'lucide-react';
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui';
-import type { CategoryResponse } from '@/schemas/category';
+import type { CategoryResponse } from '@/schemas/legacyCategory';
 
 export interface TransactionFiltersState {
   type: 'all' | 'expense' | 'income' | 'transfer';

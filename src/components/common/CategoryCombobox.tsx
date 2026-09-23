@@ -12,8 +12,8 @@ import {
 } from '@/components/ui/command';
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
 import { cn } from '@/lib/utils';
-import type { CategoryOptionResponse, CategoryResponse } from '@/schemas/category';
 import { TransactionType } from '@/schemas/enums';
+import type { CategoryOptionResponse, CategoryResponse } from '@/schemas/legacyCategory';
 
 export interface CategoryComboboxProps {
   categories: Array<CategoryResponse | CategoryOptionResponse>;

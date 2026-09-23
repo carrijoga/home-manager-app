@@ -25,7 +25,6 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { usePolling } from '@/hooks/usePolling';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import type { BankAccountResponse } from '@/schemas/bank-account';
-import type { CategoryResponse } from '@/schemas/category';
 import { PaymentStatus, TransactionType } from '@/schemas/enums';
 import type {
   AddPaymentRequest,
@@ -35,11 +34,12 @@ import type {
   FinancialTransactionUpcomingBillResponse,
   UpdateTransactionRequest,
 } from '@/schemas/financial';
+import type { CategoryResponse } from '@/schemas/legacyCategory';
 import type { NestMember } from '@/schemas/nest';
 import type { PaymentCardResponse } from '@/schemas/payment-card';
 import * as bankAccountService from '@/services/bankAccountService';
-import * as categoryService from '@/services/categoryService';
 import * as financialService from '@/services/financialService';
+import * as categoryService from '@/services/legacyCategoryService';
 import * as nestService from '@/services/nestService';
 import * as paymentCardService from '@/services/paymentCardService';
 import { getEffectiveAmount, getMonthLabel, getMonthRange } from '@/utils/financialUtils';

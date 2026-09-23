@@ -15,9 +15,9 @@ import {
 } from '@/components/ui';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
-import type { CategoryResponse } from '@/schemas/category';
 import { TransactionType } from '@/schemas/enums';
-import * as categoryService from '@/services/categoryService';
+import type { CategoryResponse } from '@/schemas/legacyCategory';
+import * as categoryService from '@/services/legacyCategoryService';
 
 interface CreateCategoryModalProps {
   open: boolean;

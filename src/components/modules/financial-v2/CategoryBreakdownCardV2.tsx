@@ -3,8 +3,8 @@ import { Check, Filter, Lightbulb, Plus, TrendingUp } from 'lucide-react';
 
 import { AnimatedCurrency, AnimatedPercent } from '@/components/common/AnimatedNumber';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
-import type { CategoryResponse } from '@/schemas/category';
 import type { FinancialTransactionCategoryExpenseResponse } from '@/schemas/financial';
+import type { CategoryResponse } from '@/schemas/legacyCategory';
 
 interface CategoryBreakdownCardV2Props {
   expensesByCategory: FinancialTransactionCategoryExpenseResponse[];

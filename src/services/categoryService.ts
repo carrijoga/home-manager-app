@@ -1,32 +1,51 @@
-import type {
-  CategoryFilter,
-  CategoryListResponse,
-  CategoryOptionResponse,
-  CategoryResponse,
-  CreateCategoryRequest,
-  ListCategoryOptionsQuery,
-  UpdateCategoryRequest,
-} from '@/schemas/category';
+import { getCurrentLanguage, getErrorMessageByCode } from '@/i18n';
 import {
   CategoryListResponseSchema,
-  CategoryOptionListResponseSchema,
+  type CategoryResponse,
   CategoryResponseSchema,
+  CategoryScope,
+  type CategoryUsageResponse,
+  CategoryUsageResponseSchema,
+  type CreateCategoryRequest,
   CreateCategoryResponseSchema,
+  type MoveCategoryRequest,
+  type UpdateCategoryRequest,
 } from '@/schemas/category';
 
-import { mockFinancialCategories } from '../mocks/data';
+import { mockCategoryTree } from '../mocks/data';
 import { DATA_MODE } from './api/config';
 import { ENDPOINTS } from './api/endpoints';
-import { httpClient } from './api/httpClient';
+import { ApiError, httpClient } from './api/httpClient';
 
-// Cópia mutável — simula persistência entre chamadas no modo mock, sem alterar
-// o array exportado original (reinicia em full reload/HMR, igual a `finSeq` em mocks/data.ts).
-let mockCategoriesStore: CategoryResponse[] = [...mockFinancialCategories];
+// ── Mock store ────────────────────────────────────────────────────────────────
+// Cópia profunda mutável: simula persistência entre chamadas no modo mock
+// (reinicia em full reload/HMR).
+let mockStore: CategoryResponse[] = structuredClone(mockCategoryTree);
+
+const delay = <T>(value: T) => new Promise<T>((resolve) => setTimeout(() => resolve(value), 100));
+
+function sortTree(tree: CategoryResponse[]): CategoryResponse[] {
+  return [...tree]
+    .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
+    .map((c) => ({ ...c, children: sortTree(c.children) }));
+}
+
+function mockFind(id: string): { cat: CategoryResponse; parent: CategoryResponse | null } | null {
+  for (const root of mockStore) {
+    if (root.categoryId === id) return { cat: root, parent: null };
+    const child = root.children.find((c) => c.categoryId === id);
+    if (child) return { cat: child, parent: root };
+  }
+  return null;
+}
+
+function mockFail(code: string): never {
+  const message = getErrorMessageByCode(code, getCurrentLanguage()) ?? code;
+  throw new ApiError(message, 400, code);
+}
 
 function safeParse<T>(
-  schema: {
-    safeParse: (v: unknown) => { success: boolean; data?: T; error?: { flatten: () => unknown } };
-  },
+  schema: { safeParse: (v: unknown) => { success: boolean; data?: T; error?: { flatten: () => unknown } } },
   raw: unknown,
   name: string
 ): T {
@@ -37,132 +56,148 @@ function safeParse<T>(
     }
     return raw as T;
   }
-  return result.data!;
+  return result.data as T;
 }
 
-/** Lista categorias com filtro. A API retorna um array puro (sem paginação). */
+// ── API ───────────────────────────────────────────────────────────────────────
+
+/** Árvore de categorias (principais com subcategorias), em ordem alfabética. */
 export async function listCategories(
-  filter?: CategoryFilter,
-  nestId?: string
-): Promise<CategoryListResponse> {
+  nestId: string | undefined,
+  scope?: CategoryScope
+): Promise<CategoryResponse[]> {
   if (DATA_MODE === 'mock') {
-    const items = filter?.types?.length
-      ? mockCategoriesStore.filter((c) => filter.types!.includes(c.type))
-      : mockCategoriesStore;
-    return new Promise((resolve) => setTimeout(() => resolve(items), 100));
+    const items = scope ? mockStore.filter((c) => c.scope === scope) : mockStore;
+    return delay(sortTree(structuredClone(items)));
   }
-  const raw = await httpClient.post<unknown>(ENDPOINTS.categories.list, filter ?? {}, { nestId });
+  const path = scope ? `${ENDPOINTS.categories.list}?scope=${scope}` : ENDPOINTS.categories.list;
+  const raw = await httpClient.get<unknown>(path, nestId);
   return safeParse(CategoryListResponseSchema, raw, 'listCategories');
 }
 
-/** Lista um conjunto minificado de categorias (apenas ID e nome) para selects. */
-export async function listCategoryOptions(
-  query?: ListCategoryOptionsQuery,
-  nestId?: string
-): Promise<CategoryOptionResponse[]> {
+export async function getCategoryById(nestId: string | undefined, id: string): Promise<CategoryResponse> {
   if (DATA_MODE === 'mock') {
-    let items = [...mockCategoriesStore];
-    if (query?.type != null) {
-      items = items.filter((c) => c.type === query.type);
-    }
-    if (query?.ids?.length) {
-      items = items.filter((c) => query.ids!.includes(c.categoryId));
-    }
-    if (query?.description) {
-      const descLower = query.description.toLowerCase();
-      items = items.filter((c) => c.description?.toLowerCase().includes(descLower));
-    }
-    const options: CategoryOptionResponse[] = items.map((c) => ({
-      categoryId: c.categoryId,
-      name: c.name,
-    }));
-    return new Promise((resolve) => setTimeout(() => resolve(options), 100));
+    const found = mockFind(id);
+    if (!found) mockFail('Category_NotFound');
+    return delay(structuredClone(found.cat));
   }
-  const raw = await httpClient.post<unknown>(ENDPOINTS.categories.listOptions, query ?? {}, {
-    nestId,
-  });
-  return safeParse(CategoryOptionListResponseSchema, raw, 'listCategoryOptions');
-}
-
-/**
- * Cria uma nova categoria. A API retorna apenas o UUID da categoria criada,
- * então o objeto completo é montado localmente a partir do payload enviado.
- */
-export async function createCategory(
-  payload: CreateCategoryRequest,
-  nestId?: string
-): Promise<CategoryResponse> {
-  if (DATA_MODE === 'mock') {
-    const created: CategoryResponse = {
-      categoryId: `fincat-mock-${Date.now()}`,
-      nestId: nestId ?? 'nest-mock-0001',
-      name: payload.name,
-      description: payload.description ?? undefined,
-      type: payload.type,
-    };
-    mockCategoriesStore = [...mockCategoriesStore, created];
-    return new Promise((resolve) => setTimeout(() => resolve(created), 100));
-  }
-  const raw = await httpClient.post<unknown>(ENDPOINTS.categories.create, payload, { nestId });
-  const categoryId = safeParse(CreateCategoryResponseSchema, raw, 'createCategory');
-  return {
-    categoryId,
-    nestId: nestId ?? '',
-    name: payload.name,
-    description: payload.description ?? undefined,
-    type: payload.type,
-  };
-}
-
-/** Busca uma categoria pelo ID */
-export async function getCategoryById(id: string, nestId?: string): Promise<CategoryResponse> {
-  const raw = await httpClient.get<unknown>(`${ENDPOINTS.categories.getById}?id=${id}`, nestId);
+  const raw = await httpClient.get<unknown>(ENDPOINTS.categories.getById(id), nestId);
   return safeParse(CategoryResponseSchema, raw, 'getCategoryById');
 }
 
-/** Atualiza os dados de uma categoria */
-export async function updateCategory(
-  id: string,
-  payload: UpdateCategoryRequest,
-  nestId?: string
-): Promise<CategoryResponse> {
+export async function getCategoryUsage(
+  nestId: string | undefined,
+  id: string
+): Promise<CategoryUsageResponse> {
   if (DATA_MODE === 'mock') {
-    const idx = mockCategoriesStore.findIndex((c) => c.categoryId === id);
-    if (idx >= 0) {
-      mockCategoriesStore[idx] = {
-        ...mockCategoriesStore[idx],
-        name: payload.name ?? mockCategoriesStore[idx].name,
-        description:
-          payload.description !== undefined
-            ? (payload.description ?? undefined)
-            : mockCategoriesStore[idx].description,
-        type: payload.type ?? mockCategoriesStore[idx].type,
-      };
-      return new Promise((resolve) => setTimeout(() => resolve(mockCategoriesStore[idx]), 100));
-    }
+    const found = mockFind(id);
+    if (!found) mockFail('Category_NotFound');
+    const children = found.cat.children.length;
+    return delay({
+      children,
+      usages: [],
+      canDelete: children === 0,
+      blockingReason: children > 0 ? 'Category_CannotDeleteWithChildren' : null,
+    });
   }
-  await httpClient.put<void>(ENDPOINTS.categories.update(id), payload, nestId);
-  try {
-    return await getCategoryById(id, nestId);
-  } catch {
-    return {
-      categoryId: id,
-      nestId: nestId ?? '',
-      name: payload.name ?? '',
-      description: payload.description ?? undefined,
-      type: payload.type ?? 1,
-    };
-  }
+  const raw = await httpClient.get<unknown>(ENDPOINTS.categories.usage(id), nestId);
+  return safeParse(CategoryUsageResponseSchema, raw, 'getCategoryUsage');
 }
 
-/** Exclui uma categoria */
-export async function deleteCategory(id: string, nestId?: string): Promise<void> {
+/** Cria uma categoria e devolve o UUID criado. */
+export async function createCategory(
+  nestId: string | undefined,
+  req: CreateCategoryRequest
+): Promise<string> {
   if (DATA_MODE === 'mock') {
-    const idx = mockCategoriesStore.findIndex((c) => c.categoryId === id);
-    if (idx >= 0) {
-      mockCategoriesStore.splice(idx, 1);
+    const id = crypto.randomUUID();
+    if (req.parentCategoryId) {
+      const parent = mockFind(req.parentCategoryId);
+      if (!parent) mockFail('Category_NotFound');
+      if (parent.parent) mockFail('Category_MaxDepthExceeded');
+      if (parent.cat.children.some((c) => c.name.toLowerCase() === req.name.toLowerCase()))
+        mockFail('Category_NameAlreadyExists');
+      parent.cat.children.push({
+        categoryId: id,
+        scope: parent.cat.scope,
+        parentCategoryId: parent.cat.categoryId,
+        name: req.name,
+        icon: req.icon,
+        color: parent.cat.color,
+        children: [],
+      });
+    } else {
+      if (mockStore.some((c) => c.scope === req.scope && c.name.toLowerCase() === req.name.toLowerCase()))
+        mockFail('Category_NameAlreadyExists');
+      mockStore.push({
+        categoryId: id,
+        scope: req.scope,
+        parentCategoryId: null,
+        name: req.name,
+        icon: req.icon,
+        color: req.color ?? '#64748B',
+        children: [],
+      });
     }
-    return new Promise((resolve) => setTimeout(resolve, 100));
+    return delay(id);
+  }
+  const raw = await httpClient.post<unknown>(ENDPOINTS.categories.create, req, { nestId });
+  return safeParse(CreateCategoryResponseSchema, raw, 'createCategory');
+}
+
+export async function updateCategory(
+  nestId: string | undefined,
+  id: string,
+  req: UpdateCategoryRequest
+): Promise<void> {
+  if (DATA_MODE === 'mock') {
+    const found = mockFind(id);
+    if (!found) mockFail('Category_NotFound');
+    found.cat.name = req.name;
+    found.cat.icon = req.icon;
+    if (!found.parent && req.color) {
+      found.cat.color = req.color;
+      found.cat.children.forEach((c) => (c.color = req.color!));
+    }
+    return delay(undefined);
+  }
+  await httpClient.put<void>(ENDPOINTS.categories.update(id), req, nestId);
+}
+
+export async function moveCategory(
+  nestId: string | undefined,
+  id: string,
+  req: MoveCategoryRequest
+): Promise<void> {
+  if (DATA_MODE === 'mock') {
+    const found = mockFind(id);
+    if (!found) mockFail('Category_NotFound');
+    const { cat, parent } = found;
+    if (req.parentCategoryId === cat.categoryId) mockFail('Category_InvalidMove');
+    if (req.parentCategoryId && cat.children.length > 0) mockFail('Category_MaxDepthExceeded');
+    // remove da posição atual
+    if (parent) parent.children = parent.children.filter((c) => c.categoryId !== id);
+    else mockStore = mockStore.filter((c) => c.categoryId !== id);
+    if (req.parentCategoryId) {
+      const target = mockFind(req.parentCategoryId);
+      if (!target || target.parent || target.cat.scope !== cat.scope) mockFail('Category_ParentScopeMismatch');
+      target.cat.children.push({ ...cat, parentCategoryId: target.cat.categoryId, color: target.cat.color });
+    } else {
+      mockStore.push({ ...cat, parentCategoryId: null, color: req.color ?? cat.color });
+    }
+    return delay(undefined);
+  }
+  await httpClient.put<void>(ENDPOINTS.categories.move(id), req, nestId);
+}
+
+export async function deleteCategory(nestId: string | undefined, id: string): Promise<void> {
+  if (DATA_MODE === 'mock') {
+    const found = mockFind(id);
+    if (!found) mockFail('Category_NotFound');
+    if (found.cat.children.length > 0) mockFail('Category_CannotDeleteWithChildren');
+    if (found.parent) found.parent.children = found.parent.children.filter((c) => c.categoryId !== id);
+    else mockStore = mockStore.filter((c) => c.categoryId !== id);
+    return delay(undefined);
   }
   await httpClient.del<void>(ENDPOINTS.categories.delete(id), nestId);
 }

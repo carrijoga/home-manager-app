@@ -10,8 +10,8 @@ import {
   SelectValue,
   Textarea,
 } from '@/components/ui';
-import type { CategoryResponse } from '@/schemas/category';
 import { ApiPaymentMethod, TransactionType } from '@/schemas/enums';
+import type { CategoryResponse } from '@/schemas/legacyCategory';
 import type { NestMember } from '@/schemas/nest';
 
 import { MoreDetails } from './MoreDetails';

@@ -17,9 +17,9 @@ import {
   SelectValue,
   Switch,
 } from '@/components/ui';
-import type { CategoryResponse } from '@/schemas/category';
 import { NestRole, TransactionType } from '@/schemas/enums';
-import * as categoryService from '@/services/categoryService';
+import type { CategoryResponse } from '@/schemas/legacyCategory';
+import * as categoryService from '@/services/legacyCategoryService';
 import * as nestService from '@/services/nestService';
 import type { AppUserNest } from '@/types';
 

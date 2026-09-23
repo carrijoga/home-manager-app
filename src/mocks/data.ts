@@ -6,11 +6,12 @@
 
 import { getItemEstimatedTotal, getItemSpentTotal } from '@/components/modules/Shopping/helpers';
 import type { BankAccountResponse } from '@/schemas/bank-account';
-import type { CategoryResponse } from '@/schemas/category';
+import { type CategoryResponse as UnifiedCategoryResponse,CategoryScope } from '@/schemas/category';
 import type {
   FinancialTransactionPaymentResponse,
   FinancialTransactionResponse,
 } from '@/schemas/financial';
+import type { CategoryResponse } from '@/schemas/legacyCategory';
 import type { PaymentCardInvoice, PaymentCardResponse } from '@/schemas/payment-card';
 import type {
   AppNotification,
@@ -999,6 +1000,58 @@ export const mockFinancialCategories = [
     type: 0,
   },
 ] satisfies CategoryResponse[];
+
+// ── Categorias unificadas (árvore por escopo) ─────────────────────────────────
+
+function mockCat(
+  id: string,
+  scope: CategoryScope,
+  name: string,
+  icon: string,
+  color: string,
+  children: Array<[string, string, string]> = []
+): UnifiedCategoryResponse {
+  return {
+    categoryId: id,
+    scope,
+    parentCategoryId: null,
+    name,
+    icon,
+    color,
+    children: children.map(([childId, childName, childIcon]) => ({
+      categoryId: childId,
+      scope,
+      parentCategoryId: id,
+      name: childName,
+      icon: childIcon,
+      color,
+      children: [],
+    })),
+  };
+}
+
+export const mockCategoryTree: UnifiedCategoryResponse[] = [
+  mockCat('c0000001-0000-4000-8000-000000000001', CategoryScope.Expense, 'Moradia', '🏠', '#3B82F6', [
+    ['c0000001-0000-4000-8000-000000000011', 'Aluguel', '🔑'],
+    ['c0000001-0000-4000-8000-000000000012', 'Energia', '💡'],
+  ]),
+  mockCat('c0000001-0000-4000-8000-000000000002', CategoryScope.Expense, 'Alimentação', '🍽️', '#F97316', [
+    ['c0000001-0000-4000-8000-000000000021', 'Mercado', '🛒'],
+  ]),
+  mockCat('c0000001-0000-4000-8000-000000000003', CategoryScope.Expense, 'Transporte', '🚗', '#6366F1'),
+  mockCat('c0000002-0000-4000-8000-000000000001', CategoryScope.Income, 'Salário', '💼', '#22C55E'),
+  mockCat('c0000002-0000-4000-8000-000000000002', CategoryScope.Income, 'Extras', '💸', '#14B8A6', [
+    ['c0000002-0000-4000-8000-000000000021', 'Freelance', '🤝'],
+  ]),
+  mockCat('c0000003-0000-4000-8000-000000000001', CategoryScope.Shopping, 'Hortifruti', '🥦', '#84CC16'),
+  mockCat('c0000003-0000-4000-8000-000000000002', CategoryScope.Shopping, 'Limpeza', '🧼', '#06B6D4', [
+    ['c0000003-0000-4000-8000-000000000021', 'Lavanderia', '🧺'],
+  ]),
+  mockCat('c0000003-0000-4000-8000-000000000003', CategoryScope.Shopping, 'Padaria', '🍞', '#F59E0B'),
+  mockCat('c0000004-0000-4000-8000-000000000001', CategoryScope.Task, 'Limpeza', '🧹', '#06B6D4'),
+  mockCat('c0000004-0000-4000-8000-000000000002', CategoryScope.Task, 'Cozinha', '🍳', '#EF4444'),
+  mockCat('c0000004-0000-4000-8000-000000000003', CategoryScope.Task, 'Manutenção', '🛠️', '#64748B'),
+];
 
 const FIN_NEST_ID = 'nest-mock-0001';
 const FIN_JOAO = { id: 'user-mock-0001', name: 'João (Você)' };

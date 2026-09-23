@@ -9,13 +9,13 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import type { BankAccountResponse } from '@/schemas/bank-account';
-import type { CategoryResponse } from '@/schemas/category';
 import { TransactionType } from '@/schemas/enums';
 import type {
   CreateTransactionRequest,
   FinancialTransactionResponse,
   UpdateTransactionRequest,
 } from '@/schemas/financial';
+import type { CategoryResponse } from '@/schemas/legacyCategory';
 import type { NestMember } from '@/schemas/nest';
 import * as bankAccountService from '@/services/bankAccountService';
 import * as nestService from '@/services/nestService';

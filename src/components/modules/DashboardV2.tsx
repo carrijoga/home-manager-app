@@ -19,16 +19,16 @@ import {
   saveWeatherPreferences,
   WEATHER_PREFERENCES_UPDATED_EVENT,
 } from '@/lib/weatherPreferences';
-import type { CategoryResponse } from '@/schemas/category';
 import type { DashboardResponse } from '@/schemas/dashboard';
 import type { CreateTransactionRequest, UpdateTransactionRequest } from '@/schemas/financial';
+import type { CategoryResponse } from '@/schemas/legacyCategory';
 import type { NestMember } from '@/schemas/nest';
 import { DATA_MODE } from '@/services/api/config';
 import { ENDPOINTS } from '@/services/api/endpoints';
 import * as calendarService from '@/services/calendarService';
-import * as categoryService from '@/services/categoryService';
 import * as dashboardService from '@/services/dashboardService';
 import * as financialService from '@/services/financialService';
+import * as categoryService from '@/services/legacyCategoryService';
 import * as nestService from '@/services/nestService';
 import * as noticeService from '@/services/noticeService';
 import * as taskService from '@/services/taskService';

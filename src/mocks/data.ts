@@ -11,7 +11,6 @@ import type {
   FinancialTransactionPaymentResponse,
   FinancialTransactionResponse,
 } from '@/schemas/financial';
-import type { CategoryResponse } from '@/schemas/legacyCategory';
 import type { PaymentCardInvoice, PaymentCardResponse } from '@/schemas/payment-card';
 import type {
   AppNotification,
@@ -999,7 +998,7 @@ export const mockFinancialCategories = [
     name: 'Renda',
     type: 0,
   },
-] satisfies CategoryResponse[];
+] satisfies Array<{ categoryId: string; nestId: string; name: string; type: number }>;
 
 // ── Categorias unificadas (árvore por escopo) ─────────────────────────────────
 

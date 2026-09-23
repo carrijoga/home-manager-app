@@ -40,8 +40,8 @@ Pick by **the nature of the data**, not by how many options happen to exist toda
 | Data                                                                   | Control                                                        |
 | ---------------------------------------------------------------------- | -------------------------------------------------------------- |
 | Closed enum / fixed domain — card type, payment method, priority, unit | Radix `Select`                                                 |
-| User-owned records — categories, accounts, members, products           | Searchable combobox (`Popover` + `Command`)                    |
-| Needs "create it right here"                                           | Combobox with an inline create action — see `CategoryCombobox` |
+| User-owned records — accounts, members, products                       | Searchable combobox (`Popover` + `Command`)                    |
+| Categories (unified tree by scope)                                     | Category tree picker (see `categoryService` and tests)         |
 
 A closed enum stays a `Select` even if it has 20 entries; a user list stays a combobox even if it has 2. Size is not the criterion — whether the set is authored by the app or by the user is.
 
@@ -69,11 +69,10 @@ Note: `SelectItem` cannot have an empty-string `value` (Radix throws). Represent
 - Labels: `className="text-xs text-muted-foreground uppercase tracking-wide"`
 - Inputs and select triggers: `className="bg-muted/30 border-border/40"`
 - Wrap each field in `<div className="space-y-1.5">`
-- Financial category pickers use `CategoryCombobox` (`common/`), not a bare Select
 
 **Combobox trigger styling** — a combobox trigger is a `Button variant="outline"` with `role="combobox"` and `className="w-full justify-between font-normal"`. The selected value renders in `text-foreground`; the placeholder in `text-muted-foreground`. The popover is `className="w-[--radix-popover-trigger-width] p-0" align="start"` so it matches the trigger width.
 
-There is deliberately no single shared combobox component: `CategoryCombobox` owns inline creation, while the Shopping dialogs (`ItemFormDialog`, `BulkEditDialog`) own type-to-open keyboard handling and a "none" sentinel item. Match whichever is closer to your case rather than forcing them together.
+Shopping dialogs (`ItemFormDialog`, `BulkEditDialog`) own type-to-open keyboard handling and a "none" sentinel item. Match this pattern when building similar context-specific pickers.
 
 **Every Sheet/Dialog needs a title primitive** — `SheetTitle` (or `DialogTitle`), never a plain `<h2>`. Radix logs an accessibility error and the dialog is unlabelled for screen readers otherwise. If the title should be visually hidden, wrap it in `VisuallyHidden.Root` (see `SettingsModal`).
 

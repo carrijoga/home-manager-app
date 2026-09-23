@@ -23,6 +23,7 @@
     "test:categories": "npx tsx scripts/test-categories.ts",
     "test:shopping": "npx tsx scripts/test-shopping-grouping.ts",
     "test:task-parts": "npx tsx scripts/test-task-parts.ts",
+    "test:task-categories": "npx tsx scripts/test-task-categories.ts",
     "icons:generate": "node scripts/generate-icons.js",
     "convert:webp": "node scripts/convert-webp.js"
   },

@@ -21,6 +21,7 @@
     "build-storybook": "storybook build",
     "test:errors": "npx tsx scripts/test-error-codes.ts",
     "test:categories": "npx tsx scripts/test-categories.ts",
+    "test:shopping": "npx tsx scripts/test-shopping-grouping.ts",
     "icons:generate": "node scripts/generate-icons.js",
     "convert:webp": "node scripts/convert-webp.js"
   },

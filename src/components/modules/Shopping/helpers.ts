@@ -31,6 +31,25 @@ export function quantityLabel(quantity: number | string, unitType: number | stri
   return `${quantity} ${UNIT_TYPE_LABELS[Number(unitType)] ?? 'un'}`;
 }
 
+/** Rótulo de quantidade: comprada (se comprado) + "(planejado …)" quando difere. */
+export function getQuantityDisplay(item: {
+  quantity: number | string;
+  purchasedQuantity?: number | null;
+  unitType: number | string;
+  isPurchased: boolean;
+  status?: number;
+}): { label: string; plannedLabel: string | null } {
+  const purchased = item.isPurchased || item.status === 1;
+  if (purchased && item.purchasedQuantity != null) {
+    const differs = Number(item.purchasedQuantity) !== Number(item.quantity);
+    return {
+      label: quantityLabel(item.purchasedQuantity, item.unitType),
+      plannedLabel: differs ? `(planejado ${quantityLabel(item.quantity, item.unitType)})` : null,
+    };
+  }
+  return { label: quantityLabel(item.quantity, item.unitType), plannedLabel: null };
+}
+
 export function isPricePerUnit(unitType: number | string): boolean {
   return [0, 1, 3, 5, 6, 7].includes(Number(unitType));
 }
@@ -49,13 +68,22 @@ export function getItemEstimatedTotal(
   return Number(estimatedPrice) * getItemMultiplier(unitType, quantity);
 }
 
-export function getItemSpentTotal(
-  price: number | null | undefined,
-  quantity: number | string,
-  unitType: number | string
-): number {
-  if (price == null) return 0;
-  return Number(price) * getItemMultiplier(unitType, quantity);
+/** Quantidade usada no gasto: a comprada quando > 0, senão 1 (regra do backend). */
+export function getSpentQuantity(item: { purchasedQuantity?: number | string | null }): number {
+  const qty = Number(item.purchasedQuantity ?? 0);
+  return qty > 0 ? qty : 1;
+}
+
+export interface SpentInput {
+  price?: number | null;
+  purchasedQuantity?: number | string | null;
+  unitType: number | string;
+}
+
+/** Gasto = preço × quantidade comprada (em unidades por item; g/mL não multiplicam). */
+export function getItemSpentTotal(item: SpentInput): number {
+  if (item.price == null) return 0;
+  return Number(item.price) * getItemMultiplier(item.unitType, getSpentQuantity(item));
 }
 
 export function unitPriceLabel(
@@ -67,15 +95,18 @@ export function unitPriceLabel(
   return `R$ ${Number(price).toFixed(2).replace('.', ',')}/${unit}`;
 }
 
-export function getSavingsInfo(
-  estimatedPrice: number | null | undefined,
-  paidPrice: number | null | undefined,
-  quantity: number,
-  unitType: number
-) {
-  if (estimatedPrice == null || paidPrice == null) return null;
-  const estTotal = getItemEstimatedTotal(estimatedPrice, quantity, unitType);
-  const paidTotal = getItemSpentTotal(paidPrice, quantity, unitType);
+export interface SavingsInput extends SpentInput {
+  estimatedPrice?: number | null;
+}
+
+/**
+ * Variação de preço do item comprado. O estimado é recalculado na quantidade
+ * comprada: comprar mais do que o planejado não conta como "acréscimo".
+ */
+export function getSavingsInfo(item: SavingsInput) {
+  if (item.estimatedPrice == null || item.price == null) return null;
+  const estTotal = getItemEstimatedTotal(item.estimatedPrice, getSpentQuantity(item), item.unitType);
+  const paidTotal = getItemSpentTotal(item);
   if (estTotal <= 0) return null;
   const diff = paidTotal - estTotal;
   if (Math.abs(diff) < 0.01) return { type: 'equal' as const, diff: 0, pct: 0 };

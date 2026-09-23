@@ -245,7 +245,7 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
   const totalSpent =
     detailData?.items
       .filter((i) => i.isPurchased)
-      .reduce((s, i) => s + getItemSpentTotal(i.price, i.quantity, i.unitType), 0) ?? 0;
+      .reduce((s, i) => s + getItemSpentTotal(i), 0) ?? 0;
   const remaining = Math.max(0, totalEstimated - totalSpent);
 
   if (isLoadingDetail || !detailData) {
@@ -469,7 +469,7 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
       {selectedItem && (() => {
         const itemSpent =
           selectedItem.isPurchased && selectedItem.price != null
-            ? getItemSpentTotal(selectedItem.price, selectedItem.quantity, selectedItem.unitType)
+            ? getItemSpentTotal(selectedItem)
             : null;
 
         const itemEstimated =
@@ -481,14 +481,7 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
               )
             : null;
 
-        const itemSavings = selectedItem.isPurchased
-          ? getSavingsInfo(
-              selectedItem.estimatedPrice,
-              selectedItem.price,
-              selectedItem.quantity,
-              selectedItem.unitType
-            )
-          : null;
+        const itemSavings = selectedItem.isPurchased ? getSavingsInfo(selectedItem) : null;
 
         const isMultiQty = selectedItem.quantity > 1;
 

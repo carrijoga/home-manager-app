@@ -638,7 +638,7 @@ function _recomputeSummary(listId: string): void {
       ),
       totalSpent: detail.items
         .filter((i) => i.isPurchased)
-        .reduce((acc, i) => acc + getItemSpentTotal(i.price, i.quantity, i.unitType), 0),
+        .reduce((acc, i) => acc + getItemSpentTotal(i), 0),
     };
   });
 }

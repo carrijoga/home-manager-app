@@ -85,7 +85,7 @@ export function ShoppingItemRow(props: ShoppingItemRowProps) {
     onDelete,
   } = props;
 
-  const savings = getSavingsInfo(item.estimatedPrice, item.price, item.quantity, item.unitType);
+  const savings = getSavingsInfo(item);
 
   /* ── 1. Modo Edição Inline (Desktop) ── */
   if (isEditing) {
@@ -344,7 +344,7 @@ export function ShoppingItemRow(props: ShoppingItemRowProps) {
           <>
             <span className="text-xs sm:text-sm font-bold text-foreground tabular-nums">
               {item.price != null
-                ? formatCurrency(getItemSpentTotal(item.price, item.quantity, item.unitType))
+                ? formatCurrency(getItemSpentTotal(item))
                 : 'Comprado'}
             </span>
             {savings && savings.type === 'savings' && (

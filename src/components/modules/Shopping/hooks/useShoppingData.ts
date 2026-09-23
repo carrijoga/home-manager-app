@@ -30,7 +30,11 @@ function buildSummaryFromDetail(detail: AppShoppingList): AppShoppingListSummary
         item.unitType
       );
       if (item.isPurchased)
-        acc.totalSpent += getItemSpentTotal(item.price, item.quantity, item.unitType);
+        acc.totalSpent += getItemSpentTotal({
+          price: item.price,
+          purchasedQuantity: item.purchasedQuantity,
+          unitType: item.unitType,
+        });
       return acc;
     },
     { totalItems: 0, purchasedItems: 0, totalEstimated: 0, totalSpent: 0 }
@@ -222,11 +226,12 @@ export function useShoppingData() {
       unitType: number,
       estimatedPrice?: number | null,
       isPurchased?: boolean,
-      price?: number | null
+      price?: number | null,
+      purchasedQuantity?: number | null
     ) => {
       await shoppingService.deleteShoppingItem(id, nestId);
       const estimatedContrib = getItemEstimatedTotal(estimatedPrice, quantity, unitType);
-      const spentContrib = getItemSpentTotal(price, quantity, unitType);
+      const spentContrib = getItemSpentTotal({ price, purchasedQuantity, unitType });
       setShoppingLists((prev) =>
         prev.map((l) =>
           l.shoppingListId === listId
@@ -256,7 +261,7 @@ export function useShoppingData() {
       purchasedAt: string
     ) => {
       await shoppingService.markItemAsPurchased(id, { quantity, price, purchasedAt }, nestId);
-      const spentContrib = getItemSpentTotal(price, quantity, unitType);
+      const spentContrib = getItemSpentTotal({ price, purchasedQuantity: quantity, unitType });
       setShoppingLists((prev) =>
         prev.map((l) =>
           l.shoppingListId === listId
@@ -273,9 +278,15 @@ export function useShoppingData() {
   );
 
   const unmarkItemAsPurchased = useCallback(
-    async (id: string, listId: string, quantity: number, unitType: number, price: number) => {
+    async (
+      id: string,
+      listId: string,
+      purchasedQuantity: number | null,
+      unitType: number,
+      price: number
+    ) => {
       await shoppingService.unmarkItemAsPurchased(listId, id, nestId);
-      const spentContrib = getItemSpentTotal(price, quantity, unitType);
+      const spentContrib = getItemSpentTotal({ price, purchasedQuantity, unitType });
       setShoppingLists((prev) =>
         prev.map((l) =>
           l.shoppingListId === listId

@@ -797,7 +797,7 @@ export const mockShoppingLists: AppShoppingListSummary[] = [
     ),
     totalSpent: mockShoppingItemsWeek1
       .filter((i) => i.isPurchased)
-      .reduce((s, i) => s + getItemSpentTotal(i.price, i.quantity, i.unitType), 0),
+      .reduce((s, i) => s + getItemSpentTotal(i), 0),
   },
   {
     shoppingListId: 'list-0002',

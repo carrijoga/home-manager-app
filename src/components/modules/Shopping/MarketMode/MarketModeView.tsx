@@ -101,10 +101,7 @@ export function MarketModeView({
 
   const totalSpent = useMemo(
     () =>
-      cartItems.reduce(
-        (acc, i) => acc + getItemSpentTotal(i.price, i.quantity, i.unitType),
-        0
-      ),
+      cartItems.reduce((acc, i) => acc + getItemSpentTotal(i), 0),
     [cartItems]
   );
 
@@ -494,12 +491,7 @@ export function MarketModeView({
             {!isCartCollapsed && (
               <div className="space-y-1.5">
                 {displayedCartItems.map((item) => {
-                  const savings = getSavingsInfo(
-                    item.estimatedPrice,
-                    item.price,
-                    item.quantity,
-                    item.unitType
-                  );
+                  const savings = getSavingsInfo(item);
 
                   return (
                     <div
@@ -532,9 +524,7 @@ export function MarketModeView({
                       <div className="text-right shrink-0 pl-2">
                         <span className="font-display text-sm font-bold text-emerald-600 dark:text-emerald-400 tabular-nums block">
                           {item.price != null
-                            ? formatCurrency(
-                                getItemSpentTotal(item.price, item.quantity, item.unitType)
-                              )
+                            ? formatCurrency(getItemSpentTotal(item))
                             : 'Comprado'}
                         </span>
                         {savings && savings.type === 'savings' && (

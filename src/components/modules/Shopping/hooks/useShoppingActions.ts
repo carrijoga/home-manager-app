@@ -50,7 +50,8 @@ interface ShoppingActionsDeps {
     unitType: number,
     estimatedPrice?: number | null,
     isPurchased?: boolean,
-    price?: number | null
+    price?: number | null,
+    purchasedQuantity?: number | null
   ) => Promise<void>;
   markItemAsPurchased: (
     id: string,
@@ -63,7 +64,7 @@ interface ShoppingActionsDeps {
   unmarkItemAsPurchased: (
     id: string,
     listId: string,
-    quantity: number,
+    purchasedQuantity: number | null,
     unitType: number,
     price: number
   ) => Promise<void>;
@@ -529,7 +530,8 @@ export function useShoppingActions(
           item.unitType,
           item.estimatedPrice,
           item.isPurchased,
-          item.price
+          item.price,
+          item.purchasedQuantity
         );
         setDetailData((prev) =>
           prev
@@ -597,7 +599,7 @@ export function useShoppingActions(
         await unmarkItemAsPurchased(
           item.shoppingItemId,
           selectedListId!,
-          item.quantity,
+          item.purchasedQuantity,
           item.unitType,
           item.price ?? 0
         );
@@ -753,7 +755,8 @@ export function useShoppingActions(
           item.unitType,
           item.estimatedPrice,
           item.isPurchased,
-          item.price
+          item.price,
+          item.purchasedQuantity
         );
       }
       const deletedIds = new Set(selectedItems.map((i) => i.shoppingItemId));

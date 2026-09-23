@@ -51,8 +51,9 @@ import {
   emptyItemForm,
   getItemEstimatedTotal,
   getItemSpentTotal,
+  getQuantityDisplay,
   getSavingsInfo,
-  quantityLabel,
+  getSpentQuantity,
   unitPriceLabel,
 } from './helpers';
 import { QuickAddItemBar } from './QuickAddItemBar';
@@ -483,7 +484,8 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
 
         const itemSavings = selectedItem.isPurchased ? getSavingsInfo(selectedItem) : null;
 
-        const isMultiQty = selectedItem.quantity > 1;
+        const isMultiQty =
+          (selectedItem.isPurchased ? getSpentQuantity(selectedItem) : selectedItem.quantity) > 1;
 
         return (
           <Sheet
@@ -542,8 +544,13 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
                   {/* Quantidade */}
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Quantidade</span>
-                    <span className="font-bold text-foreground">
-                      {quantityLabel(selectedItem.quantity, selectedItem.unitType)}
+                    <span className="text-right font-bold text-foreground">
+                      {getQuantityDisplay(selectedItem).label}
+                      {getQuantityDisplay(selectedItem).plannedLabel && (
+                        <span className="block text-xs font-normal text-muted-foreground">
+                          {getQuantityDisplay(selectedItem).plannedLabel}
+                        </span>
+                      )}
                     </span>
                   </div>
 

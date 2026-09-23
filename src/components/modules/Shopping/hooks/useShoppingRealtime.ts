@@ -155,11 +155,12 @@ export function useShoppingRealtime({
       });
     };
 
-    const onItemPurchaseChanged = (payload: {
+    const onItemPurchaseChanged = async (payload: {
       itemId: string;
       isPurchased: boolean;
       price: number | null;
     }) => {
+      // Estado imediato (o evento não traz a quantidade comprada)
       setDetailData((prev) => {
         if (!prev) return prev;
         return {
@@ -171,11 +172,29 @@ export function useShoppingRealtime({
                   isPurchased: payload.isPurchased,
                   status: payload.isPurchased ? 1 : i.status === 1 ? 0 : i.status,
                   price: payload.price,
+                  ...(payload.isPurchased ? {} : { purchasedQuantity: null, purchasedAt: null }),
                 }
               : i
           ),
         };
       });
+      // Recarrega para obter purchasedQuantity/purchasedAt reais do item
+      if (!selectedListId) return;
+      try {
+        const fresh = await getShoppingListById(selectedListId, nestId);
+        const freshItem = fresh.items.find((i) => i.shoppingItemId === payload.itemId);
+        if (!freshItem) return;
+        setDetailData((prev) =>
+          prev && prev.shoppingListId === fresh.shoppingListId
+            ? {
+                ...prev,
+                items: prev.items.map((i) => (i.shoppingItemId === payload.itemId ? freshItem : i)),
+              }
+            : prev
+        );
+      } catch {
+        // lista pode ter sido excluída — ignora
+      }
     };
 
     const onItemStatusChanged = (payload: {
@@ -192,7 +211,9 @@ export function useShoppingRealtime({
                   ...i,
                   status: payload.status,
                   isPurchased: payload.status === 1,
-                  ...(payload.status !== 1 ? { price: null, purchasedAt: null } : {}),
+                  ...(payload.status !== 1
+                    ? { price: null, purchasedAt: null, purchasedQuantity: null }
+                    : {}),
                 }
               : i
           ),
@@ -213,5 +234,5 @@ export function useShoppingRealtime({
       connection.off('ReceiveItemPurchaseChanged', onItemPurchaseChanged);
       connection.off('ReceiveItemStatusChanged', onItemStatusChanged);
     };
-  }, [connectionRef, isConnected, shoppingCategories, setDetailData]);
+  }, [connectionRef, isConnected, shoppingCategories, setDetailData, selectedListId, nestId]);
 }

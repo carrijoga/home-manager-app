@@ -234,7 +234,9 @@ export function useShoppingActions(
                           quantity: newQty,
                           estimatedPrice: newEstimated,
                           isPurchased: true,
+                          status: 1,
                           price: newPaid,
+                          purchasedQuantity: newQty,
                         }
                       : i
                   ),
@@ -569,7 +571,7 @@ export function useShoppingActions(
             ...prev,
             items: prev.items.map((i) =>
               i.shoppingItemId === item.shoppingItemId
-                ? { ...i, quantity: qty, isPurchased: true, status: 1, price, purchasedAt }
+                ? { ...i, purchasedQuantity: qty, isPurchased: true, status: 1, price, purchasedAt }
                 : i
             ),
           };
@@ -609,7 +611,14 @@ export function useShoppingActions(
             ...prev,
             items: prev.items.map((i) =>
               i.shoppingItemId === item.shoppingItemId
-                ? { ...i, isPurchased: false, status: 0, price: null, purchasedAt: null }
+                ? {
+                    ...i,
+                    isPurchased: false,
+                    status: 0,
+                    price: null,
+                    purchasedAt: null,
+                    purchasedQuantity: null,
+                  }
                 : i
             ),
           };
@@ -636,7 +645,14 @@ export function useShoppingActions(
             ...prev,
             items: prev.items.map((i) =>
               i.shoppingItemId === item.shoppingItemId
-                ? { ...i, isPurchased: false, status: 2, price: null, purchasedAt: null }
+                ? {
+                    ...i,
+                    isPurchased: false,
+                    status: 2,
+                    price: null,
+                    purchasedAt: null,
+                    purchasedQuantity: null,
+                  }
                 : i
             ),
           };
@@ -663,7 +679,14 @@ export function useShoppingActions(
             ...prev,
             items: prev.items.map((i) =>
               i.shoppingItemId === item.shoppingItemId
-                ? { ...i, isPurchased: false, status: 0, price: null, purchasedAt: null }
+                ? {
+                    ...i,
+                    isPurchased: false,
+                    status: 0,
+                    price: null,
+                    purchasedAt: null,
+                    purchasedQuantity: null,
+                  }
                 : i
             ),
           };

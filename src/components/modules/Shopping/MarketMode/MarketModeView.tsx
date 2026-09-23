@@ -28,6 +28,7 @@ import { ItemFormDialog } from '../dialogs/ItemFormDialog';
 import {
   getItemEstimatedTotal,
   getItemSpentTotal,
+  getQuantityDisplay,
   getSavingsInfo,
   quantityLabel,
 } from '../helpers';
@@ -159,7 +160,7 @@ export function MarketModeView({
       ) {
         await onEditItem(purchaseItem, {
           name: purchaseItem.name,
-          quantity: data.quantity,
+          quantity: String(purchaseItem.quantity),
           unitType: String(data.unitType),
           categoryId: purchaseItem.shoppingCategoryId ?? '',
           estimatedPrice: purchaseItem.estimatedPrice ?? null,
@@ -511,8 +512,13 @@ export function MarketModeView({
                           </span>
                           <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                             <span className="font-semibold text-foreground/80 tabular-nums">
-                              {quantityLabel(item.quantity, item.unitType)} colocado
+                              {getQuantityDisplay(item).label} colocado
                             </span>
+                            {getQuantityDisplay(item).plannedLabel && (
+                              <span className="text-muted-foreground/75 tabular-nums">
+                                {getQuantityDisplay(item).plannedLabel}
+                              </span>
+                            )}
                             <span className="text-muted-foreground/40 font-bold">·</span>
                             <span className="text-muted-foreground/75 flex items-center gap-1">
                               <Undo2 size={10} /> desfazer

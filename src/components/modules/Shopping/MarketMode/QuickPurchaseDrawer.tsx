@@ -176,6 +176,9 @@ export function QuickPurchaseDrawer({
                   Estimado: {formatCurrency(item.estimatedPrice)}
                 </span>
               )}
+              <span className="text-xs text-muted-foreground tabular-nums">
+                Planejado: {item.quantity} {UNIT_TYPE_LABELS[item.unitType] ?? 'un'}
+              </span>
               {onEditItemFull && (
                 <button
                   type="button"

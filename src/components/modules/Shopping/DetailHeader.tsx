@@ -27,6 +27,8 @@ import { cn } from '@/lib/utils';
 import { UNIT_TYPE_LABELS } from '@/schemas/enums';
 import type { AppShoppingList } from '@/types';
 
+import { getQuantityDisplay } from './helpers';
+
 interface DetailHeaderProps {
   detailData: AppShoppingList | null;
   totalEstimated: number;
@@ -78,8 +80,7 @@ export function DetailHeader(props: DetailHeaderProps) {
     if (purchased.length > 0) {
       text += `*Comprados (${purchased.length}):*\n`;
       purchased.forEach((i) => {
-        const u = UNIT_TYPE_LABELS[i.unitType] ?? 'un';
-        text += `✅ ${i.name} — ${i.quantity} ${u}\n`;
+        text += `✅ ${i.name} — ${getQuantityDisplay(i).label}\n`;
       });
     }
 

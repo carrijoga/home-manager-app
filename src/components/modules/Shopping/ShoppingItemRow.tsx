@@ -34,6 +34,7 @@ import type { AppShoppingItem } from '@/types';
 import {
   getItemEstimatedTotal,
   getItemSpentTotal,
+  getQuantityDisplay,
   getSavingsInfo,
   quantityLabel,
 } from './helpers';
@@ -208,6 +209,7 @@ export function ShoppingItemRow(props: ShoppingItemRowProps) {
   const isIgnored = item.status === 2;
   const isNotPurchased = item.status === 3;
   const isPendingStatus = !isPurchased && !isIgnored && !isNotPurchased;
+  const qtyDisplay = getQuantityDisplay(item);
 
   /* ── 3. Estado Normal de Item (Design Limpo, Editorial e Tátil) ── */
   return (
@@ -314,8 +316,13 @@ export function ShoppingItemRow(props: ShoppingItemRowProps) {
         {/* Linha de Metadados Unificada com Separadores Pontilhados (Sem poluição de badges) */}
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground truncate">
           <span className="font-semibold text-foreground/85 shrink-0 tabular-nums">
-            {quantityLabel(item.quantity, item.unitType)}
+            {qtyDisplay.label}
           </span>
+          {qtyDisplay.plannedLabel && (
+            <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
+              {qtyDisplay.plannedLabel}
+            </span>
+          )}
 
           {item.categoryName && (
             <>

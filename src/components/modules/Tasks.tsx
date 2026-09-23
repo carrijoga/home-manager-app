@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { History, CheckSquare } from 'lucide-react';
+import { CheckSquare,History } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import type { TaskFormPayload } from '@/components/modals/TaskFormModal';
@@ -9,19 +9,19 @@ import { TaskListSkeleton } from '@/components/skeletons';
 import { useApp } from '@/contexts/AppContext';
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
 import { usePolling } from '@/hooks/usePolling';
+import { cn } from '@/lib/utils';
 import type { NestMember } from '@/schemas/nest';
 import * as nestService from '@/services/nestService';
 import * as taskService from '@/services/taskService';
-import type { Task, ApiCategory } from '@/types';
+import type { ApiCategory,Task } from '@/types';
 import { TaskStatus } from '@/types';
-import { cn } from '@/lib/utils';
 
 import { KanbanBoard } from './tasks/KanbanBoard';
 import { QuickAddTaskBar } from './tasks/QuickAddTaskBar';
+import { TaskBulkActionsBar } from './tasks/TaskBulkActionsBar';
+import { TaskFilterBar, TaskSortOrder,TaskStatusFilter } from './tasks/TaskFilterBar';
 import { TaskListView } from './tasks/TaskListView';
 import { TaskSideSummary } from './tasks/TaskSideSummary';
-import { TaskFilterBar, TaskStatusFilter, TaskSortOrder } from './tasks/TaskFilterBar';
-import { TaskBulkActionsBar } from './tasks/TaskBulkActionsBar';
 
 type ViewMode = 'list' | 'kanban';
 

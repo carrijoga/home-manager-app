@@ -1,15 +1,19 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { motion } from 'framer-motion';
-import { AlertCircle, CalendarDays, Check, Edit2, MoreHorizontal, Pencil, Trash2, User } from 'lucide-react';
+import { AlertCircle, CalendarDays, Check, Edit2, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { memo } from 'react';
 
 import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui';
+import { resolveUserAvatar } from '@/constants/koboyoAvatars';
 import { cn } from '@/lib/utils';
 import type { Task } from '@/types';
 
@@ -17,7 +21,6 @@ import { PRIORITY_CONFIG } from './constants';
 
 interface KanbanCardProps {
   task: Task;
-  assignedName?: string;
   onEdit: (task: Task) => void;
   onDelete: (taskId: string, snap: Task) => void;
   isDragOverlay?: boolean;
@@ -25,7 +28,6 @@ interface KanbanCardProps {
 
 export const KanbanCard = memo(function KanbanCard({
   task,
-  assignedName,
   onEdit,
   onDelete,
   isDragOverlay,
@@ -107,15 +109,63 @@ export const KanbanCard = memo(function KanbanCard({
               {task.categoryLabel}
             </span>
 
-            {assignedName && (
-              <>
-                <span className="text-muted-foreground/40 font-bold shrink-0">·</span>
-                <span className="inline-flex items-center gap-1 font-medium text-muted-foreground/90 truncate">
-                  <User size={10} className="shrink-0 opacity-70" />
-                  <span className="truncate">{assignedName}</span>
-                </span>
-              </>
-            )}
+            {task.assignees && task.assignees.length > 0 && (() => {
+              const completedCount = task.assignees.filter((a) => a.isCompleted).length;
+              const totalCount = task.assignees.length;
+              const isMultiAssignee = totalCount > 1;
+
+              return (
+                <>
+                  <span className="text-muted-foreground/40 font-bold shrink-0">·</span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <div className="flex items-center -space-x-1.5 overflow-hidden">
+                      {task.assignees.map((a) => {
+                        const avatarSrc = resolveUserAvatar(a.photoUrl, null);
+                        return (
+                          <div key={a.userId} className="relative group/avatar">
+                            <Avatar
+                              className={cn(
+                                'size-5 border-2 border-background transition-transform hover:scale-110',
+                                a.isCompleted
+                                  ? 'ring-2 ring-emerald-500 shadow-xs'
+                                  : 'opacity-70 grayscale-[30%]'
+                              )}
+                              title={`${a.name}: ${a.isCompleted ? 'Concluído' : 'Pendente'}`}
+                            >
+                              {avatarSrc && <AvatarImage src={avatarSrc} alt={a.name} />}
+                              <AvatarFallback className="text-[8px] font-bold">
+                                {a.name?.substring(0, 1).toUpperCase() || 'M'}
+                              </AvatarFallback>
+                            </Avatar>
+                            {a.isCompleted && (
+                              <span className="absolute -bottom-0.5 -right-0.5 flex size-2.5 items-center justify-center rounded-full bg-emerald-600 text-white ring-1 ring-background dark:bg-emerald-500">
+                                <Check size={7} strokeWidth={3} />
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {isMultiAssignee && (
+                      <span
+                        className={cn(
+                          'rounded-full px-1.5 py-0.2 text-[9px] font-extrabold tabular-nums',
+                          completedCount === totalCount
+                            ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                            : completedCount > 0
+                            ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+                            : 'bg-muted text-muted-foreground'
+                        )}
+                        title={`${completedCount} de ${totalCount} concluíram`}
+                      >
+                        {completedCount}/{totalCount}
+                      </span>
+                    )}
+                  </div>
+                </>
+              );
+            })()}
 
             {task.dueDate && (
               <>

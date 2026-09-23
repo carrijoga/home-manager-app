@@ -180,13 +180,20 @@ export interface Notice {
   reactions?: NoticeReaction[];
 }
 
+/** Responsável individual de uma Task (vem da API) */
+export interface TaskAssignee {
+  userId: string;
+  name: string;
+  photoUrl: string | null;
+  isCompleted: boolean;
+  completedAt: string | null;
+}
+
 /** Tarefa (módulo Tasks) */
 export interface Task {
   taskId: string;
   title: string;
   description?: string | null;
-  details?: string | null;
-  assignedTo?: string | null; // UUID do usuário ou null = Geral
   dueDate?: string | null;
   priority: ApiPriority;
   priorityLabel: string;
@@ -200,6 +207,7 @@ export interface Task {
   isOverdue: boolean;
   createdBy: string;
   createdAt: string;
+  assignees: TaskAssignee[];
 }
 
 /** Resposta paginada genérica */

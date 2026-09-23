@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertCircle,
   ArrowRight,
+  Check,
   CheckCircle2,
   Circle,
   MoreVertical,
@@ -12,6 +13,7 @@ import {
 import React, { memo, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { AnimatedNumber } from '@/components/common/AnimatedNumber';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,7 +22,6 @@ import {
 } from '@/components/ui';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { resolveUserAvatar } from '@/constants/koboyoAvatars';
-import { AnimatedNumber } from '@/components/common/AnimatedNumber';
 import { cn } from '@/lib/utils';
 import type { NestMember } from '@/schemas/nest';
 import type { Task } from '@/types';
@@ -292,7 +293,6 @@ export function DashboardDailyTasksV2({
 const TaskRowItem = memo(
   ({
     task,
-    members = [],
     onComplete,
     onEdit,
     onDelete,
@@ -304,11 +304,6 @@ const TaskRowItem = memo(
     onDelete?: (id: string) => Promise<void>;
   }) => {
     const priority = PRIORITY_BADGES[task.priority ?? 3] ?? PRIORITY_BADGES[3];
-
-    const assignedMember = useMemo(() => {
-      if (!task.assignedTo || !members?.length) return null;
-      return members.find((m) => m.userId === task.assignedTo);
-    }, [task.assignedTo, members]);
 
     return (
       <motion.div
@@ -367,26 +362,58 @@ const TaskRowItem = memo(
             </div>
 
             <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[10px]">
-              {/* Badge {Avatar} + Nome */}
-              {assignedMember && (() => {
-                const avatarSrc = resolveUserAvatar(assignedMember.photoUrl, assignedMember.avatarSlug);
+              {/* Avatares dos responsáveis */}
+              {task.assignees && task.assignees.length > 0 && (() => {
+                const completedCount = task.assignees.filter((a) => a.isCompleted).length;
+                const totalCount = task.assignees.length;
+                const isMultiAssignee = totalCount > 1;
+
                 return (
-                  <div className="flex items-center gap-1 rounded-full border border-amber-200/70 bg-amber-50/90 pl-1 pr-2 py-0.2 shadow-2xs dark:border-amber-800/40 dark:bg-amber-950/40">
-                    <Avatar className="size-3.5 rounded-full bg-white">
-                      {avatarSrc && (
-                        <AvatarImage
-                          src={avatarSrc}
-                          alt={assignedMember.name}
-                          className="size-full object-contain filter contrast-125 dark:brightness-105"
-                        />
-                      )}
-                      <AvatarFallback className="bg-primary/20 text-[7px] font-bold text-primary">
-                        {assignedMember.name.slice(0, 1).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="font-ui text-[9px] font-bold text-amber-900 dark:text-amber-200">
-                      {assignedMember.name.split(' ')[0]}
-                    </span>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <div className="flex items-center -space-x-1.5 overflow-hidden">
+                      {task.assignees.map((a) => {
+                        const avatarSrc = resolveUserAvatar(a.photoUrl, null);
+                        return (
+                          <div key={a.userId} className="relative">
+                            <Avatar
+                              className={cn(
+                                'size-4 border border-background transition-transform hover:scale-110',
+                                a.isCompleted
+                                  ? 'ring-1 ring-emerald-500 shadow-xs'
+                                  : 'opacity-70 grayscale-[30%]'
+                              )}
+                              title={`${a.name}: ${a.isCompleted ? 'Concluído' : 'Pendente'}`}
+                            >
+                              {avatarSrc && <AvatarImage src={avatarSrc} alt={a.name} />}
+                              <AvatarFallback className="text-[7px] font-bold">
+                                {a.name?.substring(0, 1).toUpperCase() || 'M'}
+                              </AvatarFallback>
+                            </Avatar>
+                            {a.isCompleted && (
+                              <span className="absolute -bottom-0.5 -right-0.5 flex size-2 items-center justify-center rounded-full bg-emerald-600 text-white ring-1 ring-background dark:bg-emerald-500">
+                                <Check size={5} strokeWidth={3} />
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {isMultiAssignee && (
+                      <span
+                        className={cn(
+                          'rounded-full px-1 py-0.1 text-[8px] font-extrabold tabular-nums',
+                          completedCount === totalCount
+                            ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                            : completedCount > 0
+                            ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+                            : 'bg-muted text-muted-foreground'
+                        )}
+                        title={`${completedCount} de ${totalCount} concluíram`}
+                      >
+                        {completedCount}/{totalCount}
+                      </span>
+                    )}
                   </div>
                 );
               })()}

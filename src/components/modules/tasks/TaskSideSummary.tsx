@@ -1,6 +1,5 @@
 import { AlertCircle, CalendarDays, CheckCircle2, ListTodo } from 'lucide-react';
 
-
 import { AnimatedNumber, AnimatedPercent, SpringProgress } from '@/components/ui';
 
 interface TaskSideSummaryProps {

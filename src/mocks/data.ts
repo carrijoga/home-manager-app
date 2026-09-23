@@ -226,7 +226,15 @@ export const mockTasks: Task[] = [
     taskId: 'task-mock-0001',
     title: 'Limpar a geladeira',
     description: 'Remover itens vencidos e higienizar prateleiras',
-    assignedTo: null,
+    assignees: [
+      {
+        userId: MOCK_USER_ID,
+        name: 'Você',
+        photoUrl: null,
+        isCompleted: false,
+        completedAt: null,
+      },
+    ],
     dueDate: new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000).toISOString(),
     priority: ApiPriority.Alta,
     priorityLabel: 'Alta',
@@ -242,7 +250,15 @@ export const mockTasks: Task[] = [
   {
     taskId: 'task-mock-0002',
     title: 'Levar o lixo para fora',
-    assignedTo: null,
+    assignees: [
+      {
+        userId: MOCK_USER_ID,
+        name: 'Você',
+        photoUrl: null,
+        isCompleted: false,
+        completedAt: null,
+      },
+    ],
     dueDate: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString(),
     priority: ApiPriority.Urgente,
     priorityLabel: 'Urgente',
@@ -258,7 +274,15 @@ export const mockTasks: Task[] = [
   {
     taskId: 'task-mock-0003',
     title: 'Limpar o banheiro',
-    assignedTo: null,
+    assignees: [
+      {
+        userId: MOCK_USER_ID,
+        name: 'Você',
+        photoUrl: null,
+        isCompleted: false,
+        completedAt: null,
+      },
+    ],
     dueDate: new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString(),
     priority: ApiPriority.Media,
     priorityLabel: 'Média',
@@ -275,7 +299,15 @@ export const mockTasks: Task[] = [
     taskId: 'task-mock-0004',
     title: 'Organizar a despensa',
     description: 'Verificar validades e organizar por categoria',
-    assignedTo: null,
+    assignees: [
+      {
+        userId: MOCK_USER_ID,
+        name: 'Você',
+        photoUrl: null,
+        isCompleted: false,
+        completedAt: null,
+      },
+    ],
     dueDate: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString(),
     priority: ApiPriority.Baixa,
     priorityLabel: 'Baixa',
@@ -291,7 +323,15 @@ export const mockTasks: Task[] = [
   {
     taskId: 'task-mock-0005',
     title: 'Limpar quintal',
-    assignedTo: null,
+    assignees: [
+      {
+        userId: MOCK_USER_ID,
+        name: 'Você',
+        photoUrl: null,
+        isCompleted: false,
+        completedAt: null,
+      },
+    ],
     dueDate: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString(),
     priority: ApiPriority.Media,
     priorityLabel: 'Média',
@@ -308,7 +348,15 @@ export const mockTasks: Task[] = [
   {
     taskId: 'task-mock-0006',
     title: 'Pagar conta de luz',
-    assignedTo: null,
+    assignees: [
+      {
+        userId: MOCK_USER_ID,
+        name: 'Você',
+        photoUrl: null,
+        isCompleted: false,
+        completedAt: null,
+      },
+    ],
     dueDate: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
     priority: ApiPriority.Alta,
     priorityLabel: 'Alta',
@@ -324,7 +372,15 @@ export const mockTasks: Task[] = [
   {
     taskId: 'task-mock-0007',
     title: 'Trocar lâmpada da sala',
-    assignedTo: null,
+    assignees: [
+      {
+        userId: MOCK_USER_ID,
+        name: 'Você',
+        photoUrl: null,
+        isCompleted: false,
+        completedAt: null,
+      },
+    ],
     dueDate: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000).toISOString(),
     priority: ApiPriority.Baixa,
     priorityLabel: 'Baixa',
@@ -340,7 +396,15 @@ export const mockTasks: Task[] = [
   {
     taskId: 'task-mock-0008',
     title: 'Fazer compras do mês',
-    assignedTo: null,
+    assignees: [
+      {
+        userId: MOCK_USER_ID,
+        name: 'Você',
+        photoUrl: null,
+        isCompleted: false,
+        completedAt: null,
+      },
+    ],
     dueDate: new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000).toISOString(),
     priority: ApiPriority.Alta,
     priorityLabel: 'Alta',

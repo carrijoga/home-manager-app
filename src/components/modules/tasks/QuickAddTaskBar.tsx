@@ -1,11 +1,12 @@
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence,motion } from 'framer-motion';
 import { Plus, SlidersHorizontal, Sparkles } from 'lucide-react';
 import React, { useRef, useState } from 'react';
 
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
+
+import { PRIORITY_CONFIG,TASK_CATEGORY_LABELS } from './constants';
 import { analyzeTaskTitle } from './smartTaskCategory';
-import { TASK_CATEGORY_LABELS, PRIORITY_CONFIG } from './constants';
 
 interface QuickAddTaskBarProps {
   onAddTask: (title: string, detectedCategory: number | null, detectedPriority: number | null) => Promise<void>;

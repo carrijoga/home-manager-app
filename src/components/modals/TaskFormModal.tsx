@@ -19,6 +19,7 @@ import {
   SheetTitle,
   Textarea,
 } from '@/components/ui';
+import { MemberMultiSelect } from '@/components/ui';
 import { Spinner } from '@/components/ui/spinner';
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
 import type { NestMember } from '@/schemas/nest';
@@ -28,8 +29,7 @@ import { TaskStatus } from '@/types';
 export interface TaskFormPayload {
   title: string;
   description: string | null;
-  details: string | null;
-  assignedTo: string | null;
+  assigneeIds: string[];
   dueDate: string | null;
   priority: number;
   category: number;
@@ -48,8 +48,7 @@ interface TaskFormModalProps {
 const EMPTY_FORM = {
   title: '',
   description: '',
-  details: '',
-  assignedTo: 'none',
+  assigneeIds: [] as string[],
   dueDate: undefined as Date | undefined,
   priority: '3',
   category: '0',
@@ -89,8 +88,7 @@ export function TaskFormModal({
       setForm({
         title: initialTask.title ?? '',
         description: initialTask.description ?? '',
-        details: initialTask.details ?? '',
-        assignedTo: initialTask.assignedTo ?? 'none',
+        assigneeIds: initialTask.assignees ? initialTask.assignees.map((a) => a.userId) : [],
         dueDate: initialTask.dueDate ? new Date(initialTask.dueDate) : undefined,
         priority: String(initialTask.priority ?? 3),
         category: String(initialTask.category ?? 0),
@@ -114,8 +112,7 @@ export function TaskFormModal({
       await onSubmit({
         title: form.title.trim(),
         description: form.description || null,
-        details: form.details || null,
-        assignedTo: form.assignedTo && form.assignedTo !== 'none' ? form.assignedTo : null,
+        assigneeIds: form.assigneeIds,
         dueDate: form.dueDate ? form.dueDate.toISOString() : null,
         priority: Number(form.priority),
         category: Number(form.category),
@@ -274,24 +271,14 @@ export function TaskFormModal({
             {members.length > 0 && (
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Atribuído a (Responsável)
+                  Responsáveis
                 </Label>
-                <Select
-                  value={form.assignedTo}
-                  onValueChange={(v) => setForm((f) => ({ ...f, assignedTo: v }))}
-                >
-                  <SelectTrigger className="h-12 rounded-2xl bg-muted/30 px-4 text-base border-border/40 focus:ring-2 focus:ring-primary">
-                    <SelectValue placeholder="Selecione um membro..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Nenhum membro atribuído</SelectItem>
-                    {members.map((m) => (
-                      <SelectItem key={m.userId} value={m.userId}>
-                        {m.name || 'Membro'}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <MemberMultiSelect
+                  members={members}
+                  selectedIds={form.assigneeIds}
+                  onChange={(ids) => setForm((f) => ({ ...f, assigneeIds: ids }))}
+                  placeholder="Selecione os membros responsáveis..."
+                />
               </div>
             )}
 
@@ -307,23 +294,6 @@ export function TaskFormModal({
                 placeholder="Resumo ou descrição simples..."
                 value={form.description}
                 onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                rows={2}
-                className="rounded-2xl bg-muted/30 p-3.5 text-base shadow-none border-border/40 focus-visible:ring-2 focus-visible:ring-primary resize-none"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label
-                htmlFor="task-details"
-                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-              >
-                Detalhes adicionais <span className="text-[11px] font-normal lowercase">(opcional)</span>
-              </Label>
-              <Textarea
-                id="task-details"
-                placeholder="Instruções ou notas detalhadas sobre a tarefa..."
-                value={form.details}
-                onChange={(e) => setForm((f) => ({ ...f, details: e.target.value }))}
                 rows={2}
                 className="rounded-2xl bg-muted/30 p-3.5 text-base shadow-none border-border/40 focus-visible:ring-2 focus-visible:ring-primary resize-none"
               />

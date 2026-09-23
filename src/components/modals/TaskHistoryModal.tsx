@@ -5,7 +5,6 @@ import {
   ChevronRight,
   History,
   RotateCcw,
-  User,
   X,
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
@@ -18,6 +17,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { resolveUserAvatar } from '@/constants/koboyoAvatars';
 import type { NestMember } from '@/schemas/nest';
 import * as taskService from '@/services/taskService';
 import type { Task } from '@/types';
@@ -49,7 +50,6 @@ export function TaskHistoryModal({
   open,
   onClose,
   nestId,
-  members = [],
   onTaskUncompleted,
 }: TaskHistoryModalProps) {
   const [history, setHistory] = useState<Task[]>([]);
@@ -93,12 +93,6 @@ export function TaskHistoryModal({
     } catch {
       // Error is handled upstream or silent fallback
     }
-  };
-
-  const getMemberName = (userId?: string | null) => {
-    if (!userId) return null;
-    const member = members.find((m) => m.userId === userId);
-    return member?.name || 'Membro do Ninho';
   };
 
   const totalPages = Math.ceil(totalCount / pageSize) || 1;
@@ -146,7 +140,6 @@ export function TaskHistoryModal({
               {history.map((item) => {
                 const priorityCfg =
                   PRIORITY_CONFIG[item.priority as 0 | 1 | 2 | 3] ?? PRIORITY_CONFIG[3];
-                const assignedName = getMemberName(item.assignedTo);
                 const completedDate = formatDate(item.completedAt);
 
                 return (
@@ -164,11 +157,6 @@ export function TaskHistoryModal({
                           {item.description && (
                             <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
                               {item.description}
-                            </p>
-                          )}
-                          {item.details && (
-                            <p className="mt-1 line-clamp-2 text-xs italic text-muted-foreground/80">
-                              {item.details}
                             </p>
                           )}
                         </div>
@@ -191,10 +179,20 @@ export function TaskHistoryModal({
                         {priorityCfg.label}
                       </span>
                       <span className="text-muted-foreground">{item.categoryLabel || 'Geral'}</span>
-                      {assignedName && (
-                        <span className="inline-flex items-center gap-1 text-muted-foreground">
-                          <User size={11} /> {assignedName}
-                        </span>
+                      {item.assignees && item.assignees.length > 0 && (
+                        <div className="flex items-center -space-x-1.5 overflow-hidden">
+                          {item.assignees.map((a) => {
+                            const avatarSrc = resolveUserAvatar(a.photoUrl, null);
+                            return (
+                              <Avatar key={a.userId} className="size-4 border border-background" title={a.name}>
+                                {avatarSrc && <AvatarImage src={avatarSrc} alt={a.name} />}
+                                <AvatarFallback className="text-[7px]">
+                                  {a.name?.substring(0, 1).toUpperCase() || 'M'}
+                                </AvatarFallback>
+                              </Avatar>
+                            );
+                          })}
+                        </div>
                       )}
                       {completedDate && (
                         <span className="ml-auto inline-flex items-center gap-1 text-sage-600 dark:text-sage-400">

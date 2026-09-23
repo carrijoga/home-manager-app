@@ -24,8 +24,6 @@ function apiToTask(raw: unknown): Task {
       taskId: d.taskId,
       title: d.title,
       description: d.description ?? null,
-      details: d.details ?? null,
-      assignedTo: d.assignedTo ?? null,
       dueDate: d.dueDate ?? null,
       priority: d.priority as Task['priority'],
       priorityLabel: d.priorityLabel,
@@ -37,18 +35,18 @@ function apiToTask(raw: unknown): Task {
       isOverdue: d.isOverdue,
       createdBy: d.createdBy,
       createdAt: d.createdAt,
+      assignees: d.assignees ?? [],
     };
   }
   // fallback permissivo
   const r = raw as Record<string, unknown>;
   const priority = Number(r.priority ?? 3);
   const category = Number(r.category ?? 0);
+  const rawAssignees = Array.isArray(r.assignees) ? r.assignees : [];
   return {
     taskId: String(r.taskId ?? ''),
     title: String(r.title ?? ''),
     description: (r.description as string) ?? null,
-    details: (r.details as string) ?? null,
-    assignedTo: (r.assignedTo as string) ?? null,
     dueDate: (r.dueDate as string) ?? null,
     priority: priority as Task['priority'],
     priorityLabel: (r.priorityLabel as string) ?? PRIORITY_LABELS[priority] ?? 'Baixa',
@@ -60,6 +58,13 @@ function apiToTask(raw: unknown): Task {
     isOverdue: Boolean(r.isOverdue ?? false),
     createdBy: String(r.createdBy ?? ''),
     createdAt: String(r.createdAt ?? new Date().toISOString()),
+    assignees: rawAssignees.map((a: any) => ({
+      userId: String(a.userId ?? ''),
+      name: String(a.name ?? 'Membro'),
+      photoUrl: (a.photoUrl as string) ?? null,
+      isCompleted: Boolean(a.isCompleted ?? false),
+      completedAt: (a.completedAt as string) ?? null,
+    })),
   };
 }
 
@@ -126,8 +131,6 @@ export async function createTask(payload: CreateTaskRequest, nestId?: string): P
       taskId: crypto.randomUUID(),
       title: payload.title,
       description: payload.description ?? null,
-      details: payload.details ?? null,
-      assignedTo: payload.assignedTo ?? null,
       dueDate: payload.dueDate ?? null,
       priority: (payload.priority ?? ApiPriority.Baixa) as Task['priority'],
       priorityLabel: PRIORITY_LABELS[payload.priority ?? ApiPriority.Baixa],
@@ -139,6 +142,13 @@ export async function createTask(payload: CreateTaskRequest, nestId?: string): P
       isOverdue: false,
       createdBy: 'user-mock-0001',
       createdAt: now,
+      assignees: (payload.assigneeIds ?? ['user-mock-0001']).map((id) => ({
+        userId: id,
+        name: 'Usuário Mock',
+        photoUrl: null,
+        isCompleted: false,
+        completedAt: null,
+      })),
     };
     _mockState.unshift(task);
     return new Promise((resolve) => setTimeout(() => resolve(task), 100));
@@ -186,13 +196,25 @@ export async function updateTask(
         ..._mockState[idx],
         title: payload.title,
         description: payload.description ?? null,
-        details: payload.details ?? null,
-        assignedTo: payload.assignedTo ?? null,
         dueDate: payload.dueDate ?? null,
         priority: (payload.priority ?? ApiPriority.Baixa) as Task['priority'],
         priorityLabel: PRIORITY_LABELS[payload.priority ?? ApiPriority.Baixa],
         category: (payload.category ?? ApiCategory.Geral) as Task['category'],
         categoryLabel: CATEGORY_LABELS[payload.category ?? ApiCategory.Geral],
+        assignees: payload.assigneeIds
+          ? payload.assigneeIds.map((uId) => {
+              const existing = _mockState[idx].assignees.find((a) => a.userId === uId);
+              return (
+                existing ?? {
+                  userId: uId,
+                  name: 'Usuário Mock',
+                  photoUrl: null,
+                  isCompleted: false,
+                  completedAt: null,
+                }
+              );
+            })
+          : _mockState[idx].assignees,
       };
     }
     return new Promise((resolve) => setTimeout(resolve, 100));
@@ -209,34 +231,50 @@ export async function deleteTask(id: string, nestId?: string): Promise<void> {
   await httpClient.del<void>(ENDPOINTS.tasks.delete(id), nestId);
 }
 
-export async function completeTask(id: string, nestId?: string): Promise<Task> {
+export async function completeTask(id: string, nestId?: string, assigneeId?: string): Promise<Task> {
   if (DATA_MODE === 'mock') {
     const task = _mockState.find((t) => t.taskId === id);
     if (task) {
       task.isCompleted = true;
       task.completedAt = new Date().toISOString();
       task.isOverdue = false;
+      task.assignees = task.assignees.map((a) =>
+        !assigneeId || a.userId === assigneeId
+          ? { ...a, isCompleted: true, completedAt: new Date().toISOString() }
+          : a
+      );
     }
     return new Promise((resolve, reject) =>
       setTimeout(() => (task ? resolve({ ...task }) : reject(new Error('Task not found'))), 100)
     );
   }
-  await httpClient.patch<void>(ENDPOINTS.tasks.complete(id), undefined, nestId);
+  const url = assigneeId
+    ? `${ENDPOINTS.tasks.complete(id)}?assigneeId=${encodeURIComponent(assigneeId)}`
+    : ENDPOINTS.tasks.complete(id);
+  await httpClient.patch<void>(url, undefined, nestId);
   return getTaskById(id, nestId);
 }
 
-export async function uncompleteTask(id: string, nestId?: string): Promise<Task> {
+export async function uncompleteTask(id: string, nestId?: string, assigneeId?: string): Promise<Task> {
   if (DATA_MODE === 'mock') {
     const task = _mockState.find((t) => t.taskId === id);
     if (task) {
       task.isCompleted = false;
       task.completedAt = null;
+      task.assignees = task.assignees.map((a) =>
+        !assigneeId || a.userId === assigneeId
+          ? { ...a, isCompleted: false, completedAt: null }
+          : a
+      );
     }
     return new Promise((resolve, reject) =>
       setTimeout(() => (task ? resolve({ ...task }) : reject(new Error('Task not found'))), 100)
     );
   }
-  await httpClient.patch<void>(ENDPOINTS.tasks.uncomplete(id), undefined, nestId);
+  const url = assigneeId
+    ? `${ENDPOINTS.tasks.uncomplete(id)}?assigneeId=${encodeURIComponent(assigneeId)}`
+    : ENDPOINTS.tasks.uncomplete(id);
+  await httpClient.patch<void>(url, undefined, nestId);
   return getTaskById(id, nestId);
 }
 

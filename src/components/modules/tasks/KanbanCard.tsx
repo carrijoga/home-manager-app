@@ -5,20 +5,20 @@ import { AlertCircle, CalendarDays, Check, Edit2, MoreHorizontal, Pencil, Trash2
 import { memo } from 'react';
 
 import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui';
-import { resolveUserAvatar } from '@/constants/koboyoAvatars';
 import { formatTaskCategory } from '@/lib/taskCategories';
 import { cn } from '@/lib/utils';
 import type { Task } from '@/types';
 
+import { AssigneesPopover } from './AssigneesPopover';
 import { PRIORITY_CONFIG } from './constants';
+import { getMyPart, NOT_ASSIGNEE_HINT } from './taskParts';
+import { useToggleAssignee } from './TaskAssigneeActionsContext';
+import { useTaskViewer } from './useTaskViewer';
 
 interface KanbanCardProps {
   task: Task;
@@ -33,6 +33,11 @@ export const KanbanCard = memo(function KanbanCard({
   onDelete,
   isDragOverlay,
 }: KanbanCardProps) {
+  const viewer = useTaskViewer();
+  const toggleAssignee = useToggleAssignee();
+  const myPart = getMyPart(task, viewer.userId);
+  const myDone = myPart?.isCompleted ?? false;
+
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.taskId,
   });
@@ -63,14 +68,17 @@ export const KanbanCard = memo(function KanbanCard({
       <div className="flex items-start gap-3">
         {/* Checkbox Visual Only (Kanban status drives completion) */}
         <div
+          title={!myPart ? NOT_ASSIGNEE_HINT : myDone ? 'Sua parte está concluída' : 'Sua parte está pendente'}
           className={cn(
             'mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition-colors',
-            task.isCompleted
-              ? 'bg-emerald-600 text-white shadow-2xs dark:bg-emerald-500'
-              : 'border-2 border-border/90 bg-card shadow-2xs'
+            !myPart
+              ? 'border-2 border-dashed border-border/70 bg-muted/40 opacity-60'
+              : myDone
+                ? 'bg-emerald-600 text-white shadow-2xs dark:bg-emerald-500'
+                : 'border-2 border-border/90 bg-card shadow-2xs'
           )}
         >
-          {task.isCompleted && (
+          {myDone && (
             <motion.span
               initial={{ scale: 0.3, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -110,63 +118,21 @@ export const KanbanCard = memo(function KanbanCard({
               {formatTaskCategory(task.category)}
             </span>
 
-            {task.assignees && task.assignees.length > 0 && (() => {
-              const completedCount = task.assignees.filter((a) => a.isCompleted).length;
-              const totalCount = task.assignees.length;
-              const isMultiAssignee = totalCount > 1;
-
-              return (
-                <>
-                  <span className="text-muted-foreground/40 font-bold shrink-0">·</span>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <div className="flex items-center -space-x-1.5 overflow-hidden">
-                      {task.assignees.map((a) => {
-                        const avatarSrc = resolveUserAvatar(a.photoUrl, null);
-                        return (
-                          <div key={a.userId} className="relative group/avatar">
-                            <Avatar
-                              className={cn(
-                                'size-5 border-2 border-background transition-transform hover:scale-110',
-                                a.isCompleted
-                                  ? 'ring-2 ring-emerald-500 shadow-xs'
-                                  : 'opacity-70 grayscale-[30%]'
-                              )}
-                              title={`${a.name}: ${a.isCompleted ? 'Concluído' : 'Pendente'}`}
-                            >
-                              {avatarSrc && <AvatarImage src={avatarSrc} alt={a.name} />}
-                              <AvatarFallback className="text-[8px] font-bold">
-                                {a.name?.substring(0, 1).toUpperCase() || 'M'}
-                              </AvatarFallback>
-                            </Avatar>
-                            {a.isCompleted && (
-                              <span className="absolute -bottom-0.5 -right-0.5 flex size-2.5 items-center justify-center rounded-full bg-emerald-600 text-white ring-1 ring-background dark:bg-emerald-500">
-                                <Check size={7} strokeWidth={3} />
-                              </span>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {isMultiAssignee && (
-                      <span
-                        className={cn(
-                          'rounded-full px-1.5 py-0.2 text-[9px] font-extrabold tabular-nums',
-                          completedCount === totalCount
-                            ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
-                            : completedCount > 0
-                            ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
-                            : 'bg-muted text-muted-foreground'
-                        )}
-                        title={`${completedCount} de ${totalCount} concluíram`}
-                      >
-                        {completedCount}/{totalCount}
-                      </span>
-                    )}
-                  </div>
-                </>
-              );
-            })()}
+            {task.assignees.length > 0 && (
+              <>
+                <span className="text-muted-foreground/40 font-bold shrink-0">·</span>
+                <AssigneesPopover
+                  task={task}
+                  currentUserId={viewer.userId}
+                  canCompleteOthers={viewer.canCompleteOthers}
+                  onToggleAssignee={
+                    toggleAssignee
+                      ? (assigneeUserId, done) => toggleAssignee(task.taskId, assigneeUserId, done)
+                      : undefined
+                  }
+                />
+              </>
+            )}
 
             {task.dueDate && (
               <>

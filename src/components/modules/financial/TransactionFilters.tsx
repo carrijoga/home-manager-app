@@ -1,7 +1,7 @@
 import { Search } from 'lucide-react';
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui';
-import type { CategoryResponse } from '@/schemas/legacyCategory';
+import type { CategoryOption } from '@/lib/categories';
 
 export interface TransactionFiltersState {
   type: 'all' | 'expense' | 'income' | 'transfer';
@@ -20,7 +20,7 @@ export const DEFAULT_FILTERS: TransactionFiltersState = {
 interface TransactionFiltersProps {
   value: TransactionFiltersState;
   onChange: (value: TransactionFiltersState) => void;
-  categories: CategoryResponse[];
+  categories: CategoryOption[];
 }
 
 const ALL_CATEGORIES = '__all__';
@@ -121,7 +121,7 @@ export function TransactionFilters({ value, onChange, categories }: TransactionF
             <SelectItem value={ALL_CATEGORIES}>Todas categorias</SelectItem>
             {categories.map((c) => (
               <SelectItem key={c.categoryId} value={c.categoryId}>
-                {c.name}
+                {c.label}
               </SelectItem>
             ))}
           </SelectContent>

@@ -1,5 +1,5 @@
 // src/components/modals/transaction-sheet/ExpenseFields.tsx
-import { CategoryCombobox } from '@/components/common/CategoryCombobox';
+import { CategoryPicker } from '@/components/common/CategoryPicker';
 import {
   Input,
   Label,
@@ -10,8 +10,8 @@ import {
   SelectValue,
   Textarea,
 } from '@/components/ui';
-import { ApiPaymentMethod, TransactionType } from '@/schemas/enums';
-import type { CategoryResponse } from '@/schemas/legacyCategory';
+import { CategoryScope } from '@/schemas/category';
+import { ApiPaymentMethod } from '@/schemas/enums';
 import type { NestMember } from '@/schemas/nest';
 
 import { MoreDetails } from './MoreDetails';
@@ -19,7 +19,6 @@ import { MoreDetails } from './MoreDetails';
 interface ExpenseFieldsProps {
   categoryId: string;
   onCategoryChange: (v: string) => void;
-  onCreateCategory: (payload: { name: string; type: number }) => Promise<CategoryResponse>;
   transactionDate: string;
   onDateChange: (v: string) => void;
   responsibleUserId: string;
@@ -32,7 +31,6 @@ interface ExpenseFieldsProps {
   onObservationChange: (v: string) => void;
   isDetailsOpen: boolean;
   onDetailsToggle: () => void;
-  categories: CategoryResponse[];
   members: NestMember[];
   isEdit: boolean;
 }
@@ -49,7 +47,6 @@ const PAYMENT_METHOD_LABELS: Record<number, string> = {
 export function ExpenseFields({
   categoryId,
   onCategoryChange,
-  onCreateCategory,
   transactionDate,
   onDateChange,
   responsibleUserId,
@@ -62,7 +59,6 @@ export function ExpenseFields({
   onObservationChange,
   isDetailsOpen,
   onDetailsToggle,
-  categories,
   members,
   isEdit,
 }: ExpenseFieldsProps) {
@@ -91,12 +87,11 @@ export function ExpenseFields({
           >
             Categoria
           </Label>
-          <CategoryCombobox
-            categories={categories}
-            value={categoryId}
-            onChange={onCategoryChange}
-            defaultType={TransactionType.Expense}
-            onCreateCategory={onCreateCategory}
+          <CategoryPicker
+            id="tx-category"
+            scope={CategoryScope.Expense}
+            value={categoryId || null}
+            onChange={(id) => onCategoryChange(id ?? '')}
           />
         </div>
       </div>

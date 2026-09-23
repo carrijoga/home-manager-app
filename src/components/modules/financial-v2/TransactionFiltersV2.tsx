@@ -10,9 +10,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui';
+import type { CategoryOption } from '@/lib/categories';
 import { PaymentStatus, TransactionType } from '@/schemas/enums';
 import type { FinancialTransactionResponse } from '@/schemas/financial';
-import type { CategoryResponse } from '@/schemas/legacyCategory';
 import type { NestMember } from '@/schemas/nest';
 import { calculateFilterCounts } from '@/utils/financialUtils';
 
@@ -35,7 +35,7 @@ export const DEFAULT_FILTERS_V2: TransactionFiltersV2State = {
 interface TransactionFiltersV2Props {
   value: TransactionFiltersV2State;
   onChange: (value: TransactionFiltersV2State) => void;
-  categories: CategoryResponse[];
+  categories: CategoryOption[];
   members: NestMember[];
   monthTransactions: FinancialTransactionResponse[];
   filteredTransactions: FinancialTransactionResponse[];
@@ -351,7 +351,7 @@ export function TransactionFiltersV2({
             <SelectItem value={ALL_CATEGORIES}>Todas as categorias</SelectItem>
             {categories.map((c) => (
               <SelectItem key={c.categoryId} value={c.categoryId}>
-                {c.name}
+                {c.label}
               </SelectItem>
             ))}
           </SelectContent>

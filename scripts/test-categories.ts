@@ -10,6 +10,7 @@ import {
   isHexColor,
   isSingleEmoji,
   nextPaletteColor,
+  toCategoryOptions,
 } from '@/lib/categories';
 
 const tree: CategoryNode[] = [
@@ -91,6 +92,13 @@ check('nextPaletteColor escolhe a primeira não usada e recicla', () => {
   assert.equal(nextPaletteColor([]), CATEGORY_COLORS[0]);
   assert.equal(nextPaletteColor([CATEGORY_COLORS[0]]), CATEGORY_COLORS[1]);
   assert.equal(nextPaletteColor([...CATEGORY_COLORS]), CATEGORY_COLORS[0]);
+});
+
+check('toCategoryOptions gera rótulo com pai', () => {
+  const opts = toCategoryOptions(flattenTree(tree));
+  assert.deepEqual(opts.map((o) => o.label), ['🛒 Mercado', '🥦 Mercado › Hortifruti', '🏠 Moradia']);
+  assert.equal(opts[1].name, 'Hortifruti');
+  assert.equal(opts[1].color, '#22C55E');
 });
 
 if (failures > 0) {

@@ -17,7 +17,6 @@ import {
   Search,
   Shield,
   Star,
-  Tag,
   Trash2,
   UserMinus,
   Users,
@@ -64,13 +63,12 @@ import { CreateNestRequestSchema, type UpdateNestRequest } from '@/schemas/nest'
 import * as nestService from '@/services/nestService';
 import type { AppUserNest } from '@/types';
 
-import { CategoriesPanel } from './CategoriesPanel';
 import { NestConfigurationPanel } from './NestConfigurationPanel';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type Mode = 'list' | 'create' | 'edit' | 'join_code';
-type EditSection = 'info' | 'members' | 'categories' | 'permissions';
+type EditSection = 'info' | 'members' | 'permissions';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -134,7 +132,6 @@ function formatDate(iso: string): string {
 const EDIT_SECTIONS: { id: EditSection; label: string; icon: React.ElementType }[] = [
   { id: 'info', label: 'Informações', icon: Info },
   { id: 'members', label: 'Membros', icon: Users },
-  { id: 'categories', label: 'Categorias', icon: Tag },
   { id: 'permissions', label: 'Configurações', icon: Shield },
 ];
 
@@ -1862,7 +1859,6 @@ export function NestManagerModal({ open, onClose, onOpenChange, initialMode = 'l
                     />
                   )}
                   {editSection === 'members' && <MembersPanel nest={editingNest} />}
-                  {editSection === 'categories' && <CategoriesPanel nest={editingNest} />}
                   {editSection === 'permissions' && <NestConfigurationPanel nest={editingNest} />}
                 </div>
               ) : (
@@ -1887,7 +1883,6 @@ export function NestManagerModal({ open, onClose, onOpenChange, initialMode = 'l
                       />
                     )}
                     {editSection === 'members' && <MembersPanel nest={editingNest} />}
-                    {editSection === 'categories' && <CategoriesPanel nest={editingNest} />}
                     {editSection === 'permissions' && <NestConfigurationPanel nest={editingNest} />}
                   </motion.div>
                 </AnimatePresence>

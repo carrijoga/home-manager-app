@@ -69,6 +69,22 @@ export function formatCategoryLabel(
   return parent ? `${cat.icon} ${parent.name} › ${cat.name}` : `${cat.icon} ${cat.name}`;
 }
 
+export interface CategoryOption {
+  categoryId: string;
+  label: string;
+  name: string;
+  color: string;
+}
+
+export function toCategoryOptions<T extends CategoryNode>(flat: FlatCategory<T>[]): CategoryOption[] {
+  return flat.map(({ category, parent }) => ({
+    categoryId: category.categoryId,
+    label: formatCategoryLabel(category, parent),
+    name: category.name,
+    color: category.color,
+  }));
+}
+
 function normalize(value: string): string {
   return value
     .normalize('NFD')

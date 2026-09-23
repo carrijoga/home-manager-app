@@ -1,7 +1,7 @@
 // src/components/modals/transaction-sheet/IncomeFields.tsx
 import { Info } from 'lucide-react';
 
-import { CategoryCombobox } from '@/components/common/CategoryCombobox';
+import { CategoryPicker } from '@/components/common/CategoryPicker';
 import {
   Input,
   Label,
@@ -17,8 +17,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui';
 import type { BankAccountResponse } from '@/schemas/bank-account';
-import { TransactionType } from '@/schemas/enums';
-import type { CategoryResponse } from '@/schemas/legacyCategory';
+import { CategoryScope } from '@/schemas/category';
 import type { NestMember } from '@/schemas/nest';
 
 import { MoreDetails } from './MoreDetails';
@@ -26,7 +25,6 @@ import { MoreDetails } from './MoreDetails';
 interface IncomeFieldsProps {
   categoryId: string;
   onCategoryChange: (v: string) => void;
-  onCreateCategory: (payload: { name: string; type: number }) => Promise<CategoryResponse>;
   transactionDate: string;
   onDateChange: (v: string) => void;
   responsibleUserId: string;
@@ -38,7 +36,6 @@ interface IncomeFieldsProps {
   onObservationChange: (v: string) => void;
   isDetailsOpen: boolean;
   onDetailsToggle: () => void;
-  categories: CategoryResponse[];
   members: NestMember[];
   isEdit: boolean;
 }
@@ -46,7 +43,6 @@ interface IncomeFieldsProps {
 export function IncomeFields({
   categoryId,
   onCategoryChange,
-  onCreateCategory,
   transactionDate,
   onDateChange,
   responsibleUserId,
@@ -58,7 +54,6 @@ export function IncomeFields({
   onObservationChange,
   isDetailsOpen,
   onDetailsToggle,
-  categories,
   members,
   isEdit,
 }: IncomeFieldsProps) {
@@ -89,12 +84,11 @@ export function IncomeFields({
           >
             Categoria
           </Label>
-          <CategoryCombobox
-            categories={categories}
-            value={categoryId}
-            onChange={onCategoryChange}
-            defaultType={TransactionType.Income}
-            onCreateCategory={onCreateCategory}
+          <CategoryPicker
+            id="tx-category-income"
+            scope={CategoryScope.Income}
+            value={categoryId || null}
+            onChange={(id) => onCategoryChange(id ?? '')}
           />
         </div>
       </div>

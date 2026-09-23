@@ -15,7 +15,6 @@ import type {
   FinancialTransactionResponse,
   UpdateTransactionRequest,
 } from '@/schemas/financial';
-import type { CategoryResponse } from '@/schemas/legacyCategory';
 import type { NestMember } from '@/schemas/nest';
 import * as bankAccountService from '@/services/bankAccountService';
 import * as nestService from '@/services/nestService';
@@ -28,11 +27,9 @@ import { TypeToggle } from './transaction-sheet/TypeToggle';
 export interface TransactionSheetProps {
   open: boolean;
   onClose: () => void;
-  categories: CategoryResponse[];
   nestId: string | undefined;
   currentUserId: string;
   onCreate: (payload: CreateTransactionRequest) => Promise<void>;
-  onCreateCategory: (payload: { name: string; type: number }) => Promise<CategoryResponse>;
   /** Quando presente, o sheet abre em modo edição para esta transação. */
   editingTransaction?: FinancialTransactionResponse | null;
   onUpdate?: (payload: UpdateTransactionRequest) => Promise<void>;
@@ -52,11 +49,9 @@ const INCOME_COLOR = '#6ab085';
 export function TransactionSheet({
   open,
   onClose,
-  categories,
   nestId,
   currentUserId,
   onCreate,
-  onCreateCategory,
   editingTransaction = null,
   onUpdate,
 }: TransactionSheetProps) {
@@ -174,8 +169,6 @@ export function TransactionSheet({
     }
     setIsDetailsOpen(false);
   };
-
-  const visibleCategories = categories.filter((c) => c.type === type);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -312,7 +305,6 @@ export function TransactionSheet({
                 <ExpenseFields
                   categoryId={categoryId}
                   onCategoryChange={setCategoryId}
-                  onCreateCategory={onCreateCategory}
                   transactionDate={transactionDate}
                   onDateChange={setTransactionDate}
                   responsibleUserId={responsibleUserId}
@@ -325,7 +317,6 @@ export function TransactionSheet({
                   onObservationChange={setObservation}
                   isDetailsOpen={isDetailsOpen}
                   onDetailsToggle={() => setIsDetailsOpen((v) => !v)}
-                  categories={visibleCategories}
                   members={members}
                   isEdit={isEditMode}
                 />
@@ -341,7 +332,6 @@ export function TransactionSheet({
                 <IncomeFields
                   categoryId={categoryId}
                   onCategoryChange={setCategoryId}
-                  onCreateCategory={onCreateCategory}
                   transactionDate={transactionDate}
                   onDateChange={setTransactionDate}
                   responsibleUserId={responsibleUserId}
@@ -353,7 +343,6 @@ export function TransactionSheet({
                   onObservationChange={setObservation}
                   isDetailsOpen={isDetailsOpen}
                   onDetailsToggle={() => setIsDetailsOpen((v) => !v)}
-                  categories={visibleCategories}
                   members={members}
                   isEdit={isEditMode}
                 />

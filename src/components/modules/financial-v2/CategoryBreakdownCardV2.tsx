@@ -3,12 +3,12 @@ import { Check, Filter, Lightbulb, Plus, TrendingUp } from 'lucide-react';
 
 import { AnimatedCurrency, AnimatedPercent } from '@/components/common/AnimatedNumber';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import type { CategoryOption } from '@/lib/categories';
 import type { FinancialTransactionCategoryExpenseResponse } from '@/schemas/financial';
-import type { CategoryResponse } from '@/schemas/legacyCategory';
 
 interface CategoryBreakdownCardV2Props {
   expensesByCategory: FinancialTransactionCategoryExpenseResponse[];
-  categories: CategoryResponse[];
+  categories: CategoryOption[];
   selectedCategoryId: string | null;
   onSelectCategory: (categoryId: string | null) => void;
   onAddCategory?: () => void;
@@ -52,6 +52,7 @@ export function CategoryBreakdownCardV2({
     const matchedCategory = categories.find(
       (c) => c.name.toLowerCase().trim() === r.categoryName.toLowerCase().trim()
     );
+    // Bloco 4 troca esse lookup por categoryId direto da API do dashboard.
     const amount = Number(r.totalAmount);
     const percentage = totalExpenseSum > 0 ? Math.round((amount / totalExpenseSum) * 100) : 0;
     return {

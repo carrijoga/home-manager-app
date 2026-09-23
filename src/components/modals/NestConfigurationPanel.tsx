@@ -17,9 +17,12 @@ import {
   SelectValue,
   Switch,
 } from '@/components/ui';
-import { NestRole, TransactionType } from '@/schemas/enums';
-import type { CategoryResponse } from '@/schemas/legacyCategory';
-import * as categoryService from '@/services/legacyCategoryService';
+import { useApp } from '@/contexts/AppContext';
+import { useCategories } from '@/hooks/useCategories';
+import { type CategoryOption, flattenTree, toCategoryOptions } from '@/lib/categories';
+import { type CategoryResponse,CategoryScope } from '@/schemas/category';
+import { NestRole } from '@/schemas/enums';
+import * as categoryService from '@/services/categoryService';
 import * as nestService from '@/services/nestService';
 import type { AppUserNest } from '@/types';
 
@@ -27,12 +30,39 @@ interface NestConfigurationPanelProps {
   nest: AppUserNest;
 }
 
+/**
+ * `nest.nestId` editado aqui pode não ser o ninho ativo — `useCategories` usa
+ * sempre o ninho ativo (`useApp().activeNestId`). Quando são o mesmo, reaproveita
+ * o hook (com cache); caso contrário, carrega localmente para o ninho alvo.
+ */
+function useExpenseOptionsForNest(nestId: string): CategoryOption[] {
+  const { activeNestId } = useApp();
+  const active = useCategories(CategoryScope.Expense);
+  const [other, setOther] = React.useState<CategoryResponse[]>([]);
+  const isActive = nestId === activeNestId;
+  React.useEffect(() => {
+    if (isActive) return;
+    let alive = true;
+    categoryService
+      .listCategories(nestId, CategoryScope.Expense)
+      .then((t) => alive && setOther(t))
+      .catch(() => alive && setOther([]));
+    return () => {
+      alive = false;
+    };
+  }, [nestId, isActive]);
+  return React.useMemo(
+    () => toCategoryOptions(flattenTree(isActive ? active.tree : other)),
+    [isActive, active.tree, other]
+  );
+}
+
 export function NestConfigurationPanel({ nest }: NestConfigurationPanelProps) {
   const isOwnerOrAdmin = nest.role === NestRole.Owner || nest.role === NestRole.Admin;
 
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
-  const [categories, setCategories] = React.useState<CategoryResponse[]>([]);
+  const categoryOptions = useExpenseOptionsForNest(nest.nestId);
 
   const [finishedShoppingListGenerateFinancial, setFinishedShoppingListGenerateFinancial] =
     React.useState(false);
@@ -43,16 +73,12 @@ export function NestConfigurationPanel({ nest }: NestConfigurationPanelProps) {
   const fetchConfiguration = React.useCallback(async () => {
     setLoading(true);
     try {
-      const [configData, catsData] = await Promise.all([
-        nestService.getNestConfiguration(nest.nestId),
-        categoryService.listCategories({ types: [TransactionType.Expense] }, nest.nestId),
-      ]);
+      const configData = await nestService.getNestConfiguration(nest.nestId);
 
       setFinishedShoppingListGenerateFinancial(
         configData.finishedShoppingListGenerateFinancial ?? false
       );
       setDefaultShoppingExpenseCategoryId(configData.defaultShoppingExpenseCategoryId ?? null);
-      setCategories(catsData ?? []);
     } catch (error) {
       if (import.meta.env.DEV) {
         console.warn('[NestConfigurationPanel] Erro ao carregar configurações:', error);
@@ -177,14 +203,14 @@ export function NestConfigurationPanel({ nest }: NestConfigurationPanelProps) {
                     <SelectValue placeholder="Selecione uma categoria de despesa..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories.length === 0 ? (
+                    {categoryOptions.length === 0 ? (
                       <div className="p-2 text-center text-xs text-muted-foreground">
                         Nenhuma categoria de despesa encontrada neste ninho.
                       </div>
                     ) : (
-                      categories.map((cat) => (
+                      categoryOptions.map((cat) => (
                         <SelectItem key={cat.categoryId} value={cat.categoryId}>
-                          {cat.name}
+                          {cat.label}
                         </SelectItem>
                       ))
                     )}

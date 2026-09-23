@@ -20,10 +20,13 @@ import {
 } from '@/components/ui';
 import { useApp } from '@/contexts/AppContext';
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
+import { useCategories } from '@/hooks/useCategories';
 import { useDebounce } from '@/hooks/useDebounce';
 import { usePolling } from '@/hooks/usePolling';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { toCategoryOptions } from '@/lib/categories';
 import type { BankAccountResponse } from '@/schemas/bank-account';
+import { CategoryScope } from '@/schemas/category';
 import { PaymentStatus, TransactionType } from '@/schemas/enums';
 import type {
   AddPaymentRequest,
@@ -33,11 +36,9 @@ import type {
   FinancialTransactionUpcomingBillResponse,
   UpdateTransactionRequest,
 } from '@/schemas/financial';
-import type { CategoryResponse } from '@/schemas/legacyCategory';
 import type { PaymentCardResponse } from '@/schemas/payment-card';
 import * as bankAccountService from '@/services/bankAccountService';
 import * as financialService from '@/services/financialService';
-import * as categoryService from '@/services/legacyCategoryService';
 import * as paymentCardService from '@/services/paymentCardService';
 import { getMonthRange } from '@/utils/financialUtils';
 
@@ -87,7 +88,6 @@ const Financial = () => {
   const [dashboardData, setDashboardData] = useState<FinancialTransactionDashboardResponse | null>(
     null
   );
-  const [categories, setCategories] = useState<CategoryResponse[]>([]);
   const [bankAccounts, setBankAccounts] = useState<BankAccountResponse[]>([]);
   const [paymentCards, setPaymentCards] = useState<PaymentCardResponse[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -127,20 +127,12 @@ const Financial = () => {
     { intervalMs: 10000, enabled: Boolean(nestId) }
   );
 
-  // Categorias — uma vez por nest, sem refresh em mutações
-  useEffect(() => {
-    let active = true;
-    categoryService
-      .listCategories({ pageSize: 100 }, nestId)
-      .then((res) => {
-        if (active) setCategories(res ?? []);
-      })
-      .catch(() => {});
-    return () => {
-      active = false;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nestId]);
+  const { flat: expenseFlat } = useCategories(CategoryScope.Expense);
+  const { flat: incomeFlat } = useCategories(CategoryScope.Income);
+  const categoryOptions = useMemo(
+    () => toCategoryOptions([...expenseFlat, ...incomeFlat]),
+    [expenseFlat, incomeFlat]
+  );
 
   // Contas e cartões — para resolver nomes de origem nos pagamentos expandidos
   useEffect(() => {
@@ -161,15 +153,6 @@ const Financial = () => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nestId]);
-
-  const handleCreateCategory = async (payload: { name: string; type: number }) => {
-    const created = await categoryService.createCategory(
-      { name: payload.name, type: payload.type },
-      nestId
-    );
-    setCategories((prev) => [...prev, created]);
-    return created;
-  };
 
   // ── Derivados client-side ──────────────────────────────────────────────────
   const filteredTransactions = useMemo(() => {
@@ -377,7 +360,7 @@ const Financial = () => {
           variants={cardSlide}
           className="order-2 flex flex-col gap-3 lg:order-1 lg:col-span-2"
         >
-          <TransactionFilters value={filters} onChange={setFilters} categories={categories} />
+          <TransactionFilters value={filters} onChange={setFilters} categories={categoryOptions} />
           <TransactionList
             transactions={filteredTransactions}
             loading={loading}
@@ -423,11 +406,9 @@ const Financial = () => {
       <TransactionSheet
         open={formOpen}
         onClose={closeForm}
-        categories={categories}
         nestId={nestId}
         currentUserId={currentUserId}
         onCreate={handleCreate}
-        onCreateCategory={handleCreateCategory}
         editingTransaction={editingTx}
         onUpdate={handleUpdate}
       />

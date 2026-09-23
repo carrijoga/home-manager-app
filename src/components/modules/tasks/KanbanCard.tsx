@@ -16,8 +16,8 @@ import type { Task } from '@/types';
 
 import { AssigneesPopover } from './AssigneesPopover';
 import { PRIORITY_CONFIG } from './constants';
-import { getMyPart, NOT_ASSIGNEE_HINT } from './taskParts';
 import { useToggleAssignee } from './TaskAssigneeActionsContext';
+import { getMyPart, NOT_ASSIGNEE_HINT } from './taskParts';
 import { useTaskViewer } from './useTaskViewer';
 
 interface KanbanCardProps {

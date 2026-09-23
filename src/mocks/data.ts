@@ -1151,9 +1151,6 @@ function makeFinTx(seed: FinTxSeed): FinancialTransactionResponse {
     responsibleUserId: FIN_JOAO.id,
     responsibleUserName: FIN_JOAO.name,
     category,
-    // Transitório (Tarefa 6 remove).
-    categoryId: category?.categoryId ?? null,
-    categoryName: category?.name ?? null,
     origin: seed.origin ?? (seed.shoppingListId ? 2 : 0),
     originName: seed.originName ?? (seed.shoppingListId ? 'Lista de Compras' : 'Financeiro'),
     observation:

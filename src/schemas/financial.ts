@@ -125,10 +125,6 @@ export const FinancialTransactionResponseSchema = z.object({
   dueDate: DateTimeSchema.nullable(),
   responsibleUserId: UuidSchema.nullable().optional(),
   responsibleUserName: z.string().nullable().optional(),
-  /** @deprecated Removido do contrato — use `category`. Some na Tarefa 6 do Bloco 4. */
-  categoryId: UuidSchema.nullable().optional(),
-  /** @deprecated Removido do contrato — use `category`. Some na Tarefa 6 do Bloco 4. */
-  categoryName: z.string().nullable().optional(),
   // Transferência e ajuste de saldo vêm com category = null.
   category: CategorySummaryResponseSchema.nullable(),
   origin: ModulesSchema.nullable().optional(),

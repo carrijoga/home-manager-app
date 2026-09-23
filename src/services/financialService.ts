@@ -311,9 +311,6 @@ export async function createTransaction(
       responsibleUserId: payload.responsibleUserId,
       responsibleUserName: 'João (Você)',
       category,
-      // Transitório (Tarefa 6 remove).
-      categoryId: payload.categoryId,
-      categoryName: category?.name ?? null,
       origin: 0,
       originName: 'Financeiro',
       observation: null,
@@ -352,9 +349,6 @@ export async function updateTransaction(
       transactionDate: payload.transactionDate,
       dueDate: payload.dueDate ?? null,
       category,
-      // Transitório (Tarefa 6 remove).
-      categoryId: payload.categoryId,
-      categoryName: category?.name ?? null,
       responsibleUserId: payload.responsibleUserId,
       sourceId:
         payload.type === TransactionType.Income

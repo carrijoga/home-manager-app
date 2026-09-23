@@ -30,7 +30,6 @@ import { useTheme } from './contexts/ThemeContext';
 
 // Lazy loading dos módulos para code splitting
 const DashboardModule = lazy(() => import('./components/modules/Dashboard'));
-const DashboardV2Module = lazy(() => import('./components/modules/DashboardV2'));
 const TasksModule = lazy(() => import('./components/modules/Tasks'));
 const ShoppingListModule = lazy(() => import('./components/modules/Shopping'));
 const FinancialModule = lazy(() => import('./components/modules/Financial'));
@@ -58,10 +57,6 @@ const NotFound = lazy(() => import('./pages/NotFound'));
 // Componentes wrapper que conectam o context aos módulos
 const Dashboard: FC = () => {
   return <DashboardModule />;
-};
-
-const DashboardV2: FC = () => {
-  return <DashboardV2Module />;
 };
 
 const Tasks: FC = () => {
@@ -214,16 +209,6 @@ export const App: FC = () => {
                       <Suspense fallback={<DashboardSkeleton />}>
                         <FadeIn>
                           <Dashboard />
-                        </FadeIn>
-                      </Suspense>
-                    }
-                  />
-                  <Route
-                    path="dashboard-v2"
-                    element={
-                      <Suspense fallback={<DashboardSkeleton />}>
-                        <FadeIn>
-                          <DashboardV2 />
                         </FadeIn>
                       </Suspense>
                     }

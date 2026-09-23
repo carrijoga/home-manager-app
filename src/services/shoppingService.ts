@@ -1,16 +1,14 @@
 /**
- * Serviço para gerenciar listas de compras, itens e categorias.
+ * Serviço para gerenciar listas de compras e itens (inclui replicação de lista).
  * Dual-mode: DATA_MODE === 'mock' usa dados locais; 'api' usa httpClient.
  */
 
 import { getItemEstimatedTotal, getItemSpentTotal } from '@/components/modules/Shopping/helpers';
 import { toCategorySummary } from '@/lib/categories';
 import type {
-  CreateShoppingCategoryRequest,
   CreateShoppingItemRequest,
   CreateShoppingListRequest,
   MarkAsPurchasedRequest,
-  ShoppingCategoryResponse,
   ShoppingItemResponse,
   ShoppingListResponse,
   ShoppingListSummaryResponse,
@@ -21,20 +19,18 @@ import {
   CreateShoppingItemRequestSchema,
   MarkAsPurchasedRequestSchema,
   ReplicateShoppingListRequestSchema,
-  ShoppingCategoryResponseSchema,
   ShoppingListResponseSchema,
   ShoppingListSummaryResponseSchema,
   UpdateShoppingItemRequestSchema,
 } from '@/schemas/shopping';
 import { getMockCategoryTree } from '@/services/categoryService';
 import type {
-  AppShoppingCategory,
   AppShoppingItem,
   AppShoppingList,
   AppShoppingListSummary,
 } from '@/types';
 
-import { mockShoppingCategories, mockShoppingListDetails, mockShoppingLists } from '../mocks/data';
+import { mockShoppingListDetails, mockShoppingLists } from '../mocks/data';
 import { DATA_MODE } from './api/config';
 import { ENDPOINTS } from './api/endpoints';
 import { ApiError, httpClient } from './api/httpClient';
@@ -78,16 +74,6 @@ function validateRequest<T>(
 }
 
 // ── Mappers (API response → app-internal type) ────────────────────────────────
-
-function mapCategory(r: ShoppingCategoryResponse): AppShoppingCategory {
-  return {
-    shoppingCategoryId: r.shoppingCategoryId,
-    nestId: r.nestId ?? null,
-    name: r.name,
-    description: r.description,
-    isDefault: r.isDefault,
-  };
-}
 
 export function mapItem(r: ShoppingItemResponse): AppShoppingItem {
   const status = r.status ?? (r.isPurchased ? 1 : 0);
@@ -145,57 +131,6 @@ let _mockLists: AppShoppingListSummary[] = [...mockShoppingLists];
 const _mockDetails: Record<string, AppShoppingList> = Object.fromEntries(
   Object.entries(mockShoppingListDetails).map(([k, v]) => [k, { ...v, items: [...v.items].reverse() }])
 );
-let _mockCategories: AppShoppingCategory[] = [...mockShoppingCategories];
-
-// ── ShoppingCategory ──────────────────────────────────────────────────────────
-
-export async function getShoppingCategories(nestId?: string): Promise<AppShoppingCategory[]> {
-  if (DATA_MODE === 'mock') {
-    return new Promise((resolve) => setTimeout(() => resolve([..._mockCategories]), 100));
-  }
-
-  const raw = await httpClient.get<unknown[]>(ENDPOINTS.shoppingCategories.list, nestId);
-  const parsed = (Array.isArray(raw) ? raw : []).map((item) =>
-    mapCategory(safeParse(ShoppingCategoryResponseSchema, item, 'getShoppingCategories'))
-  );
-  return parsed;
-}
-
-export async function createShoppingCategory(
-  data: CreateShoppingCategoryRequest,
-  nestId?: string
-): Promise<AppShoppingCategory> {
-  if (DATA_MODE === 'mock') {
-    const newCat: AppShoppingCategory = {
-      shoppingCategoryId: crypto.randomUUID(),
-      nestId: nestId ?? null,
-      name: data.name,
-      description: data.description ?? null,
-      isDefault: false,
-    };
-    _mockCategories = [..._mockCategories, newCat];
-    return new Promise((resolve) => setTimeout(() => resolve(newCat), 100));
-  }
-
-  // Backend requires description (even when empty) despite the OpenAPI spec marking it optional
-  const payload = { ...data, description: data.description ?? '' };
-  const newId = await httpClient.post<string>(ENDPOINTS.shoppingCategories.create, payload, {
-    nestId,
-  });
-  const allCats = await getShoppingCategories(nestId);
-  const found = allCats.find((c) => c.shoppingCategoryId === newId);
-  if (!found) throw new Error('Categoria não encontrada após criação');
-  return found;
-}
-
-export async function deleteShoppingCategory(id: string, nestId?: string): Promise<void> {
-  if (DATA_MODE === 'mock') {
-    _mockCategories = _mockCategories.filter((c) => c.shoppingCategoryId !== id);
-    return new Promise((resolve) => setTimeout(resolve, 100));
-  }
-
-  await httpClient.del<void>(ENDPOINTS.shoppingCategories.delete(id), nestId);
-}
 
 // ── ShoppingList ──────────────────────────────────────────────────────────────
 

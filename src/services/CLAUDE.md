@@ -55,7 +55,7 @@ All 16 services in this directory are fully typed TypeScript modules (`.ts`):
 | `notificationService.ts`| User notifications management (list, read, delete)   |
 | `paymentCardService.ts` | Credit and debit card management and card statements |
 | `settingsService.ts`    | User and nest preferences                            |
-| `shoppingService.ts`    | Shopping lists and item CRUD                         |
+| `shoppingService.ts`    | Shopping lists and item CRUD (+ replicate list to another month) |
 | `taskService.ts`        | CRUD for tasks, subtasks, and status transitions     |
 | `userService.ts`        | User profile and credentials management              |
 | `weatherService.ts`     | Weather forecasts for home location                  |

@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
 import { useDebounce } from '@/hooks/useDebounce';
 import type { CategoryResponse } from '@/schemas/category';
-import type { AppShoppingCategory, AppShoppingList, AppShoppingListSummary } from '@/types';
+import type { AppShoppingList, AppShoppingListSummary } from '@/types';
 
 import { getMainCategoryKey, groupItemsByMainCategory, type ItemSection, type SectionOption } from '../grouping';
 import { addMonths, currentMonthValue, fromISOMonthYear } from '../helpers';
@@ -12,14 +12,12 @@ import type { ViewMode } from '../types';
 
 interface ShoppingNavigationDeps {
   remoteShoppingLists: AppShoppingListSummary[];
-  shoppingCategories: AppShoppingCategory[];
   categoryTree: CategoryResponse[];
   loadShoppingListDetail: (id: string) => Promise<AppShoppingList>;
 }
 
 export function useShoppingNavigation({
   remoteShoppingLists,
-  shoppingCategories,
   categoryTree,
   loadShoppingListDetail,
 }: ShoppingNavigationDeps) {
@@ -46,14 +44,6 @@ export function useShoppingNavigation({
 
   const categoryScrollRef = useRef<HTMLDivElement | null>(null);
   const categoryDragRef = useRef({ startX: 0, scrollLeft: 0, isDragging: false });
-
-  const uniqueCategories = useMemo(() => {
-    const map = new Map<string, { shoppingCategoryId: string; name: string; isDefault: boolean }>();
-    shoppingCategories.forEach((c) => {
-      if (!map.has(c.shoppingCategoryId)) map.set(c.shoppingCategoryId, c);
-    });
-    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
-  }, [shoppingCategories]);
 
   const [filterYear, filterMonthNum] = filterMonth.split('-').map(Number);
   const filteredLists = useMemo(
@@ -249,7 +239,6 @@ export function useShoppingNavigation({
     collapsedCategories,
     shoppingLists,
     setShoppingLists,
-    uniqueCategories,
     // refs
     categoryScrollRef,
     // computed

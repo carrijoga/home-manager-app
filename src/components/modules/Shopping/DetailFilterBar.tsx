@@ -10,6 +10,7 @@ import {
   X,
 } from 'lucide-react';
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import {
   DropdownMenu,
@@ -39,7 +40,6 @@ interface DetailFilterBarProps {
   detailDataLoaded: boolean;
   categoryScrollRef: React.RefObject<HTMLDivElement | null>;
   onExitBulkMode: () => void;
-  onShowCategories: () => void;
   onUploadClick: () => void;
   onEnterBulkMode: () => void;
   onAddItem: () => void;
@@ -79,7 +79,6 @@ export function DetailFilterBar(props: DetailFilterBarProps) {
     detailDataLoaded,
     categoryScrollRef,
     onExitBulkMode,
-    onShowCategories,
     onUploadClick,
     onEnterBulkMode,
     onScrollCategories,
@@ -87,6 +86,8 @@ export function DetailFilterBar(props: DetailFilterBarProps) {
     onCategoryPointerMove,
     onCategoryPointerUp,
   } = props;
+
+  const navigate = useNavigate();
 
   /* ── Barra de Modo de Seleção em Massa ── */
   if (isBulkMode) {
@@ -294,8 +295,8 @@ export function DetailFilterBar(props: DetailFilterBarProps) {
           <button
             type="button"
             className="flex h-8 items-center gap-1.5 rounded-xl border border-border/70 bg-card px-2.5 text-xs font-semibold text-muted-foreground shadow-subtle transition-colors hover:bg-muted hover:text-foreground"
-            onClick={onShowCategories}
-            title="Gerenciar categorias da lista"
+            onClick={() => navigate('/settings/categories?scope=shopping')}
+            title="Gerenciar categorias de compras"
           >
             <Tag size={12} />
             <span className="hidden sm:inline">Categorias</span>

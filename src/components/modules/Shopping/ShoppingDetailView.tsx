@@ -45,7 +45,6 @@ import { DetailHeader } from './DetailHeader';
 import { BulkEditDialog } from './dialogs/BulkEditDialog';
 import { ItemFormDialog } from './dialogs/ItemFormDialog';
 import { ListFormDialog } from './dialogs/ListFormDialog';
-import { ManageCategoriesDialog } from './dialogs/ManageCategoriesDialog';
 import { MarkAsPurchasedDialog } from './dialogs/MarkAsPurchasedDialog';
 import type { ItemSection, SectionOption } from './grouping';
 import {
@@ -65,7 +64,6 @@ interface ShoppingDetailViewProps {
   isLoadingDetail: boolean;
   isFinished: boolean;
   editListInitialData: ListFormData | undefined;
-  uniqueCategories: Array<{ shoppingCategoryId: string; name: string; isDefault: boolean }>;
   sectionOptions: SectionOption[];
   itemSections: ItemSection[];
   categoryFilter: string | null;
@@ -101,8 +99,6 @@ interface ShoppingDetailViewProps {
   setShowEditItem: (v: boolean) => void;
   showPurchase: boolean;
   setShowPurchase: (v: boolean) => void;
-  showCategories: boolean;
-  setShowCategories: (v: boolean) => void;
   showDeleteAlert: boolean;
   setShowDeleteAlert: (v: boolean) => void;
   showBulkEdit: boolean;
@@ -140,8 +136,6 @@ interface ShoppingDetailViewProps {
   onUploadFile: (file: File) => Promise<void>;
   onBulkEdit: (patch: BulkEditPatch) => Promise<void>;
   onBulkDelete: () => Promise<void>;
-  onCreateCategory: (name: string) => Promise<void>;
-  onDeleteCategory: (id: string) => Promise<void>;
   onStartMarketMode?: () => void;
 }
 
@@ -152,7 +146,6 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
     isLoadingDetail,
     isFinished,
     editListInitialData,
-    uniqueCategories,
     sectionOptions,
     itemSections,
     categoryFilter,
@@ -186,8 +179,6 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
     setShowEditItem,
     showPurchase,
     setShowPurchase,
-    showCategories,
-    setShowCategories,
     showDeleteAlert,
     setShowDeleteAlert,
     showBulkEdit,
@@ -225,8 +216,6 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
     onUploadFile,
     onBulkEdit,
     onBulkDelete,
-    onCreateCategory,
-    onDeleteCategory,
     onStartMarketMode,
   } = props;
 
@@ -363,7 +352,6 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
         detailDataLoaded={!!detailData}
         categoryScrollRef={categoryScrollRef}
         onExitBulkMode={onExitBulkMode}
-        onShowCategories={() => setShowCategories(true)}
         onUploadClick={() => setShowUploadModal(true)}
         onEnterBulkMode={() => setIsBulkMode(true)}
         onAddItem={() => setShowAddItem(true)}
@@ -791,7 +779,6 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
         open={showBulkEdit}
         onClose={() => setShowBulkEdit(false)}
         selectedItems={selectedItems}
-        categories={uniqueCategories}
         onSubmit={onBulkEdit}
       />
       <AlertDialog
@@ -834,8 +821,6 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
         initialData={addItemInitialData}
         onSubmit={onAddItem}
         title="Adicionar Item"
-        categories={uniqueCategories}
-        onCreateCategory={onCreateCategory}
       />
       <ItemFormDialog
         open={showEditItem}
@@ -846,8 +831,6 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
         initialData={editItemInitialData}
         onSubmit={onEditItem}
         title="Editar Item"
-        categories={uniqueCategories}
-        onCreateCategory={onCreateCategory}
       />
       <MarkAsPurchasedDialog
         open={showPurchase}
@@ -857,13 +840,6 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
         }}
         item={selectedItem}
         onSubmit={onSubmitPurchase}
-      />
-      <ManageCategoriesDialog
-        open={showCategories}
-        onClose={() => setShowCategories(false)}
-        categories={uniqueCategories}
-        onCreateCategory={onCreateCategory}
-        onDeleteCategory={onDeleteCategory}
       />
 
       {/* Delete list alert */}

@@ -1,7 +1,8 @@
 import MoneyInput from '@components/common/MoneyInput';
-import { ChevronRight, FolderMinus, Minus, Plus, Sparkles, Tag } from 'lucide-react';
-import React, { useEffect, useMemo, useState } from 'react';
+import { ChevronRight, Minus, Plus, Sparkles } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 
+import { CategoryPicker } from '@/components/common/CategoryPicker';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,7 +15,6 @@ import { UNIT_TYPE_LABELS } from '@/schemas/enums';
 import { emptyItemForm } from '../helpers';
 import { suggestCategoryForItem } from '../smartCategory';
 import type { ItemFormData } from '../types';
-import { CategoryPickerSheet } from './CategoryPickerSheet';
 import { UnitChips, UnitPickerSheet } from './UnitSelector';
 
 interface ItemFormDialogProps {
@@ -23,8 +23,6 @@ interface ItemFormDialogProps {
   initialData?: ItemFormData;
   onSubmit: (data: ItemFormData) => Promise<void>;
   title: string;
-  categories: Array<{ shoppingCategoryId: string; name: string }>;
-  onCreateCategory?: (name: string) => Promise<void>;
 }
 
 export function ItemFormDialog({
@@ -33,12 +31,9 @@ export function ItemFormDialog({
   initialData,
   onSubmit,
   title,
-  categories,
-  onCreateCategory,
 }: ItemFormDialogProps) {
   const [data, setData] = useState<ItemFormData>(initialData ?? emptyItemForm());
   const [saving, setSaving] = useState(false);
-  const [categoryPickerOpen, setCategoryPickerOpen] = useState(false);
   const [unitPickerOpen, setUnitPickerOpen] = useState(false);
   const [categoryWasManuallySet, setCategoryWasManuallySet] = useState(false);
 
@@ -48,16 +43,10 @@ export function ItemFormDialog({
     if (open) {
       setData(initialData ?? emptyItemForm());
       setSaving(false);
-      setCategoryPickerOpen(false);
       setUnitPickerOpen(false);
       setCategoryWasManuallySet(Boolean(initialData?.categoryId));
     }
   }, [open, initialData]);
-
-  const selectedCategory = useMemo(
-    () => categories.find((c) => c.shoppingCategoryId === data.categoryId),
-    [categories, data.categoryId]
-  );
 
   // Auto-sugestão inteligente de categoria conforme digita o nome do item
   const handleNameChange = (name: string) => {
@@ -199,37 +188,30 @@ export function ItemFormDialog({
               {/* Categoria */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <Label
+                    htmlFor="item-category"
+                    className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                  >
                     Categoria
                   </Label>
-                  {selectedCategory && (
+                  {data.categoryId && !categoryWasManuallySet && (
                     <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
                       <Sparkles size={11} />
-                      {selectedCategory.name}
+                      Sugerida
                     </span>
                   )}
                 </div>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (document.activeElement instanceof HTMLElement) {
-                      document.activeElement.blur();
-                    }
-                    setCategoryPickerOpen(true);
+                <CategoryPicker
+                  id="item-category"
+                  scope={CategoryScope.Shopping}
+                  value={data.categoryId || null}
+                  onChange={(id) => {
+                    setData((d) => ({ ...d, categoryId: id ?? '' }));
+                    setCategoryWasManuallySet(true);
                   }}
-                  className="flex h-12 w-full items-center justify-between rounded-2xl border border-border/80 bg-muted/30 px-4 text-left text-sm font-medium transition-colors hover:bg-accent/40 active:scale-[0.99]"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-muted text-muted-foreground">
-                      {selectedCategory ? <Tag size={15} /> : <FolderMinus size={15} />}
-                    </div>
-                    <span className={selectedCategory ? 'font-semibold text-foreground' : 'text-muted-foreground'}>
-                      {selectedCategory ? selectedCategory.name : 'Selecionar categoria...'}
-                    </span>
-                  </div>
-                  <ChevronRight size={16} className="text-muted-foreground" />
-                </button>
+                  allowClear
+                  placeholder="Selecionar categoria..."
+                />
               </div>
 
               {/* Preço Estimado */}
@@ -291,19 +273,6 @@ export function ItemFormDialog({
           </form>
         </SheetContent>
       </Sheet>
-
-      {/* Sheet de Categorias */}
-      <CategoryPickerSheet
-        open={categoryPickerOpen}
-        onClose={() => setCategoryPickerOpen(false)}
-        selectedCategoryId={data.categoryId}
-        onSelectCategory={(catId) => {
-          setData((d) => ({ ...d, categoryId: catId }));
-          setCategoryWasManuallySet(true);
-        }}
-        categories={categories}
-        onCreateCategory={onCreateCategory}
-      />
 
       {/* Sheet de Unidades Completo */}
       <UnitPickerSheet

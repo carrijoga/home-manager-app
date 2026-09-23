@@ -1,23 +1,23 @@
 import MoneyInput from '@components/common/MoneyInput';
-import { ChevronRight, Tag } from 'lucide-react';
-import React, { useEffect, useMemo, useState } from 'react';
+import { ChevronRight } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 
+import { CategoryPicker } from '@/components/common/CategoryPicker';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { CategoryScope } from '@/schemas/category';
 import { UNIT_TYPE_LABELS } from '@/schemas/enums';
 import type { AppShoppingItem } from '@/types';
 
 import type { BulkEditPatch } from '../types';
-import { CategoryPickerSheet } from './CategoryPickerSheet';
 import { UnitChips, UnitPickerSheet } from './UnitSelector';
 
 interface BulkEditDialogProps {
   open: boolean;
   onClose: () => void;
   selectedItems: AppShoppingItem[];
-  categories: Array<{ shoppingCategoryId: string; name: string }>;
   onSubmit: (patch: BulkEditPatch) => Promise<void>;
 }
 
@@ -25,14 +25,12 @@ export function BulkEditDialog({
   open,
   onClose,
   selectedItems,
-  categories,
   onSubmit,
 }: BulkEditDialogProps) {
   const [quantity, setQuantity] = useState('');
   const [unitType, setUnitType] = useState<string>('');
   const [categoryId, setCategoryId] = useState<string>('');
   const [estimatedPrice, setEstimatedPrice] = useState<number | null>(null);
-  const [categoryPickerOpen, setCategoryPickerOpen] = useState(false);
   const [unitPickerOpen, setUnitPickerOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -42,16 +40,10 @@ export function BulkEditDialog({
       setUnitType('');
       setCategoryId('');
       setEstimatedPrice(null);
-      setCategoryPickerOpen(false);
       setUnitPickerOpen(false);
       setSaving(false);
     }
   }, [open]);
-
-  const selectedCategoryName = useMemo(
-    () => categories.find((c) => c.shoppingCategoryId === categoryId)?.name ?? null,
-    [categories, categoryId]
-  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -136,31 +128,20 @@ export function BulkEditDialog({
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <Label
+                  htmlFor="bulk-category"
+                  className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                >
                   Categoria
                 </Label>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (document.activeElement instanceof HTMLElement) {
-                      document.activeElement.blur();
-                    }
-                    setCategoryPickerOpen(true);
-                  }}
-                  className="flex h-12 w-full items-center justify-between rounded-2xl border border-border/80 bg-muted/30 px-4 text-left text-sm font-medium transition-colors hover:bg-accent/40"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-muted text-muted-foreground">
-                      <Tag size={15} />
-                    </div>
-                    <span className={categoryId ? 'font-semibold text-foreground' : 'text-muted-foreground'}>
-                      {categoryId === '__clear__'
-                        ? 'Remover categoria'
-                        : selectedCategoryName ?? '— Manter categorias atuais —'}
-                    </span>
-                  </div>
-                  <ChevronRight size={16} className="text-muted-foreground" />
-                </button>
+                <CategoryPicker
+                  id="bulk-category"
+                  scope={CategoryScope.Shopping}
+                  value={categoryId && categoryId !== '__clear__' ? categoryId : null}
+                  onChange={(id) => setCategoryId(id ?? '__clear__')}
+                  allowClear
+                  placeholder={categoryId === '__clear__' ? 'Remover categoria' : 'Manter categoria atual'}
+                />
               </div>
 
               <div className="space-y-1.5">
@@ -199,14 +180,6 @@ export function BulkEditDialog({
           </form>
         </SheetContent>
       </Sheet>
-
-      <CategoryPickerSheet
-        open={categoryPickerOpen}
-        onClose={() => setCategoryPickerOpen(false)}
-        selectedCategoryId={categoryId}
-        onSelectCategory={(catId) => setCategoryId(catId)}
-        categories={categories}
-      />
 
       <UnitPickerSheet
         open={unitPickerOpen}

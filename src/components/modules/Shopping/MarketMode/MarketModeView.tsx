@@ -44,7 +44,6 @@ import { QuickPurchaseDrawer } from './QuickPurchaseDrawer';
 
 interface MarketModeViewProps {
   detailData: AppShoppingList | null;
-  uniqueCategories: Array<{ shoppingCategoryId: string; name: string; isDefault: boolean }>;
   categoryTree: CategoryResponse[];
   onExit: () => void;
   onMarkAsPurchased: (item: AppShoppingItem, data: PurchaseFormData) => Promise<void>;
@@ -56,7 +55,6 @@ interface MarketModeViewProps {
 
 export function MarketModeView({
   detailData,
-  uniqueCategories,
   categoryTree,
   onExit,
   onMarkAsPurchased,
@@ -163,7 +161,7 @@ export function MarketModeView({
           name: purchaseItem.name,
           quantity: String(purchaseItem.quantity),
           unitType: String(data.unitType),
-          categoryId: purchaseItem.shoppingCategoryId ?? '',
+          categoryId: purchaseItem.category?.categoryId ?? '',
           estimatedPrice: purchaseItem.estimatedPrice ?? null,
           notes: purchaseItem.notes ?? '',
         });
@@ -186,7 +184,7 @@ export function MarketModeView({
       name: editingItem.name,
       quantity: String(editingItem.quantity),
       unitType: String(editingItem.unitType),
-      categoryId: editingItem.shoppingCategoryId ?? '',
+      categoryId: editingItem.category?.categoryId ?? '',
       estimatedPrice: editingItem.estimatedPrice ?? null,
       notes: editingItem.notes ?? '',
     };
@@ -616,7 +614,6 @@ export function MarketModeView({
         open={showAddItem}
         onClose={() => setShowAddItem(false)}
         title="Adicionar Item Extra no Mercado"
-        categories={uniqueCategories}
         onSubmit={async (data) => {
           await onAddItem(data);
           setShowAddItem(false);
@@ -629,7 +626,6 @@ export function MarketModeView({
         onClose={() => setEditingItem(null)}
         title="Editar Item"
         initialData={editItemInitialData}
-        categories={uniqueCategories}
         onSubmit={async (data) => {
           if (editingItem && onEditItem) {
             await onEditItem(editingItem, data);

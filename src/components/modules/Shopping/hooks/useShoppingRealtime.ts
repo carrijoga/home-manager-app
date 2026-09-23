@@ -3,7 +3,7 @@ import type React from 'react';
 import { useEffect } from 'react';
 
 import { getShoppingListById, mapItem } from '@/services/shoppingService';
-import type { AppShoppingCategory, AppShoppingList, AppShoppingListSummary } from '@/types';
+import type { AppShoppingList, AppShoppingListSummary } from '@/types';
 
 import type { ViewMode } from '../types';
 
@@ -12,7 +12,6 @@ interface UseShoppingRealtimeArgs {
   isConnected: boolean;
   viewMode: ViewMode;
   selectedListId: string | null;
-  shoppingCategories: AppShoppingCategory[];
   setDetailData: React.Dispatch<React.SetStateAction<AppShoppingList | null>>;
   setShoppingLists: React.Dispatch<React.SetStateAction<AppShoppingListSummary[]>>;
   backToLists: () => void;
@@ -24,7 +23,6 @@ export function useShoppingRealtime({
   isConnected,
   viewMode,
   selectedListId,
-  shoppingCategories,
   setDetailData,
   setShoppingLists,
   backToLists,
@@ -104,43 +102,25 @@ export function useShoppingRealtime({
     const connection = connectionRef.current;
     if (!connection || !isConnected) return;
 
-    // O payload do hub (ReceiveItemCreated/ReceiveItemUpdated) traz o registro
-    // cru do banco, sem o join de categoryName que a REST API faz — deriva
-    // localmente a partir do shoppingCategoryId para não perder/zerar a categoria.
-    const resolveCategoryName = (categoryId: string | null | undefined): string | null =>
-      categoryId
-        ? (shoppingCategories.find((c) => c.shoppingCategoryId === categoryId)?.name ?? null)
-        : null;
-
     const onItemCreated = (raw: unknown) => {
       const item = mapItem(raw as Parameters<typeof mapItem>[0]);
-      const resolved = {
-        ...item,
-        categoryName: item.categoryName ?? resolveCategoryName(item.shoppingCategoryId),
-      };
       setDetailData((prev) => {
         if (!prev) return prev;
-        const idx = prev.items.findIndex((i) => i.shoppingItemId === resolved.shoppingItemId);
-        if (idx === -1) return { ...prev, items: [resolved, ...prev.items] };
+        const idx = prev.items.findIndex((i) => i.shoppingItemId === item.shoppingItemId);
+        if (idx === -1) return { ...prev, items: [item, ...prev.items] };
         const items = [...prev.items];
-        items[idx] = resolved;
+        items[idx] = item;
         return { ...prev, items };
       });
     };
 
     const onItemUpdated = (raw: unknown) => {
       const item = mapItem(raw as Parameters<typeof mapItem>[0]);
-      const resolved = {
-        ...item,
-        categoryName: item.categoryName ?? resolveCategoryName(item.shoppingCategoryId),
-      };
       setDetailData((prev) => {
         if (!prev) return prev;
         return {
           ...prev,
-          items: prev.items.map((i) =>
-            i.shoppingItemId === resolved.shoppingItemId ? resolved : i
-          ),
+          items: prev.items.map((i) => (i.shoppingItemId === item.shoppingItemId ? item : i)),
         };
       });
     };
@@ -234,5 +214,5 @@ export function useShoppingRealtime({
       connection.off('ReceiveItemPurchaseChanged', onItemPurchaseChanged);
       connection.off('ReceiveItemStatusChanged', onItemStatusChanged);
     };
-  }, [connectionRef, isConnected, shoppingCategories, setDetailData, selectedListId, nestId]);
+  }, [connectionRef, isConnected, setDetailData, selectedListId, nestId]);
 }

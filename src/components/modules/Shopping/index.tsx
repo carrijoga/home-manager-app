@@ -26,13 +26,12 @@ const Shopping = memo(function Shopping() {
 
   const nav = useShoppingNavigation({
     remoteShoppingLists: data.shoppingLists,
-    shoppingCategories: data.shoppingCategories,
     categoryTree,
     loadShoppingListDetail: data.loadShoppingListDetail,
   });
   const actions = useShoppingActions(nav.selectedListId, nav.setDetailData, {
     shoppingLists: data.shoppingLists,
-    shoppingCategories: data.shoppingCategories,
+    categoryTree,
     createShoppingList: data.createShoppingList,
     updateShoppingList: data.updateShoppingList,
     deleteShoppingList: data.deleteShoppingList,
@@ -46,8 +45,6 @@ const Shopping = memo(function Shopping() {
     ignoreShoppingItem: data.ignoreShoppingItem,
     unignoreShoppingItem: data.unignoreShoppingItem,
     uploadShoppingItems: data.uploadShoppingItems,
-    createShoppingCategory: data.createShoppingCategory,
-    deleteShoppingCategory: data.deleteShoppingCategory,
   });
 
   const hubUrl = DATA_MODE !== 'mock' && activeNestId ? ENDPOINTS.shoppingHub(activeNestId) : null;
@@ -59,7 +56,6 @@ const Shopping = memo(function Shopping() {
     isConnected,
     viewMode: nav.viewMode,
     selectedListId: nav.selectedListId,
-    shoppingCategories: data.shoppingCategories,
     setDetailData: nav.setDetailData,
     setShoppingLists: nav.setShoppingLists,
     backToLists: nav.backToLists,
@@ -109,7 +105,6 @@ const Shopping = memo(function Shopping() {
         <MarketModeView
           key="market"
           detailData={nav.detailData}
-          uniqueCategories={actions.uniqueCategories}
           categoryTree={categoryTree}
           onExit={() => setIsMarketMode(false)}
           onMarkAsPurchased={actions.handleMarkItemAsPurchased}
@@ -155,7 +150,6 @@ const Shopping = memo(function Shopping() {
           isLoadingDetail={nav.isLoadingDetail}
           isFinished={isFinished}
           editListInitialData={editListInitialData}
-          uniqueCategories={actions.uniqueCategories}
           sectionOptions={nav.sectionOptions}
           itemSections={nav.itemSections}
           categoryFilter={nav.categoryFilter}
@@ -189,8 +183,6 @@ const Shopping = memo(function Shopping() {
           setShowEditItem={actions.setShowEditItem}
           showPurchase={actions.showPurchase}
           setShowPurchase={actions.setShowPurchase}
-          showCategories={actions.showCategories}
-          setShowCategories={actions.setShowCategories}
           showDeleteAlert={actions.showDeleteAlert}
           setShowDeleteAlert={actions.setShowDeleteAlert}
           showBulkEdit={actions.showBulkEdit}
@@ -231,12 +223,6 @@ const Shopping = memo(function Shopping() {
           onUploadFile={actions.handleUploadFile}
           onBulkEdit={(patch) => actions.handleBulkEdit(patch, selectedItems)}
           onBulkDelete={() => actions.handleBulkDelete(selectedItems)}
-          onCreateCategory={async (name) => {
-            await actions.createShoppingCategory(name);
-          }}
-          onDeleteCategory={async (id) => {
-            await actions.deleteShoppingCategory(id);
-          }}
           onStartMarketMode={() => setIsMarketMode(true)}
         />
       )}

@@ -17,6 +17,10 @@ import { filterTree } from '@/lib/categories';
 import { cn } from '@/lib/utils';
 import { type CategoryResponse, CategoryScope } from '@/schemas/category';
 
+import { CategoryFormDialog } from './categories/CategoryFormDialog';
+import { DeleteCategoryDialog } from './categories/DeleteCategoryDialog';
+import { MoveCategoryDialog } from './categories/MoveCategoryDialog';
+
 const SCOPES: Array<{ key: string; scope: CategoryScope; label: string }> = [
   { key: 'expense', scope: CategoryScope.Expense, label: 'Despesas' },
   { key: 'income', scope: CategoryScope.Income, label: 'Receitas' },
@@ -34,10 +38,9 @@ export type DialogState =
 export default function CategoriesSettings() {
   const [params, setParams] = useSearchParams();
   const current = SCOPES.find((s) => s.key === params.get('scope')) ?? SCOPES[0];
-  const { tree, loading, error, reload } = useCategories(current.scope);
+  const { tree, loading, error, reload, create, update, move, remove } = useCategories(current.scope);
   const [search, setSearch] = useState('');
   const [dialog, setDialog] = useState<DialogState>({ kind: 'none' });
-  void dialog; // usado por Tarefa 6 (diálogos)
 
   const visible = useMemo(() => filterTree(tree, search), [tree, search]);
 
@@ -270,7 +273,37 @@ export default function CategoriesSettings() {
         </div>
       )}
 
-      {/* Diálogos: Tarefa 6 */}
+      {dialog.kind === 'form' && (
+        <CategoryFormDialog
+          open
+          onOpenChange={(o) => !o && setDialog({ kind: 'none' })}
+          scope={current.scope}
+          tree={tree}
+          mode={dialog.mode}
+          category={dialog.mode === 'edit' ? dialog.category : undefined}
+          parent={dialog.parent}
+          onSubmitCreate={create}
+          onSubmitUpdate={update}
+        />
+      )}
+      {dialog.kind === 'move' && (
+        <MoveCategoryDialog
+          open
+          onOpenChange={(o) => !o && setDialog({ kind: 'none' })}
+          tree={tree}
+          category={dialog.category}
+          parent={dialog.parent}
+          onSubmit={move}
+        />
+      )}
+      {dialog.kind === 'delete' && (
+        <DeleteCategoryDialog
+          open
+          onOpenChange={(o) => !o && setDialog({ kind: 'none' })}
+          category={dialog.category}
+          onConfirm={remove}
+        />
+      )}
     </div>
   );
 }

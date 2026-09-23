@@ -171,11 +171,11 @@ export const esES: ErrorDictionary = {
   ShoppingList_NotFound: 'Lista de compras no encontrada.',
 
   // Tareas
-  Task_AssignedNotificationMessage: 'Fuiste asignado a "{0}".',
+  Task_AssignedNotificationMessage: 'Ahora eres responsable de "{0}".',
   Task_AssignedNotificationTitle: 'Nueva tarea para ti',
   Task_AssigneeNotFound: 'El usuario no está asignado a esta tarea.',
   Task_AssigneeNotInNest: 'Uno de los responsables seleccionados no pertenece a este nido.',
-  Task_CompletedNotificationMessage: '"{0}" está hecha.',
+  Task_CompletedNotificationMessage: 'Tarea "{0}" completada.',
   Task_CompletedNotificationTitle: 'Tarea completada',
   Task_InvalidTitle:
     'El título de la tarea no puede estar vacío y debe tener como máximo 200 caracteres.',

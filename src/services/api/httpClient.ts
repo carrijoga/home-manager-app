@@ -9,7 +9,7 @@
 const BASE_URL = (import.meta.env?.VITE_API_URL || '').replace(/\/$/, '');
 const TIMEOUT_MS = 10_000;
 
-import { getCurrentLanguage, getDefaultErrorMessage, getErrorMessageByCode } from '@/i18n';
+import { getCurrentLanguage, getDefaultErrorMessage, getErrorMessageByCode, getRateLimitMessage } from '@/i18n';
 
 // ── Erro tipado ───────────────────────────────────────────────────────────────
 
@@ -309,7 +309,12 @@ async function parseResponse<T>(response: Response): Promise<T> {
       displayMessage = fallbackMessage;
     }
 
-    // 3. Fallback genérico no idioma ativo
+    // 3. Se for rate limit (429) e nenhuma mensagem foi resolvida, usa mensagem de rate limit
+    if (!displayMessage && status === 429) {
+      displayMessage = getRateLimitMessage(currentLang);
+    }
+
+    // 4. Fallback genérico no idioma ativo
     if (!displayMessage) {
       displayMessage = getDefaultErrorMessage(currentLang);
     }

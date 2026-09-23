@@ -37,7 +37,22 @@ export const esES: ErrorDictionary = {
     'Esta categoría no se puede eliminar porque tiene transacciones financieras vinculadas.',
   Category_CannotDeleteUsedInNestConfiguration:
     'Esta categoría no se puede eliminar porque está configurada como predeterminada de compras del nido.',
+  Category_CannotDeleteWithChildren:
+    'Una categoría con subcategorías no se puede eliminar. Mueva o elimine sus subcategorías primero.',
+  Category_ColorInvalid: 'El color de la categoría debe ser un color hexadecimal en el formato #RRGGBB.',
+  Category_ColorRequired: 'Una categoría principal debe tener un color.',
+  Category_IconInvalid: 'El icono de la categoría debe ser un único emoji.',
+  Category_IconRequired: 'El icono de la categoría es obligatorio.',
+  Category_InvalidMove:
+    'Una categoría no se puede mover bajo sí misma o bajo una de sus subcategorías.',
+  Category_MaxDepthExceeded:
+    'Las categorías admiten solo dos niveles: una categoría principal y sus subcategorías.',
+  Category_NameAlreadyExists: 'Ya existe una categoría con este nombre en este nivel.',
+  Category_NameRequired: 'El nombre de la categoría es obligatorio.',
+  Category_NameTooLong: 'El nombre de la categoría no debe superar 100 caracteres.',
   Category_NotFound: 'Categoría no encontrada.',
+  Category_ParentScopeMismatch: 'La categoría padre debe pertenecer al mismo nido y ámbito.',
+  Category_ScopeInvalid: 'La categoría no pertenece al ámbito esperado.',
 
   // Archivos
   File_FileEmpty: 'El archivo enviado está vacío.',
@@ -74,10 +89,11 @@ export const esES: ErrorDictionary = {
     'Las transacciones de transferencia no se pueden eliminar directamente.',
   Transaction_CannotUpdateTransfer:
     'Las transacciones de transferencia no se pueden modificar directamente.',
+  Transaction_CategoryNotAllowedForType:
+    'La categoría no coincide con el tipo de transacción (categorías de gasto para gastos, categorías de ingreso para ingresos).',
   Transaction_DescriptionRequired: 'La descripción de la transacción es obligatoria.',
   Transaction_DescriptionTooLong: 'La descripción de la transacción no debe superar los 200 caracteres.',
   Transaction_DueDateOnlyForExpense: 'La fecha de vencimiento solo se puede indicar para gastos.',
-  Transaction_IncomeOriginOnlyForReceipt: 'El origen solo se puede indicar para ingresos.',
   Transaction_TransactionNotFound: 'Transacción financiera no encontrada.',
   Transaction_ValueMustBePositive: 'El valor de la transacción debe ser mayor que cero.',
 
@@ -141,9 +157,8 @@ export const esES: ErrorDictionary = {
   Notification_NotFound: 'Notificación no encontrada.',
 
   // Lista de Compras
-  ShoppingCategory_CannotDeleteDefault: 'Las categorías de compra predeterminadas no se pueden eliminar.',
-  ShoppingCategory_NotFound: 'Categoría de compras no encontrada.',
   ShoppingItem_AlreadyPurchased: 'Este artículo ya ha sido marcado como comprado.',
+  ShoppingItem_DoesNotBelongToList: 'El artículo de compras no pertenece a esta lista de compras.',
   ShoppingItem_CannotBeIgnored: 'Solo los artículos pendientes se pueden descartar.',
   ShoppingItem_ImportFailed: 'Error al importar artículos de compras desde el archivo.',
   ShoppingItem_NotFound: 'Artículo de la lista de compras no encontrado.',
@@ -156,10 +171,20 @@ export const esES: ErrorDictionary = {
   ShoppingList_NotFound: 'Lista de compras no encontrada.',
 
   // Tareas
+  Task_AssignedNotificationMessage: 'Fuiste asignado a "{0}".',
+  Task_AssignedNotificationTitle: 'Nueva tarea para ti',
+  Task_AssigneeNotFound: 'El usuario no está asignado a esta tarea.',
+  Task_AssigneeNotInNest: 'Uno de los responsables seleccionados no pertenece a este nido.',
+  Task_CompletedNotificationMessage: '"{0}" está hecha.',
+  Task_CompletedNotificationTitle: 'Tarea completada',
   Task_InvalidTitle:
     'El título de la tarea no puede estar vacío y debe tener como máximo 200 caracteres.',
   Task_NotCompleted: 'La tarea aún no se ha completado.',
   Task_NotFound: 'Tarea no encontrada.',
+  Task_OnlyOwnerAdminOrCreatorCanChangeAssignees:
+    'Solo el propietario, un administrador o el creador de la tarea pueden cambiar los responsables.',
+  Task_OnlyOwnerOrAdminCanCompleteForOthers:
+    'Solo el propietario o un administrador pueden completar la tarea de otro miembro.',
   Task_PageMustBePositive: 'El número de página debe ser mayor o igual a 1.',
   Task_PageSizeMustBePositive: 'La cantidad de elementos por página debe ser mayor o igual a 1.',
 
@@ -167,6 +192,8 @@ export const esES: ErrorDictionary = {
   UserConfiguration_InvalidLocale: 'Idioma o formato regional inválido.',
   UserConfiguration_InvalidOnboardingTour: 'Clave del tour de bienvenida inválida.',
   UserConfiguration_InvalidTheme: 'Tema de interfaz inválido.',
+  User_AccountLocked:
+    'Demasiados intentos de acceso fallidos. Tu cuenta está bloqueada temporalmente, por favor intenta más tarde.',
   User_AlreadyExists: 'Ya existe una cuenta registrada con este correo electrónico.',
   User_AlreadyInNest: 'Ya formas parte de este nido.',
   User_CantGenerateUsername:

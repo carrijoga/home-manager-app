@@ -37,7 +37,22 @@ export const enUS: ErrorDictionary = {
     'This category cannot be deleted because it has linked financial transactions.',
   Category_CannotDeleteUsedInNestConfiguration:
     'This category cannot be deleted because it is set as the default shopping category for the nest.',
+  Category_CannotDeleteWithChildren:
+    'A category with subcategories cannot be deleted. Move or delete its subcategories first.',
+  Category_ColorInvalid: 'The category color must be a hexadecimal color in the #RRGGBB format.',
+  Category_ColorRequired: 'A main category must have a color.',
+  Category_IconInvalid: 'The category icon must be a single emoji.',
+  Category_IconRequired: 'The category icon is required.',
+  Category_InvalidMove:
+    'A category cannot be moved under itself or one of its subcategories.',
+  Category_MaxDepthExceeded:
+    'Categories support only two levels: a main category and its subcategories.',
+  Category_NameAlreadyExists: 'A category with this name already exists at this level.',
+  Category_NameRequired: 'The category name is required.',
+  Category_NameTooLong: 'The category name must be at most 100 characters.',
   Category_NotFound: 'Category not found.',
+  Category_ParentScopeMismatch: 'The parent category must belong to the same nest and scope.',
+  Category_ScopeInvalid: 'The category does not belong to the expected scope.',
 
   // Files
   File_FileEmpty: 'The uploaded file is empty.',
@@ -72,10 +87,11 @@ export const enUS: ErrorDictionary = {
   Transaction_AlreadyPaid: 'This transaction has already been paid in full.',
   Transaction_CannotDeleteTransfer: 'Transfer transactions cannot be deleted directly.',
   Transaction_CannotUpdateTransfer: 'Transfer transactions cannot be modified directly.',
+  Transaction_CategoryNotAllowedForType:
+    'The category does not match the transaction type (expense categories for expenses, income categories for income).',
   Transaction_DescriptionRequired: 'Transaction description is required.',
   Transaction_DescriptionTooLong: 'Transaction description must not exceed 200 characters.',
   Transaction_DueDateOnlyForExpense: 'Due date can only be set for expense transactions.',
-  Transaction_IncomeOriginOnlyForReceipt: 'Income source can only be set for receipt transactions.',
   Transaction_TransactionNotFound: 'Financial transaction not found.',
   Transaction_ValueMustBePositive: 'Transaction amount must be greater than zero.',
 
@@ -138,9 +154,8 @@ export const enUS: ErrorDictionary = {
   Notification_NotFound: 'Notification not found.',
 
   // Shopping List
-  ShoppingCategory_CannotDeleteDefault: 'Default shopping categories cannot be deleted.',
-  ShoppingCategory_NotFound: 'Shopping category not found.',
   ShoppingItem_AlreadyPurchased: 'This item has already been marked as purchased.',
+  ShoppingItem_DoesNotBelongToList: 'Shopping item does not belong to this shopping list.',
   ShoppingItem_CannotBeIgnored: 'Only pending items can be marked as ignored.',
   ShoppingItem_ImportFailed: 'Failed to import shopping items from the file.',
   ShoppingItem_NotFound: 'Shopping list item not found.',
@@ -153,10 +168,20 @@ export const enUS: ErrorDictionary = {
   ShoppingList_NotFound: 'Shopping list not found.',
 
   // Tasks
+  Task_AssignedNotificationMessage: 'You were assigned to "{0}".',
+  Task_AssignedNotificationTitle: 'New task for you',
+  Task_AssigneeNotFound: 'The user is not assigned to this task.',
+  Task_AssigneeNotInNest: 'One of the selected assignees does not belong to this nest.',
+  Task_CompletedNotificationMessage: '"{0}" is done.',
+  Task_CompletedNotificationTitle: 'Task completed',
   Task_InvalidTitle:
     'Task title must not be empty and cannot exceed 200 characters.',
   Task_NotCompleted: 'The task has not been completed yet.',
   Task_NotFound: 'Task not found.',
+  Task_OnlyOwnerAdminOrCreatorCanChangeAssignees:
+    'Only the owner, an admin or the task creator can change the assignees.',
+  Task_OnlyOwnerOrAdminCanCompleteForOthers:
+    'Only the owner or an admin can complete another member\'s part.',
   Task_PageMustBePositive: 'Page number must be greater than or equal to 1.',
   Task_PageSizeMustBePositive: 'Page size must be greater than or equal to 1.',
 
@@ -164,6 +189,8 @@ export const enUS: ErrorDictionary = {
   UserConfiguration_InvalidLocale: 'Invalid locale or regional format.',
   UserConfiguration_InvalidOnboardingTour: 'Invalid onboarding tour key.',
   UserConfiguration_InvalidTheme: 'Invalid interface theme.',
+  User_AccountLocked:
+    'Too many failed sign-in attempts. Your account is temporarily locked, please try again later.',
   User_AlreadyExists: 'An account with this email address already exists.',
   User_AlreadyInNest: 'You are already a member of this nest.',
   User_CantGenerateUsername:

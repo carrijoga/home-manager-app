@@ -668,7 +668,7 @@ export const Dashboard: FC = () => {
             icon={<CheckCircle2 size={20} strokeWidth={1.5} />}
             iconColor="var(--chart-2)"
             category="Tarefas"
-            label="Tarefas de hoje"
+            label="Suas tarefas hoje"
             value={<AnimatedNumber value={taskMetrics.pending} suffix=" Pendentes" />}
             isLoading={isLoadingDashboard}
             footer={[

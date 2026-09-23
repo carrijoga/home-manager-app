@@ -34,21 +34,7 @@ export const PRIORITIES = [
   { value: '3', label: 'Baixa' },
 ] as const;
 
-export const CATEGORIES = [
-  { value: '0', label: 'Geral' },
-  { value: '1', label: 'Limpeza' },
-  { value: '2', label: 'Manutenção' },
-  { value: '3', label: 'Finanças' },
-  { value: '4', label: 'Outros' },
-] as const;
 
-export const TASK_CATEGORY_LABELS: Record<number, string> = {
-  0: 'Geral',
-  1: 'Limpeza',
-  2: 'Manutenção',
-  3: 'Finanças',
-  4: 'Outros',
-};
 
 export const KANBAN_COLUMNS = [
   {

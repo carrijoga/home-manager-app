@@ -167,24 +167,7 @@ export const PRIORITY_LABELS: Record<number, string> = {
   3: 'Baixa',
 };
 
-// Categoria de tarefa: 0 = Geral, 1 = Limpeza, 2 = Manutenção, 3 = Finanças, 4 = Outros
-export const ApiCategorySchema = z.number().int();
-export type ApiCategoryType = z.infer<typeof ApiCategorySchema>;
-export const ApiCategory = {
-  Geral: 0,
-  Limpeza: 1,
-  Manutencao: 2,
-  Financas: 3,
-  Outros: 4,
-} as const;
 
-export const CATEGORY_LABELS: Record<number, string> = {
-  0: 'Geral',
-  1: 'Limpeza',
-  2: 'Manutenção',
-  3: 'Finanças',
-  4: 'Outros',
-};
 
 // Tipo de cartão de pagamento: 0 = Crédito, 1 = Débito, 2 = Pré-pago, 3 = Outro
 export const CardType = {

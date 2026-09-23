@@ -22,14 +22,7 @@ export enum ApiPriority {
   Baixa = 3,
 }
 
-/** Categoria de tarefa — enum numérico conforme API */
-export enum ApiCategory {
-  Geral = 0,
-  Limpeza = 1,
-  Manutencao = 2,
-  Financas = 3,
-  Outros = 4,
-}
+
 
 /** Status de tarefa no board (client-side — o backend usa isCompleted) */
 export enum TaskStatus {

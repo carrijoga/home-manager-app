@@ -1,15 +1,18 @@
-import { AnimatePresence,motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Plus, SlidersHorizontal, Sparkles } from 'lucide-react';
 import React, { useRef, useState } from 'react';
 
 import { Spinner } from '@/components/ui/spinner';
+import { useCategories } from '@/hooks/useCategories';
+import { formatTaskCategory, toCategorySummary } from '@/lib/taskCategories';
 import { cn } from '@/lib/utils';
+import { CategoryScope } from '@/schemas/category';
 
-import { PRIORITY_CONFIG,TASK_CATEGORY_LABELS } from './constants';
+import { PRIORITY_CONFIG } from './constants';
 import { analyzeTaskTitle } from './smartTaskCategory';
 
 interface QuickAddTaskBarProps {
-  onAddTask: (title: string, detectedCategory: number | null, detectedPriority: number | null) => Promise<void>;
+  onAddTask: (title: string, categoryId: string | null, priority: number | null) => Promise<void>;
   onOpenDetailedForm: (initialTitle?: string) => void;
   disabled?: boolean;
 }
@@ -24,8 +27,10 @@ export function QuickAddTaskBar({
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  const smartResult = analyzeTaskTitle(title);
-  const showSmartBadge = smartResult.category !== null || smartResult.priority !== null;
+  const { tree } = useCategories(CategoryScope.Task);
+  const smartResult = analyzeTaskTitle(title, tree);
+  const suggestedCategory = toCategorySummary(tree, smartResult.categoryId);
+  const showSmartBadge = suggestedCategory !== null || smartResult.priority !== null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +39,7 @@ export function QuickAddTaskBar({
 
     setIsAdding(true);
     try {
-      await onAddTask(smartResult.title || trimmed, smartResult.category, smartResult.priority);
+      await onAddTask(smartResult.title || trimmed, smartResult.categoryId, smartResult.priority);
       setTitle('');
       inputRef.current?.focus();
     } catch {
@@ -76,14 +81,19 @@ export function QuickAddTaskBar({
               exit={{ opacity: 0, scale: 0.8, x: 10 }}
               className="flex items-center gap-1.5 mr-2"
             >
-              {smartResult.category !== null && (
+              {suggestedCategory && (
                 <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1 text-[10px] font-semibold text-primary">
                   <Sparkles size={10} />
-                  {TASK_CATEGORY_LABELS[smartResult.category]}
+                  {formatTaskCategory(suggestedCategory)}
                 </span>
               )}
               {smartResult.priority !== null && (
-                <span className={cn('inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-semibold', PRIORITY_CONFIG[smartResult.priority as keyof typeof PRIORITY_CONFIG].pill)}>
+                <span
+                  className={cn(
+                    'inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-semibold',
+                    PRIORITY_CONFIG[smartResult.priority as keyof typeof PRIORITY_CONFIG].pill
+                  )}
+                >
                   {PRIORITY_CONFIG[smartResult.priority as keyof typeof PRIORITY_CONFIG].label}
                 </span>
               )}

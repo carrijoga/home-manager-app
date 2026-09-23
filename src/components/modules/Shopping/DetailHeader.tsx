@@ -3,6 +3,7 @@ import {
   ArrowLeft,
   CheckCircle2,
   Clock,
+  CopyPlus,
   MoreVertical,
   Pencil,
   Share2,
@@ -37,6 +38,7 @@ interface DetailHeaderProps {
   onBack: () => void;
   onEditList?: () => void;
   onDeleteList?: () => void;
+  onReplicateList?: () => void;
   onStartMarketMode?: () => void;
 }
 
@@ -49,6 +51,7 @@ export function DetailHeader(props: DetailHeaderProps) {
     onBack,
     onEditList,
     onDeleteList,
+    onReplicateList,
     onStartMarketMode,
   } = props;
   const { showSuccess } = useToastNotifications();
@@ -154,7 +157,7 @@ export function DetailHeader(props: DetailHeaderProps) {
             <span className="hidden sm:inline">Compartilhar</span>
           </motion.button>
 
-          {(onEditList || onDeleteList) && (
+          {(onEditList || onDeleteList || onReplicateList) && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
@@ -169,6 +172,12 @@ export function DetailHeader(props: DetailHeaderProps) {
                   <DropdownMenuItem onClick={onEditList} className="gap-2 font-medium">
                     <Pencil size={14} />
                     Editar Lista
+                  </DropdownMenuItem>
+                )}
+                {onReplicateList && (
+                  <DropdownMenuItem onClick={onReplicateList} className="gap-2 font-medium">
+                    <CopyPlus size={14} />
+                    Replicar para outro mês
                   </DropdownMenuItem>
                 )}
                 {onDeleteList && (

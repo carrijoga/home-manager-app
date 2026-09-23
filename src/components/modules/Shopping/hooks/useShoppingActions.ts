@@ -5,7 +5,7 @@ import { toCategorySummary } from '@/lib/categories';
 import type { CategoryResponse } from '@/schemas/category';
 import type { AppShoppingItem, AppShoppingList, AppShoppingListSummary } from '@/types';
 
-import { fromISOMonthYear, todayISO, toISOMonthYear } from '../helpers';
+import { formatMonthYearPT, fromISOMonthYear, todayISO, toISOMonthYear } from '../helpers';
 import type { BulkEditPatch, ItemFormData, ListFormData, PurchaseFormData } from '../types';
 
 interface ShoppingActionsDeps {
@@ -21,6 +21,7 @@ interface ShoppingActionsDeps {
   deleteShoppingList: (id: string) => Promise<void>;
   finishShoppingList: (id: string) => Promise<void>;
   unfinishShoppingList: (id: string) => Promise<void>;
+  replicateShoppingList: (id: string, monthYear: string) => Promise<string>;
   addShoppingItem: (
     listId: string,
     name: string,
@@ -83,6 +84,7 @@ export function useShoppingActions(
     deleteShoppingList,
     finishShoppingList,
     unfinishShoppingList,
+    replicateShoppingList,
     addShoppingItem,
     updateShoppingItem,
     deleteShoppingItem,
@@ -403,6 +405,21 @@ export function useShoppingActions(
       setEditingListId(null);
     }
   }, [editingListId, deleteShoppingList, showSuccess, showError]);
+
+  const handleReplicateList = useCallback(
+    async (sourceId: string, ym: string): Promise<string> => {
+      try {
+        const iso = toISOMonthYear(ym);
+        const newId = await replicateShoppingList(sourceId, iso);
+        showSuccess(`Lista replicada para ${formatMonthYearPT(iso)}.`);
+        return newId;
+      } catch (err) {
+        showError(err instanceof Error && err.message ? err.message : 'Erro ao replicar lista.');
+        throw err;
+      }
+    },
+    [replicateShoppingList, showSuccess, showError]
+  );
 
   // ── Item CRUD ─────────────────────────────────────────────────────────────
   const handleAddItem = useCallback(
@@ -829,6 +846,7 @@ export function useShoppingActions(
     handleDeleteList,
     handleFinishList,
     handleUnfinishList,
+    handleReplicateList,
     handleEditListFromGrid,
     handleDeleteListFromGrid,
     handleAddItem,

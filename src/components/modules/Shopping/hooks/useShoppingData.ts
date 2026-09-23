@@ -313,6 +313,15 @@ export function useShoppingData() {
     [nestId]
   );
 
+  const replicateShoppingList = useCallback(
+    async (id: string, monthYear: string): Promise<string> => {
+      const newId = await shoppingService.replicateShoppingList(id, monthYear, nestId);
+      await refreshShoppingData();
+      return newId;
+    },
+    [nestId, refreshShoppingData]
+  );
+
   return {
     shoppingLists,
     setShoppingLists,
@@ -324,6 +333,7 @@ export function useShoppingData() {
     deleteShoppingList,
     finishShoppingList,
     unfinishShoppingList,
+    replicateShoppingList,
     addShoppingItem,
     updateShoppingItem,
     deleteShoppingItem,

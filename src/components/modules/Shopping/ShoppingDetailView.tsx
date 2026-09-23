@@ -136,6 +136,7 @@ interface ShoppingDetailViewProps {
   onUploadFile: (file: File) => Promise<void>;
   onBulkEdit: (patch: BulkEditPatch) => Promise<void>;
   onBulkDelete: () => Promise<void>;
+  onReplicateList?: () => void;
   onStartMarketMode?: () => void;
 }
 
@@ -216,6 +217,7 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
     onUploadFile,
     onBulkEdit,
     onBulkDelete,
+    onReplicateList,
     onStartMarketMode,
   } = props;
 
@@ -318,6 +320,7 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
         onBack={onBack}
         onEditList={() => setShowEditList(true)}
         onDeleteList={() => setShowDeleteAlert(true)}
+        onReplicateList={onReplicateList}
         onStartMarketMode={onStartMarketMode}
       />
 

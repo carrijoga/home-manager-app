@@ -37,16 +37,8 @@ function notify(key: string) {
   listeners.get(key)?.forEach((fn) => fn());
 }
 
-function load(
-  key: string,
-  nestId: string,
-  scope: CategoryScope,
-  force = false
-): Promise<CategoryResponse[]> {
-  const entry = getEntry(key);
-  if (entry.promise) return entry.promise;
-  if (entry.data && !force) return Promise.resolve(entry.data);
-  entry.promise = categoryService
+function fetchInto(entry: Entry, key: string, nestId: string, scope: CategoryScope) {
+  const promise = categoryService
     .listCategories(nestId, scope)
     .then((data) => {
       entry.data = data;
@@ -61,12 +53,42 @@ function load(
       entry.promise = null;
       notify(key);
     });
-  notify(key);
-  return entry.promise;
+  entry.promise = promise;
+  return promise;
 }
 
+function load(
+  key: string,
+  nestId: string,
+  scope: CategoryScope,
+  force = false
+): Promise<CategoryResponse[]> {
+  const entry = getEntry(key);
+  if (entry.promise) {
+    // Uma requisição já está em voo. Para chamadas não forçadas, reaproveita
+    // (dedupe). Para `force` (ex.: reload pós-mutação), encadeia uma nova
+    // busca depois que a em-voo terminar, para não devolver dado stale
+    // capturado antes da mutação.
+    if (!force) return entry.promise;
+    entry.promise = entry.promise
+      .catch(() => {})
+      .then(() => fetchInto(entry, key, nestId, scope));
+    notify(key);
+    return entry.promise;
+  }
+  if (entry.data && !force) return Promise.resolve(entry.data);
+  const promise = fetchInto(entry, key, nestId, scope);
+  notify(key);
+  return promise;
+}
+
+// Só é seguro limpar o cache inteiro no logout (activeNestId -> null): todas
+// as chaves ficam órfãs e nenhum listener continua montado para o nest
+// anterior. Fora desse caso, prefira invalidar a chave específica.
 export function clearCategoryCache(): void {
+  const keys = [...cache.keys()];
   cache.clear();
+  keys.forEach((key) => notify(key));
 }
 
 // ── Hook ──────────────────────────────────────────────────────────────────────

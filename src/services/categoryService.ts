@@ -175,12 +175,18 @@ export async function moveCategory(
     const { cat, parent } = found;
     if (req.parentCategoryId === cat.categoryId) mockFail('Category_InvalidMove');
     if (req.parentCategoryId && cat.children.length > 0) mockFail('Category_MaxDepthExceeded');
+    // Valida o destino ANTES de remover a categoria da posição atual, para
+    // que um destino inválido nunca deixe a árvore mock num estado
+    // inconsistente (categoria removida do pai sem ter sido reinserida).
+    let target: { cat: CategoryResponse; parent: CategoryResponse | null } | null = null;
+    if (req.parentCategoryId) {
+      target = mockFind(req.parentCategoryId);
+      if (!target || target.parent || target.cat.scope !== cat.scope) mockFail('Category_ParentScopeMismatch');
+    }
     // remove da posição atual
     if (parent) parent.children = parent.children.filter((c) => c.categoryId !== id);
     else mockStore = mockStore.filter((c) => c.categoryId !== id);
-    if (req.parentCategoryId) {
-      const target = mockFind(req.parentCategoryId);
-      if (!target || target.parent || target.cat.scope !== cat.scope) mockFail('Category_ParentScopeMismatch');
+    if (target) {
       target.cat.children.push({ ...cat, parentCategoryId: target.cat.categoryId, color: target.cat.color });
     } else {
       mockStore.push({ ...cat, parentCategoryId: null, color: req.color ?? cat.color });

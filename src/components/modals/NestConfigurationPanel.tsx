@@ -20,7 +20,7 @@ import {
 import { useApp } from '@/contexts/AppContext';
 import { useCategories } from '@/hooks/useCategories';
 import { type CategoryOption, flattenTree, toCategoryOptions } from '@/lib/categories';
-import { type CategoryResponse,CategoryScope } from '@/schemas/category';
+import { type CategoryResponse, CategoryScope } from '@/schemas/category';
 import { NestRole } from '@/schemas/enums';
 import * as categoryService from '@/services/categoryService';
 import * as nestService from '@/services/nestService';

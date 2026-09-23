@@ -121,7 +121,7 @@ export default function CategoriesSettings() {
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => reload()}
+            onClick={() => reload().catch(() => {})}
             className="mt-3 h-9 rounded-xl border-border/60"
           >
             Tentar novamente

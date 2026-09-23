@@ -6,7 +6,7 @@
 
 import { getItemEstimatedTotal, getItemSpentTotal } from '@/components/modules/Shopping/helpers';
 import type { BankAccountResponse } from '@/schemas/bank-account';
-import { type CategoryResponse as UnifiedCategoryResponse,CategoryScope } from '@/schemas/category';
+import { type CategoryResponse as UnifiedCategoryResponse, CategoryScope } from '@/schemas/category';
 import type {
   FinancialTransactionPaymentResponse,
   FinancialTransactionResponse,

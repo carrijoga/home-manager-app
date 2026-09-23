@@ -41,7 +41,7 @@ Pick by **the nature of the data**, not by how many options happen to exist toda
 | ---------------------------------------------------------------------- | -------------------------------------------------------------- |
 | Closed enum / fixed domain — card type, payment method, priority, unit | Radix `Select`                                                 |
 | User-owned records — accounts, members, products                       | Searchable combobox (`Popover` + `Command`)                    |
-| Categories (unified tree by scope)                                     | Category tree picker (see `categoryService` and tests)         |
+| Categories (unified tree by scope)                                     | `common/CategoryPicker` (reusable scope-filtered category picker) |
 
 A closed enum stays a `Select` even if it has 20 entries; a user list stays a combobox even if it has 2. Size is not the criterion — whether the set is authored by the app or by the user is.
 

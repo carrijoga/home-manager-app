@@ -4,6 +4,7 @@
  * Em modo mock usa dados locais de `mocks/data.ts`.
  */
 
+import { findCategory } from '@/lib/categories';
 import { ApiPaymentMethod, PaymentStatus, TransactionType } from '@/schemas/enums';
 import type {
   AddPaymentRequest,
@@ -22,10 +23,18 @@ import {
   FinancialTransactionResponseSchema,
 } from '@/schemas/financial';
 
-import { mockExpenses, mockFinancialCategories, mockTransactions } from '../mocks/data';
+import { mockCategoryTree, mockExpenses, mockFinancialCategories, mockTransactions } from '../mocks/data';
 import { DATA_MODE } from './api/config';
 import { ENDPOINTS } from './api/endpoints';
 import { httpClient } from './api/httpClient';
+
+// Resolve o nome da categoria escolhida via árvore unificada (mockCategoryTree);
+// cai para mockFinancialCategories (ids fincat-*) para transações seed antigas.
+function resolveMockCategoryName(categoryId: string): string | undefined {
+  const found = findCategory(mockCategoryTree, categoryId);
+  if (found) return found.category.name;
+  return mockFinancialCategories.find((c) => c.categoryId === categoryId)?.name;
+}
 
 // Tipo do mock — mantido para os stubs legados addExpense/deleteExpense
 type MockExpense = (typeof mockExpenses)[number];
@@ -270,7 +279,7 @@ export async function createTransaction(
   nestId?: string
 ): Promise<FinancialTransactionResponse> {
   if (DATA_MODE === 'mock') {
-    const category = mockFinancialCategories.find((c) => c.categoryId === payload.categoryId);
+    const categoryName = resolveMockCategoryName(payload.categoryId);
     const created = recomputeStatus({
       financialTransactionId: crypto.randomUUID(),
       nestId: nestId ?? 'nest-mock-0001',
@@ -282,7 +291,7 @@ export async function createTransaction(
       responsibleUserId: payload.responsibleUserId,
       responsibleUserName: 'João (Você)',
       categoryId: payload.categoryId,
-      categoryName: category?.name ?? 'Geral',
+      categoryName: categoryName ?? 'Geral',
       origin: 0,
       originName: 'Financeiro',
       observation: null,
@@ -311,7 +320,7 @@ export async function updateTransaction(
       (t) => t.financialTransactionId === payload.financialTransactionId
     );
     if (idx === -1) throw new Error('Transação não encontrada');
-    const category = mockFinancialCategories.find((c) => c.categoryId === payload.categoryId);
+    const categoryName = resolveMockCategoryName(payload.categoryId);
     const updated = recomputeStatus({
       ...mockStore[idx],
       transactionType: payload.type,
@@ -320,7 +329,7 @@ export async function updateTransaction(
       transactionDate: payload.transactionDate,
       dueDate: payload.dueDate ?? null,
       categoryId: payload.categoryId,
-      categoryName: category?.name ?? mockStore[idx].categoryName,
+      categoryName: categoryName ?? mockStore[idx].categoryName,
       responsibleUserId: payload.responsibleUserId,
       sourceId:
         payload.type === TransactionType.Income

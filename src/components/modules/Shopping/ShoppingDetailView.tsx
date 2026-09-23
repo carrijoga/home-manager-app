@@ -341,7 +341,6 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
             );
             setShowAddItem(true);
           }}
-          categories={uniqueCategories}
           disabled={!detailData}
         />
       )}

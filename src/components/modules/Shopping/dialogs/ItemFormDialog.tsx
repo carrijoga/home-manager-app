@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Spinner } from '@/components/ui/spinner';
+import { useCategories } from '@/hooks/useCategories';
+import { CategoryScope } from '@/schemas/category';
 import { UNIT_TYPE_LABELS } from '@/schemas/enums';
 
 import { emptyItemForm } from '../helpers';
@@ -40,6 +42,8 @@ export function ItemFormDialog({
   const [unitPickerOpen, setUnitPickerOpen] = useState(false);
   const [categoryWasManuallySet, setCategoryWasManuallySet] = useState(false);
 
+  const { tree } = useCategories(CategoryScope.Shopping);
+
   useEffect(() => {
     if (open) {
       setData(initialData ?? emptyItemForm());
@@ -60,7 +64,7 @@ export function ItemFormDialog({
     setData((d) => {
       const next = { ...d, name };
       if (!categoryWasManuallySet && !d.categoryId && name.trim().length >= 3) {
-        const suggestedCat = suggestCategoryForItem(name, categories);
+        const suggestedCat = suggestCategoryForItem(name, tree);
         if (suggestedCat) {
           next.categoryId = suggestedCat;
         }

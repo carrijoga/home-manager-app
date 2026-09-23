@@ -2,7 +2,10 @@ import { Plus, SlidersHorizontal, Sparkles } from 'lucide-react';
 import React, { useMemo, useRef, useState } from 'react';
 
 import { Spinner } from '@/components/ui/spinner';
+import { useCategories } from '@/hooks/useCategories';
+import { findCategory } from '@/lib/categories';
 import { cn } from '@/lib/utils';
+import { CategoryScope } from '@/schemas/category';
 
 import { suggestCategoryForItem } from './smartCategory';
 import type { ItemFormData } from './types';
@@ -10,14 +13,12 @@ import type { ItemFormData } from './types';
 interface QuickAddItemBarProps {
   onAddItem: (data: ItemFormData) => Promise<void>;
   onOpenDetailedForm: (initialName?: string) => void;
-  categories: Array<{ shoppingCategoryId: string; name: string }>;
   disabled?: boolean;
 }
 
 export function QuickAddItemBar({
   onAddItem,
   onOpenDetailedForm,
-  categories,
   disabled = false,
 }: QuickAddItemBarProps) {
   const [name, setName] = useState('');
@@ -25,21 +26,21 @@ export function QuickAddItemBar({
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  const suggestedCategoryId = useMemo(() => {
-    return suggestCategoryForItem(name, categories);
-  }, [name, categories]);
+  const { tree } = useCategories(CategoryScope.Shopping);
 
-  const suggestedCategory = useMemo(() => {
-    if (!suggestedCategoryId) return null;
-    return categories.find((c) => c.shoppingCategoryId === suggestedCategoryId);
-  }, [suggestedCategoryId, categories]);
+  const suggestedCategoryId = useMemo(() => suggestCategoryForItem(name, tree), [name, tree]);
+
+  const suggestedCategory = useMemo(
+    () => findCategory(tree, suggestedCategoryId)?.category ?? null,
+    [tree, suggestedCategoryId]
+  );
 
   const handleQuickAdd = async (itemName: string) => {
     const trimmed = itemName.trim();
     if (!trimmed || isAdding || disabled) return;
 
     setIsAdding(true);
-    const catId = suggestCategoryForItem(trimmed, categories) ?? '';
+    const catId = suggestCategoryForItem(trimmed, tree) ?? '';
 
     try {
       await onAddItem({
@@ -91,7 +92,7 @@ export function QuickAddItemBar({
       {suggestedCategory && (
         <span className="hidden sm:inline-flex items-center gap-1 rounded-xl bg-primary/10 border border-primary/20 px-2.5 py-1 text-[11px] font-bold text-primary mr-1.5 animate-in fade-in zoom-in-95">
           <Sparkles size={11} />
-          {suggestedCategory.name}
+          {suggestedCategory.icon} {suggestedCategory.name}
         </span>
       )}
 

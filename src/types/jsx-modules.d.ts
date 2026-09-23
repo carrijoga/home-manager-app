@@ -5,6 +5,7 @@
 
 // Permitir importação de arquivos .jsx
 declare module '*.jsx' {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const component: React.ComponentType<any>;
   export default component;
   export const ThemeProvider: React.ComponentType<{ children: React.ReactNode }>;

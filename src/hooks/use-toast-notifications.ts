@@ -1,4 +1,5 @@
-import { toast } from "sonner";
+import { useCallback, useMemo } from 'react';
+import { toast } from 'sonner';
 
 /**
  * Cache de áudios pré-carregados
@@ -12,13 +13,16 @@ const createAudioData = (
   type: 'success-add' | 'success-update' | 'success-delete' | 'error' | 'warning' | 'info'
 ): string => {
   // Frequências otimizadas para cada tipo (notas musicais)
-  const configs: Record<string, { freq1: number; freq2: number; freq3?: number; duration: number }> = {
+  const configs: Record<
+    string,
+    { freq1: number; freq2: number; freq3?: number; duration: number }
+  > = {
     'success-add': { freq1: 523.25, freq2: 659.25, freq3: 783.99, duration: 0.18 }, // C5 + E5 + G5 (acorde maior ascendente)
     'success-update': { freq1: 523.25, freq2: 698.46, duration: 0.15 }, // C5 + F5 (quinta perfeita)
     'success-delete': { freq1: 659.25, freq2: 523.25, duration: 0.16 }, // E5 + C5 (descendente)
-    'error': { freq1: 466.16, freq2: 415.30, duration: 0.20 }, // Bb4 + Ab4 (dissonante)
-    'warning': { freq1: 587.33, freq2: 587.33, duration: 0.18 }, // D5 (neutro)
-    'info': { freq1: 698.46, freq2: 698.46, duration: 0.12 }, // F5 (suave)
+    error: { freq1: 466.16, freq2: 415.3, duration: 0.2 }, // Bb4 + Ab4 (dissonante)
+    warning: { freq1: 587.33, freq2: 587.33, duration: 0.18 }, // D5 (neutro)
+    info: { freq1: 698.46, freq2: 698.46, duration: 0.12 }, // F5 (suave)
   };
 
   const config = configs[type];
@@ -126,7 +130,7 @@ const createWavBlob = (samples: Float32Array, sampleRate: number): Blob => {
   const offset = 44;
   for (let i = 0; i < samples.length; i++) {
     const sample = Math.max(-1, Math.min(1, samples[i]));
-    view.setInt16(offset + i * 2, sample * 0x7FFF, true);
+    view.setInt16(offset + i * 2, sample * 0x7fff, true);
   }
 
   return new Blob([buffer], { type: 'audio/wav' });
@@ -166,6 +170,7 @@ const playSound = (
 };
 
 interface ToastOptions {
+  description?: string;
   action?: {
     label: string;
     onClick: () => void;
@@ -176,27 +181,38 @@ interface ToastOptions {
   soundVariant?: 'add' | 'update' | 'delete';
 }
 
+export interface ToastPromiseOptions<T> {
+  loading: string;
+  success: string | ((data: T) => string);
+  error: string | ((error: any) => string);
+  description?: string | ((data: T) => string);
+  duration?: number;
+  playSound?: boolean;
+  soundVariant?: 'add' | 'update' | 'delete';
+}
+
 /**
  * Hook customizado para notificações toast com mensagens padrão em português
  */
 export const useToastNotifications = () => {
-  const showSuccess = (message: string, options?: ToastOptions) => {
+  const showSuccess = useCallback((message: string, options?: ToastOptions) => {
     const duration = options?.persistent ? Infinity : (options?.duration ?? 3000);
 
     if (options?.playSound !== false) {
       const soundType = options?.soundVariant
-        ? `success-${options.soundVariant}` as const
+        ? (`success-${options.soundVariant}` as const)
         : 'success-add';
       playSound(soundType);
     }
 
     toast.success(message, {
+      description: options?.description,
       duration,
       action: options?.action,
     });
-  };
+  }, []);
 
-  const showError = (message: string, options?: ToastOptions) => {
+  const showError = useCallback((message: string, options?: ToastOptions) => {
     const duration = options?.persistent ? Infinity : (options?.duration ?? 3000);
 
     if (options?.playSound !== false) {
@@ -204,12 +220,13 @@ export const useToastNotifications = () => {
     }
 
     toast.error(message, {
+      description: options?.description,
       duration,
       action: options?.action,
     });
-  };
+  }, []);
 
-  const showWarning = (message: string, options?: ToastOptions) => {
+  const showWarning = useCallback((message: string, options?: ToastOptions) => {
     const duration = options?.persistent ? Infinity : (options?.duration ?? 3000);
 
     if (options?.playSound !== false) {
@@ -217,12 +234,13 @@ export const useToastNotifications = () => {
     }
 
     toast.warning(message, {
+      description: options?.description,
       duration,
       action: options?.action,
     });
-  };
+  }, []);
 
-  const showInfo = (message: string, options?: ToastOptions) => {
+  const showInfo = useCallback((message: string, options?: ToastOptions) => {
     const duration = options?.persistent ? Infinity : (options?.duration ?? 3000);
 
     if (options?.playSound !== false) {
@@ -230,40 +248,90 @@ export const useToastNotifications = () => {
     }
 
     toast.info(message, {
+      description: options?.description,
       duration,
       action: options?.action,
     });
-  };
+  }, []);
 
-  const showLoading = (message: string) => {
+  const showLoading = useCallback((message: string) => {
     return toast.loading(message);
-  };
+  }, []);
 
-  const dismissToast = (toastId: string | number) => {
+  const showPromise = useCallback(
+    <T>(
+      promise: Promise<T> | (() => Promise<T>),
+      options: ToastPromiseOptions<T>
+    ) => {
+      const p = typeof promise === 'function' ? promise() : promise;
+      return toast.promise(p, {
+        loading: options.loading,
+        success: (data: T) => {
+          if (options.playSound !== false) {
+            const soundType = options.soundVariant
+              ? (`success-${options.soundVariant}` as const)
+              : 'success-add';
+            playSound(soundType);
+          }
+          return typeof options.success === 'function'
+            ? options.success(data)
+            : options.success;
+        },
+        error: (err: any) => {
+          if (options.playSound !== false) {
+            playSound('error');
+          }
+          return typeof options.error === 'function'
+            ? options.error(err)
+            : options.error;
+        },
+        description: options.description as any,
+        duration: options.duration ?? 4000,
+      });
+    },
+    []
+  );
+
+  const dismissToast = useCallback((toastId: string | number) => {
     toast.dismiss(toastId);
-  };
+  }, []);
 
-  const enableSound = () => {
+  const enableSound = useCallback(() => {
     localStorage.setItem('toast-sound-enabled', 'true');
-  };
+  }, []);
 
-  const disableSound = () => {
+  const disableSound = useCallback(() => {
     localStorage.setItem('toast-sound-enabled', 'false');
-  };
+  }, []);
 
-  const isSoundEnabled = () => {
+  const isSoundEnabled = useCallback(() => {
     return localStorage.getItem('toast-sound-enabled') === 'true';
-  };
+  }, []);
 
-  return {
-    showSuccess,
-    showError,
-    showWarning,
-    showInfo,
-    showLoading,
-    dismissToast,
-    enableSound,
-    disableSound,
-    isSoundEnabled,
-  };
+  return useMemo(
+    () => ({
+      showSuccess,
+      showError,
+      showWarning,
+      showInfo,
+      showLoading,
+      showPromise,
+      dismissToast,
+      enableSound,
+      disableSound,
+      isSoundEnabled,
+    }),
+    [
+      showSuccess,
+      showError,
+      showWarning,
+      showInfo,
+      showLoading,
+      showPromise,
+      dismissToast,
+      enableSound,
+      disableSound,
+      isSoundEnabled,
+    ]
+  );
 };

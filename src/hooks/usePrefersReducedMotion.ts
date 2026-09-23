@@ -7,7 +7,7 @@
  * Quando true, as animações devem ser reduzidas ou removidas.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
 /**
  * Hook que retorna true se o usuário prefere movimento reduzido
@@ -37,7 +37,7 @@ export function usePrefersReducedMotion(): boolean {
 
   useEffect(() => {
     // Media query para detectar preferência de movimento reduzido
-    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
 
     // Define valor inicial
     setPrefersReducedMotion(mediaQuery.matches);
@@ -49,7 +49,7 @@ export function usePrefersReducedMotion(): boolean {
 
     // Adiciona listener (suporta navegadores antigos e modernos)
     if (mediaQuery.addEventListener) {
-      mediaQuery.addEventListener("change", handleChange);
+      mediaQuery.addEventListener('change', handleChange);
     } else {
       // Fallback para navegadores antigos
       mediaQuery.addListener(handleChange);
@@ -58,7 +58,7 @@ export function usePrefersReducedMotion(): boolean {
     // Cleanup
     return () => {
       if (mediaQuery.removeEventListener) {
-        mediaQuery.removeEventListener("change", handleChange);
+        mediaQuery.removeEventListener('change', handleChange);
       } else {
         mediaQuery.removeListener(handleChange);
       }
@@ -91,6 +91,7 @@ export function usePrefersReducedMotion(): boolean {
  * }
  * ```
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useReducedMotionTransition(normalTransition: any) {
   const prefersReducedMotion = usePrefersReducedMotion();
 
@@ -130,8 +131,11 @@ export function useReducedMotionTransition(normalTransition: any) {
  * }
  * ```
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useReducedMotionVariants(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   normalVariants: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   reducedVariants?: any
 ) {
   const prefersReducedMotion = usePrefersReducedMotion();
@@ -143,6 +147,7 @@ export function useReducedMotionVariants(
     }
 
     // Caso contrário, remove transformações mas mantém opacity
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const reduced: any = {};
     for (const key in normalVariants) {
       reduced[key] = {

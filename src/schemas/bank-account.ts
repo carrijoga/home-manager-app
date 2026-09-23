@@ -1,13 +1,15 @@
 import { z } from 'zod';
-import { UuidSchema, MoneySchema } from './shared';
-import { AccountTypeSchema } from './enums';
+
+import { AccountTypeSchema, CardTypeSchema } from './enums';
+import { MoneyRequestSchema, MoneySchema, UuidSchema } from './shared';
 
 // ── Requests ──────────────────────────────────────────────────────────────────
 
 export const CreateBankAccountRequestSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
   type: AccountTypeSchema,
-  balance: MoneySchema,
+  balance: MoneyRequestSchema,
+  initialBalance: MoneyRequestSchema,
   color: z.string().min(1, 'Cor é obrigatória'),
 });
 export type CreateBankAccountRequest = z.infer<typeof CreateBankAccountRequestSchema>;
@@ -19,13 +21,51 @@ export const UpdateBankAccountRequestSchema = z.object({
 });
 export type UpdateBankAccountRequest = z.infer<typeof UpdateBankAccountRequestSchema>;
 
+export const AdjustBalanceRequestSchema = z.object({
+  newBalance: z.number().finite('Valor inválido'),
+  observation: z.string().nullable().optional(),
+});
+export type AdjustBalanceRequest = z.infer<typeof AdjustBalanceRequestSchema>;
+
+export const TransferBankAccountRequestSchema = z.object({
+  sourceBankAccountId: UuidSchema,
+  destinationBankAccountId: UuidSchema,
+  amount: MoneyRequestSchema,
+  observation: z.string().nullable().optional(),
+});
+export type TransferBankAccountRequest = z.infer<typeof TransferBankAccountRequestSchema>;
+
 // ── Responses ─────────────────────────────────────────────────────────────────
+
+export const PaymentCardSummaryResponseSchema = z.object({
+  paymentCardId: UuidSchema,
+  bankAccountId: UuidSchema.nullable(),
+  type: CardTypeSchema,
+  name: z.string(),
+  color: z.string().nullable(),
+  isActive: z.boolean(),
+});
+export type PaymentCardSummaryResponse = z.infer<typeof PaymentCardSummaryResponseSchema>;
 
 export const BankAccountResponseSchema = z.object({
   bankAccountId: UuidSchema,
   name: z.string(),
   type: AccountTypeSchema,
+  isActive: z.boolean(),
   balance: MoneySchema,
+  initialBalance: MoneySchema,
   color: z.string(),
+  paymentCards: z.array(PaymentCardSummaryResponseSchema),
 });
 export type BankAccountResponse = z.infer<typeof BankAccountResponseSchema>;
+
+export const CanDeleteBankAccountResponseSchema = z.object({
+  canDelete: z.boolean(),
+  linkedTransactionsCount: z.number().int(),
+});
+export type CanDeleteBankAccountResponse = z.infer<typeof CanDeleteBankAccountResponseSchema>;
+
+export const InactivateBankAccountResponseSchema = z.object({
+  affectedPaymentCardsCount: z.number().int(),
+});
+export type InactivateBankAccountResponse = z.infer<typeof InactivateBankAccountResponseSchema>;

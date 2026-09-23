@@ -17,7 +17,59 @@ export default defineConfig({
   },
   server: {
     port: 3000,
-    open: true
+    open: true,
+    // Expõe na rede local para testar em dispositivos móveis
+    host: true,
+    // Encaminha as chamadas de API para o back-end, mantendo tudo na mesma
+    // origem do dev server. Evita CORS e permite acesso via IP da rede local.
+    proxy: {
+      '/api': {
+        target: process.env.VITE_PROXY_TARGET || 'https://localhost:7067',
+        changeOrigin: true,
+        secure: false,
+        configure: (proxy) => {
+          proxy.on('proxyRes', (proxyRes) => {
+            const setCookie = proxyRes.headers['set-cookie'];
+            if (setCookie) {
+              proxyRes.headers['set-cookie'] = setCookie.map((cookie: string) =>
+                cookie.replace(/;\s*secure/gi, '')
+              );
+            }
+          });
+        },
+      },
+      '/hubs': {
+        target: process.env.VITE_PROXY_TARGET || 'https://localhost:7067',
+        changeOrigin: true,
+        secure: false,
+        ws: true,
+        configure: (proxy) => {
+          proxy.on('proxyRes', (proxyRes) => {
+            const setCookie = proxyRes.headers['set-cookie'];
+            if (setCookie) {
+              proxyRes.headers['set-cookie'] = setCookie.map((cookie: string) =>
+                cookie.replace(/;\s*secure/gi, '')
+              );
+            }
+          });
+        },
+      },
+      '/health': {
+        target: process.env.VITE_PROXY_TARGET || 'https://localhost:7067',
+        changeOrigin: true,
+        secure: false,
+        configure: (proxy) => {
+          proxy.on('proxyRes', (proxyRes) => {
+            const setCookie = proxyRes.headers['set-cookie'];
+            if (setCookie) {
+              proxyRes.headers['set-cookie'] = setCookie.map((cookie: string) =>
+                cookie.replace(/;\s*secure/gi, '')
+              );
+            }
+          });
+        },
+      }
+    }
   },
   build: {
     outDir: 'dist',
@@ -25,37 +77,49 @@ export default defineConfig({
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Separa React e React DOM em chunk próprio
-          'react-vendor': ['react', 'react-dom'],
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return;
 
-          // Separa Radix UI components em chunk próprio
-          'radix-ui': [
-            '@radix-ui/react-accordion',
-            '@radix-ui/react-alert-dialog',
-            '@radix-ui/react-avatar',
-            '@radix-ui/react-checkbox',
-            '@radix-ui/react-dialog',
-            '@radix-ui/react-dropdown-menu',
-            '@radix-ui/react-label',
-            '@radix-ui/react-popover',
-            '@radix-ui/react-select',
-            '@radix-ui/react-separator',
-            '@radix-ui/react-slot'
-          ],
+          // Separa React, React DOM e React Router em chunk próprio
+          if (
+            id.includes('react/') ||
+            id.includes('react-dom/') ||
+            id.includes('react-router-dom/') ||
+            id.includes('@remix-run/')
+          ) {
+            return 'react-vendor';
+          }
 
-          // Separa biblioteca de gráficos (pesada)
-          'charts': ['recharts'],
+          // Separa Radix UI components
+          if (id.includes('@radix-ui/')) {
+            return 'radix-ui';
+          }
+
+          // Separa biblioteca de gráficos
+          if (id.includes('recharts')) {
+            return 'charts';
+          }
 
           // Separa bibliotecas de animação e carousel
-          'animations': ['framer-motion', 'embla-carousel-react', 'embla-carousel-autoplay'],
+          if (id.includes('framer-motion') || id.includes('embla-carousel')) {
+            return 'animations';
+          }
 
           // Separa utilitários de data
-          'date-utils': ['date-fns', 'react-day-picker'],
+          if (id.includes('date-fns') || id.includes('react-day-picker')) {
+            return 'date-utils';
+          }
 
-          // Separa ícones e utilitários UI
-          'ui-utils': ['lucide-react', 'class-variance-authority', 'clsx', 'tailwind-merge']
-        }
+          // Separa ícones e utilitários de classe UI
+          if (
+            id.includes('lucide-react') ||
+            id.includes('class-variance-authority') ||
+            id.includes('clsx') ||
+            id.includes('tailwind-merge')
+          ) {
+            return 'ui-utils';
+          }
+        },
       }
     }
   }

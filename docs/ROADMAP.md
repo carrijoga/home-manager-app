@@ -1,287 +1,55 @@
-# 🎯 Roadmap de Features do Ninho
+# Roadmap do Projeto Ninho
 
-Este documento lista ideias de features futuras organizadas por prioridade e categoria.
-
-## 🔥 Features Essenciais (Alta Prioridade)
-
-### 1. **Sistema de Notificações Toast**
-- ✅ **Implementado**: react-hot-toast
-- Notificações ao adicionar/remover/editar itens
-- Feedback visual instantâneo
-- Animações suaves
-
-### 2. **Sistema de Drag and Drop**
-- **Biblioteca**: @dnd-kit/core ou react-beautiful-dnd
-- Reordenar tarefas por prioridade
-- Reorganizar lista de compras
-- Mover itens entre categorias
-
-### 3. **Filtros e Busca**
-- Busca em tempo real em todas as listas
-- Filtrar por categoria, data, responsável
-- Filtros salvos (favoritos)
-- Busca global no app
-
-### 4. **Estatísticas e Gráficos**
-- **Biblioteca**: recharts ou chart.js
-- Gráfico de gastos por categoria
-- Evolução de tarefas concluídas
-- Comparativo mensal
-- Meta de gastos
-
-### 5. **Sistema de Categorias Personalizadas**
-- Criar categorias customizadas
-- Ícones para cada categoria
-- Cores personalizadas
-- Drag to reorder
+Este documento apresenta o histórico de evolução, funcionalidades implementadas e marcos de planejamento futuro do **Ninho**.
 
 ---
 
-## 💡 Features Intermediárias
+## 🚀 Funcionalidades Concluídas
 
-### 6. **Modo de Edição Inline**
-- Editar tarefas clicando nelas
-- Editar valores sem abrir modal
-- Atalhos de teclado (Enter para salvar, Esc para cancelar)
+### 🔐 Autenticação & Gestão de Ninhos
+- [x] Login com Email/Senha e integração Google OAuth (`/auth/google/callback`).
+- [x] Cadastro de novos usuários e perfil de conta.
+- [x] Aceite de convites de membros para ninhos familiares via link (`/invite`).
+- [x] Troca dinâmica entre múltiplos ninhos cadastrados.
 
-### 7. **Histórico e Desfazer**
-- Desfazer última ação (Ctrl+Z)
-- Histórico de alterações
-- Restaurar itens deletados
+### 📊 Dashboard & Avisos
+- [x] Visão geral consolidada da residência com estatísticas e mini-gráficos.
+- [x] Quadro de avisos familiar (Post-it interativos com suporte a fixação).
+- [x] Carrossel de métricas responsivo e skeleton loaders.
+- [x] Busca global unificada de tarefas, compras e finanças.
 
-### 8. **Anexos e Fotos**
-- Anexar fotos aos itens
-- Notas de voz para avisos
-- PDFs de recibos/notas fiscais
-- Preview de imagens
+### ✅ Módulo de Tarefas
+- [x] Gerenciamento completo de tarefas domésticas com prioridades (Baixa, Média, Alta).
+- [x] Atribuição de responsáveis, categorias e datas de vencimento.
+- [x] Visualização em abas (Pendentes e Concluídas) com ordenação e filtros.
 
-### 9. **Tags e Etiquetas**
-- Sistema de tags flexível
-- Tags coloridas
-- Filtrar por tags
-- Tags sugeridas
+### 🛒 Módulo de Lista de Compras
+- [x] Organização de itens por categoria com indicadores visuais de progresso.
+- [x] Edição em lote (Bulk edit) e estatísticas de orçamento.
+- [x] Conexão SignalR para sincronização em tempo real de alterações na lista de compras.
 
-### 10. **Lembretes e Alertas**
-- Notificações de tarefas vencendo
-- Alertas de contas a pagar
-- Lembrete de itens da lista
-- Notificações push (futuro)
+### 💰 Módulo Financeiro (V1 e V2)
+- [x] Registro e categorização de despesas e receitas domésticas.
+- [x] Gestão de Contas Bancárias (`/financial/account`) e saldo consolidado.
+- [x] Gestão de Cartões de Crédito (`/financial/card`) com limite e fechamento de fatura.
+- [x] Metas Financeiras (`/financial/goals`) e Recorrências de pagamentos (`/financial/recurrences`).
+- [x] Visão Financeiro V2 (`/financial-v2`) com métricas avançadas e dashboards refinados.
 
----
+### 📦 Compras Futuras & Calendário
+- [x] Lista de desejos de compras futuras com estimativa de custos.
+- [x] Módulo de Calendário preparado para integração de eventos.
 
-## 🚀 Features Avançadas
-
-### 11. **Modo Colaborativo**
-- Múltiplos usuários
-- Atribuir tarefas a pessoas específicas
-- Sistema de comentários
-- Notificações para membros
-
-### 12. **Integração com Calendário**
-- Google Calendar sync
-- Visualização de calendário
-- Eventos da casa
-- Agendamento de tarefas
-
-### 13. **Orçamento Inteligente**
-- Definir orçamento mensal
-- Alertas de gastos
-- Sugestões de economia
-- Projeção de gastos futuros
-
-### 14. **Receitas e Despesas Recorrentes**
-- Gastos fixos mensais
-- Compras recorrentes
-- Auto-adicionar na lista
-- Previsão de gastos
-
-### 15. **Metas e Gamificação**
-- Conquistas (achievements)
-- Streaks de tarefas
-- Pontos por conclusão
-- Rankings familiares
+### 🛠️ Infraestrutura & PWA
+- [x] Migração dos serviços, schemas, types e contextos para **TypeScript**.
+- [x] Cliente HTTP unificado com suporte a refresh token e cookies.
+- [x] Suporte a Progressive Web App (PWA) completo com cache via Service Worker (`sw.js`).
+- [x] Sistema de temas (Claro / Escuro / Preferência do Sistema).
 
 ---
 
-## 🎨 Melhorias de UX/UI
+## 🔮 Próximos Passos & Planejamento Futuro
 
-### 16. **Temas Personalizados**
-- Além de light/dark
-- Temas customizados
-- Paletas de cores
-- Salvar temas favoritos
-
-### 17. **Atalhos de Teclado**
-- Navegação por teclado
-- Adicionar rápido (Ctrl+N)
-- Busca rápida (Ctrl+K)
-- Lista de atalhos (?)
-
-### 18. **Modo Compacto/Expansivo**
-- Visualização densa
-- Cards expandidos
-- Layout customizável
-- Preferências salvas
-
-### 19. **Onboarding e Tutorial**
-- Tour interativo
-- Dicas contextuais
-- Vídeo tutorial
-- Exemplos pré-carregados
-
-### 20. **Acessibilidade**
-- Screen reader support
-- Alto contraste
-- Tamanho de fonte ajustável
-- Navegação por teclado completa
-
----
-
-## 📱 Features Mobile
-
-### 21. **PWA (Progressive Web App)**
-- Instalável no celular
-- Funciona offline
-- Notificações push
-- Cache inteligente
-
-### 22. **Scanner de Códigos**
-- Escanear código de barras
-- Adicionar produtos automaticamente
-- OCR em recibos
-- Extração de dados
-
-### 23. **Gestos Touch**
-- Swipe para deletar
-- Pull to refresh
-- Long press para opções
-- Pinch to zoom
-
----
-
-## 🔌 Integrações
-
-### 24. **Integrações Externas**
-- WhatsApp (compartilhar lista)
-- Telegram bot
-- Google Assistant
-- Alexa skills
-
-### 25. **Import/Export**
-- Exportar para Excel/CSV
-- Importar de outras apps
-- Backup automático
-- Sync com cloud
-
-### 26. **API Pública**
-- REST API
-- Webhooks
-- Integrações custom
-- Documentação Swagger
-
----
-
-## 💾 Data & Analytics
-
-### 27. **Relatórios**
-- Relatório mensal
-- Exportar PDF
-- Análise de padrões
-- Insights automáticos
-
-### 28. **Machine Learning**
-- Prever gastos futuros
-- Sugerir categorias
-- Detectar padrões
-- Alertas inteligentes
-
-### 29. **Métricas e KPIs**
-- Taxa de conclusão de tarefas
-- Economia mensal
-- Eficiência doméstica
-- Comparações
-
----
-
-## 🎁 Features Premium (Monetização Futura)
-
-### 30. **Plano Premium**
-- Sync ilimitado
-- Uploads ilimitados
-- Temas premium
-- Suporte prioritário
-- Relatórios avançados
-
----
-
-## 🏆 Top 5 Recomendações para Implementar Agora:
-
-1. **🔔 Sistema de Notificações Toast** - Feedback essencial ✅ **Implementado**
-2. **🔍 Busca e Filtros** - Usabilidade crítica
-3. **📊 Gráficos Básicos** - Visualização de dados
-4. **✏️ Edição Inline** - UX moderna
-5. **🏷️ Tags/Etiquetas** - Organização flexível
-
----
-
-## 📚 Bibliotecas Recomendadas
-
-### Animações
-- ✅ **framer-motion** - Animações React (já adicionado)
-- **react-spring** - Animações baseadas em física
-
-### UI Components
-- **Headless UI** - Componentes acessíveis
-- **Radix UI** - Primitivos de UI
-- ✅ **shadcn/ui** - Componentes prontos (Tailwind) (já adicionado)
-
-### Formulários
-- **react-hook-form** - Formulários performáticos
-- **zod** - Validação de schemas
-
-### Datas
-- ✅ **date-fns** - Manipulação de datas (já adicionado)
-- **react-datepicker** - Date picker component
-
-### Drag & Drop
-- **@dnd-kit** - Drag and drop moderno
-- **react-beautiful-dnd** - DnD do Atlassian
-
-### Gráficos
-- **recharts** - Gráficos React simples
-- **chart.js** - Gráficos tradicionais
-
-### Notificações
-- ✅ **react-hot-toast** - Toast notifications (já adicionado)
-- **sonner** - Toast minimalista
-
-### Ícones
-- ✅ **lucide-react** - Ícones modernos (já usando)
-
-### Utilitários
-- **clsx** / **classnames** - Manipulação de classes
-- **nanoid** - IDs únicos
-- **lodash** - Utilidades JavaScript
-
----
-
-## 📅 Cronograma Sugerido
-
-### Sprint 1 (Curto Prazo)
-- [ ] Sistema de busca e filtros
-- [ ] Edição inline de itens
-- [ ] Tags e etiquetas
-
-### Sprint 2 (Médio Prazo)
-- [ ] Drag and drop
-- [ ] Gráficos básicos
-- [ ] Histórico e desfazer
-
-### Sprint 3 (Longo Prazo)
-- [ ] Modo colaborativo
-- [ ] Integração com calendário
-- [ ] Scanner de códigos
-
----
-
-**Qual feature você quer que seja implementada primeiro?** 🚀
+- [ ] Integrar sincronização bidirecional de eventos com o **Google Calendar API**.
+- [ ] Implementar notificações Push para lembretes de tarefas e faturas de cartão.
+- [ ] Adicionar suporte a fila de sincronização offline (Offline Sync Queue com IndexedDB).
+- [ ] Concluir migração dos últimos componentes JSX legados de `src/components/modules/` para TSX.

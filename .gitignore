@@ -26,9 +26,12 @@ dist-ssr
 *.sw?
 
 # Environment variables
-# Note: .env.example, .env.development, .env.staging, and .env.production
-# are versioned as templates/references. Use them to create your local .env
+# Local env files are ignored. Create them in your workspace as needed.
 .env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 .env.development
 .env.production
 .env.staging
@@ -38,3 +41,21 @@ build
 
 # Database migrations (mantidas fora do versionamento)
 migrations/
+
+.claude
+.playwright-mcp
+.superpowers
+/docs/superpowers
+.planning
+
+v1.json
+
+*storybook.log
+storybook-static
+
+statusline.py
+
+# Temporary & Test files
+scratch/
+screenshot*.png
+test.png

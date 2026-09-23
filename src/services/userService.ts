@@ -1,4 +1,3 @@
-import { UserProfileResponseSchema, UserSummaryResponseSchema } from '@/schemas/user';
 import type {
   CreateNestRequest,
   UpdateNestRequest,
@@ -8,10 +7,20 @@ import type {
   UserProfileResponse,
   UserSummaryResponse,
 } from '@/schemas/user';
-import { httpClient } from './api/httpClient';
-import { ENDPOINTS } from './api/endpoints';
+import { UserProfileResponseSchema, UserSummaryResponseSchema } from '@/schemas/user';
 
-function safeParse<T>(schema: { safeParse: (v: unknown) => { success: boolean; data?: T; error?: { flatten: () => unknown } } }, raw: unknown, name: string): T {
+import { DATA_MODE } from './api/config';
+import { ENDPOINTS } from './api/endpoints';
+import { httpClient } from './api/httpClient';
+import * as nestService from './nestService';
+
+function safeParse<T>(
+  schema: {
+    safeParse: (v: unknown) => { success: boolean; data?: T; error?: { flatten: () => unknown } };
+  },
+  raw: unknown,
+  name: string
+): T {
   const result = schema.safeParse(raw);
   if (!result.success) {
     if (import.meta.env.DEV) {
@@ -47,6 +56,9 @@ export async function getConfiguration(): Promise<UserConfigurationResponse> {
 
 /** Nests (grupos/famílias) do usuário */
 export async function getNests(): Promise<UserNestResponse[]> {
+  if (DATA_MODE === 'mock') {
+    return nestService.getMockNests() as UserNestResponse[];
+  }
   return httpClient.get<UserNestResponse[]>(ENDPOINTS.users.meNests);
 }
 
@@ -55,16 +67,17 @@ export async function createNest(payload: CreateNestRequest): Promise<void> {
   await httpClient.post<void>(ENDPOINTS.nests.create, payload);
 }
 
-/** Atualiza um ninho existente
- * TODO: confirmar rota e método HTTP quando o endpoint estiver no contrato da API
- */
+/** Atualiza um ninho existente */
 export async function updateNest(nestId: string, payload: UpdateNestRequest): Promise<void> {
-  await httpClient.put<void>(ENDPOINTS.nests.update(nestId), payload);
+  await httpClient.put<void>(ENDPOINTS.nests.update, { ...payload, nestId }, nestId);
 }
 
-/** Remove um ninho
- * TODO: confirmar rota e método HTTP quando o endpoint estiver no contrato da API
- */
+/** Define um ninho como o principal/padrão */
+export async function setDefaultNest(nestId: string): Promise<void> {
+  await nestService.setDefaultNest(nestId);
+}
+
+/** Remove um ninho */
 export async function deleteNest(nestId: string): Promise<void> {
-  await httpClient.del(ENDPOINTS.nests.delete(nestId));
+  await httpClient.del(ENDPOINTS.nests.delete(nestId), nestId);
 }

@@ -29,6 +29,19 @@ export enum ApiCategory {
   Outros = 4,
 }
 
+/** Status de tarefa no board (client-side — o backend usa isCompleted) */
+export enum TaskStatus {
+  AFazer = 0,
+  EmAndamento = 1,
+  Concluido = 2,
+}
+
+export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
+  [TaskStatus.AFazer]: 'A Fazer',
+  [TaskStatus.EmAndamento]: 'Em Andamento',
+  [TaskStatus.Concluido]: 'Concluído',
+};
+
 /** IDs dos módulos da aplicação */
 export enum ModuleId {
   DASHBOARD = 'dashboard',
@@ -74,7 +87,26 @@ export interface AppUserNest {
   role: number;
 }
 
-/** Notificação do usuário (derivado de UserNotificationResponse da API) */
+export type NotificationModule = 'financial' | 'shopping' | 'tasks' | 'system' | 'calendar';
+
+export interface NotificationAction {
+  id: string;
+  label: string;
+  variant?: 'primary' | 'secondary' | 'outline' | 'destructive';
+  actionType: 'navigate' | 'api_call' | 'open_modal' | 'complete_task';
+  url?: string;
+  payload?: Record<string, unknown>;
+}
+
+export interface NotificationAttachment {
+  id: string;
+  name: string;
+  url: string;
+  size?: string;
+  fileType: 'pdf' | 'image' | 'doc' | 'other';
+}
+
+/** Notificação do usuário (derivado de UserNotificationResponse da API e enriquecido) */
 export interface AppNotification {
   notificationId: string;
   title: string;
@@ -82,6 +114,15 @@ export interface AppNotification {
   type: number; // NotificationType: 0=Info, 1=Warning, 2=Error, 3=Success
   isRead: boolean;
   isEnabled: boolean;
+  createdAt?: string | Date;
+  module?: NotificationModule;
+  actions?: NotificationAction[];
+  attachments?: NotificationAttachment[];
+  author?: {
+    name: string;
+    avatarUrl?: string | null;
+  };
+  data?: Record<string, unknown>;
 }
 
 /** Representação interna do usuário autenticado */
@@ -91,9 +132,36 @@ export interface AppUser {
   callmeby: string;
   email: string;
   avatar?: string;
+  avatarSlug?: string | null;
+  profilePictureUrl?: string | null;
   nests?: AppUserNest[];
   notifications?: AppNotification[];
 }
+
+/** Clima atual apresentado no dashboard */
+export interface AppWeather {
+  city: string;
+  temperature: number;
+  temperatureMin?: number;
+  temperatureMax?: number;
+  description: string;
+  source?: 'gps' | 'ip' | 'manual';
+  conditionCode?: string | null;
+  observedAt?: string | null;
+}
+
+/** Reação de aviso no mural */
+export interface NoticeReaction {
+  reactionId: string;
+  noticeId: string;
+  userId: string;
+  userName?: string;
+  userAvatar?: string;
+  emoji: string;
+  createdAt: string;
+}
+
+export type { CalendarEventPreview } from '@/services/calendarService';
 
 /** Aviso do quadro (módulo Notices) */
 export interface Notice {
@@ -101,12 +169,15 @@ export interface Notice {
   message: string;
   date: string;
   isPinned: boolean;
+  priority: ApiPriority;
   expiresAt: string | null;
   isActive: boolean;
-  createdBy: string; // UUID do autor
+  createdBy: string; // UUID do autor/criador
   createdAt: string;
-  authorName?: string; // nome legível, enriquecido no frontend
-  color?: string; // chave de cor do post-it (yellow|pink|green|orange|blue)
+  authorName?: string; // nome do criador
+  authorAvatar?: string; // foto/avatar do criador
+  color?: string; // chave de cor do post-it
+  reactions?: NoticeReaction[];
 }
 
 /** Tarefa (módulo Tasks) */
@@ -122,6 +193,8 @@ export interface Task {
   category: ApiCategory;
   categoryLabel: string;
   date: string;
+  /** Status no board Kanban — derivado de isCompleted na ausência de campo da API */
+  status?: TaskStatus;
   isCompleted: boolean;
   completedAt?: string | null;
   isOverdue: boolean;
@@ -156,6 +229,7 @@ export interface AppShoppingItem {
   shoppingCategoryId?: string | null;
   categoryName?: string | null;
   isPurchased: boolean;
+  status: number; // 0=Pending, 1=Purchased, 2=Ignored, 3=NotPurchased
   price?: number | null;
   estimatedPrice?: number | null;
   purchasedAt?: string | null;
@@ -168,6 +242,9 @@ export interface AppShoppingList {
   name: string;
   monthYear: string; // ISO date-time string
   notes?: string | null;
+  finished: boolean;
+  finishedAt?: string | null;
+  finishedBy?: string | null;
   items: AppShoppingItem[];
 }
 
@@ -181,29 +258,13 @@ export interface AppShoppingListSummary {
   purchasedItems: number;
   totalEstimated?: number | null;
   totalSpent?: number | null;
+  finished: boolean;
+  finishedAt?: string | null;
+  finishedBy?: string | null;
+  isFinished?: boolean;
 }
 
-/** Informações de compra de item futuro */
-export interface FuturePurchase {
-  expenseId: string;
-  actualValue: number;
-  purchasedAt: string;
-}
-
-/** Item de compra futura (módulo FutureItems, mock-only por enquanto) */
-export interface FutureItem {
-  id: string;
-  name: string;
-  priority: Priority;
-  estimatedCost: string; // ex: 'R$ 2.500'
-  estimatedValue?: number;
-  description?: string;
-  category?: string;
-  link?: string;
-  notes?: string;
-  status?: FutureItemStatus;
-  purchase?: FuturePurchase;
-}
+import { resolveUserAvatar } from '@/constants/koboyoAvatars';
 
 // ==================== HELPERS ====================
 
@@ -218,6 +279,7 @@ export function userProfileToAppUser(profile: {
   callbyName: string;
   email: string;
   profilePictureUrl?: string | null;
+  avatarSlug?: string | null;
   nests?: Array<{
     nestId: string;
     name: string;
@@ -241,15 +303,17 @@ export function userProfileToAppUser(profile: {
     name: `${profile.firstName} ${profile.lastName}`.trim(),
     callmeby: profile.callbyName,
     email: profile.email,
-    avatar: profile.profilePictureUrl ?? undefined,
-    nests: (profile.nests ?? []).map(n => ({
+    profilePictureUrl: profile.profilePictureUrl ?? undefined,
+    avatarSlug: profile.avatarSlug ?? undefined,
+    avatar: resolveUserAvatar(profile.profilePictureUrl, profile.avatarSlug),
+    nests: (profile.nests ?? []).map((n) => ({
       nestId: n.nestId,
       name: n.name,
       icon: n.icon,
       isDefault: n.isDefault,
       role: n.role,
     })),
-    notifications: (profile.profile?.notifications ?? []).map(n => ({
+    notifications: (profile.profile?.notifications ?? []).map((n) => ({
       notificationId: n.notificationId,
       title: n.title,
       message: n.message,

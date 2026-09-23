@@ -10,65 +10,79 @@ export { EyeIcon, EyeOffIcon } from './eye-icons';
  */
 
 // Form Components
-export { Button, buttonVariants } from './button';
 export type { ButtonProps } from './button';
-
+export { Button, buttonVariants } from './button';
 export { Input } from './input';
-
+export { Label } from './label';
+export {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectScrollDownButton,
+  SelectScrollUpButton,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+} from './select';
 export { Textarea } from './textarea';
 
-export { Label } from './label';
-
-export {
-  Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectScrollDownButton, SelectScrollUpButton, SelectSeparator, SelectTrigger, SelectValue
-} from './select';
-
 // Layout Components
-export {
-  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle
-} from './card';
-
+export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './card';
 export { Separator } from './separator';
 
 // Overlay Components
 export {
-  Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogOverlay, DialogPortal, DialogTitle, DialogTrigger
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogOverlay,
+  AlertDialogPortal,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from './alert-dialog';
+export {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogOverlay,
+  DialogPortal,
+  DialogTitle,
+  DialogTrigger,
 } from './dialog';
 
-export {
-  AlertDialog, AlertDialogAction,
-  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogOverlay, AlertDialogPortal, AlertDialogTitle, AlertDialogTrigger
-} from './alert-dialog';
-
 // Display Components
-export { Badge, badgeVariants } from './badge';
-export type { BadgeProps } from './badge';
-
 export { Avatar, AvatarFallback, AvatarImage } from './avatar';
+export type { BadgeProps } from './badge';
+export { Badge, badgeVariants } from './badge';
 
 // Date Components
 export { Calendar } from './calendar';
-export { DatePicker } from './date-picker';
 export type { DatePickerProps } from './date-picker';
+export { DatePicker } from './date-picker';
 export { Popover, PopoverContent, PopoverTrigger } from './popover';
 
 // Navigation Components
-export {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger
-} from './accordion';
+export { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './accordion';
 
 // Feedback Components
 export { Checkbox } from './checkbox';
+export { Switch } from './switch';
 
 // Menu Components
 export {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from './dropdown-menu';
 
 // Toast/Notifications
@@ -99,7 +113,7 @@ export {
   SidebarRail,
   SidebarSeparator,
   SidebarTrigger,
-  useSidebar
+  useSidebar,
 } from './sidebar';
 
 // Sheet Components
@@ -113,21 +127,27 @@ export {
   SheetOverlay,
   SheetPortal,
   SheetTitle,
-  SheetTrigger
+  SheetTrigger,
 } from './sheet';
 
 // Tooltip Components
-export {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger
-} from './tooltip';
+export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './tooltip';
 
 // Collapsible Components
-export {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger
-} from './collapsible';
+export { Collapsible, CollapsibleContent, CollapsibleTrigger } from './collapsible';
 
+// Animated Numbers & Text
+export {
+  AnimatedNumber,
+  AnimatedCurrency,
+  AnimatedPercent,
+  AnimatedText,
+  type AnimatedNumberProps,
+  type AnimatedCurrencyProps,
+  type AnimatedPercentProps,
+  type AnimatedTextProps,
+  type AnimatedNumberVariant,
+} from './animated-number';
+
+// Spring Progress
+export { SpringProgress, type SpringProgressProps } from './spring-progress';

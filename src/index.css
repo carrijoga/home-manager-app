@@ -16,26 +16,20 @@ body,
 }
 
 body {
-  font-family:
-    Roboto,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    "Roboto",
-    "Oxygen",
-    "Ubuntu",
-    "Cantarell",
-    "Fira Sans",
-    "Droid Sans",
-    "Helvetica Neue",
-    sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* scrollbar-gutter: stable; */
+}
+
+/* react-remove-scroll injects `margin-right: 15px !important` via a runtime <style>
+   tag (always last in cascade). Higher specificity beats same-specificity !important. */
+html body[data-scroll-locked] {
+  padding-right: 0 !important;
+  margin-right: 0 !important;
 }
 
 code {
-  font-family:
-    source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
 /* Hide scrollbar for navigation */
@@ -50,79 +44,193 @@ code {
 
 @layer base {
   :root {
-    /* shadcn/ui theme variables (HSL format) */
-    /* Modern Indigo & Purple theme */
-    --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 239 84% 67%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 271 91% 65%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 220 14% 96%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 220 14% 96%;
-    --accent-foreground: 222 47% 11%;
-    --destructive: 350 89% 60%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 239 84% 67%;
-    --chart-1: 239 84% 67%;
-    --chart-2: 271 91% 65%;
-    --chart-3: 189 94% 43%;
-    --chart-4: 160 84% 39%;
-    --chart-5: 350 89% 60%;
-    --radius: 0.5rem;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* ── Sanctuary Warm Modern Palette (Light Mode) ── */
+    --background: #faf8f5; /* warm linen surface */
+    --foreground: #1c1917; /* stone-900 warm deep text */
+    --card: #ffffff; /* pure white content surface */
+    --card-foreground: #1c1917;
+    --popover: #ffffff;
+    --popover-foreground: #1c1917;
+    --primary: #c05621; /* Warm Terracotta — high contrast AA/AAA with white */
+    --primary-foreground: #ffffff; /* crisp white text */
+    --secondary: #f4efe6; /* soft linen secondary surface */
+    --secondary-foreground: #292524;
+    --muted: #f2ede4; /* distinguishable from background */
+    --muted-foreground: #736d65; /* legible muted tone */
+    --accent: #f2ede4;
+    --accent-foreground: #1c1917;
+    --destructive: #dc2626; /* clear red */
+    --destructive-foreground: #ffffff;
+    --border: #e8e3da; /* subtle warm structural border */
+    --input: #ffffff;
+    --ring: #c05621;
+    --success: #3d7a54; /* sage green */
+    --success-foreground: #ffffff;
+    --chart-1: #c05621; /* terracotta */
+    --chart-2: #3d7a54; /* sage green */
+    --chart-3: #d97706; /* honey amber */
+    --chart-4: #dc2626; /* danger red */
+    --chart-5: #78716c; /* warm slate neutral */
+
+    /* ── Multi-layer Elevation & Depth Shadows (Light Mode) ── */
+    --shadow-subtle: 0 1px 2px 0 rgba(28, 25, 23, 0.04);
+    --shadow-card: 0 1px 3px 0 rgba(28, 25, 23, 0.05), 0 1px 2px -1px rgba(28, 25, 23, 0.03);
+    --shadow-card-hover: 0 8px 20px -3px rgba(28, 25, 23, 0.08), 0 3px 6px -2px rgba(28, 25, 23, 0.04);
+    --shadow-popover: 0 12px 28px -4px rgba(28, 25, 23, 0.10), 0 4px 10px -2px rgba(28, 25, 23, 0.04);
+    --shadow-modal: 0 24px 44px -6px rgba(28, 25, 23, 0.14), 0 8px 18px -4px rgba(28, 25, 23, 0.06);
+
+    /* ── Concentric Border Radius Tokens ── */
+    --radius-xs: 0.25rem;  /* 4px */
+    --radius-sm: 0.375rem; /* 6px */
+    --radius-md: 0.5rem;   /* 8px - controls, inputs, buttons */
+    --radius-lg: 0.75rem;  /* 12px - cards, inner panels */
+    --radius-xl: 1rem;     /* 16px - containers, sheets, dialogs */
+    --radius-2xl: 1.25rem; /* 20px - large modals, hero wrappers */
+    --radius-full: 9999px; /* badges, pills, avatars */
+    --radius: 0.75rem;
+
+    /* ── Sidebar (Clean, Warm Dark) ── */
+    --sidebar-background: #141312;
+    --sidebar-foreground: #f5f5f4;
+    --sidebar-primary: #e07e59;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #22201e;
+    --sidebar-accent-foreground: #f5f5f4;
+    --sidebar-border: rgba(255, 255, 255, 0.08);
+    --sidebar-ring: #e07e59;
+
+    /* ── Surface tier tokens (Light Mode) ── */
+    --surface: #faf8f5;
+    --surface-container-lowest: #ffffff;
+    --surface-container-low: #faf8f5;
+    --surface-container: #f5f1ea;
+    --surface-container-high: #f0ebe2;
+    --surface-container-highest: #e9e3d8;
+    --on-surface: #1c1917;
+    --outline-variant: #e8e3da;
+
+    /* ── Color-mix aliases ── */
+    --primary-subtle: color-mix(in srgb, var(--primary) 12%, var(--background));
+    --primary-subtle-hover: color-mix(in srgb, var(--primary) 20%, var(--background));
+    --secondary-subtle: color-mix(in srgb, var(--secondary) 25%, var(--background));
+
+    /* ── Fluid type scale ── */
+    --text-xs: clamp(0.65rem, 0.6rem + 0.25vw, 0.75rem);
+    --text-sm: clamp(0.8rem, 0.75rem + 0.25vw, 0.875rem);
+    --text-base: clamp(0.9rem, 0.85rem + 0.25vw, 1rem);
+    --text-lg: clamp(1rem, 0.95rem + 0.3vw, 1.125rem);
+    --text-xl: clamp(1.1rem, 1rem + 0.5vw, 1.25rem);
+    --text-2xl: clamp(1.25rem, 1.1rem + 0.75vw, 1.5rem);
+    --text-3xl: clamp(1.5rem, 1.25rem + 1.25vw, 2rem);
+    --text-4xl: clamp(1.875rem, 1.5rem + 1.75vw, 2.5rem);
+
+    /* ── Fluid spacing ── */
+    --space-xs: clamp(0.25rem, 0.2rem + 0.25vw, 0.375rem);
+    --space-sm: clamp(0.5rem, 0.4rem + 0.5vw, 0.75rem);
+    --space-md: clamp(0.75rem, 0.6rem + 0.75vw, 1.25rem);
+    --space-lg: clamp(1rem, 0.8rem + 1vw, 1.5rem);
+    --space-xl: clamp(1.5rem, 1.2rem + 1.5vw, 2.5rem);
+    --space-2xl: clamp(2rem, 1.5rem + 2.5vw, 4rem);
+
+    /* ── Easing curves ── */
+    --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-spring: cubic-bezier(0.34, 1.2, 0.64, 1); /* subtle overshoot, no bounce */
+
+    /* ── Duration tokens ── */
+    --dur-fast: 150ms;
+    --dur-base: 250ms;
+    --dur-slow: 400ms;
+    --dur-slower: 600ms;
   }
 
   .dark {
-    /* shadcn/ui theme variables (HSL format) */
-    /* Dark mode with slate base */
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
-    --card: 222 47% 15%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 239 84% 67%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 271 91% 65%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 217 33% 17%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 350 89% 60%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 239 84% 67%;
-    --chart-1: 239 84% 67%;
-    --chart-2: 271 91% 65%;
-    --chart-3: 189 94% 43%;
-    --chart-4: 160 84% 39%;
-    --chart-5: 350 89% 60%;
-    /* Use a slightly lighter dark tone for the sidebar so it isn't pure black */
-    --sidebar-background: 222 47% 15%; /* matches --card in dark mode */
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 217 33% 17%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217 33% 17%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* ── Sanctuary Warm Modern Palette (Dark Mode) ── */
+    --background: #141312; /* deep warm obsidian */
+    --foreground: #f5f5f4; /* stone-100 high contrast text */
+    --card: #1e1c1a; /* level 1 luminance card */
+    --card-foreground: #f5f5f4;
+    --popover: #252321; /* level 2 luminance popover */
+    --popover-foreground: #f5f5f4;
+    --primary: #e07e59; /* luminous warm terracotta */
+    --primary-foreground: #260f04; /* dark rich text for AAA contrast */
+    --secondary: #2a2724;
+    --secondary-foreground: #f5f5f4;
+    --muted: #262422; /* distinct from dark canvas */
+    --muted-foreground: #a8a29e;
+    --accent: #262422;
+    --accent-foreground: #f5f5f4;
+    --destructive: #f87171;
+    --destructive-foreground: #3b0a07;
+    --border: rgba(255, 255, 255, 0.09);
+    --input: #292724;
+    --ring: #e07e59;
+    --success: #4ade80;
+    --success-foreground: #052e16;
+    --chart-1: #e07e59;
+    --chart-2: #4ade80;
+    --chart-3: #fbbf24;
+    --chart-4: #f87171;
+    --chart-5: #a8a29e;
+
+    /* ── Multi-layer Elevation & Depth Shadows (Dark Mode) ── */
+    --shadow-subtle: 0 1px 2px 0 rgba(0, 0, 0, 0.45);
+    --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.55), inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+    --shadow-card-hover: 0 8px 20px -3px rgba(0, 0, 0, 0.65), inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+    --shadow-popover: 0 12px 28px -4px rgba(0, 0, 0, 0.75), inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
+    --shadow-modal: 0 24px 44px -6px rgba(0, 0, 0, 0.85), inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+
+    /* ── Surface tier tokens (Dark Mode) ── */
+    --surface: #141312;
+    --surface-container-lowest: #0e0d0c;
+    --surface-container-low: #1e1c1a;
+    --surface-container: #22201e;
+    --surface-container-high: #282623;
+    --surface-container-highest: #32302c;
+    --on-surface: #f5f5f4;
+    --outline-variant: rgba(255, 255, 255, 0.09);
+
+    /* ── Sidebar ── */
+    --sidebar-background: #0e0d0c;
+    --sidebar-foreground: #f5f5f4;
+    --sidebar-primary: #e07e59;
+    --sidebar-primary-foreground: #260f04;
+    --sidebar-accent: #1e1c1a;
+    --sidebar-accent-foreground: #f5f5f4;
+    --sidebar-border: rgba(255, 255, 255, 0.08);
+    --sidebar-ring: #e07e59;
+
+    --primary-subtle: color-mix(in srgb, #e07e59 18%, #141312);
+    --primary-subtle-hover: color-mix(in srgb, #e07e59 28%, #141312);
+    --secondary-subtle: color-mix(in srgb, #f4efe6 12%, #141312);
+
+    --text-xs: clamp(0.65rem, 0.6rem + 0.25vw, 0.75rem);
+    --text-sm: clamp(0.8rem, 0.75rem + 0.25vw, 0.875rem);
+    --text-base: clamp(0.9rem, 0.85rem + 0.25vw, 1rem);
+    --text-lg: clamp(1rem, 0.95rem + 0.3vw, 1.125rem);
+    --text-xl: clamp(1.1rem, 1rem + 0.5vw, 1.25rem);
+    --text-2xl: clamp(1.25rem, 1.1rem + 0.75vw, 1.5rem);
+    --text-3xl: clamp(1.5rem, 1.25rem + 1.25vw, 2rem);
+    --text-4xl: clamp(1.875rem, 1.5rem + 1.75vw, 2.5rem);
+
+    /* ── Fluid spacing ── */
+    --space-xs: clamp(0.25rem, 0.2rem + 0.25vw, 0.375rem);
+    --space-sm: clamp(0.5rem, 0.4rem + 0.5vw, 0.75rem);
+    --space-md: clamp(0.75rem, 0.6rem + 0.75vw, 1.25rem);
+    --space-lg: clamp(1rem, 0.8rem + 1vw, 1.5rem);
+    --space-xl: clamp(1.5rem, 1.2rem + 1.5vw, 2.5rem);
+    --space-2xl: clamp(2rem, 1.5rem + 2.5vw, 4rem);
+
+    /* ── Easing curves ── */
+    --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-spring: cubic-bezier(0.34, 1.2, 0.64, 1);
+
+    /* ── Duration tokens ── */
+    --dur-fast: 150ms;
+    --dur-base: 250ms;
+    --dur-slow: 400ms;
+    --dur-slower: 600ms;
   }
 }
 
@@ -132,5 +240,228 @@ code {
   }
   body {
     @apply bg-background text-foreground;
+    font-family:
+      'Inter',
+      -apple-system,
+      BlinkMacSystemFont,
+      'Segoe UI',
+      sans-serif;
+    font-size: var(--text-base);
+  }
+  .font-display {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+  .font-editorial {
+    font-family: 'Manrope', 'Plus Jakarta Sans', sans-serif;
+  }
+  .font-ui {
+    font-family: 'Inter', 'Lato', sans-serif;
   }
 }
+
+/* ── Glassmorphism utility — floating/overlay elements ── */
+.glass {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background: color-mix(in srgb, var(--card) 85%, transparent);
+}
+
+/* ── Elevation Utility Classes ── */
+.elevation-1 {
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--border);
+}
+.elevation-2 {
+  box-shadow: var(--shadow-popover);
+  border: 1px solid var(--border);
+}
+.elevation-3 {
+  box-shadow: var(--shadow-modal);
+  border: 1px solid var(--border);
+}
+
+/* ── Touch devices: PostIt action buttons always visible ── */
+@media (pointer: coarse) {
+  .postit-actions {
+    opacity: 1 !important;
+  }
+}
+
+/* ── Reduced motion — respect OS accessibility preference ── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── Sonner Close Button Positioning Fix ── */
+[data-sonner-toast] [data-close-button] {
+  left: auto !important;
+  right: 0.625rem !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  border-radius: 0.5rem !important;
+  border: none !important;
+  background: transparent !important;
+  color: #94a3b8 !important;
+  transition: all 150ms ease !important;
+}
+
+[data-sonner-toast] [data-close-button]:hover {
+  background: rgba(148, 163, 184, 0.15) !important;
+  color: #334155 !important;
+}
+
+.dark [data-sonner-toast] [data-close-button]:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #f1f5f9 !important;
+}
+
+/* ── CreateUI Toast Progress Bar & Micro-interactions ── */
+@keyframes toast-progress-countdown {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+
+@keyframes toast-indeterminate-pulse {
+  0% {
+    left: -40%;
+    width: 40%;
+  }
+  50% {
+    left: 25%;
+    width: 60%;
+  }
+  100% {
+    left: 100%;
+    width: 40%;
+  }
+}
+
+[data-sonner-toast] {
+  overflow: hidden !important;
+  border-radius: 1rem !important;
+}
+
+/* Fix icon sizing and spacing so icon and title/content never overlap */
+[data-sonner-toast] [data-icon] {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+  margin-left: 0 !important;
+  margin-right: 0.625rem !important;
+  flex-shrink: 0 !important;
+}
+
+[data-sonner-toast] [data-content] {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+
+/* Auto-dismiss progress bar (only on the front active toast, or when stack is expanded) */
+[data-sonner-toast][data-front="true"]::before,
+[data-sonner-toast][data-expanded="true"]::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  width: 100%;
+  opacity: 0.85;
+  transition: opacity 150ms ease;
+  pointer-events: none;
+  z-index: 10;
+  animation: toast-progress-countdown var(--toast-duration, 4000ms) linear forwards;
+}
+
+/* Background stacked cards in the deck must NEVER display a progress bar */
+[data-sonner-toast][data-front="false"]:not([data-expanded="true"])::before,
+[data-sonner-toast][data-expanded="false"][data-front="false"]::before {
+  display: none !important;
+  content: none !important;
+  opacity: 0 !important;
+}
+
+/* Freeze progress countdown on hover (CreateUI behavior) */
+[data-sonner-toaster]:hover [data-sonner-toast]::before,
+[data-sonner-toast]:hover::before {
+  animation-play-state: paused !important;
+}
+
+/* Semantic colors for progress bar */
+[data-sonner-toast][data-type="success"]::before {
+  background: rgb(16 185 129);
+}
+
+[data-sonner-toast][data-type="error"]::before {
+  background: rgb(244 63 94);
+}
+
+[data-sonner-toast][data-type="warning"]::before {
+  background: rgb(245 158 11);
+}
+
+[data-sonner-toast][data-type="info"]::before {
+  background: rgb(59 130 246);
+}
+
+[data-sonner-toast][data-type="default"]::before {
+  background: rgb(99 102 241);
+}
+
+/* Indeterminate pulse for Promise loading state */
+[data-sonner-toast][data-type="loading"]::before {
+  animation: toast-indeterminate-pulse 1.5s infinite ease-in-out !important;
+  background: rgb(99 102 241);
+}
+
+/* Persistent toasts without auto-dismiss */
+[data-sonner-toast][data-duration="Infinity"]::before,
+[data-sonner-toast][data-duration="0"]::before {
+  display: none !important;
+}
+
+/* ── Mobile Responsive Toast Styles ── */
+@media (max-width: 639px) {
+  [data-sonner-toaster] {
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+    bottom: max(0.75rem, env(safe-area-inset-bottom, 0.75rem)) !important;
+    width: calc(100vw - 24px) !important;
+    max-width: 420px !important;
+  }
+
+  [data-sonner-toast] {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+  }
+
+  [data-sonner-toast] [data-close-button] {
+    width: 1.75rem !important;
+    height: 1.75rem !important;
+  }
+}
+
+/* ── Toast elevado para telas com Dock Flutuante Inferior (Modo Mercado) ── */
+body:has(.market-mode-active) [data-sonner-toaster],
+.market-mode-active [data-sonner-toaster] {
+  bottom: calc(5.75rem + env(safe-area-inset-bottom, 0.75rem)) !important;
+}
+
+

@@ -1,6 +1,7 @@
 import { z } from 'zod';
-import { UuidSchema, DateTimeSchema, MoneySchema } from './shared';
+
 import { UnitTypeSchema } from './enums';
+import { DateTimeSchema, MoneyRequestSchema, MoneySchema, UuidSchema } from './shared';
 
 // ── Requests — ShoppingCategory ───────────────────────────────────────────────
 
@@ -34,7 +35,7 @@ export const CreateShoppingItemRequestSchema = z.object({
   quantity: MoneySchema,
   unitType: UnitTypeSchema,
   shoppingCategoryId: UuidSchema.nullable().optional(),
-  estimatedPrice: MoneySchema.nullable().optional(),
+  estimatedPrice: MoneyRequestSchema.nullable().optional(),
   notes: z.string().nullable().optional(),
 });
 export type CreateShoppingItemRequest = z.infer<typeof CreateShoppingItemRequestSchema>;
@@ -44,13 +45,14 @@ export const UpdateShoppingItemRequestSchema = z.object({
   quantity: MoneySchema,
   unitType: UnitTypeSchema,
   shoppingCategoryId: UuidSchema.nullable().optional(),
-  estimatedPrice: MoneySchema.nullable().optional(),
+  estimatedPrice: MoneyRequestSchema.nullable().optional(),
   notes: z.string().nullable().optional(),
 });
 export type UpdateShoppingItemRequest = z.infer<typeof UpdateShoppingItemRequestSchema>;
 
 export const MarkAsPurchasedRequestSchema = z.object({
-  price: MoneySchema,
+  quantity: MoneySchema,
+  price: MoneyRequestSchema,
   purchasedAt: DateTimeSchema,
 });
 export type MarkAsPurchasedRequest = z.infer<typeof MarkAsPurchasedRequestSchema>;
@@ -75,6 +77,7 @@ export const ShoppingItemResponseSchema = z.object({
   shoppingCategoryId: UuidSchema.nullable().optional(),
   categoryName: z.string().nullable().optional(),
   isPurchased: z.boolean(),
+  status: z.number().int().optional().default(0),
   price: MoneySchema.nullable().optional(),
   estimatedPrice: MoneySchema.nullable().optional(),
   purchasedAt: DateTimeSchema.nullable().optional(),
@@ -87,6 +90,9 @@ export const ShoppingListResponseSchema = z.object({
   name: z.string(),
   monthYear: DateTimeSchema,
   notes: z.string().nullable().optional(),
+  finished: z.boolean(),
+  finishedAt: DateTimeSchema.nullable().optional(),
+  finishedBy: UuidSchema.nullable().optional(),
   items: z.array(ShoppingItemResponseSchema),
 });
 export type ShoppingListResponse = z.infer<typeof ShoppingListResponseSchema>;
@@ -96,9 +102,13 @@ export const ShoppingListSummaryResponseSchema = z.object({
   name: z.string(),
   monthYear: DateTimeSchema,
   notes: z.string().nullable().optional(),
+  finished: z.boolean(),
+  finishedAt: DateTimeSchema.nullable().optional(),
+  finishedBy: UuidSchema.nullable().optional(),
   totalItems: z.union([z.number(), z.string()]).transform(Number),
   purchasedItems: z.union([z.number(), z.string()]).transform(Number),
   totalEstimated: MoneySchema.nullable().optional(),
   totalSpent: MoneySchema.nullable().optional(),
+  isFinished: z.boolean().optional(),
 });
 export type ShoppingListSummaryResponse = z.infer<typeof ShoppingListSummaryResponseSchema>;

@@ -47,6 +47,7 @@ const FinancialRecurrencesModule = lazy(
 const NotificationCenterPageModule = lazy(
   () => import('./components/modules/notifications/NotificationCenterPage')
 );
+const CategoriesSettingsPage = lazy(() => import('./pages/settings/CategoriesSettings'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
@@ -323,6 +324,16 @@ export const App: FC = () => {
                       <Suspense fallback={<CalendarSkeleton />}>
                         <FadeIn>
                           <Calendar />
+                        </FadeIn>
+                      </Suspense>
+                    }
+                  />
+                  <Route
+                    path="settings/categories"
+                    element={
+                      <Suspense fallback={<TaskListSkeleton />}>
+                        <FadeIn>
+                          <CategoriesSettingsPage />
                         </FadeIn>
                       </Suspense>
                     }

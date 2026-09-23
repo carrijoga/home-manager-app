@@ -31,6 +31,7 @@ import {
   type DollarSignIconHandle,
 } from '@/components/ui/animated-icons/dollar-sign';
 import { HomeIcon } from '@/components/ui/animated-icons/home';
+import { LayoutPanelTopIcon } from '@/components/ui/animated-icons/layout-panel-top';
 import { RefreshCWIcon } from '@/components/ui/animated-icons/refresh-cw';
 import { TrendingUpIcon } from '@/components/ui/animated-icons/trending-up';
 import { UserIcon as AnimatedUserIcon } from '@/components/ui/animated-icons/user';
@@ -116,6 +117,10 @@ const MAIN_MODULE_CONFIG: ModuleConfig[] = [
   { id: 'tasks', labelKey: 'nav.tasks', icon: CheckIcon, path: '/tasks' },
   { id: 'shopping', labelKey: 'nav.shopping', icon: CartIcon, path: '/shopping' },
   { id: 'calendar', labelKey: 'nav.calendar', icon: CalendarDaysIcon, path: '/calendar' },
+];
+
+const SETTINGS_MODULE_CONFIG: ModuleConfig[] = [
+  { id: 'settings-categories', labelKey: 'nav.categories', icon: LayoutPanelTopIcon, path: '/settings/categories' },
 ];
 
 function getInitials(name?: string | null) {
@@ -221,6 +226,17 @@ export function AppSidebar({ user }: AppSidebarProps) {
   const financasSubItems = React.useMemo<FinancasSubItem[]>(
     () =>
       FINANCAS_SUB_CONFIG.map((m) => ({
+        id: m.id,
+        name: t(m.labelKey),
+        icon: m.icon,
+        path: m.path,
+      })),
+    [t]
+  );
+
+  const settingsModules = React.useMemo<Module[]>(
+    () =>
+      SETTINGS_MODULE_CONFIG.map((m) => ({
         id: m.id,
         name: t(m.labelKey),
         icon: m.icon,
@@ -421,6 +437,29 @@ export function AppSidebar({ user }: AppSidebarProps) {
                 isCollapsed={isCollapsed}
                 isMobile={isMobile}
               />
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* GRUPO CONFIGURAÇÕES */}
+        <SidebarGroup className={cn('py-1', isCollapsed && 'px-0 py-1 items-center')}>
+          {!isCollapsed && (
+            <SidebarGroupLabel className="px-3 pb-1.5 pt-2 text-[10px] font-bold uppercase tracking-wider text-sidebar-foreground/40">
+              {t('nav.settingsGroup')}
+            </SidebarGroupLabel>
+          )}
+          <SidebarGroupContent>
+            <SidebarMenu className={cn('gap-1', isCollapsed && 'items-center')}>
+              {settingsModules.map((module) => (
+                <NavModuleItem
+                  key={module.id}
+                  module={module}
+                  isActive={isActive(module.path)}
+                  isCollapsed={isCollapsed}
+                  isMobile={isMobile}
+                  onNavigate={handleNavClick}
+                />
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

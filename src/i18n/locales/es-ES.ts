@@ -53,6 +53,8 @@ export const esES: UiDictionary = {
     searchShortcut: 'Buscar (⌘K)',
     mainGroup: 'Principal',
     financialGroup: 'Financiero',
+    settingsGroup: 'Configuración',
+    categories: 'Categorías',
     financialModule: 'Módulo Financiero',
     collapseFinancial: 'Contraer Finanzas',
     expandFinancial: 'Expandir Finanzas',

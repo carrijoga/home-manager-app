@@ -51,6 +51,8 @@ export const ptBR = {
     searchShortcut: 'Buscar (⌘K)',
     mainGroup: 'Principal',
     financialGroup: 'Financeiro',
+    settingsGroup: 'Configurações',
+    categories: 'Categorias',
     financialModule: 'Módulo Financeiro',
     collapseFinancial: 'Recolher Finanças',
     expandFinancial: 'Expandir Finanças',

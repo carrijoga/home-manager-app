@@ -9,12 +9,13 @@ import {
   User,
   X,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import Logo from '@/components/common/Logo';
+import { TurnstileWidget, type TurnstileWidgetRef } from '@/components/common/TurnstileWidget';
 import { EyeIcon, EyeOffIcon } from '@/components/ui';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -73,12 +74,18 @@ function Login() {
   const [rememberMe, setRememberMe] = useState(true);
   const [activeSlide, setActiveSlide] = useState(0);
 
+  // Turnstile Widget Ref & State
+  const turnstileRef = useRef<TurnstileWidgetRef>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string>('');
+
   // Password Recovery Modal State
   const [isRecoveryOpen, setIsRecoveryOpen] = useState(false);
   const [recoveryEmail, setRecoveryEmail] = useState('');
   const [recoveryError, setRecoveryError] = useState<string | null>(null);
   const [isRecoverySubmitting, setIsRecoverySubmitting] = useState(false);
   const [recoverySuccess, setRecoverySuccess] = useState(false);
+  const recoveryTurnstileRef = useRef<TurnstileWidgetRef>(null);
+  const [recoveryTurnstileToken, setRecoveryTurnstileToken] = useState<string>('');
 
   // Auto-rotate showcase slides every 7 seconds
   useEffect(() => {
@@ -108,7 +115,8 @@ function Login() {
 
   const onSubmit = async (data: LoginRequest) => {
     try {
-      await loginRequest(data);
+      const activeToken = turnstileToken || turnstileRef.current?.getResponse();
+      await loginRequest({ ...data, turnstileToken: activeToken });
       await loadUserProfile();
       toast.success('Bem-vindo ao seu Ninho!');
 
@@ -131,6 +139,8 @@ function Login() {
 
       navigate('/dashboard', { replace: true });
     } catch (err) {
+      turnstileRef.current?.reset();
+      setTurnstileToken('');
       const message =
         err instanceof Error ? err.message : 'Não foi possível realizar o login. Tente novamente.';
       toast.error(message);
@@ -166,7 +176,8 @@ function Login() {
     e.preventDefault();
     setRecoveryError(null);
 
-    const payload = { userEmail: recoveryEmail };
+    const activeToken = recoveryTurnstileToken || recoveryTurnstileRef.current?.getResponse();
+    const payload = { userEmail: recoveryEmail, turnstileToken: activeToken };
     const parsed = RequestPasswordRecoverySchema.safeParse(payload);
     if (!parsed.success) {
       setRecoveryError(parsed.error.issues[0]?.message || 'E-mail inválido.');
@@ -178,6 +189,8 @@ function Login() {
       await requestPasswordRecovery(payload);
       setRecoverySuccess(true);
     } catch (err) {
+      recoveryTurnstileRef.current?.reset();
+      setRecoveryTurnstileToken('');
       const message =
         err instanceof Error
           ? err.message
@@ -426,10 +439,18 @@ function Login() {
                 </button>
               </div>
 
+              {/* Cloudflare Turnstile */}
+              <TurnstileWidget
+                ref={turnstileRef}
+                action="login"
+                onVerify={(token) => setTurnstileToken(token)}
+                onExpire={() => setTurnstileToken('')}
+              />
+
               {/* Submit CTA Button */}
               <Button
                 type="submit"
-                disabled={!isValid || isSubmitting || isGoogleLoading}
+                disabled={!isValid || isSubmitting || isGoogleLoading || !turnstileToken}
                 className="mt-2 h-10 w-full text-sm font-semibold transition-opacity disabled:opacity-50"
               >
                 {isSubmitting ? (
@@ -538,6 +559,14 @@ function Login() {
                 {recoveryError && <p className="text-xs text-destructive">{recoveryError}</p>}
               </div>
 
+              {/* Cloudflare Turnstile */}
+              <TurnstileWidget
+                ref={recoveryTurnstileRef}
+                action="request_recovery"
+                onVerify={(token) => setRecoveryTurnstileToken(token)}
+                onExpire={() => setRecoveryTurnstileToken('')}
+              />
+
               <div className="flex items-center justify-end gap-2 pt-2">
                 <Button
                   type="button"
@@ -550,7 +579,7 @@ function Login() {
                 <Button
                   type="submit"
                   size="sm"
-                  disabled={isRecoverySubmitting}
+                  disabled={isRecoverySubmitting || !recoveryTurnstileToken}
                   className="text-xs font-semibold"
                 >
                   {isRecoverySubmitting ? <Spinner className="h-3.5 w-3.5" /> : 'Enviar'}

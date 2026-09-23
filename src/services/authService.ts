@@ -110,8 +110,13 @@ export async function register(payload: RegisterRequest): Promise<{ message: str
     );
   }
   RegisterRequestSchema.parse(payload);
+  const registerHeaders: Record<string, string> = {};
+  if (payload.turnstileToken) {
+    registerHeaders['cf-turnstile-response'] = payload.turnstileToken;
+  }
   return httpClient.post<{ message: string }>(ENDPOINTS.auth.register, payload, {
     skipRefresh: true,
+    headers: registerHeaders,
   });
 }
 
@@ -129,8 +134,13 @@ export async function login(payload: LoginRequest): Promise<AuthTokenResponse> {
   }
 
   LoginRequestSchema.parse(payload);
+  const loginHeaders: Record<string, string> = {};
+  if (payload.turnstileToken) {
+    loginHeaders['cf-turnstile-response'] = payload.turnstileToken;
+  }
   const response = await httpClient.post<AuthTokenResponse>(ENDPOINTS.auth.login, payload, {
     skipRefresh: true,
+    headers: loginHeaders,
   });
 
   const resAny = response as unknown as Record<string, unknown>;
@@ -212,10 +222,14 @@ export async function requestPasswordRecovery(
   }
   RequestPasswordRecoverySchema.parse(payload);
   const emailVal = payload.userEmail;
+  const headers: Record<string, string> = {};
+  if (payload.turnstileToken) {
+    headers['cf-turnstile-response'] = payload.turnstileToken;
+  }
   return httpClient.post<{ message?: string }>(
     ENDPOINTS.security.requestPasswordRecovery,
-    { userEmail: emailVal, email: emailVal },
-    { skipRefresh: true }
+    { userEmail: emailVal, email: emailVal, turnstileToken: payload.turnstileToken },
+    { skipRefresh: true, headers }
   );
 }
 

@@ -15,6 +15,12 @@ import {
 import { useState } from 'react';
 
 import {
+  AnimatedCurrency,
+  AnimatedNumber,
+  AnimatedPercent,
+  SpringProgress,
+} from '@/components/ui';
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -24,12 +30,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import {
-  AnimatedCurrency,
-  AnimatedNumber,
-  AnimatedPercent,
-  SpringProgress,
-} from '@/components/ui';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,

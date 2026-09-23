@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import React from 'react';
 
+import { UploadModal } from '@/components/modals/UploadModal';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -90,7 +91,6 @@ interface ShoppingDetailViewProps {
   isFinishingList?: boolean;
   isUnfinishingList?: boolean;
   isUploading: boolean;
-  uploadInputRef: React.RefObject<HTMLInputElement | null>;
   showEditList: boolean;
   setShowEditList: (v: boolean) => void;
   showAddItem: boolean;
@@ -135,7 +135,7 @@ interface ShoppingDetailViewProps {
   onUnmarkAsPurchased: (item: AppShoppingItem) => Promise<void>;
   onIgnoreItem: (item: AppShoppingItem) => Promise<void>;
   onUnignoreItem: (item: AppShoppingItem) => Promise<void>;
-  onUploadFile: (event: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
+  onUploadFile: (file: File) => Promise<void>;
   onBulkEdit: (patch: BulkEditPatch) => Promise<void>;
   onBulkDelete: () => Promise<void>;
   onCreateCategory: (name: string) => Promise<void>;
@@ -176,7 +176,6 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
     isFinishingList = false,
     isUnfinishingList = false,
     isUploading,
-    uploadInputRef,
     showEditList,
     setShowEditList,
     showAddItem,
@@ -229,6 +228,7 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
     onStartMarketMode,
   } = props;
 
+  const [showUploadModal, setShowUploadModal] = React.useState(false);
   const [addItemInitialData, setAddItemInitialData] = React.useState<ItemFormData | undefined>(
     undefined
   );
@@ -363,7 +363,7 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
         categoryScrollRef={categoryScrollRef}
         onExitBulkMode={onExitBulkMode}
         onShowCategories={() => setShowCategories(true)}
-        onUploadClick={() => uploadInputRef.current?.click()}
+        onUploadClick={() => setShowUploadModal(true)}
         onEnterBulkMode={() => setIsBulkMode(true)}
         onAddItem={() => setShowAddItem(true)}
         onScrollCategories={onScrollCategories}
@@ -371,15 +371,18 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
         onCategoryPointerMove={onCategoryPointerMove}
         onCategoryPointerUp={onCategoryPointerUp}
       />
-
-      <input
-        ref={uploadInputRef}
-        type="file"
+      <UploadModal
+        open={showUploadModal}
+        onOpenChange={setShowUploadModal}
+        onConfirm={async (file: File) => {
+          await onUploadFile(file);
+          setShowUploadModal(false);
+        }}
+        isLoading={isUploading}
         accept=".csv,.txt"
-        onChange={onUploadFile}
-        className="hidden"
+        title="Importar Itens"
+        description="Selecione ou arraste um arquivo CSV ou TXT para importar produtos para sua lista de compras."
       />
-
       {/* Item list */}
       {isLoadingDetail ? (
         <div className="space-y-4">

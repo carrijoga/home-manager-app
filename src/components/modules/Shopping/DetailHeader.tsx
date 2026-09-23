@@ -1,8 +1,3 @@
-import {
-  AnimatedCurrency,
-  AnimatedNumber,
-  AnimatedPercent,
-} from '@/components/common/AnimatedNumber';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft,
@@ -15,6 +10,11 @@ import {
   Trash2,
 } from 'lucide-react';
 
+import {
+  AnimatedCurrency,
+  AnimatedNumber,
+  AnimatedPercent,
+} from '@/components/common/AnimatedNumber';
 import {
   DropdownMenu,
   DropdownMenuContent,

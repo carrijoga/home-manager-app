@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
 import type {
@@ -119,7 +119,6 @@ export function useShoppingActions(
   const [isFinishingList, setIsFinishingList] = useState(false);
   const [isUnfinishingList, setIsUnfinishingList] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const uploadInputRef = useRef<HTMLInputElement | null>(null);
 
   // ── Bulk state ────────────────────────────────────────────────────────────
   const [isBulkMode, setIsBulkMode] = useState(false);
@@ -678,9 +677,7 @@ export function useShoppingActions(
   );
 
   const handleUploadFile = useCallback(
-    async (event: React.ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0];
-      event.target.value = '';
+    async (file: File) => {
       if (!file || !selectedListId) return;
       setIsUploading(true);
       try {
@@ -805,7 +802,6 @@ export function useShoppingActions(
     isFinishingList,
     isUnfinishingList,
     isUploading,
-    uploadInputRef,
     // bulk
     isBulkMode,
     setIsBulkMode,

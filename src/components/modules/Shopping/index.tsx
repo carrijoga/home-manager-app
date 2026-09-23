@@ -176,7 +176,6 @@ const Shopping = memo(function Shopping() {
           isFinishingList={actions.isFinishingList}
           isUnfinishingList={actions.isUnfinishingList}
           isUploading={actions.isUploading}
-          uploadInputRef={actions.uploadInputRef}
           showEditList={actions.showEditList}
           setShowEditList={actions.setShowEditList}
           showAddItem={actions.showAddItem}

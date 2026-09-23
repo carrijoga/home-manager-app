@@ -27,12 +27,11 @@ import * as React from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
-import { RoleBadge } from '@/components/common/RoleBadge';
 import {
   AvatarWithPresence,
   OnlineStatusPill,
 } from '@/components/common/OnlineStatusBadge';
-import { useNestPresence } from '@/hooks/useNestPresence';
+import { RoleBadge } from '@/components/common/RoleBadge';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -54,6 +53,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { resolveUserAvatar } from '@/constants/koboyoAvatars';
 import { useApp } from '@/contexts/AppContext';
+import { useNestPresence } from '@/hooks/useNestPresence';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { cardVariants, pageVariants, transitions } from '@/lib/animations';
 import { CURATED_NEST_ICONS, getIconComponent, KOBOYO_NEST_ICONS } from '@/lib/nestIcons';

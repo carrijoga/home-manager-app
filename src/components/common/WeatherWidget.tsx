@@ -1,3 +1,4 @@
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import {
   Cloud,
   CloudDrizzle,
@@ -11,7 +12,6 @@ import {
   Sun,
   Wind,
 } from 'lucide-react';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { AnimatedNumber, AnimatedText } from '@/components/common/AnimatedNumber';

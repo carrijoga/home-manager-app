@@ -11,12 +11,12 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-import { cn } from '@/lib/utils';
 import {
   AnimatedCurrency,
   AnimatedNumber,
   AnimatedPercent,
 } from '@/components/common/AnimatedNumber';
+import { cn } from '@/lib/utils';
 
 interface DashboardHeroKpisV2Props {
   financial: {

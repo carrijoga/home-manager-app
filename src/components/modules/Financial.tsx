@@ -4,6 +4,7 @@ import { Plus, Sparkles } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { AnimatedCurrency } from '@/components/common/AnimatedNumber';
 import { PaymentModal } from '@/components/modals/PaymentModal';
 import { TransactionSheet } from '@/components/modals/TransactionSheet';
 import {
@@ -38,7 +39,6 @@ import * as bankAccountService from '@/services/bankAccountService';
 import * as categoryService from '@/services/categoryService';
 import * as financialService from '@/services/financialService';
 import * as paymentCardService from '@/services/paymentCardService';
-import { AnimatedCurrency } from '@/components/common/AnimatedNumber';
 import { getMonthRange } from '@/utils/financialUtils';
 
 import { CategoryBreakdownCard } from './financial/CategoryBreakdownCard';

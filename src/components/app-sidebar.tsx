@@ -17,8 +17,8 @@ import {
 import * as React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { RoleBadge } from '@/components/common/RoleBadge';
 import { AvatarWithPresence, OnlineStatusBadge } from '@/components/common/OnlineStatusBadge';
+import { RoleBadge } from '@/components/common/RoleBadge';
 import { NestManagerModal } from '@/components/modals/NestManagerModal';
 import { ProfileModal } from '@/components/modals/ProfileModal';
 import { SettingsModal } from '@/components/modals/SettingsModal';

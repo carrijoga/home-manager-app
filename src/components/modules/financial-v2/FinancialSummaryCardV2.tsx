@@ -7,16 +7,16 @@ import {
 } from 'lucide-react';
 
 import {
+  AnimatedCurrency,
+  AnimatedPercent,
+} from '@/components/common/AnimatedNumber';
+import {
   SpringProgress,
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui';
-import {
-  AnimatedCurrency,
-  AnimatedPercent,
-} from '@/components/common/AnimatedNumber';
 import { PaymentStatus, TransactionType } from '@/schemas/enums';
 import type {
   FinancialTransactionMonthSummary,

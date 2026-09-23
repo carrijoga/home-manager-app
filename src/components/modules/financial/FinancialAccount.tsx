@@ -24,7 +24,7 @@ import { formatCurrency } from '@/utils/formatters';
 
 import { AccountDetails } from './account/AccountDetails';
 import { AccountList } from './account/AccountList';
-import { FinancialFilterPills, type FilterPillItem } from './shared/FinancialFilterPills';
+import { type FilterPillItem,FinancialFilterPills } from './shared/FinancialFilterPills';
 import { FinancialHudCard, type HudSegment } from './shared/FinancialHudCard';
 import { FinancialPageHeader } from './shared/FinancialPageHeader';
 

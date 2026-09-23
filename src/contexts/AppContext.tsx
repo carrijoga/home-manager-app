@@ -10,12 +10,12 @@ import {
 import { toast } from 'sonner';
 
 import { useNotificationRealtime } from '@/hooks/useNotificationRealtime';
+import { apiLocaleToLanguage, setCurrentLanguage } from '@/i18n';
 import { DATA_MODE } from '@/services/api/config';
 import * as authService from '@/services/authService';
 import * as nestService from '@/services/nestService';
 import * as notificationService from '@/services/notificationService';
 import * as userService from '@/services/userService';
-import { apiLocaleToLanguage, setCurrentLanguage } from '@/i18n';
 import type { AppNotification, AppUser, AppUserNest } from '@/types';
 import { userProfileToAppUser } from '@/types';
 

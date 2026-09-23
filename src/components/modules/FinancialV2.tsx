@@ -4,6 +4,7 @@ import { ArrowDownRight, ArrowUpRight, CheckCircle2, Clock, Plus, Sparkles } fro
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { AnimatedCurrency, AnimatedPercent } from '@/components/common/AnimatedNumber';
 import { CreateCategoryModal } from '@/components/modals/CreateCategoryModal';
 import { PaymentModal } from '@/components/modals/PaymentModal';
 import { TransactionSheet } from '@/components/modals/TransactionSheet';
@@ -41,7 +42,6 @@ import * as categoryService from '@/services/categoryService';
 import * as financialService from '@/services/financialService';
 import * as nestService from '@/services/nestService';
 import * as paymentCardService from '@/services/paymentCardService';
-import { AnimatedCurrency, AnimatedPercent } from '@/components/common/AnimatedNumber';
 import { getEffectiveAmount, getMonthLabel, getMonthRange } from '@/utils/financialUtils';
 
 import { MonthNavigator } from './financial/MonthNavigator';

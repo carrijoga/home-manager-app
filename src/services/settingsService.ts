@@ -1,12 +1,11 @@
 import { KOBOYO_FACE_SLUGS } from '@/constants/koboyoAvatars';
+import { languageToApiLocale, type SupportedLanguage } from '@/i18n';
 import type {
   ChangePasswordData,
   UpdateUserConfigurationRequest,
   UpdateUsernameData,
 } from '@/schemas/settingsSchemas';
 import type { ChangeAvatarSlugRequest, UpdateProfileRequest } from '@/schemas/user';
-
-import { languageToApiLocale, type SupportedLanguage } from '@/i18n';
 
 import { ENDPOINTS } from './api/endpoints';
 import { httpClient } from './api/httpClient';

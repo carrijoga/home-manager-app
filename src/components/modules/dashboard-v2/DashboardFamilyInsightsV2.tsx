@@ -8,8 +8,8 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-import { RoleBadge } from '@/components/common/RoleBadge';
 import { AvatarWithPresence } from '@/components/common/OnlineStatusBadge';
+import { RoleBadge } from '@/components/common/RoleBadge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { resolveUserAvatar } from '@/constants/koboyoAvatars';
 import { cn } from '@/lib/utils';

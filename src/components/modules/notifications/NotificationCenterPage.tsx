@@ -1,4 +1,4 @@
-import { CheckCheck, Sparkles, Trash2, BellOff } from 'lucide-react';
+import { BellOff,CheckCheck, Sparkles, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import EmptyState from '@/components/common/EmptyState';

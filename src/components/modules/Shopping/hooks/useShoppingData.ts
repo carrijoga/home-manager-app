@@ -171,7 +171,7 @@ export function useShoppingData() {
           name,
           quantity,
           unitType,
-          shoppingCategoryId: categoryId,
+          categoryId,
           estimatedPrice,
           notes,
         },
@@ -207,7 +207,7 @@ export function useShoppingData() {
     ) => {
       await shoppingService.updateShoppingItem(
         id,
-        { name, quantity, unitType, shoppingCategoryId: categoryId, estimatedPrice, notes },
+        { name, quantity, unitType, categoryId, estimatedPrice, notes },
         nestId
       );
     },

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { CategorySummaryResponseSchema } from './category';
 import { UnitTypeSchema } from './enums';
 import { DateTimeSchema, MoneyRequestSchema, MoneySchema, UuidSchema } from './shared';
 
@@ -34,7 +35,7 @@ export const CreateShoppingItemRequestSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
   quantity: MoneySchema,
   unitType: UnitTypeSchema,
-  shoppingCategoryId: UuidSchema.nullable().optional(),
+  categoryId: UuidSchema.nullable().optional(),
   estimatedPrice: MoneyRequestSchema.nullable().optional(),
   notes: z.string().nullable().optional(),
 });
@@ -44,7 +45,7 @@ export const UpdateShoppingItemRequestSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
   quantity: MoneySchema,
   unitType: UnitTypeSchema,
-  shoppingCategoryId: UuidSchema.nullable().optional(),
+  categoryId: UuidSchema.nullable().optional(),
   estimatedPrice: MoneyRequestSchema.nullable().optional(),
   notes: z.string().nullable().optional(),
 });
@@ -56,6 +57,11 @@ export const MarkAsPurchasedRequestSchema = z.object({
   purchasedAt: DateTimeSchema,
 });
 export type MarkAsPurchasedRequest = z.infer<typeof MarkAsPurchasedRequestSchema>;
+
+export const ReplicateShoppingListRequestSchema = z.object({
+  monthYear: DateTimeSchema,
+});
+export type ReplicateShoppingListRequest = z.infer<typeof ReplicateShoppingListRequestSchema>;
 
 // ── Responses ─────────────────────────────────────────────────────────────────
 
@@ -74,8 +80,8 @@ export const ShoppingItemResponseSchema = z.object({
   name: z.string(),
   quantity: MoneySchema,
   unitType: UnitTypeSchema,
-  shoppingCategoryId: UuidSchema.nullable().optional(),
-  categoryName: z.string().nullable().optional(),
+  purchasedQuantity: MoneySchema.nullable().optional(),
+  category: CategorySummaryResponseSchema.nullable().optional(),
   isPurchased: z.boolean(),
   status: z.number().int().optional().default(0),
   price: MoneySchema.nullable().optional(),

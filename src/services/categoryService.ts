@@ -22,6 +22,11 @@ import { ApiError, httpClient } from './api/httpClient';
 // (reinicia em full reload/HMR).
 let mockStore: CategoryResponse[] = structuredClone(mockCategoryTree);
 
+/** Leitura síncrona do store mock — usada pelos mocks de outros serviços (ex.: compras). */
+export function getMockCategoryTree(): CategoryResponse[] {
+  return mockStore;
+}
+
 const delay = <T>(value: T) => new Promise<T>((resolve) => setTimeout(() => resolve(value), 100));
 
 function sortTree(tree: CategoryResponse[]): CategoryResponse[] {

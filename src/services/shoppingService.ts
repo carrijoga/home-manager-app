@@ -4,6 +4,7 @@
  */
 
 import { getItemEstimatedTotal, getItemSpentTotal } from '@/components/modules/Shopping/helpers';
+import { toCategorySummary } from '@/lib/categories';
 import type {
   CreateShoppingCategoryRequest,
   CreateShoppingItemRequest,
@@ -19,11 +20,13 @@ import type {
 import {
   CreateShoppingItemRequestSchema,
   MarkAsPurchasedRequestSchema,
+  ReplicateShoppingListRequestSchema,
   ShoppingCategoryResponseSchema,
   ShoppingListResponseSchema,
   ShoppingListSummaryResponseSchema,
   UpdateShoppingItemRequestSchema,
 } from '@/schemas/shopping';
+import { getMockCategoryTree } from '@/services/categoryService';
 import type {
   AppShoppingCategory,
   AppShoppingItem,
@@ -94,8 +97,8 @@ export function mapItem(r: ShoppingItemResponse): AppShoppingItem {
     name: r.name,
     quantity: Number(r.quantity),
     unitType: Number(r.unitType),
-    shoppingCategoryId: r.shoppingCategoryId ?? null,
-    categoryName: r.categoryName ?? null,
+    purchasedQuantity: r.purchasedQuantity != null ? Number(r.purchasedQuantity) : null,
+    category: r.category ?? null,
     isPurchased: status === 1 || Boolean(r.isPurchased),
     status,
     price: r.price != null ? Number(r.price) : null,
@@ -346,6 +349,66 @@ export async function unfinishShoppingList(id: string, nestId?: string): Promise
   await httpClient.patch<void>(ENDPOINTS.shoppingLists.unfinish(id), undefined, nestId);
 }
 
+/** Replica a lista (todos os itens, como pendentes) para outro mês. Devolve o id da nova lista. */
+export async function replicateShoppingList(
+  id: string,
+  monthYear: string,
+  nestId?: string
+): Promise<string> {
+  if (DATA_MODE === 'mock') {
+    const source = _mockDetails[id];
+    if (!source) throw new ApiError('Lista não encontrada', 404, 'ShoppingList_NotFound');
+    const newId = crypto.randomUUID();
+    const items: AppShoppingItem[] = source.items.map((i) => ({
+      shoppingItemId: crypto.randomUUID(),
+      shoppingListId: newId,
+      name: i.name,
+      quantity: i.quantity,
+      unitType: i.unitType,
+      category: i.category,
+      estimatedPrice: i.estimatedPrice ?? null,
+      notes: i.notes ?? null,
+      purchasedQuantity: null,
+      isPurchased: false,
+      status: 0,
+      price: null,
+      purchasedAt: null,
+    }));
+    _mockDetails[newId] = {
+      shoppingListId: newId,
+      name: source.name,
+      monthYear,
+      notes: source.notes ?? null,
+      finished: false,
+      finishedAt: null,
+      finishedBy: null,
+      items,
+    };
+    _mockLists = [
+      {
+        shoppingListId: newId,
+        name: source.name,
+        monthYear,
+        notes: source.notes ?? null,
+        finished: false,
+        finishedAt: null,
+        finishedBy: null,
+        isFinished: false,
+        totalItems: 0,
+        purchasedItems: 0,
+        totalEstimated: 0,
+        totalSpent: 0,
+      },
+      ..._mockLists,
+    ];
+    _recomputeSummary(newId);
+    return new Promise((resolve) => setTimeout(() => resolve(newId), 100));
+  }
+
+  validateRequest(ReplicateShoppingListRequestSchema, { monthYear });
+  return httpClient.post<string>(ENDPOINTS.shoppingLists.replicate(id), { monthYear }, { nestId });
+}
+
 // ── ShoppingItem ──────────────────────────────────────────────────────────────
 
 export async function addShoppingItem(
@@ -353,16 +416,14 @@ export async function addShoppingItem(
   nestId?: string
 ): Promise<AppShoppingItem> {
   if (DATA_MODE === 'mock') {
-    const catName =
-      _mockCategories.find((c) => c.shoppingCategoryId === data.shoppingCategoryId)?.name ?? null;
     const newItem: AppShoppingItem = {
       shoppingItemId: crypto.randomUUID(),
       shoppingListId: data.shoppingListId,
       name: data.name,
       quantity: Number(data.quantity),
       unitType: data.unitType,
-      shoppingCategoryId: data.shoppingCategoryId ?? null,
-      categoryName: catName,
+      category: toCategorySummary(getMockCategoryTree(), data.categoryId ?? null),
+      purchasedQuantity: null,
       isPurchased: false,
       status: 0,
       price: null,
@@ -411,13 +472,15 @@ export async function updateShoppingItem(
     for (const listId of Object.keys(_mockDetails)) {
       const idx = _mockDetails[listId].items.findIndex((i) => i.shoppingItemId === id);
       if (idx !== -1) {
-        const catName =
-          _mockCategories.find((c) => c.shoppingCategoryId === data.shoppingCategoryId)?.name ??
-          null;
+        const current = _mockDetails[listId].items[idx];
         const updated: AppShoppingItem = {
-          ..._mockDetails[listId].items[idx],
-          ...data,
-          categoryName: catName,
+          ...current,
+          name: data.name,
+          quantity: Number(data.quantity),
+          unitType: data.unitType,
+          estimatedPrice: data.estimatedPrice != null ? Number(data.estimatedPrice) : null,
+          notes: data.notes ?? null,
+          category: toCategorySummary(getMockCategoryTree(), data.categoryId ?? null),
         };
         _mockDetails[listId].items = _mockDetails[listId].items.map((item, n) =>
           n === idx ? updated : item
@@ -466,7 +529,7 @@ export async function markItemAsPurchased(
                 ...item,
                 isPurchased: true,
                 status: 1,
-                quantity: Number(data.quantity),
+                purchasedQuantity: Number(data.quantity),
                 price: Number(data.price),
                 purchasedAt: data.purchasedAt,
               }
@@ -492,7 +555,9 @@ export async function unmarkItemAsPurchased(
     const idx = _mockDetails[listId]?.items.findIndex((i) => i.shoppingItemId === itemId) ?? -1;
     if (idx !== -1) {
       _mockDetails[listId].items = _mockDetails[listId].items.map((item, n) =>
-        n === idx ? { ...item, isPurchased: false, status: 0, price: null, purchasedAt: null } : item
+        n === idx
+          ? { ...item, isPurchased: false, status: 0, price: null, purchasedAt: null, purchasedQuantity: null }
+          : item
       );
       _recomputeSummary(listId);
     }
@@ -515,7 +580,9 @@ export async function ignoreShoppingItem(
     const idx = _mockDetails[listId]?.items.findIndex((i) => i.shoppingItemId === itemId) ?? -1;
     if (idx !== -1) {
       _mockDetails[listId].items = _mockDetails[listId].items.map((item, n) =>
-        n === idx ? { ...item, isPurchased: false, status: 2, price: null, purchasedAt: null } : item
+        n === idx
+          ? { ...item, isPurchased: false, status: 2, price: null, purchasedAt: null, purchasedQuantity: null }
+          : item
       );
       _recomputeSummary(listId);
     }
@@ -538,7 +605,9 @@ export async function unignoreShoppingItem(
     const idx = _mockDetails[listId]?.items.findIndex((i) => i.shoppingItemId === itemId) ?? -1;
     if (idx !== -1) {
       _mockDetails[listId].items = _mockDetails[listId].items.map((item, n) =>
-        n === idx ? { ...item, isPurchased: false, status: 0, price: null, purchasedAt: null } : item
+        n === idx
+          ? { ...item, isPurchased: false, status: 0, price: null, purchasedAt: null, purchasedQuantity: null }
+          : item
       );
       _recomputeSummary(listId);
     }

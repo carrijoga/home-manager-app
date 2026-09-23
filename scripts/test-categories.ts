@@ -11,6 +11,7 @@ import {
   isSingleEmoji,
   nextPaletteColor,
   toCategoryOptions,
+  toCategorySummary,
 } from '@/lib/categories';
 
 const tree: CategoryNode[] = [
@@ -99,6 +100,27 @@ check('toCategoryOptions gera rótulo com pai', () => {
   assert.deepEqual(opts.map((o) => o.label), ['🛒 Mercado', '🥦 Mercado › Hortifruti', '🏠 Moradia']);
   assert.equal(opts[1].name, 'Hortifruti');
   assert.equal(opts[1].color, '#22C55E');
+});
+
+check('toCategorySummary monta o sumário com o pai', () => {
+  assert.deepEqual(toCategorySummary(tree, 'a1'), {
+    categoryId: 'a1',
+    name: 'Hortifruti',
+    icon: '🥦',
+    color: '#22C55E',
+    parentCategoryId: 'a',
+    parentName: 'Mercado',
+  });
+  assert.deepEqual(toCategorySummary(tree, 'b'), {
+    categoryId: 'b',
+    name: 'Moradia',
+    icon: '🏠',
+    color: '#3B82F6',
+    parentCategoryId: null,
+    parentName: null,
+  });
+  assert.equal(toCategorySummary(tree, 'zzz'), null);
+  assert.equal(toCategorySummary(tree, null), null);
 });
 
 if (failures > 0) {

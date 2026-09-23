@@ -127,3 +127,30 @@ export function nextPaletteColor(used: string[]): string {
   const usedUpper = new Set(used.map((c) => c.toUpperCase()));
   return CATEGORY_COLORS.find((c) => !usedUpper.has(c.toUpperCase())) ?? CATEGORY_COLORS[0];
 }
+
+/** Mesmo formato de `CategorySummaryResponse` da API (item de compra/transação). */
+export interface CategorySummary {
+  categoryId: string;
+  name: string;
+  icon: string;
+  color: string;
+  parentCategoryId: string | null;
+  parentName: string | null;
+}
+
+export function toCategorySummary<T extends CategoryNode>(
+  tree: T[],
+  id: string | null | undefined
+): CategorySummary | null {
+  const found = findCategory(tree, id);
+  if (!found) return null;
+  const { category, parent } = found;
+  return {
+    categoryId: category.categoryId,
+    name: category.name,
+    icon: category.icon,
+    color: category.color,
+    parentCategoryId: parent?.categoryId ?? null,
+    parentName: parent?.name ?? null,
+  };
+}

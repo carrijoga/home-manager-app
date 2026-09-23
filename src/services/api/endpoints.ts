@@ -129,6 +129,7 @@ export const ENDPOINTS = {
     delete: (id: string) => `/api/shopping-list/${id}`,
     finish: (id: string) => `/api/shopping-list/${id}/finish`,
     unfinish: (id: string) => `/api/shopping-list/${id}/unfinished`,
+    replicate: (id: string) => `/api/shopping-list/${id}/replicate`,
   },
 
   // Itens de compra

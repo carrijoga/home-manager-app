@@ -3,6 +3,8 @@
  * Para tipos derivados da API, use `src/schemas/`.
  */
 
+import type { CategorySummaryResponse } from '@/schemas/category';
+
 // ==================== ENUMS ====================
 
 /** Níveis de prioridade — usados em Task e FutureItem (legado) */
@@ -234,8 +236,14 @@ export interface AppShoppingItem {
   name: string;
   quantity: number;
   unitType: number;
+  /** @deprecated legado de /api/shopping-category — removido na Tarefa 8 do Bloco 2 */
   shoppingCategoryId?: string | null;
+  /** @deprecated legado de /api/shopping-category — removido na Tarefa 8 do Bloco 2 */
   categoryName?: string | null;
+  /** Categoria unificada (escopo Compras); sub traz parentCategoryId/parentName */
+  category: CategorySummaryResponse | null;
+  /** Quantidade comprada; `quantity` é sempre a planejada */
+  purchasedQuantity: number | null;
   isPurchased: boolean;
   status: number; // 0=Pending, 1=Purchased, 2=Ignored, 3=NotPurchased
   price?: number | null;

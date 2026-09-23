@@ -7,8 +7,10 @@ import {
   findCategory,
   flattenTree,
   formatCategoryLabel,
+  formatCategorySummary,
   isHexColor,
   isSingleEmoji,
+  matchesCategoryFilter,
   nextPaletteColor,
   toCategoryOptions,
   toCategorySummary,
@@ -38,6 +40,53 @@ function check(name: string, fn: () => void) {
     console.error(`[FAIL] ${name}`, err);
   }
 }
+
+check('matchesCategoryFilter: filtro por principal casa a sub e a própria principal', () => {
+  assert.equal(matchesCategoryFilter({ categoryId: 'a1', parentCategoryId: 'a' }, 'a'), true);
+  assert.equal(matchesCategoryFilter({ categoryId: 'a', parentCategoryId: null }, 'a'), true);
+});
+
+check('matchesCategoryFilter: filtro por sub não casa irmã nem a principal', () => {
+  assert.equal(matchesCategoryFilter({ categoryId: 'a2', parentCategoryId: 'a' }, 'a1'), false);
+  assert.equal(matchesCategoryFilter({ categoryId: 'a', parentCategoryId: null }, 'a1'), false);
+  assert.equal(matchesCategoryFilter({ categoryId: 'a1', parentCategoryId: 'a' }, 'a1'), true);
+});
+
+check('matchesCategoryFilter: filtro nulo casa tudo', () => {
+  assert.equal(matchesCategoryFilter({ categoryId: 'b', parentCategoryId: null }, null), true);
+  assert.equal(matchesCategoryFilter(null, null), true);
+});
+
+check('matchesCategoryFilter: categoria nula não casa filtro', () => {
+  assert.equal(matchesCategoryFilter(null, 'a'), false);
+  assert.equal(matchesCategoryFilter(undefined, 'a'), false);
+});
+
+check('formatCategorySummary com e sem pai', () => {
+  assert.equal(
+    formatCategorySummary({
+      categoryId: 'a1',
+      name: 'Hortifruti',
+      icon: '🥦',
+      color: '#22C55E',
+      parentCategoryId: 'a',
+      parentName: 'Mercado',
+    }),
+    '🥦 Mercado › Hortifruti'
+  );
+  assert.equal(
+    formatCategorySummary({
+      categoryId: 'b',
+      name: 'Moradia',
+      icon: '🏠',
+      color: '#3B82F6',
+      parentCategoryId: null,
+      parentName: null,
+    }),
+    '🏠 Moradia'
+  );
+  assert.equal(formatCategorySummary(null), null);
+});
 
 check('flattenTree ordena pai antes do filho com depth', () => {
   const flat = flattenTree(tree);

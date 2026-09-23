@@ -74,15 +74,39 @@ export interface CategoryOption {
   label: string;
   name: string;
   color: string;
+  /** 0 = principal, 1 = subcategoria (usado para recuar opções em selects). */
+  depth: 0 | 1;
 }
 
 export function toCategoryOptions<T extends CategoryNode>(flat: FlatCategory<T>[]): CategoryOption[] {
-  return flat.map(({ category, parent }) => ({
+  return flat.map(({ category, parent, depth }) => ({
     categoryId: category.categoryId,
     label: formatCategoryLabel(category, parent),
     name: category.name,
     color: category.color,
+    depth,
   }));
+}
+
+/**
+ * Regra do backend para `FinancialTransactionFilter.categoryIds`: filtrar por uma
+ * principal inclui as suas subcategorias; filtrar por uma sub casa só ela.
+ */
+export function matchesCategoryFilter(
+  category: { categoryId: string; parentCategoryId: string | null } | null | undefined,
+  filterId: string | null
+): boolean {
+  if (!filterId) return true;
+  if (!category) return false;
+  return category.categoryId === filterId || category.parentCategoryId === filterId;
+}
+
+/** "{icon} {parentName} › {name}" (sub) ou "{icon} {name}" (principal); null sem categoria. */
+export function formatCategorySummary(
+  summary: CategorySummary | null | undefined
+): string | null {
+  if (!summary) return null;
+  return formatCategoryLabel(summary, summary.parentName ? { name: summary.parentName } : null);
 }
 
 function normalize(value: string): string {

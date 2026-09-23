@@ -35,6 +35,7 @@ import {
 import type { CheckIconHandle } from '@/components/ui/animated-icons/check';
 import { CheckIcon } from '@/components/ui/animated-icons/check';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { formatCategorySummary } from '@/lib/categories';
 import { PaymentStatus, TransactionType } from '@/schemas/enums';
 import type { FinancialTransactionResponse } from '@/schemas/financial';
 import { formatCurrency } from '@/utils/dashboardMetrics';
@@ -145,6 +146,8 @@ export function TransactionRowV2({
   const isAdjustment =
     !isTransfer &&
     (t.transactionType === TransactionType.Adjustment || t.transactionType === 2);
+  const categoryLabel =
+    formatCategorySummary(t.category) ?? (isTransfer || isAdjustment ? null : 'Sem categoria');
   const status = getTransactionStatus(t);
   const totalValue = Number(t.value) || 0;
   const paidAmount = getPaidAmount(t);
@@ -219,10 +222,10 @@ export function TransactionRowV2({
           </div>
 
           <div className="font-ui mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-            {t.categoryName && (
-              <span className="flex items-center gap-1">
-                <Tag size={11} className="shrink-0 text-muted-foreground/70" />
-                {t.categoryName}
+            {categoryLabel && (
+              <span className="flex min-w-0 items-center gap-1">
+                {!t.category && <Tag size={11} className="shrink-0 text-muted-foreground/70" />}
+                <span className="truncate">{categoryLabel}</span>
               </span>
             )}
 

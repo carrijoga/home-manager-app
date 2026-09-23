@@ -25,6 +25,7 @@ import {
 import type { CheckIconHandle } from '@/components/ui/animated-icons/check';
 import { CheckIcon } from '@/components/ui/animated-icons/check';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { formatCategorySummary } from '@/lib/categories';
 import { PaymentStatus, TransactionType } from '@/schemas/enums';
 import type { FinancialTransactionResponse } from '@/schemas/financial';
 import { formatCurrency } from '@/utils/dashboardMetrics';
@@ -105,7 +106,9 @@ export function TransactionRow({
     !isTransfer &&
     (t.transactionType === TransactionType.Adjustment ||
       t.transactionType === 2 ||
-      (!t.categoryId && !t.categoryName));
+      !t.category);
+  const categoryLabel =
+    formatCategorySummary(t.category) ?? (isTransfer || isAdjustment ? null : 'Sem categoria');
   const status = getTransactionStatus(t);
   const paidRatio = Number(t.value) > 0 ? getPaidAmount(t) / Number(t.value) : 0;
   const canPay = !isIncome && !isAdjustment && !isTransfer && t.paymentStatus !== PaymentStatus.Paid;
@@ -163,7 +166,7 @@ export function TransactionRow({
             )}
           </div>
           <p className="font-ui truncate text-xs text-muted-foreground">
-            {t.categoryName ? `${t.categoryName} · ` : ''}
+            {categoryLabel ? `${categoryLabel} · ` : ''}
             {t.responsibleUserName || 'Sistema'}
             {t.paymentStatus !== PaymentStatus.Paid && t.dueDate && (
               <span className={t.isOverdue ? 'font-semibold text-destructive' : undefined}>

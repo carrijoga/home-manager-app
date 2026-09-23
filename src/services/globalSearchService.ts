@@ -12,6 +12,7 @@ import {
   User,
 } from 'lucide-react';
 
+import { formatCategorySummary } from '@/lib/categories';
 import { formatTaskCategory } from '@/lib/taskCategories';
 import * as calendarService from '@/services/calendarService';
 import * as financialService from '@/services/financialService';
@@ -278,13 +279,14 @@ export async function searchAll(
         (t) =>
           (t.description && String(t.description).toLowerCase().includes(query)) ||
           (t.notes && String(t.notes).toLowerCase().includes(query)) ||
-          (t.categoryName && String(t.categoryName).toLowerCase().includes(query)) ||
+          (formatCategorySummary(t.category ?? null) ?? '').toLowerCase().includes(query) ||
           (t.value != null && String(t.value).includes(query))
       )
       .slice(0, 5);
 
     matchedTxs.forEach((t) => {
       const isExpense = Number(t.transactionType) === 0;
+      const categoryLabel = formatCategorySummary(t.category ?? null);
       const formattedValue = new Intl.NumberFormat('pt-BR', {
         style: 'currency',
         currency: 'BRL',
@@ -295,7 +297,7 @@ export async function searchAll(
         type: 'financial',
         group: 'Financeiro',
         title: t.description,
-        subtitle: `Valor: ${formattedValue}${t.categoryName ? ` • ${t.categoryName}` : ''}`,
+        subtitle: `Valor: ${formattedValue}${categoryLabel ? ` • ${categoryLabel}` : ''}`,
         badge: isExpense ? 'Despesa' : 'Receita',
         icon: DollarSign,
         path: '/financial',

@@ -9,7 +9,7 @@ interface CategoryBreakdownCardProps {
   expensesByCategory: FinancialTransactionCategoryExpenseResponse[];
 }
 
-const COLORS = [
+const FALLBACK_COLORS = [
   'var(--primary)',
   'var(--secondary)',
   'var(--chart-2)',
@@ -23,10 +23,12 @@ export function CategoryBreakdownCard({ expensesByCategory }: CategoryBreakdownC
 
   const max = Math.max(...expensesByCategory.map((r) => Number(r.totalAmount)), 1);
   const rows = expensesByCategory.slice(0, 5).map((r, i) => ({
-    label: r.categoryName,
+    categoryId: r.categoryId,
+    label: `${r.categoryIcon} ${r.categoryName}`.trim(),
     amount: Number(r.totalAmount),
     ratio: Number(r.totalAmount) / max,
-    color: COLORS[i % COLORS.length],
+    // Cor da categoria principal (API); paleta antiga só se vier vazia.
+    color: r.categoryColor || FALLBACK_COLORS[i % FALLBACK_COLORS.length],
   }));
 
   return (
@@ -41,7 +43,7 @@ export function CategoryBreakdownCard({ expensesByCategory }: CategoryBreakdownC
       ) : (
         <div className="flex flex-col gap-3">
           {rows.map((row) => (
-            <div key={row.label} className="flex flex-col gap-1">
+            <div key={row.categoryId} className="flex flex-col gap-1">
               <div className="font-ui flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">{row.label}</span>
                 <span className="font-semibold text-foreground">{formatCurrency(row.amount)}</span>

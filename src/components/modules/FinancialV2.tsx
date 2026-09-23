@@ -135,9 +135,6 @@ export function FinancialV2() {
     () => toCategoryOptions([...expenseFlat, ...incomeFlat]),
     [expenseFlat, incomeFlat]
   );
-  // Breakdown de despesas por categoria — deve ofertar somente categorias de
-  // despesa (o dashboard de expensesByCategory nunca traz receita).
-  const expenseCategoryOptions = useMemo(() => toCategoryOptions(expenseFlat), [expenseFlat]);
 
   // Moradores — para filtro por responsável
   useEffect(() => {
@@ -547,7 +544,6 @@ export function FinancialV2() {
           <motion.div variants={cardSlide} className="hidden lg:block">
             <CategoryBreakdownCardV2
               expensesByCategory={dashboardData?.expensesByCategory ?? []}
-              categories={expenseCategoryOptions}
               selectedCategoryId={filters.categoryId}
               onSelectCategory={(catId) => setFilters((f) => ({ ...f, categoryId: catId }))}
               onAddCategory={() => navigate('/settings/categories?scope=expense')}
@@ -599,7 +595,6 @@ export function FinancialV2() {
         <motion.div variants={cardSlide} className="order-3 lg:hidden">
           <CategoryBreakdownCardV2
             expensesByCategory={dashboardData?.expensesByCategory ?? []}
-            categories={expenseCategoryOptions}
             selectedCategoryId={filters.categoryId}
             onSelectCategory={(catId) => setFilters((f) => ({ ...f, categoryId: catId }))}
             onAddCategory={() => navigate('/settings/categories?scope=expense')}

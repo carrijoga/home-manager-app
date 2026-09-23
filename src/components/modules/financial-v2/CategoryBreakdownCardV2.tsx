@@ -3,18 +3,16 @@ import { Check, Filter, Lightbulb, Plus, TrendingUp } from 'lucide-react';
 
 import { AnimatedCurrency, AnimatedPercent } from '@/components/common/AnimatedNumber';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
-import type { CategoryOption } from '@/lib/categories';
 import type { FinancialTransactionCategoryExpenseResponse } from '@/schemas/financial';
 
 interface CategoryBreakdownCardV2Props {
   expensesByCategory: FinancialTransactionCategoryExpenseResponse[];
-  categories: CategoryOption[];
   selectedCategoryId: string | null;
   onSelectCategory: (categoryId: string | null) => void;
   onAddCategory?: () => void;
 }
 
-const PALETTE = [
+const FALLBACK_PALETTE = [
   'var(--chart-1)',
   'var(--chart-2)',
   'var(--chart-3)',
@@ -29,7 +27,6 @@ const PALETTE = [
  */
 export function CategoryBreakdownCardV2({
   expensesByCategory,
-  categories,
   selectedCategoryId,
   onSelectCategory,
   onAddCategory,
@@ -47,21 +44,17 @@ export function CategoryBreakdownCardV2({
   );
   const max = Math.max(...sortedExpenses.map((r) => Number(r.totalAmount) || 0), 1);
 
-  // Mapeia os dados da API para associar com o categoryId real
+  // A API já agrupa pela categoria principal e manda id, ícone e cor.
   const rows = sortedExpenses.map((r, i) => {
-    const matchedCategory = categories.find(
-      (c) => c.name.toLowerCase().trim() === r.categoryName.toLowerCase().trim()
-    );
-    // Bloco 4 troca esse lookup por categoryId direto da API do dashboard.
     const amount = Number(r.totalAmount);
     const percentage = totalExpenseSum > 0 ? Math.round((amount / totalExpenseSum) * 100) : 0;
     return {
-      categoryId: r.categoryId || matchedCategory?.categoryId || null,
-      label: r.categoryName,
+      categoryId: r.categoryId || null,
+      label: `${r.categoryIcon} ${r.categoryName}`.trim(),
       amount,
       ratio: amount / max,
       percentage,
-      color: PALETTE[i % PALETTE.length],
+      color: r.categoryColor || FALLBACK_PALETTE[i % FALLBACK_PALETTE.length],
     };
   });
 
@@ -129,7 +122,7 @@ export function CategoryBreakdownCardV2({
             const isSelected = selectedCategoryId !== null && row.categoryId === selectedCategoryId;
             return (
               <button
-                key={row.label}
+                key={row.categoryId ?? row.label}
                 type="button"
                 onClick={() => {
                   if (!row.categoryId) return;

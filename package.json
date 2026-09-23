@@ -20,6 +20,7 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "test:errors": "npx tsx scripts/test-error-codes.ts",
+    "test:categories": "npx tsx scripts/test-categories.ts",
     "icons:generate": "node scripts/generate-icons.js",
     "convert:webp": "node scripts/convert-webp.js"
   },

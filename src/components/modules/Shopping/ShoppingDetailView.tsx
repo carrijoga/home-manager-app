@@ -11,7 +11,6 @@ import {
   Plus,
   RotateCcw,
   ShoppingCart,
-  Tag,
   Trash2,
   TrendingDown,
   TrendingUp,
@@ -35,6 +34,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useSidebar } from '@/components/ui/sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
+import { formatCategoryLabel } from '@/lib/categories';
 import { cn } from '@/lib/utils';
 import { ShoppingItemStatus } from '@/schemas/enums';
 import type { AppShoppingItem, AppShoppingList } from '@/types';
@@ -47,6 +47,7 @@ import { ItemFormDialog } from './dialogs/ItemFormDialog';
 import { ListFormDialog } from './dialogs/ListFormDialog';
 import { ManageCategoriesDialog } from './dialogs/ManageCategoriesDialog';
 import { MarkAsPurchasedDialog } from './dialogs/MarkAsPurchasedDialog';
+import type { ItemSection, SectionOption } from './grouping';
 import {
   emptyItemForm,
   getItemEstimatedTotal,
@@ -65,8 +66,8 @@ interface ShoppingDetailViewProps {
   isFinished: boolean;
   editListInitialData: ListFormData | undefined;
   uniqueCategories: Array<{ shoppingCategoryId: string; name: string; isDefault: boolean }>;
-  categoriesInDetail: string[];
-  groupedItemEntries: [string, AppShoppingItem[]][];
+  sectionOptions: SectionOption[];
+  itemSections: ItemSection[];
   categoryFilter: string | null;
   setCategoryFilter: (v: string | null) => void;
   sortOrder: 'name' | 'count' | 'purchased';
@@ -152,8 +153,8 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
     isFinished,
     editListInitialData,
     uniqueCategories,
-    categoriesInDetail,
-    groupedItemEntries,
+    sectionOptions,
+    itemSections,
     categoryFilter,
     setCategoryFilter,
     sortOrder,
@@ -353,7 +354,7 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
         setSortOrder={setSortOrder}
         categoryFilter={categoryFilter}
         setCategoryFilter={setCategoryFilter}
-        categoriesInDetail={categoriesInDetail}
+        sectionOptions={sectionOptions}
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
         isSearchPending={isSearchPending}
@@ -431,12 +432,11 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
         </div>
       ) : (
         <div className="space-y-4">
-          {groupedItemEntries.map(([category, items]) => (
+          {itemSections.map((section) => (
             <CategorySection
-              key={category}
-              category={category}
-              items={items}
-              isCollapsed={collapsedCategories.has(category)}
+              key={section.key}
+              section={section}
+              isCollapsed={collapsedCategories.has(section.key)}
               isBulkMode={isBulkMode}
               isFinished={isFinished}
               selectedItemIds={selectedItemIds}
@@ -524,10 +524,12 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
                       Pendente
                     </span>
                   )}
-                  {selectedItem.categoryName && (
+                  {selectedItem.category && (
                     <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-muted/50 px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                      <Tag size={11} />
-                      {selectedItem.categoryName}
+                      {formatCategoryLabel(
+                        selectedItem.category,
+                        selectedItem.category.parentName ? { name: selectedItem.category.parentName } : null
+                      )}
                     </span>
                   )}
                 </div>

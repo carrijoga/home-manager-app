@@ -169,7 +169,7 @@ export function QuickPurchaseDrawer({
           <div className="space-y-0.5">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="inline-flex items-center gap-1 rounded-md bg-muted/60 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                {item.categoryName || 'Item da Lista'}
+                {item.category ? `${item.category.icon} ${item.category.name}` : 'Item da Lista'}
               </span>
               {item.estimatedPrice != null && (
                 <span className="text-xs text-muted-foreground tabular-nums">

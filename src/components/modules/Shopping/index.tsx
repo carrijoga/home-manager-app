@@ -2,8 +2,10 @@ import { AnimatePresence } from 'framer-motion';
 import { memo, useCallback, useMemo, useState } from 'react';
 
 import { useApp } from '@/contexts/AppContext';
+import { useCategories } from '@/hooks/useCategories';
 import { usePolling } from '@/hooks/usePolling';
 import { useSignalR } from '@/hooks/useSignalR';
+import { CategoryScope } from '@/schemas/category';
 import { DATA_MODE } from '@/services/api/config';
 import { ENDPOINTS } from '@/services/api/endpoints';
 
@@ -18,12 +20,14 @@ import { ShoppingListsView } from './ShoppingListsView';
 
 const Shopping = memo(function Shopping() {
   const { activeNestId } = useApp();
+  const { tree: categoryTree } = useCategories(CategoryScope.Shopping);
 
   const data = useShoppingData();
 
   const nav = useShoppingNavigation({
     remoteShoppingLists: data.shoppingLists,
     shoppingCategories: data.shoppingCategories,
+    categoryTree,
     loadShoppingListDetail: data.loadShoppingListDetail,
   });
   const actions = useShoppingActions(nav.selectedListId, nav.setDetailData, {
@@ -106,6 +110,7 @@ const Shopping = memo(function Shopping() {
           key="market"
           detailData={nav.detailData}
           uniqueCategories={actions.uniqueCategories}
+          categoryTree={categoryTree}
           onExit={() => setIsMarketMode(false)}
           onMarkAsPurchased={actions.handleMarkItemAsPurchased}
           onUnmarkAsPurchased={actions.handleUnmarkAsPurchased}
@@ -151,8 +156,8 @@ const Shopping = memo(function Shopping() {
           isFinished={isFinished}
           editListInitialData={editListInitialData}
           uniqueCategories={actions.uniqueCategories}
-          categoriesInDetail={nav.categoriesInDetail}
-          groupedItemEntries={nav.groupedItemEntries}
+          sectionOptions={nav.sectionOptions}
+          itemSections={nav.itemSections}
           categoryFilter={nav.categoryFilter}
           setCategoryFilter={nav.setCategoryFilter}
           sortOrder={nav.sortOrder}

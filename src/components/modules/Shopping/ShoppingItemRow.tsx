@@ -324,11 +324,12 @@ export function ShoppingItemRow(props: ShoppingItemRowProps) {
             </span>
           )}
 
-          {item.categoryName && (
+          {item.category?.parentCategoryId && (
             <>
               <span className="text-muted-foreground/40 font-bold shrink-0">·</span>
-              <span className="truncate text-muted-foreground/90 font-medium">
-                {item.categoryName}
+              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-muted/60 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                <span aria-hidden>{item.category.icon}</span>
+                {item.category.name}
               </span>
             </>
           )}

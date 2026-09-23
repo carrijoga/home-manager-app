@@ -22,9 +22,11 @@ import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useWakeLock } from '@/hooks/useWakeLock';
 import { cn } from '@/lib/utils';
+import type { CategoryResponse } from '@/schemas/category';
 import type { AppShoppingItem, AppShoppingList } from '@/types';
 
 import { ItemFormDialog } from '../dialogs/ItemFormDialog';
+import { getMainCategoryKey, groupItemsByMainCategory } from '../grouping';
 import {
   getItemEstimatedTotal,
   getItemSpentTotal,
@@ -43,6 +45,7 @@ import { QuickPurchaseDrawer } from './QuickPurchaseDrawer';
 interface MarketModeViewProps {
   detailData: AppShoppingList | null;
   uniqueCategories: Array<{ shoppingCategoryId: string; name: string; isDefault: boolean }>;
+  categoryTree: CategoryResponse[];
   onExit: () => void;
   onMarkAsPurchased: (item: AppShoppingItem, data: PurchaseFormData) => Promise<void>;
   onUnmarkAsPurchased: (item: AppShoppingItem) => Promise<void>;
@@ -54,6 +57,7 @@ interface MarketModeViewProps {
 export function MarketModeView({
   detailData,
   uniqueCategories,
+  categoryTree,
   onExit,
   onMarkAsPurchased,
   onUnmarkAsPurchased,
@@ -121,27 +125,24 @@ export function MarketModeView({
   // Filtragem por corredor/categoria
   const displayedPendingItems = useMemo(() => {
     if (!selectedCategory) return pendingItems;
-    return pendingItems.filter(
-      (i) => (i.categoryName || 'Sem Categoria') === selectedCategory
-    );
+    return pendingItems.filter((i) => getMainCategoryKey(i) === selectedCategory);
   }, [pendingItems, selectedCategory]);
 
   const displayedCartItems = useMemo(() => {
     if (!selectedCategory) return cartItems;
-    return cartItems.filter(
-      (i) => (i.categoryName || 'Sem Categoria') === selectedCategory
-    );
+    return cartItems.filter((i) => getMainCategoryKey(i) === selectedCategory);
   }, [cartItems, selectedCategory]);
 
-  // Contagem por categoria de itens pendentes
-  const categoriesWithCounts = useMemo(() => {
-    const map = new Map<string, number>();
-    pendingItems.forEach((i) => {
-      const cat = i.categoryName || 'Sem Categoria';
-      map.set(cat, (map.get(cat) ?? 0) + 1);
-    });
-    return Array.from(map.entries()).map(([name, count]) => ({ name, count }));
-  }, [pendingItems]);
+  // Corredores = categorias principais com itens pendentes
+  const corridors = useMemo(
+    () =>
+      groupItemsByMainCategory(pendingItems, categoryTree).map((s) => ({
+        key: s.key,
+        label: s.icon ? `${s.icon} ${s.label}` : s.label,
+        count: s.items.length,
+      })),
+    [pendingItems, categoryTree]
+  );
 
   const handleConfirmPurchase = async (data: {
     quantity: string;
@@ -336,22 +337,22 @@ export function MarketModeView({
             Todos ({pendingItems.length})
           </button>
 
-          {categoriesWithCounts.map(({ name, count }) => (
+          {corridors.map(({ key, label, count }) => (
             <button
-              key={name}
-              onClick={() => setSelectedCategory(name === selectedCategory ? null : name)}
+              key={key}
+              onClick={() => setSelectedCategory(key === selectedCategory ? null : key)}
               className={cn(
                 'shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium transition-all shadow-2xs flex items-center gap-1.5',
-                selectedCategory === name
+                selectedCategory === key
                   ? 'bg-primary text-primary-foreground font-bold'
                   : 'border border-border/70 bg-card text-muted-foreground hover:bg-muted hover:text-foreground'
               )}
             >
-              <span>{name}</span>
+              <span>{label}</span>
               <span
                 className={cn(
                   'rounded-full px-1.5 py-0.2 text-[10px] font-bold tabular-nums',
-                  selectedCategory === name
+                  selectedCategory === key
                     ? 'bg-white/20 text-white'
                     : 'bg-muted text-muted-foreground'
                 )}
@@ -381,7 +382,7 @@ export function MarketModeView({
               </div>
               <p className="text-sm font-bold text-foreground">
                 {selectedCategory
-                  ? `Nenhum item pendente no corredor "${selectedCategory}"!`
+                  ? `Nenhum item pendente no corredor "${corridors.find((c) => c.key === selectedCategory)?.label ?? ''}"!`
                   : 'Tudo pronto! Todos os itens foram para o carrinho!'}
               </p>
               <p className="text-xs text-muted-foreground">
@@ -413,10 +414,12 @@ export function MarketModeView({
                         <span className="font-bold text-primary shrink-0 tabular-nums">
                           {quantityLabel(item.quantity, item.unitType)}
                         </span>
-                        {item.categoryName && (
+                        {item.category && (
                           <>
                             <span className="text-muted-foreground/40 font-bold">·</span>
-                            <span className="truncate">{item.categoryName}</span>
+                            <span className="truncate">
+                              {item.category.icon} {item.category.name}
+                            </span>
                           </>
                         )}
                         {item.notes && (

@@ -199,8 +199,8 @@ export interface Task {
   dueDate?: string | null;
   priority: ApiPriority;
   priorityLabel: string;
-  category: ApiCategory;
-  categoryLabel: string;
+  /** Categoria unificada (escopo Task) ou null = "Sem categoria". */
+  category: CategorySummaryResponse | null;
   date: string;
   /** Status no board Kanban — derivado de isCompleted na ausência de campo da API */
   status?: TaskStatus;

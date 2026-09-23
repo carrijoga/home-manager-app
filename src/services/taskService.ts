@@ -3,13 +3,15 @@
  * Suporta API real e modo mock (DATA_MODE === 'mock').
  */
 
-import { CATEGORY_LABELS, PRIORITY_LABELS } from '@/schemas/enums';
+import { toCategorySummary } from '@/lib/taskCategories';
+import { CategorySummaryResponseSchema } from '@/schemas/category';
+import { PRIORITY_LABELS } from '@/schemas/enums';
 import type { CreateQuickTaskRequest, CreateTaskRequest, UpdateTaskRequest } from '@/schemas/tasks';
 import { TaskHistoryResponseSchema, TaskPagedResponseSchema, TaskResponseSchema } from '@/schemas/tasks';
 import type { PaginatedResponse, Task } from '@/types';
-import { ApiCategory, ApiPriority } from '@/types';
+import { ApiPriority } from '@/types';
 
-import { mockTasks } from '../mocks/data';
+import { mockCategoryTree, mockTasks } from '../mocks/data';
 import { DATA_MODE } from './api/config';
 import { ENDPOINTS } from './api/endpoints';
 import { httpClient } from './api/httpClient';
@@ -27,8 +29,7 @@ function apiToTask(raw: unknown): Task {
       dueDate: d.dueDate ?? null,
       priority: d.priority as Task['priority'],
       priorityLabel: d.priorityLabel,
-      category: d.category as Task['category'],
-      categoryLabel: d.categoryLabel,
+      category: d.category ?? null,
       date: d.date,
       isCompleted: d.isCompleted,
       completedAt: d.completedAt ?? null,
@@ -41,7 +42,6 @@ function apiToTask(raw: unknown): Task {
   // fallback permissivo
   const r = raw as Record<string, unknown>;
   const priority = Number(r.priority ?? 3);
-  const category = Number(r.category ?? 0);
   const rawAssignees = Array.isArray(r.assignees) ? r.assignees : [];
   return {
     taskId: String(r.taskId ?? ''),
@@ -50,8 +50,10 @@ function apiToTask(raw: unknown): Task {
     dueDate: (r.dueDate as string) ?? null,
     priority: priority as Task['priority'],
     priorityLabel: (r.priorityLabel as string) ?? PRIORITY_LABELS[priority] ?? 'Baixa',
-    category: category as Task['category'],
-    categoryLabel: (r.categoryLabel as string) ?? CATEGORY_LABELS[category] ?? 'Geral',
+    category: (() => {
+      const c = CategorySummaryResponseSchema.safeParse(r.category);
+      return c.success ? c.data : null;
+    })(),
     date: String(r.date ?? new Date().toISOString()),
     isCompleted: Boolean(r.isCompleted ?? false),
     completedAt: (r.completedAt as string) ?? null,
@@ -65,6 +67,23 @@ function apiToTask(raw: unknown): Task {
       isCompleted: Boolean(a.isCompleted ?? false),
       completedAt: (a.completedAt as string) ?? null,
     })),
+  };
+}
+
+/** Request de update a partir de uma tarefa carregada. `assigneeIds: null` mantém os responsáveis. */
+export function taskToUpdateRequest(
+  task: Task,
+  overrides: Partial<UpdateTaskRequest> = {}
+): UpdateTaskRequest {
+  return {
+    title: task.title,
+    description: task.description ?? null,
+    assigneeIds: null,
+    dueDate: task.dueDate ?? null,
+    priority: task.priority,
+    categoryId: task.category?.categoryId ?? null,
+    date: task.date,
+    ...overrides,
   };
 }
 
@@ -134,8 +153,7 @@ export async function createTask(payload: CreateTaskRequest, nestId?: string): P
       dueDate: payload.dueDate ?? null,
       priority: (payload.priority ?? ApiPriority.Baixa) as Task['priority'],
       priorityLabel: PRIORITY_LABELS[payload.priority ?? ApiPriority.Baixa],
-      category: (payload.category ?? ApiCategory.Geral) as Task['category'],
-      categoryLabel: CATEGORY_LABELS[payload.category ?? ApiCategory.Geral],
+      category: toCategorySummary(mockCategoryTree, payload.categoryId),
       date: payload.date ?? now,
       isCompleted: false,
       completedAt: null,
@@ -163,7 +181,7 @@ export async function createQuickTask(title: string, nestId?: string): Promise<T
       {
         title,
         priority: ApiPriority.Baixa,
-        category: ApiCategory.Geral,
+        categoryId: null,
       },
       nestId
     );
@@ -199,8 +217,7 @@ export async function updateTask(
         dueDate: payload.dueDate ?? null,
         priority: (payload.priority ?? ApiPriority.Baixa) as Task['priority'],
         priorityLabel: PRIORITY_LABELS[payload.priority ?? ApiPriority.Baixa],
-        category: (payload.category ?? ApiCategory.Geral) as Task['category'],
-        categoryLabel: CATEGORY_LABELS[payload.category ?? ApiCategory.Geral],
+        category: toCategorySummary(mockCategoryTree, payload.categoryId),
         assignees: payload.assigneeIds
           ? payload.assigneeIds.map((uId) => {
               const existing = _mockState[idx].assignees.find((a) => a.userId === uId);

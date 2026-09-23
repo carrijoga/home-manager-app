@@ -10,10 +10,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
+import type { TaskCategoryChip } from '@/lib/taskCategories';
 import { cn } from '@/lib/utils';
-import { ApiCategory } from '@/types';
-
-import { TASK_CATEGORY_LABELS } from './constants';
 
 export type TaskStatusFilter = 'all' | 'pending' | 'in_progress' | 'overdue' | 'completed_today';
 export type TaskSortOrder = 'dueDate' | 'priority' | 'title';
@@ -25,9 +23,9 @@ interface TaskFilterBarProps {
   setSortOrder: (v: TaskSortOrder) => void;
   statusFilter: TaskStatusFilter;
   setStatusFilter: (v: TaskStatusFilter) => void;
-  categoryFilter: ApiCategory | null;
-  setCategoryFilter: (v: ApiCategory | null) => void;
-  categoriesInView: ApiCategory[];
+  categoryFilter: string | null;
+  setCategoryFilter: (v: string | null) => void;
+  categoriesInView: TaskCategoryChip[];
   searchTerm: string;
   setSearchTerm: (v: string) => void;
   isSearchPending: boolean;
@@ -205,13 +203,13 @@ export function TaskFilterBar(props: TaskFilterBarProps) {
             >
               Todas
             </button>
-            {categoriesInView.map((cat) => {
-              const isSelected = categoryFilter === cat;
+            {categoriesInView.map((chip) => {
+              const isSelected = categoryFilter === chip.categoryId;
               return (
                 <button
-                  key={cat}
+                  key={chip.categoryId}
                   type="button"
-                  onClick={() => setCategoryFilter(isSelected ? null : cat)}
+                  onClick={() => setCategoryFilter(isSelected ? null : chip.categoryId)}
                   className={cn(
                     'shrink-0 rounded-xl px-3 py-1 text-xs font-semibold transition-all active:scale-95',
                     isSelected
@@ -219,7 +217,7 @@ export function TaskFilterBar(props: TaskFilterBarProps) {
                       : 'border border-border/60 bg-card text-muted-foreground hover:bg-muted hover:text-foreground'
                   )}
                 >
-                  {TASK_CATEGORY_LABELS[cat] || 'Geral'}
+                  <span aria-hidden="true">{chip.icon}</span> {chip.name}
                 </button>
               );
             })}

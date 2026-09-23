@@ -25,7 +25,7 @@ import type {
   Notice,
   Task,
 } from '@/types';
-import { ApiCategory, ApiPriority } from '@/types';
+import { ApiPriority } from '@/types';
 
 export const MOCK_USER_ID = 'user-mock-0001';
 
@@ -222,7 +222,31 @@ export const mockNotices: Notice[] = [
   },
 ];
 
-// ── Tarefas ───────────────────────────────────────────────────────────────────
+// Sumários espelhando o escopo Task de mockCategoryTree (declarado mais abaixo no arquivo).
+const TASK_CAT_LIMPEZA: CategorySummaryResponse = {
+  categoryId: 'c0000004-0000-4000-8000-000000000001',
+  name: 'Limpeza',
+  icon: '🧹',
+  color: '#06B6D4',
+  parentCategoryId: null,
+  parentName: null,
+};
+const TASK_CAT_MANUTENCAO: CategorySummaryResponse = {
+  categoryId: 'c0000004-0000-4000-8000-000000000003',
+  name: 'Manutenção',
+  icon: '🛠️',
+  color: '#64748B',
+  parentCategoryId: null,
+  parentName: null,
+};
+const TASK_CAT_CONTAS: CategorySummaryResponse = {
+  categoryId: 'c0000004-0000-4000-8000-000000000041',
+  name: 'Contas',
+  icon: '🧾',
+  color: '#3B82F6',
+  parentCategoryId: 'c0000004-0000-4000-8000-000000000004',
+  parentName: 'Casa',
+};
 
 export const mockTasks: Task[] = [
   // Pendentes — prioridades variadas
@@ -242,8 +266,7 @@ export const mockTasks: Task[] = [
     dueDate: new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000).toISOString(),
     priority: ApiPriority.Alta,
     priorityLabel: 'Alta',
-    category: ApiCategory.Limpeza,
-    categoryLabel: 'Limpeza',
+    category: TASK_CAT_LIMPEZA,
     date: now.toISOString(),
     isCompleted: false,
     completedAt: null,
@@ -262,12 +285,18 @@ export const mockTasks: Task[] = [
         isCompleted: false,
         completedAt: null,
       },
+      {
+        userId: 'user-mock-0002',
+        name: 'Maria',
+        photoUrl: null,
+        isCompleted: false,
+        completedAt: null,
+      },
     ],
     dueDate: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString(),
     priority: ApiPriority.Urgente,
     priorityLabel: 'Urgente',
-    category: ApiCategory.Limpeza,
-    categoryLabel: 'Limpeza',
+    category: TASK_CAT_LIMPEZA,
     date: now.toISOString(),
     isCompleted: false,
     completedAt: null,
@@ -290,8 +319,7 @@ export const mockTasks: Task[] = [
     dueDate: new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString(),
     priority: ApiPriority.Media,
     priorityLabel: 'Média',
-    category: ApiCategory.Limpeza,
-    categoryLabel: 'Limpeza',
+    category: TASK_CAT_LIMPEZA,
     date: now.toISOString(),
     isCompleted: false,
     completedAt: null,
@@ -305,8 +333,8 @@ export const mockTasks: Task[] = [
     description: 'Verificar validades e organizar por categoria',
     assignees: [
       {
-        userId: MOCK_USER_ID,
-        name: 'Você',
+        userId: 'user-mock-0002',
+        name: 'Maria',
         photoUrl: null,
         isCompleted: false,
         completedAt: null,
@@ -315,13 +343,12 @@ export const mockTasks: Task[] = [
     dueDate: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString(),
     priority: ApiPriority.Baixa,
     priorityLabel: 'Baixa',
-    category: ApiCategory.Geral,
-    categoryLabel: 'Geral',
+    category: null,
     date: now.toISOString(),
     isCompleted: false,
     completedAt: null,
     isOverdue: false,
-    createdBy: MOCK_USER_ID,
+    createdBy: 'user-mock-0002',
     createdAt: new Date(now.getTime() - 6 * 60 * 60 * 1000).toISOString(),
   },
   {
@@ -339,8 +366,7 @@ export const mockTasks: Task[] = [
     dueDate: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString(),
     priority: ApiPriority.Media,
     priorityLabel: 'Média',
-    category: ApiCategory.Limpeza,
-    categoryLabel: 'Limpeza',
+    category: TASK_CAT_LIMPEZA,
     date: now.toISOString(),
     isCompleted: false,
     completedAt: null,
@@ -364,8 +390,7 @@ export const mockTasks: Task[] = [
     dueDate: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
     priority: ApiPriority.Alta,
     priorityLabel: 'Alta',
-    category: ApiCategory.Financas,
-    categoryLabel: 'Finanças',
+    category: TASK_CAT_CONTAS,
     date: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(),
     isCompleted: true,
     completedAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
@@ -388,8 +413,7 @@ export const mockTasks: Task[] = [
     dueDate: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000).toISOString(),
     priority: ApiPriority.Baixa,
     priorityLabel: 'Baixa',
-    category: ApiCategory.Manutencao,
-    categoryLabel: 'Manutenção',
+    category: TASK_CAT_MANUTENCAO,
     date: new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000).toISOString(),
     isCompleted: true,
     completedAt: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000).toISOString(),
@@ -405,15 +429,14 @@ export const mockTasks: Task[] = [
         userId: MOCK_USER_ID,
         name: 'Você',
         photoUrl: null,
-        isCompleted: false,
-        completedAt: null,
+        isCompleted: true,
+        completedAt: new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000).toISOString(),
       },
     ],
     dueDate: new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-    priority: ApiPriority.Alta,
-    priorityLabel: 'Alta',
-    category: ApiCategory.Geral,
-    categoryLabel: 'Geral',
+    priority: ApiPriority.Media,
+    priorityLabel: 'Média',
+    category: null,
     date: new Date(now.getTime() - 20 * 24 * 60 * 60 * 1000).toISOString(),
     isCompleted: true,
     completedAt: new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000).toISOString(),
@@ -1091,6 +1114,15 @@ export const mockCategoryTree: UnifiedCategoryResponse[] = [
   mockCat('c0000004-0000-4000-8000-000000000001', CategoryScope.Task, 'Limpeza', '🧹', '#06B6D4'),
   mockCat('c0000004-0000-4000-8000-000000000002', CategoryScope.Task, 'Cozinha', '🍳', '#EF4444'),
   mockCat('c0000004-0000-4000-8000-000000000003', CategoryScope.Task, 'Manutenção', '🛠️', '#64748B'),
+  mockCat('c0000004-0000-4000-8000-000000000004', CategoryScope.Task, 'Casa', '🏠', '#3B82F6', [
+    ['c0000004-0000-4000-8000-000000000041', 'Contas', '🧾'],
+  ]),
+  mockCat('c0000004-0000-4000-8000-000000000005', CategoryScope.Task, 'Pets', '🐾', '#F59E0B'),
+  mockCat('c0000004-0000-4000-8000-000000000006', CategoryScope.Task, 'Estudos', '📚', '#A855F7'),
+  mockCat('c0000004-0000-4000-8000-000000000007', CategoryScope.Task, 'Trabalho', '💼', '#6366F1'),
+  mockCat('c0000004-0000-4000-8000-000000000008', CategoryScope.Task, 'Família', '👪', '#EC4899'),
+  mockCat('c0000004-0000-4000-8000-000000000009', CategoryScope.Task, 'Pessoal', '🙂', '#22C55E'),
+  mockCat('c0000004-0000-4000-8000-000000000010', CategoryScope.Task, 'Outros', '📦', '#84CC16'),
 ];
 
 const FIN_NEST_ID = 'nest-mock-0001';

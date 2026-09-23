@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui';
 import { resolveUserAvatar } from '@/constants/koboyoAvatars';
+import { formatTaskCategory } from '@/lib/taskCategories';
 import { cn } from '@/lib/utils';
 import type { Task } from '@/types';
 
@@ -106,7 +107,7 @@ export const KanbanCard = memo(function KanbanCard({
             <span className="text-muted-foreground/40 font-bold shrink-0">·</span>
             
             <span className="truncate text-muted-foreground/90 font-medium">
-              {task.categoryLabel}
+              {formatTaskCategory(task.category)}
             </span>
 
             {task.assignees && task.assignees.length > 0 && (() => {

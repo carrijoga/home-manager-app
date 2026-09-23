@@ -22,6 +22,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui';
 import { resolveUserAvatar } from '@/constants/koboyoAvatars';
+import { formatTaskCategory } from '@/lib/taskCategories';
 import { cn } from '@/lib/utils';
 import type { Task } from '@/types';
 
@@ -71,7 +72,7 @@ export const TaskCard = memo(
             )}
           </div>
           <span className="text-xs font-semibold text-muted-foreground">
-            {task.categoryLabel}
+            {formatTaskCategory(task.category)}
           </span>
         </div>
       );
@@ -149,7 +150,7 @@ export const TaskCard = memo(
             
             {/* Category */}
             <span className="truncate text-muted-foreground/90 font-medium">
-              {task.categoryLabel}
+              {formatTaskCategory(task.category)}
             </span>
 
             {task.assignees && task.assignees.length > 0 && (() => {

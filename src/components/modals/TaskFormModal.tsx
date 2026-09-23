@@ -1,7 +1,8 @@
 import { X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
-import { CATEGORIES, PRIORITIES } from '@/components/modules/tasks/constants';
+import { CategoryPicker } from '@/components/common/CategoryPicker';
+import { PRIORITIES } from '@/components/modules/tasks/constants';
 import {
   Button,
   DatePicker,
@@ -22,6 +23,7 @@ import {
 import { MemberMultiSelect } from '@/components/ui';
 import { Spinner } from '@/components/ui/spinner';
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
+import { CategoryScope } from '@/schemas/category';
 import type { NestMember } from '@/schemas/nest';
 import type { Task } from '@/types';
 import { TaskStatus } from '@/types';
@@ -32,7 +34,7 @@ export interface TaskFormPayload {
   assigneeIds: string[];
   dueDate: string | null;
   priority: number;
-  category: number;
+  categoryId: string | null;
   status: TaskStatus;
 }
 
@@ -51,7 +53,7 @@ const EMPTY_FORM = {
   assigneeIds: [] as string[],
   dueDate: undefined as Date | undefined,
   priority: '3',
-  category: '0',
+  categoryId: null as string | null,
   status: String(TaskStatus.AFazer),
 };
 
@@ -91,7 +93,7 @@ export function TaskFormModal({
         assigneeIds: initialTask.assignees ? initialTask.assignees.map((a) => a.userId) : [],
         dueDate: initialTask.dueDate ? new Date(initialTask.dueDate) : undefined,
         priority: String(initialTask.priority ?? 3),
-        category: String(initialTask.category ?? 0),
+        categoryId: initialTask.category?.categoryId ?? null,
         status: String(inferredStatus),
       });
     } else {
@@ -115,10 +117,12 @@ export function TaskFormModal({
         assigneeIds: form.assigneeIds,
         dueDate: form.dueDate ? form.dueDate.toISOString() : null,
         priority: Number(form.priority),
-        category: Number(form.category),
+        categoryId: form.categoryId,
         status: Number(form.status) as TaskStatus,
       });
       onClose();
+    } catch {
+      // erro exibido pelo chamador; mantém o formulário aberto
     } finally {
       setLoading(false);
     }
@@ -211,24 +215,20 @@ export function TaskFormModal({
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <Label
+                  htmlFor="task-category"
+                  className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                >
                   Categoria
                 </Label>
-                <Select
-                  value={form.category}
-                  onValueChange={(v) => setForm((f) => ({ ...f, category: v }))}
-                >
-                  <SelectTrigger className="h-12 rounded-2xl bg-muted/30 px-4 text-base border-border/40 focus:ring-2 focus:ring-primary">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CATEGORIES.map((c) => (
-                      <SelectItem key={c.value} value={c.value}>
-                        {c.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <CategoryPicker
+                  id="task-category"
+                  scope={CategoryScope.Task}
+                  value={form.categoryId}
+                  onChange={(id) => setForm((f) => ({ ...f, categoryId: id }))}
+                  allowClear
+                  placeholder="Sem categoria"
+                />
               </div>
             </div>
 

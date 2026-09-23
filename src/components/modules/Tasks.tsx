@@ -13,8 +13,12 @@ import { cn } from '@/lib/utils';
 import type { NestMember } from '@/schemas/nest';
 import * as nestService from '@/services/nestService';
 import * as taskService from '@/services/taskService';
-import type { ApiCategory,Task } from '@/types';
+import type { Task } from '@/types';
 import { TaskStatus } from '@/types';
+import { useCategories } from '@/hooks/useCategories';
+import { buildCategoryChips, rootCategoryId } from '@/lib/taskCategories';
+import { CategoryScope } from '@/schemas/category';
+import { toErrorMessage } from './tasks/taskParts';
 
 import { KanbanBoard } from './tasks/KanbanBoard';
 import { QuickAddTaskBar } from './tasks/QuickAddTaskBar';
@@ -80,10 +84,12 @@ function Tasks() {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [initialTaskTitle, setInitialTaskTitle] = useState('');
 
+  const { tree: taskCategoryTree } = useCategories(CategoryScope.Task);
+
   // ── Filters & Bulk State ───────────────────────────────────────────────────
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<TaskStatusFilter>('all');
-  const [categoryFilter, setCategoryFilter] = useState<ApiCategory | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<TaskSortOrder>('dueDate');
   const [isBulkMode, setIsBulkMode] = useState(false);
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
@@ -131,19 +137,19 @@ function Tasks() {
       result = result.filter(t => t.isCompleted && t.completedAt && new Date(t.completedAt).toDateString() === today);
     }
 
-    // Category filter
+    // Category filter (sempre pela categoria principal)
     if (categoryFilter !== null) {
-      result = result.filter(t => t.category === categoryFilter);
+      result = result.filter((t) => rootCategoryId(t.category) === categoryFilter);
     }
 
     return result;
   }, [tasks, searchQuery, statusFilter, categoryFilter]);
 
-  // Categories in view
-  const categoriesInView = useMemo(() => {
-    const set = new Set(filteredTasks.map(t => t.category));
-    return Array.from(set).sort();
-  }, [filteredTasks]);
+  // Categorias principais presentes nas tarefas visíveis
+  const categoriesInView = useMemo(
+    () => buildCategoryChips(filteredTasks.map((t) => t.category), taskCategoryTree),
+    [filteredTasks, taskCategoryTree]
+  );
 
   // ── Mutations ──────────────────────────────────────────────────────────────
   const restoreTask = useCallback((task: Task) => {
@@ -210,28 +216,34 @@ function Tasks() {
 
   const handleModalSubmit = useCallback(
     async (payload: TaskFormPayload) => {
-      if (editingTask) {
-        await taskService.updateTask(editingTask.taskId, payload, activeNestId ?? undefined);
-        setTasks((prev) =>
-          prev.map((t) =>
-            t.taskId === editingTask.taskId
-              ? {
-                  ...t,
-                  ...payload,
-                  status: payload.status,
-                  isCompleted: payload.status === TaskStatus.Concluido,
-                }
-              : t
-          )
-        );
-        showSuccess('Tarefa atualizada!');
-      } else {
-        const newTask = await taskService.createTask(payload, activeNestId ?? undefined);
-        setTasks((prev) => [{ ...newTask, status: payload.status }, ...prev]);
-        showSuccess('Tarefa criada!');
+      const { status, ...request } = payload;
+      const nestId = activeNestId ?? undefined;
+      try {
+        if (editingTask) {
+          await taskService.updateTask(editingTask.taskId, request, nestId);
+          const saved = await taskService.getTaskById(editingTask.taskId, nestId);
+          setTasks((prev) =>
+            prev.map((t) =>
+              t.taskId === saved.taskId
+                ? { ...saved, status: saved.isCompleted ? TaskStatus.Concluido : status }
+                : t
+            )
+          );
+          showSuccess('Tarefa atualizada!');
+        } else {
+          const saved = await taskService.createTask(request, nestId);
+          setTasks((prev) => [
+            { ...saved, status: saved.isCompleted ? TaskStatus.Concluido : status },
+            ...prev,
+          ]);
+          showSuccess('Tarefa criada!');
+        }
+      } catch (err) {
+        showError(toErrorMessage(err, 'Erro ao salvar tarefa'));
+        throw err;
       }
     },
-    [editingTask, activeNestId, showSuccess]
+    [editingTask, activeNestId, showSuccess, showError]
   );
 
   const openNewTask = useCallback(() => {
@@ -371,22 +383,18 @@ function Tasks() {
 
           {/* ── Quick Add Bar ──────────────────────────────────────────── */}
           <QuickAddTaskBar
-            onAddTask={async (title, cat, pri) => {
-              const newTask = await taskService.createQuickTask(title, activeNestId ?? undefined);
-              if (cat !== null || pri !== null) {
-                await taskService.updateTask(newTask.taskId, {
-                  ...newTask,
-                  category: cat ?? newTask.category,
-                  priority: pri ?? newTask.priority
-                }, activeNestId ?? undefined);
-                setTasks(prev => [{
-                  ...newTask,
-                  category: cat ?? newTask.category,
-                  priority: pri ?? newTask.priority
-                }, ...prev]);
-              } else {
-                setTasks(prev => [newTask, ...prev]);
+            onAddTask={async (title, _detectedCategory, pri) => {
+              const nestId = activeNestId ?? undefined;
+              let created = await taskService.createQuickTask(title, nestId);
+              if (pri !== null) {
+                await taskService.updateTask(
+                  created.taskId,
+                  taskService.taskToUpdateRequest(created, { priority: pri }),
+                  nestId
+                );
+                created = await taskService.getTaskById(created.taskId, nestId);
               }
+              setTasks((prev) => [created, ...prev]);
               showSuccess('Tarefa criada!');
             }}
             onOpenDetailedForm={(title) => {

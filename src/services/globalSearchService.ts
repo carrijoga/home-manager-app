@@ -12,6 +12,7 @@ import {
   User,
 } from 'lucide-react';
 
+import { formatTaskCategory } from '@/lib/taskCategories';
 import * as calendarService from '@/services/calendarService';
 import * as financialService from '@/services/financialService';
 import * as noticeService from '@/services/noticeService';
@@ -185,7 +186,7 @@ export async function searchAll(
         (t) =>
           (t.title && String(t.title).toLowerCase().includes(query)) ||
           (t.description && String(t.description).toLowerCase().includes(query)) ||
-          (t.categoryLabel && String(t.categoryLabel).toLowerCase().includes(query))
+          (t.category && formatTaskCategory(t.category).toLowerCase().includes(query))
       )
       .slice(0, 5);
 
@@ -195,7 +196,7 @@ export async function searchAll(
         type: 'task',
         group: 'Tarefas',
         title: t.title,
-        subtitle: t.description || `Categoria: ${t.categoryLabel || 'Geral'}`,
+        subtitle: t.description || `Categoria: ${formatTaskCategory(t.category)}`,
         badge: t.isCompleted ? 'Concluída' : t.priorityLabel || 'Pendente',
         icon: CheckSquare,
         path: '/tasks',

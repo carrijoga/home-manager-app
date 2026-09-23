@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Calendar, CheckCircle2, DollarSign, ShoppingCart, Sparkles } from 'lucide-react';
+import { Calendar, CheckCircle2, DollarSign, ShoppingCart } from 'lucide-react';
 import type { FC } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -566,24 +566,6 @@ export const Dashboard: FC = () => {
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="flex max-w-full flex-col gap-6 overflow-x-hidden md:gap-10">
-      {/* ── Banner de Alternância de Versão (V2 Beta) ── */}
-      <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-2xl border border-primary/20 bg-primary/10 px-4 py-2.5 text-xs">
-        <div className="flex items-center gap-2 font-semibold text-primary">
-          <Sparkles size={16} />
-          <span>
-            Conheça o novo <strong className="font-bold">Dashboard V2</strong> com novo design e visão dinâmica do lar
-          </span>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => navigate('/dashboard-v2')}
-          className="font-ui font-semibold text-primary underline transition-colors hover:text-primary/80"
-        >
-          Experimentar V2 →
-        </button>
-      </div>
-
       {/* ── Row 0: Header ── */}
       <div data-tour="dashboard-header">
         <DashboardHeader

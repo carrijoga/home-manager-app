@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { CategorySummaryResponseSchema } from './category';
 import { DateTimeSchema, UuidSchema } from './shared';
 
 // ── Response ──────────────────────────────────────────────────────────────────
@@ -20,8 +21,7 @@ export const TaskResponseSchema = z.object({
   dueDate: z.union([DateTimeSchema, z.null()]).optional(),
   priority: z.union([z.number(), z.string()]).transform(Number),
   priorityLabel: z.string(),
-  category: z.union([z.number(), z.string()]).transform(Number),
-  categoryLabel: z.string(),
+  category: z.union([CategorySummaryResponseSchema, z.null()]).optional().default(null),
   date: DateTimeSchema,
   isCompleted: z.boolean(),
   completedAt: z.union([DateTimeSchema, z.null()]).optional(),
@@ -56,7 +56,7 @@ export interface CreateTaskRequest {
   assigneeIds?: string[] | null;
   dueDate?: string | null;
   priority: number;
-  category: number;
+  categoryId?: string | null;
   date?: string | null;
 }
 
@@ -70,6 +70,6 @@ export interface UpdateTaskRequest {
   assigneeIds?: string[] | null;
   dueDate?: string | null;
   priority: number;
-  category: number;
+  categoryId?: string | null;
   date?: string | null;
 }

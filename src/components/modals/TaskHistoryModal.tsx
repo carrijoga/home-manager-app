@@ -19,6 +19,7 @@ import {
 } from '@/components/ui';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { resolveUserAvatar } from '@/constants/koboyoAvatars';
+import { formatTaskCategory } from '@/lib/taskCategories';
 import type { NestMember } from '@/schemas/nest';
 import * as taskService from '@/services/taskService';
 import type { Task } from '@/types';
@@ -178,7 +179,7 @@ export function TaskHistoryModal({
                       <span className={`rounded px-1.5 py-0.5 font-medium ${priorityCfg.pill}`}>
                         {priorityCfg.label}
                       </span>
-                      <span className="text-muted-foreground">{item.categoryLabel || 'Geral'}</span>
+                      <span className="text-muted-foreground">{formatTaskCategory(item.category)}</span>
                       {item.assignees && item.assignees.length > 0 && (
                         <div className="flex items-center -space-x-1.5 overflow-hidden">
                           {item.assignees.map((a) => {

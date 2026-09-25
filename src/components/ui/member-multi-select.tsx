@@ -15,6 +15,7 @@ interface MemberMultiSelectProps {
   onChange: (ids: string[]) => void;
   placeholder?: string;
   className?: string;
+  disabled?: boolean;
 }
 
 export function MemberMultiSelect({
@@ -23,6 +24,7 @@ export function MemberMultiSelect({
   onChange,
   placeholder = 'Selecione os responsáveis...',
   className,
+  disabled = false,
 }: MemberMultiSelectProps) {
   const [open, setOpen] = useState(false);
 
@@ -42,15 +44,16 @@ export function MemberMultiSelect({
   const selectedMembers = members.filter((m) => selectedIds.includes(m.userId));
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open && !disabled} onOpenChange={(next) => setOpen(disabled ? false : next)}>
       <PopoverTrigger asChild>
         <Button
           type="button"
           variant="outline"
           role="combobox"
           aria-expanded={open}
+          disabled={disabled}
           className={cn(
-            'flex min-h-[48px] h-auto w-full items-center justify-between rounded-2xl border-border/40 bg-muted/30 px-3 py-2 text-left font-normal shadow-none hover:bg-muted/40 focus:ring-2 focus:ring-primary',
+            'flex min-h-[48px] h-auto w-full items-center justify-between rounded-2xl border-border/40 bg-muted/30 px-3 py-2 text-left font-normal shadow-none hover:bg-muted/40 focus:ring-2 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-60',
             className
           )}
         >
@@ -72,13 +75,15 @@ export function MemberMultiSelect({
                       </AvatarFallback>
                     </Avatar>
                     <span className="truncate max-w-[100px]">{m.name?.split(' ')[0]}</span>
-                    <button
-                      type="button"
-                      onClick={(e) => removeMember(m.userId, e)}
-                      className="rounded-full p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-                    >
-                      <X className="size-3" />
-                    </button>
+                    {!disabled && (
+                      <button
+                        type="button"
+                        onClick={(e) => removeMember(m.userId, e)}
+                        className="rounded-full p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                      >
+                        <X className="size-3" />
+                      </button>
+                    )}
                   </span>
                 );
               })

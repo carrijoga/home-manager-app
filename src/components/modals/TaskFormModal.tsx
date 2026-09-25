@@ -44,6 +44,8 @@ interface TaskFormModalProps {
   initialTask?: Task | null;
   initialTitle?: string;
   members?: NestMember[];
+  /** Se falso, o campo de responsáveis fica desabilitado (edição sem permissão). Sempre true na criação. */
+  canChangeAssignees?: boolean;
   onSubmit: (payload: TaskFormPayload) => Promise<void>;
 }
 
@@ -69,6 +71,7 @@ export function TaskFormModal({
   initialTask,
   initialTitle,
   members = [],
+  canChangeAssignees = true,
   onSubmit,
 }: TaskFormModalProps) {
   const [form, setForm] = useState(EMPTY_FORM);
@@ -278,7 +281,13 @@ export function TaskFormModal({
                   selectedIds={form.assigneeIds}
                   onChange={(ids) => setForm((f) => ({ ...f, assigneeIds: ids }))}
                   placeholder="Selecione os membros responsáveis..."
+                  disabled={!canChangeAssignees}
                 />
+                {!canChangeAssignees && (
+                  <p className="text-[11px] text-muted-foreground">
+                    Só o Owner, um Admin ou quem criou a tarefa pode alterar os responsáveis.
+                  </p>
+                )}
               </div>
             )}
 

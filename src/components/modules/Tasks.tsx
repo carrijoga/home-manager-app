@@ -25,7 +25,7 @@ import { TaskAssigneeActionsContext } from './tasks/TaskAssigneeActionsContext';
 import { TaskBulkActionsBar } from './tasks/TaskBulkActionsBar';
 import { TaskFilterBar, TaskSortOrder,TaskStatusFilter } from './tasks/TaskFilterBar';
 import { TaskListView } from './tasks/TaskListView';
-import { getMyPart, NOT_ASSIGNEE_HINT, partitionForMyPart, partProgressMessage, skippedMessage, toErrorMessage } from './tasks/taskParts';
+import { canChangeAssignees, getMyPart, NOT_ASSIGNEE_HINT, partitionForMyPart, partProgressMessage, skippedMessage, toErrorMessage } from './tasks/taskParts';
 import { TaskSideSummary } from './tasks/TaskSideSummary';
 import { useTaskViewer } from './tasks/useTaskViewer';
 
@@ -529,6 +529,7 @@ function Tasks() {
         initialTask={editingTask}
         initialTitle={initialTaskTitle}
         members={members}
+        canChangeAssignees={canChangeAssignees(viewer.role, editingTask, viewer.userId)}
         onSubmit={handleModalSubmit}
       />
 

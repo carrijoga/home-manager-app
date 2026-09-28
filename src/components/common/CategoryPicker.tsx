@@ -1,5 +1,5 @@
 import { Check, ChevronsUpDown, Plus, Settings2, X } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -114,27 +114,34 @@ export function CategoryPicker({
             </CommandItem>
           </CommandGroup>
         )}
-        {tree.map((root) => (
-          <CommandGroup key={root.categoryId}>
-            <CommandItem value={`${root.name} ${root.categoryId}`} onSelect={() => select(root.categoryId)}>
-              <span className="mr-2 inline-block size-2 shrink-0 rounded-full" style={{ backgroundColor: root.color }} />
-              <span className="mr-1.5">{root.icon}</span>
-              <span className="truncate font-medium">{root.name}</span>
-              <Check className={cn('ml-auto size-4', value === root.categoryId ? 'opacity-100' : 'opacity-0')} />
-            </CommandItem>
-            {root.children.map((child) => (
+        {tree.map((root, index) => (
+          <Fragment key={root.categoryId}>
+            {index > 0 && <CommandSeparator />}
+            <CommandGroup>
               <CommandItem
-                key={child.categoryId}
-                value={`${root.name} ${child.name} ${child.categoryId}`}
-                onSelect={() => select(child.categoryId)}
-                className="pl-8"
+                value={`${root.name} ${root.categoryId}`}
+                onSelect={() => select(root.categoryId)}
+                className="rounded-md bg-muted/40"
               >
-                <span className="mr-1.5">{child.icon}</span>
-                <span className="truncate">{child.name}</span>
-                <Check className={cn('ml-auto size-4', value === child.categoryId ? 'opacity-100' : 'opacity-0')} />
+                <span className="mr-2 inline-block size-2 shrink-0 rounded-full" style={{ backgroundColor: root.color }} />
+                <span className="mr-1.5">{root.icon}</span>
+                <span className="truncate font-semibold">{root.name}</span>
+                <Check className={cn('ml-auto size-4', value === root.categoryId ? 'opacity-100' : 'opacity-0')} />
               </CommandItem>
-            ))}
-          </CommandGroup>
+              {root.children.map((child) => (
+                <CommandItem
+                  key={child.categoryId}
+                  value={`${root.name} ${child.name} ${child.categoryId}`}
+                  onSelect={() => select(child.categoryId)}
+                  className="relative pl-7 before:absolute before:left-3.5 before:top-0 before:h-full before:border-l before:border-border"
+                >
+                  <span className="mr-1.5">{child.icon}</span>
+                  <span className="truncate text-muted-foreground">{child.name}</span>
+                  <Check className={cn('ml-auto size-4', value === child.categoryId ? 'opacity-100' : 'opacity-0')} />
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </Fragment>
         ))}
         {allowCreate && trimmed && !exactMatch && !loading && (
           <CommandGroup>

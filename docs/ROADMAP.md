@@ -54,3 +54,4 @@ Este documento apresenta o histórico de evolução, funcionalidades implementad
 - [ ] Adicionar suporte a fila de sincronização offline (Offline Sync Queue com IndexedDB).
 - [ ] Concluir migração dos últimos componentes JSX legados de `src/components/modules/` para TSX.
 - [ ] Dashboard configurável por usuário (estilo widgets): permitir que cada usuário escolha a posição e o tamanho dos blocos do dashboard (hero, métricas, mural, eventos etc.), provavelmente via preferências de layout persistidas no perfil e um grid engine dinâmico (ex.: `react-grid-layout`). Ideia surgida durante o teste visual do `/dashboard-v2` (bento grid); adiada por ser uma mudança maior que o escopo do teste inicial.
+- [ ] Validar scroll por toque do `Sheet` do `CategoryPicker` em dispositivo real e o picker no escopo Shopping. Detalhes e demais pendências em [`PENDING-overlay-scroll-category-picker.md`](PENDING-overlay-scroll-category-picker.md).

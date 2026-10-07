@@ -1,0 +1,71 @@
+/* Ícones de clima em camadas. Só `transform` e `opacity` são animados (compostos na GPU).
+   Unidades `cqw` = % da largura do ícone (container query), então tudo escala com `size`. */
+.wi { container-type: inline-size; position: relative; display: inline-block; flex: none; }
+.wi-g, .wi-full { position: absolute; inset: 0; width: 100%; height: 100%; }
+.wi-full { object-fit: contain; }
+.wi img { user-select: none; -webkit-user-drag: none; pointer-events: none; }
+.wi-g img { position: absolute; display: block; }
+
+/* Sol e parcialmente nublado: o grupo flutua e cada raio pulsa para fora, no seu tempo */
+.wi[data-mode="layers"] .wi-g[data-anim="float"] { animation: wi-float 4.6s ease-in-out infinite; }
+@keyframes wi-float { 0%, 100% { transform: translate(-0.7cqw, 0.4cqw); } 50% { transform: translate(0.7cqw, -1.4cqw); } }
+.wi img[data-role="ray"] { animation: wi-ray 2.4s ease-in-out infinite; animation-delay: calc(var(--k) / var(--n) * -2.4s); }
+@keyframes wi-ray {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(calc(var(--ux) * 2.8cqw), calc(var(--uy) * 2.8cqw)) scale(1.16); }
+}
+
+/* Nublado (peça única): deriva e "respira" como massa */
+.wi img[data-role="single"] { transform-origin: 50% 90%; animation: wi-single 5s ease-in-out infinite; }
+@keyframes wi-single {
+  0%, 100% { transform: translate(-1.2cqw, 0) scale(1, 1); }
+  50% { transform: translate(1.2cqw, -1.2cqw) scale(1.018, 0.985); }
+}
+
+/* Chuva e neve: a nuvem balança; gotas/flocos caem por trás dela */
+.wi img[data-role="cloud"] { animation: wi-bob 3.6s ease-in-out infinite; }
+@keyframes wi-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1.6cqw); } }
+.wi img[data-role="drop"] { animation: wi-drop 1.9s cubic-bezier(0.4, 0, 0.8, 0.6) infinite; animation-delay: calc(var(--k) * -0.62s); }
+@keyframes wi-drop {
+  0% { transform: translateY(-6cqw); opacity: 0; }
+  16% { opacity: 1; }
+  72% { opacity: 1; }
+  100% { transform: translateY(18cqw); opacity: 0; }
+}
+.wi img[data-role="flake"] { animation: wi-flake 3.6s ease-in-out infinite; animation-delay: calc(var(--k) * -1.2s); }
+@keyframes wi-flake {
+  0% { transform: translate(0, -6cqw) rotate(0deg); opacity: 0; }
+  14% { opacity: 1; }
+  50% { transform: translate(calc(var(--sw) * 1.8cqw), 6cqw) rotate(calc(var(--sw) * 70deg)); }
+  86% { opacity: 1; }
+  100% { transform: translate(calc(var(--sw) * -0.6cqw), 17cqw) rotate(calc(var(--sw) * 140deg)); opacity: 0; }
+}
+
+/* Tempestade: a nuvem treme; o raio dá dois clarões (brilho e halo são camadas próprias, só opacity) */
+.wi img[data-role="glow"], .wi img[data-role="hot"] { opacity: 0; }
+.wi img[data-role="stormcloud"] { animation: wi-rumble 3.6s ease-in-out infinite; }
+@keyframes wi-rumble {
+  0%, 54%, 76%, 100% { transform: translate(0, 0); }
+  56% { transform: translate(-0.6cqw, 0.3cqw); } 58% { transform: translate(0.7cqw, -0.2cqw); }
+  60% { transform: translate(-0.5cqw, 0.2cqw); } 62% { transform: translate(0.3cqw, 0); }
+  64% { transform: translate(0, 0); } 68% { transform: translate(0.4cqw, 0.2cqw); }
+  70% { transform: translate(-0.3cqw, 0); } 72% { transform: translate(0, 0); }
+}
+.wi img[data-role="bolt"] { transform-origin: var(--ox) var(--oy); animation: wi-bolt 3.6s linear infinite; }
+@keyframes wi-bolt {
+  0%, 54%, 100% { transform: scale(1); } 57% { transform: scale(1.03, 1.08); }
+  61% { transform: scale(1); } 66% { transform: scale(1.02, 1.05); } 72% { transform: scale(1); }
+}
+.wi img[data-role="hot"] { transform-origin: var(--ox) var(--oy); animation: wi-hot 3.6s linear infinite; }
+@keyframes wi-hot {
+  0%, 54%, 100% { opacity: 0; transform: scale(1); } 57% { opacity: 0.9; transform: scale(1.03, 1.08); }
+  61% { opacity: 0.1; transform: scale(1); } 64% { opacity: 0.85; transform: scale(1.02, 1.05); } 72% { opacity: 0; transform: scale(1); }
+}
+.wi img[data-role="glow"] { animation: wi-glow 3.6s linear infinite; }
+@keyframes wi-glow { 0%, 54%, 100% { opacity: 0; } 57% { opacity: 1; } 61% { opacity: 0.25; } 64% { opacity: 0.95; } 70% { opacity: 0.35; } 76% { opacity: 0; } }
+
+/* Fora da tela: pausa */
+.wi[data-paused="true"] .wi-g, .wi[data-paused="true"] .wi-g img { animation-play-state: paused; }
+
+/* Rede de segurança (o componente já troca para a imagem estática com movimento reduzido) */
+@media (prefers-reduced-motion: reduce) { .wi .wi-g, .wi .wi-g img { animation: none !important; } }

@@ -1,24 +1,14 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import {
-  Cloud,
-  CloudDrizzle,
-  CloudFog,
-  CloudLightning,
-  CloudRain,
-  CloudSnow,
-  CloudSun,
-  Flame,
-  Snowflake,
-  Sun,
-  Wind,
-} from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { AnimatedNumber, AnimatedText } from '@/components/common/AnimatedNumber';
+import { WeatherIcon, type WeatherIconName } from '@/components/common/WeatherIcon';
 import { Button } from '@/components/ui';
 import type { RefreshCWIconHandle } from '@/components/ui/animated-icons/refresh-cw';
 import { RefreshCWIcon } from '@/components/ui/animated-icons/refresh-cw';
+import { useTranslation } from '@/hooks/useTranslation';
 import { cn } from '@/lib/utils';
+import { owmToWeatherIcon } from '@/utils/weatherIcon';
 
 export interface GetWeatherIconParams {
   conditionCode?: string | null;
@@ -27,23 +17,22 @@ export interface GetWeatherIconParams {
   temperatureLabel?: string;
 }
 
-export type WeatherType =
-  | 'sun'
-  | 'cloud-sun'
-  | 'cloud'
-  | 'rain'
-  | 'drizzle'
-  | 'lightning'
-  | 'snow'
-  | 'fog'
-  | 'wind'
-  | 'hot'
-  | 'cold';
+export type WeatherType = WeatherIconName;
 
 export interface WeatherIconInfo {
-  Icon: typeof Sun;
   type: WeatherType;
+  iconName: WeatherIconName;
+  translationKey: string;
 }
+
+const WEATHER_TRANSLATIONS: Record<WeatherIconName, string> = {
+  clear: 'weather.conditions.sun',
+  'partly-cloudy': 'weather.conditions.cloudSun',
+  cloudy: 'weather.conditions.cloud',
+  rain: 'weather.conditions.rain',
+  thunderstorm: 'weather.conditions.lightning',
+  snow: 'weather.conditions.snow',
+};
 
 export function getWeatherIconInfo({
   conditionCode,
@@ -51,139 +40,76 @@ export function getWeatherIconInfo({
   temperature,
   temperatureLabel,
 }: GetWeatherIconParams): WeatherIconInfo {
-  const code = (conditionCode || '').toLowerCase().trim();
-  const desc = description.toLowerCase().trim();
+  let iconName: WeatherIconName = 'partly-cloudy';
 
-  // 1. Verificação por código numérico do OpenWeatherMap ou texto (conditionCode)
-  const codeNum = parseInt(code, 10);
-  if (!Number.isNaN(codeNum)) {
-    if (codeNum >= 200 && codeNum < 300) return { Icon: CloudLightning, type: 'lightning' };
-    if (codeNum >= 300 && codeNum < 400) return { Icon: CloudDrizzle, type: 'drizzle' };
-    if (codeNum >= 500 && codeNum < 600) return { Icon: CloudRain, type: 'rain' };
-    if (codeNum >= 600 && codeNum < 700) return { Icon: CloudSnow, type: 'snow' };
-    if (codeNum >= 700 && codeNum < 800) return { Icon: CloudFog, type: 'fog' };
-    if (codeNum === 800) return { Icon: Sun, type: 'sun' };
-    if (codeNum === 801 || codeNum === 802) return { Icon: CloudSun, type: 'cloud-sun' };
-    if (codeNum === 803 || codeNum === 804) return { Icon: Cloud, type: 'cloud' };
-  }
-
-  if (code.includes('thunder') || code.includes('storm') || code.includes('lightning'))
-    return { Icon: CloudLightning, type: 'lightning' };
-  if (code.includes('drizzle')) return { Icon: CloudDrizzle, type: 'drizzle' };
-  if (code.includes('rain') || code.includes('shower')) return { Icon: CloudRain, type: 'rain' };
-  if (code.includes('snow') || code.includes('ice') || code.includes('flurry'))
-    return { Icon: CloudSnow, type: 'snow' };
-  if (code.includes('fog') || code.includes('mist') || code.includes('haze'))
-    return { Icon: CloudFog, type: 'fog' };
-  if (code.includes('wind') || code.includes('windy') || code.includes('breeze'))
-    return { Icon: Wind, type: 'wind' };
-  if (code.includes('clear') || code === 'sun' || code === 'sunny')
-    return { Icon: Sun, type: 'sun' };
-  if (code === 'cloudy' || code === 'overcast') return { Icon: Cloud, type: 'cloud' };
-  if (code.includes('partly') || code.includes('cloud'))
-    return { Icon: CloudSun, type: 'cloud-sun' };
-  if (code.includes('hot')) return { Icon: Flame, type: 'hot' };
-  if (code.includes('cold')) return { Icon: Snowflake, type: 'cold' };
-
-  // 2. Verificação pela descrição em português / inglês
-  if (
-    desc.includes('tempestade') ||
-    desc.includes('trovoada') ||
-    desc.includes('raio') ||
-    desc.includes('tormenta')
-  ) {
-    return { Icon: CloudLightning, type: 'lightning' };
-  }
-  if (desc.includes('garoa') || desc.includes('chuva fina') || desc.includes('chuvisco')) {
-    return { Icon: CloudDrizzle, type: 'drizzle' };
-  }
-  if (
-    desc.includes('chuva') ||
-    desc.includes('chuvoso') ||
-    desc.includes('temporal') ||
-    desc.includes('pancada') ||
-    desc.includes('aguaceiro')
-  ) {
-    return { Icon: CloudRain, type: 'rain' };
-  }
-  if (
-    desc.includes('neve') ||
-    desc.includes('geada') ||
-    desc.includes('granizo') ||
-    desc.includes('gelo')
-  ) {
-    return { Icon: CloudSnow, type: 'snow' };
-  }
-  if (
-    desc.includes('neblina') ||
-    desc.includes('nevoeiro') ||
-    desc.includes('cerração') ||
-    desc.includes('névoa')
-  ) {
-    return { Icon: CloudFog, type: 'fog' };
-  }
-  if (
-    desc.includes('vento') ||
-    desc.includes('ventania') ||
-    desc.includes('ventoso') ||
-    desc.includes('brisa')
-  ) {
-    return { Icon: Wind, type: 'wind' };
-  }
-  if (
-    desc.includes('muito quente') ||
-    desc.includes('calor extremo') ||
-    desc.includes('calorão') ||
-    desc.includes('canícula')
-  ) {
-    return { Icon: Flame, type: 'hot' };
-  }
-  if (desc.includes('muito frio') || desc.includes('congelante')) {
-    return { Icon: Snowflake, type: 'cold' };
-  }
-  if (
-    desc.includes('parcialmente') ||
-    desc.includes('poucas nuvens') ||
-    desc.includes('sol entre nuvens')
-  ) {
-    return { Icon: CloudSun, type: 'cloud-sun' };
-  }
-  if (
-    desc.includes('nublado') ||
-    desc.includes('encoberto') ||
-    desc.includes('muitas nuvens') ||
-    desc.includes('nuvens')
-  ) {
-    return { Icon: Cloud, type: 'cloud' };
-  }
-  if (
-    desc.includes('ensolarado') ||
-    desc.includes('sol') ||
-    desc.includes('céu limpo') ||
-    desc.includes('limpo')
-  ) {
-    return { Icon: Sun, type: 'sun' };
-  }
-
-  // 3. Fallback por faixa de temperatura
-  let parsedTemp = temperature;
-  if ((parsedTemp === undefined || parsedTemp === null) && temperatureLabel) {
-    const match = temperatureLabel.match(/-?\d+(\.\d+)?/);
-    if (match) {
-      parsedTemp = parseFloat(match[0]);
+  if (conditionCode) {
+    iconName = owmToWeatherIcon(conditionCode);
+  } else if (description) {
+    const desc = description.toLowerCase().trim();
+    if (
+      desc.includes('tempestade') ||
+      desc.includes('trovoada') ||
+      desc.includes('raio') ||
+      desc.includes('tormenta')
+    ) {
+      iconName = 'thunderstorm';
+    } else if (
+      desc.includes('garoa') ||
+      desc.includes('chuva') ||
+      desc.includes('chuvoso') ||
+      desc.includes('temporal') ||
+      desc.includes('pancada') ||
+      desc.includes('aguaceiro')
+    ) {
+      iconName = 'rain';
+    } else if (
+      desc.includes('neve') ||
+      desc.includes('geada') ||
+      desc.includes('granizo') ||
+      desc.includes('gelo')
+    ) {
+      iconName = 'snow';
+    } else if (
+      desc.includes('ensolarado') ||
+      desc.includes('sol') ||
+      desc.includes('céu limpo') ||
+      desc.includes('limpo') ||
+      desc.includes('quente')
+    ) {
+      iconName = 'clear';
+    } else if (desc.includes('parcialmente') || desc.includes('poucas nuvens')) {
+      iconName = 'partly-cloudy';
+    } else if (
+      desc.includes('nublado') ||
+      desc.includes('encoberto') ||
+      desc.includes('nuvens') ||
+      desc.includes('neblina')
+    ) {
+      iconName = 'cloudy';
+    } else {
+      iconName = owmToWeatherIcon(description);
+    }
+  } else {
+    let parsedTemp = temperature;
+    if ((parsedTemp === undefined || parsedTemp === null) && temperatureLabel) {
+      const match = temperatureLabel.match(/-?\d+(\.\d+)?/);
+      if (match) parsedTemp = parseFloat(match[0]);
+    }
+    if (typeof parsedTemp === 'number' && !Number.isNaN(parsedTemp)) {
+      if (parsedTemp >= 32) iconName = 'clear';
+      else if (parsedTemp <= 2) iconName = 'snow';
     }
   }
 
-  if (typeof parsedTemp === 'number' && !Number.isNaN(parsedTemp)) {
-    if (parsedTemp >= 35) return { Icon: Flame, type: 'hot' };
-    if (parsedTemp <= 2) return { Icon: Snowflake, type: 'cold' };
-  }
-
-  return { Icon: CloudSun, type: 'cloud-sun' };
+  return {
+    type: iconName,
+    iconName,
+    translationKey: WEATHER_TRANSLATIONS[iconName] || 'weather.conditions.cloudSun',
+  };
 }
 
-export function getWeatherIcon(params: GetWeatherIconParams) {
-  return getWeatherIconInfo(params).Icon;
+export function getWeatherIcon(params: GetWeatherIconParams): WeatherIconName {
+  return getWeatherIconInfo(params).iconName;
 }
 
 interface AnimatedWeatherIconProps {
@@ -192,102 +118,24 @@ interface AnimatedWeatherIconProps {
 }
 
 function AnimatedWeatherIcon({ info, className }: AnimatedWeatherIconProps) {
-  const { Icon, type } = info;
-  const prefersReducedMotion = useReducedMotion();
-
-  // Animações sutis e acolhedoras de acordo com a condição climática
-  const getMotionAnimation = () => {
-    if (prefersReducedMotion) return {};
-
-    switch (type) {
-      case 'sun':
-        return {
-          rotate: [0, 360],
-          scale: [1, 1.05, 1],
-          transition: {
-            rotate: { duration: 36, repeat: Infinity, ease: 'linear' },
-            scale: { duration: 4, repeat: Infinity, ease: 'easeInOut' },
-          },
-        };
-      case 'cloud':
-      case 'cloud-sun':
-      case 'fog':
-        return {
-          y: [0, -2.5, 0],
-          transition: {
-            duration: 3.8,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          },
-        };
-      case 'rain':
-      case 'drizzle':
-        return {
-          y: [0, -1.5, 0],
-          rotate: [0, -1, 1, 0],
-          transition: {
-            duration: 2.6,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          },
-        };
-      case 'lightning':
-        return {
-          scale: [1, 1.06, 0.98, 1],
-          transition: {
-            duration: 3,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          },
-        };
-      case 'snow':
-      case 'cold':
-        return {
-          rotate: [-4, 4, -4],
-          transition: {
-            duration: 5,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          },
-        };
-      case 'wind':
-        return {
-          x: [-2, 2, -2],
-          transition: {
-            duration: 2.8,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          },
-        };
-      case 'hot':
-        return {
-          scale: [1, 1.08, 1],
-          y: [0, -1.5, 0],
-          transition: {
-            duration: 2,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          },
-        };
-      default:
-        return {};
-    }
-  };
+  const { iconName, translationKey } = info;
+  const { t } = useTranslation();
 
   return (
     <motion.div
-      key={type}
+      key={iconName}
       initial={{ opacity: 0, scale: 0.85 }}
-      animate={{ opacity: 1, scale: 1, ...getMotionAnimation() }}
+      animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.85 }}
       transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
       className="flex items-center justify-center shrink-0"
     >
-      <Icon
-        className={cn('shrink-0 text-foreground transition-colors duration-300', className)}
-        size={32}
-        strokeWidth={1.25}
-        aria-hidden="true"
+      <WeatherIcon
+        name={iconName}
+        size={44}
+        animated={true}
+        label={t(translationKey)}
+        className={className}
       />
     </motion.div>
   );
@@ -295,7 +143,6 @@ function AnimatedWeatherIcon({ info, className }: AnimatedWeatherIconProps) {
 
 interface WeatherWidgetProps {
   mode?: 'display' | 'onboarding';
-  // display mode props
   temperatureLabel?: string;
   description?: string;
   city?: string;
@@ -304,7 +151,6 @@ interface WeatherWidgetProps {
   isLoading?: boolean;
   isError?: boolean;
   onRefresh?: () => void | Promise<void>;
-  // onboarding mode props
   onEnable?: () => void;
   className?: string;
 }
@@ -322,6 +168,7 @@ export default function WeatherWidget({
   onEnable,
   className,
 }: WeatherWidgetProps) {
+  const { t, language } = useTranslation();
   const [now, setNow] = useState(() => new Date());
   const [requesting, setRequesting] = useState(false);
   const [isLocalRefreshing, setIsLocalRefreshing] = useState(false);
@@ -335,8 +182,8 @@ export default function WeatherWidget({
   }, []);
 
   const time = useMemo(
-    () => now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-    [now]
+    () => now.toLocaleTimeString(language, { hour: '2-digit', minute: '2-digit' }),
+    [now, language]
   );
 
   const weatherIconInfo = useMemo(
@@ -344,7 +191,13 @@ export default function WeatherWidget({
     [conditionCode, description, temperature, temperatureLabel]
   );
 
-  // Extrai valor numérico e sufixo da temperatura (ex: "24°C" -> value: 24, suffix: "°C")
+  const displayDescription = useMemo(() => {
+    if (description && description.trim()) {
+      return description;
+    }
+    return t(weatherIconInfo.translationKey);
+  }, [description, t, weatherIconInfo.translationKey]);
+
   const parsedTemperature = useMemo(() => {
     if (typeof temperature === 'number' && !Number.isNaN(temperature)) {
       const suffix = temperatureLabel?.includes('°C')
@@ -365,7 +218,6 @@ export default function WeatherWidget({
     return null;
   }, [temperature, temperatureLabel]);
 
-  // Garante tempo mínimo de feedback tátil (~600ms) mesmo que a resposta em cache demore 24ms
   const handleRefresh = async () => {
     if (!onRefresh || isLoading || isLocalRefreshing) return;
 
@@ -403,18 +255,13 @@ export default function WeatherWidget({
         )}
       >
         <div className="flex items-center gap-3">
-          <CloudSun
-            className="shrink-0 text-foreground"
-            size={28}
-            strokeWidth={1.25}
-            aria-hidden="true"
-          />
+          <WeatherIcon name="partly-cloudy" size={36} animated={true} />
           <div className="flex flex-col gap-0.5">
             <span className="font-ui text-sm font-semibold leading-none text-foreground">
-              Ative o clima
+              {t('weather.onboarding.title')}
             </span>
             <span className="font-ui text-muted-foreground" style={{ fontSize: 'var(--text-xs)' }}>
-              Veja a temperatura aqui
+              {t('weather.onboarding.subtitle')}
             </span>
           </div>
         </div>
@@ -429,10 +276,10 @@ export default function WeatherWidget({
           {requesting ? (
             <>
               <RefreshCWIcon size={14} className="mr-1.5 animate-spin" aria-hidden="true" />
-              Aguardando...
+              {t('weather.onboarding.waiting')}
             </>
           ) : (
-            'Usar minha localização'
+            t('weather.onboarding.button')
           )}
         </Button>
       </div>
@@ -491,11 +338,11 @@ export default function WeatherWidget({
             style={{ fontSize: 'var(--text-xs)' }}
           >
             {isBusy ? (
-              <AnimatedText animation="smooth">Atualizando...</AnimatedText>
+              <AnimatedText animation="smooth">{t('weather.status.updating')}</AnimatedText>
             ) : isError ? (
-              <span>Clima indisponível</span>
+              <span>{t('weather.status.unavailable')}</span>
             ) : (
-              <AnimatedText animation="smooth">{description}</AnimatedText>
+              <AnimatedText animation="smooth">{displayDescription}</AnimatedText>
             )}
           </div>
         </div>
@@ -526,15 +373,15 @@ export default function WeatherWidget({
             disabled={isBusy}
             onMouseEnter={() => !isBusy && refreshIconRef.current?.startAnimation()}
             onMouseLeave={() => refreshIconRef.current?.stopAnimation()}
-            aria-label="Atualizar clima"
-            title="Atualizar clima"
+            aria-label={t('weather.actions.refresh')}
+            title={t('weather.actions.refresh')}
           >
             <RefreshCWIcon
               ref={refreshIconRef}
               size={14}
               className={cn(isBusy && 'animate-spin text-primary')}
             />
-            <span className="ml-1">Atualizar</span>
+            <span className="ml-1">{t('weather.actions.refreshShort')}</span>
           </Button>
         )}
       </div>

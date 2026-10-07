@@ -1,0 +1,636 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ninho — Domestic Sanctuary</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Tokens copiados de src/index.css (.dark) e tailwind.config.ts. Nada inventado. */
+:root{
+  --background:#141312; --foreground:#f5f5f4;
+  --card:#1e1c1a; --popover:#252321;
+  --primary:#e07e59; --primary-foreground:#260f04;
+  --secondary:#2a2724; --muted:#262422; --muted-foreground:#a8a29e;
+  --destructive:#f87171; --success:#4ade80; --input:#292724; --ring:#e07e59;
+  --border:rgba(255,255,255,.09);
+  --sc-lowest:#0e0d0c; --sc-low:#1e1c1a; --sc:#22201e; --sc-high:#282623; --sc-highest:#32302c;
+  --radius-xs:.25rem; --radius-sm:.375rem; --radius-md:.5rem; --radius-lg:.75rem; --radius-xl:1rem; --radius-2xl:1.25rem; --radius-full:9999px;
+  --shadow-subtle:0 1px 2px 0 rgba(0,0,0,.45);
+  --shadow-card:0 1px 3px 0 rgba(0,0,0,.55), inset 0 1px 0 0 rgba(255,255,255,.05);
+  --shadow-popover:0 12px 28px -4px rgba(0,0,0,.75), inset 0 1px 0 0 rgba(255,255,255,.06);
+  --shadow-modal:0 24px 44px -6px rgba(0,0,0,.85), inset 0 1px 0 0 rgba(255,255,255,.08);
+  --text-xs:clamp(.65rem,.6rem + .25vw,.75rem);
+  --text-sm:clamp(.8rem,.75rem + .25vw,.875rem);
+  --text-base:clamp(.9rem,.85rem + .25vw,1rem);
+  --text-lg:clamp(1rem,.95rem + .3vw,1.125rem);
+  --text-xl:clamp(1.1rem,1rem + .5vw,1.25rem);
+  --text-2xl:clamp(1.25rem,1.1rem + .75vw,1.5rem);
+  --text-3xl:clamp(1.5rem,1.25rem + 1.25vw,2rem);
+  --text-4xl:clamp(1.875rem,1.5rem + 1.75vw,2.5rem);
+  --ease-out-quart:cubic-bezier(.25,1,.5,1);
+  --display:'Plus Jakarta Sans',sans-serif; --editorial:'Manrope','Plus Jakarta Sans',sans-serif; --ui:'Inter',-apple-system,'Segoe UI',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition-duration:.01ms!important}}
+body{background:var(--background);color:var(--foreground);font:400 var(--text-base)/1.6 var(--ui);-webkit-font-smoothing:antialiased}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
+.wrap{max-width:1160px;margin:0 auto;padding:0 20px}
+.eyebrow{font:700 11px/1 var(--ui);letter-spacing:.14em;text-transform:uppercase;color:var(--primary)}
+.muted{color:var(--muted-foreground)}
+code,.mono{font:500 .8em/1.4 ui-monospace,Menlo,Consolas,monospace}
+code{background:var(--sc-lowest);padding:.1em .4em;border-radius:var(--radius-sm)}
+.tbd{display:inline-block;font:700 10px/1 var(--ui);letter-spacing:.1em;text-transform:uppercase;color:var(--foreground);background:var(--sc-highest);border:1px dashed #a8a29e;border-radius:var(--radius-xs);padding:4px 6px}
+
+/* topo */
+.top{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--background) 88%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+.top .wrap{display:flex;gap:4px;overflow-x:auto;padding-top:10px;padding-bottom:10px;scrollbar-width:none}
+.top a{white-space:nowrap;text-decoration:none;font:500 12px/1 var(--ui);color:#a8a29e;padding:9px 12px;border-radius:var(--radius-lg);transition:background .15s,color .15s}
+.top a:hover{background:var(--sc);color:var(--foreground)}
+.top a.on{background:color-mix(in srgb,var(--primary) 15%,transparent);color:var(--primary);font-weight:600}
+
+/* hero */
+.hero{padding:88px 0 72px}
+.hero h1{font:800 clamp(3rem,9vw,7rem)/.95 var(--display);letter-spacing:-.04em;margin:18px 0 24px}
+.hero p{max-width:60ch;font-size:var(--text-lg);color:var(--muted-foreground)}
+.hero .num{color:var(--primary)}
+
+/* seções */
+section.ds{border-top:1px solid var(--border);padding:72px 0}
+.ds-head{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;margin-bottom:40px}
+.ds-head .tag{font:700 12px/1 var(--ui);letter-spacing:.14em;text-transform:uppercase;color:var(--primary)}
+.ds-head h2{font:800 clamp(2.25rem,6vw,4.25rem)/1 var(--display);letter-spacing:-.035em}
+.ds-head p{max-width:64ch;color:var(--muted-foreground);margin-top:8px}
+h3{font:700 var(--text-xl)/1.3 var(--display);margin:48px 0 6px;letter-spacing:-.01em}
+h3 + .sub{color:var(--muted-foreground);font-size:var(--text-sm);margin-bottom:20px;max-width:70ch}
+h4{font:700 11px/1 var(--ui);letter-spacing:.12em;text-transform:uppercase;color:var(--muted-foreground);margin:24px 0 10px}
+
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr))}
+.panel{background:var(--sc-low);border-radius:var(--radius-xl);padding:24px}
+.panel.deep{background:var(--sc-lowest)}
+.callout{background:var(--sc);border-radius:var(--radius-lg);padding:16px 18px;border-left:3px solid #a8a29e}
+.callout b{font-weight:700}
+.callout.warn{border-left-color:#fbd16b}
+.callout ul{padding-left:18px;margin-top:6px}
+
+ul.rules{list-style:none;display:grid;gap:10px}
+ul.rules li{background:var(--sc-low);border-radius:var(--radius-lg);padding:14px 16px;display:grid;grid-template-columns:auto 1fr;gap:12px}
+ul.rules li > span:first-child{font:700 12px/1.7 var(--ui);color:var(--primary);font-variant-numeric:tabular-nums}
+.do,.dont{font:700 11px/1 var(--ui);letter-spacing:.1em;text-transform:uppercase}
+.do{color:var(--success)} .dont{color:var(--destructive)}
+
+/* cor */
+.sw{border-radius:var(--radius-lg);overflow:hidden;background:var(--sc-low)}
+.sw .chip{height:76px;display:flex;align-items:flex-end;padding:8px 10px;font:700 12px/1 var(--ui)}
+.sw .meta{padding:10px 12px 12px;display:grid;gap:2px}
+.sw .meta b{font:600 13px/1.3 var(--ui)}
+.sw .meta span{font-size:12px;color:var(--muted-foreground)}
+.sw .meta .mono{color:var(--foreground)}
+.scale{display:grid;grid-template-columns:repeat(10,1fr);border-radius:var(--radius-lg);overflow:hidden}
+.scale div{padding:36px 6px 8px;font:600 10px/1.3 var(--ui);text-align:center}
+.scale small{display:block;font-weight:500;opacity:.9;margin-top:2px;font-size:9px}
+@media(max-width:720px){.scale{grid-template-columns:repeat(5,1fr)}}
+
+table{width:100%;border-collapse:collapse;font-size:var(--text-sm)}
+th{font:700 11px/1 var(--ui);letter-spacing:.1em;text-transform:uppercase;color:var(--muted-foreground);text-align:left;padding:0 12px 12px}
+td{padding:12px;border-top:1px solid var(--border);vertical-align:top}
+.tw{overflow-x:auto;background:var(--sc-low);border-radius:var(--radius-xl);padding:18px 8px 6px}
+.pass{color:var(--success);font-weight:700}.fail{color:var(--destructive);font-weight:700}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;vertical-align:baseline}
+
+/* tipografia */
+.type-row{display:grid;grid-template-columns:150px 1fr;gap:20px;align-items:baseline;padding:20px 0;border-top:1px solid var(--border)}
+.type-row .k{font:600 12px/1.5 var(--ui);color:var(--muted-foreground)}
+.type-row .k b{display:block;color:var(--primary);letter-spacing:.08em;text-transform:uppercase;font-size:11px}
+@media(max-width:640px){.type-row{grid-template-columns:1fr;gap:6px}}
+
+/* fundamentos */
+.step{display:flex;align-items:center;gap:14px;padding:6px 0}
+.step i{display:block;background:var(--primary);height:12px;border-radius:2px;flex:none}
+.rad{height:84px;background:var(--sc-high);border:1px solid var(--border);display:flex;align-items:flex-end;padding:8px 10px;font:600 12px/1.3 var(--ui)}
+.layers{display:flex;flex-direction:column;gap:0}
+.layer{padding:18px 20px;font:600 13px/1.4 var(--ui);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+
+/* componentes: réplicas dos tokens/classes do código */
+.stage{background:var(--background);border-radius:var(--radius-xl);padding:24px;display:grid;gap:14px}
+.states{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;align-items:start}
+.st{display:grid;gap:8px;justify-items:start}
+.st > small{font:700 10px/1 var(--ui);letter-spacing:.12em;text-transform:uppercase;color:var(--muted-foreground)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:36px;padding:0 16px;border:0;border-radius:var(--radius-lg);font:500 var(--text-sm)/1 var(--ui);cursor:pointer;transition:all .15s var(--ease-out-quart);color:inherit;background:none}
+.btn:active{transform:scale(.96)}
+.btn svg{width:16px;height:16px}
+.btn.primary{background:var(--primary);color:var(--primary-foreground);box-shadow:var(--shadow-subtle)}
+.btn.primary:hover,.btn.primary.is-hover{background:color-mix(in srgb,var(--primary) 90%,transparent);box-shadow:var(--shadow-card)}
+.btn.secondary{background:var(--secondary);color:#f5f5f4;box-shadow:var(--shadow-subtle)}
+.btn.secondary:hover,.btn.secondary.is-hover{background:color-mix(in srgb,var(--secondary) 80%,transparent)}
+.btn.ghost:hover,.btn.ghost.is-hover{background:color-mix(in srgb,var(--muted) 60%,transparent)}
+.btn.is-focus{outline:2px solid color-mix(in srgb,var(--primary) 40%,transparent);outline-offset:2px}
+.btn:disabled{opacity:.5;pointer-events:none}
+.btn:focus-visible{outline:2px solid color-mix(in srgb,var(--primary) 40%,transparent);outline-offset:2px}
+.field{display:grid;gap:6px;width:100%;max-width:260px}
+.field label{font:700 10px/1 var(--ui);letter-spacing:.1em;text-transform:uppercase;color:var(--muted-foreground)}
+.inp{height:36px;width:100%;padding:0 12px;border-radius:var(--radius-lg);border:1px solid rgba(255,255,255,.07);background:color-mix(in srgb,var(--background) 60%,transparent);color:var(--foreground);font:400 var(--text-sm) var(--ui);box-shadow:var(--shadow-subtle);transition:all .15s}
+.inp::placeholder{color:color-mix(in srgb,var(--muted-foreground) 70%,transparent)}
+.inp:hover,.inp.is-hover{border-color:var(--border)}
+.inp:focus,.inp.is-focus{outline:0;background:var(--background);border-color:color-mix(in srgb,var(--primary) 80%,transparent);box-shadow:0 0 0 2px color-mix(in srgb,var(--primary) 20%,transparent)}
+.inp:disabled{opacity:.5;cursor:not-allowed}
+.pill{display:inline-flex;align-items:center;font:700 10px/1 var(--ui);padding:5px 7px;border-radius:var(--radius-md);gap:6px}
+.pill.urg{background:color-mix(in srgb,#54240e 40%,var(--background));color:#eca487}
+.pill.alta{background:color-mix(in srgb,#583b02 40%,var(--background));color:#fbd16b}
+.pill.media{background:color-mix(in srgb,#6e591c 30%,var(--background));color:#fde49e}
+.pill.baixa{background:color-mix(in srgb,#0e2a19 40%,var(--background));color:#91c0a1}
+.pill i{width:6px;height:6px;border-radius:50%;display:block}
+.cat{display:inline-flex;align-items:center;font:500 10px/1 var(--ui);padding:5px 8px;border-radius:var(--radius-full);background:color-mix(in srgb,var(--muted) 60%,transparent);color:var(--muted-foreground)}
+.cat.warm{background:color-mix(in srgb,var(--primary) 15%,transparent);color:var(--primary)}
+.cat.out{border:1px solid var(--border);background:color-mix(in srgb,var(--card) 60%,transparent);color:var(--foreground)}
+.tab{display:flex;align-items:center;gap:10px;height:32px;width:200px;padding:0 10px;border-radius:var(--radius-lg);font:500 12px/1 var(--ui);color:color-mix(in srgb,#f5f5f4 70%,transparent);background:var(--sc-lowest);border:0;transition:all .15s;cursor:pointer}
+.tab svg{width:14px;height:14px;color:color-mix(in srgb,#f5f5f4 50%,transparent)}
+.tab:hover,.tab.is-hover{background:color-mix(in srgb,var(--sc-low) 50%,var(--sc-lowest));color:#f5f5f4}
+.tab.on{background:color-mix(in srgb,var(--primary) 15%,var(--sc-lowest));color:var(--primary);font-weight:600}
+.tab.on svg{color:var(--primary)}
+.tab.is-focus{outline:2px solid var(--ring);outline-offset:2px}
+.tab.dis{opacity:.5;pointer-events:none}
+.task{display:flex;gap:12px;align-items:flex-start;width:100%;max-width:380px;padding:12px 14px;border-radius:var(--radius-xl);background:var(--card);border:1px solid color-mix(in srgb,var(--border) 100%,transparent);box-shadow:var(--shadow-subtle);transition:all .15s}
+.task:hover,.task.is-hover{box-shadow:var(--shadow-card);border-color:rgba(255,255,255,.14)}
+.task.is-focus{outline:2px solid var(--ring);outline-offset:2px}
+.task.done{background:color-mix(in srgb,var(--muted) 15%,var(--card));opacity:.75}
+.task.dis{opacity:.5}
+.chk{flex:none;width:24px;height:24px;margin-top:2px;border-radius:50%;border:2px solid rgba(255,255,255,.3);background:var(--card);display:grid;place-items:center}
+.chk.ok{background:#10b981;border-color:#10b981;color:#fff}
+.chk.ok svg{width:13px;height:13px}
+.task .t{font:600 var(--text-sm)/1.3 var(--ui);letter-spacing:-.01em}
+.task.done .t{text-decoration:line-through;color:var(--muted-foreground)}
+.task .m{display:flex;gap:6px;align-items:center;margin-top:6px;font:500 12px/1 var(--ui);color:var(--muted-foreground);flex-wrap:wrap}
+.shop{display:flex;align-items:center;gap:12px;width:100%;max-width:380px;padding:10px 16px;border-radius:var(--radius-lg);background:var(--card);transition:background .15s}
+.shop:hover,.shop.is-hover{background:color-mix(in srgb,var(--muted) 35%,var(--card))}
+.shop.is-focus{outline:2px solid var(--ring);outline-offset:2px}
+.shop.dis{opacity:.5}
+.shop.bought{opacity:.75}
+.shop .chk{margin:0;width:28px;height:28px}
+.shop .n{font:600 var(--text-sm)/1.3 var(--ui)}
+.shop.bought .n{text-decoration:line-through;color:var(--muted-foreground)}
+.shop .q{font:600 12px/1 var(--ui);font-variant-numeric:tabular-nums}
+
+/* ícones */
+.clay{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:14px}
+.clay figure{background:var(--sc-low);border-radius:var(--radius-xl);padding:18px 10px 12px;text-align:center}
+.clay img{width:72px;height:72px;object-fit:contain;display:block;margin:0 auto 10px}
+.clay figcaption{font:500 11px/1.3 var(--ui);color:var(--muted-foreground);word-break:break-all}
+.lu{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:12px}
+.lu div{background:var(--sc-low);border-radius:var(--radius-lg);padding:16px 8px;text-align:center;font:500 11px/1.3 var(--ui);color:var(--muted-foreground)}
+.lu svg{width:24px;height:24px;stroke:var(--foreground);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:block;margin:0 auto 8px}
+
+footer{border-top:1px solid var(--border);padding:40px 0 80px;color:var(--muted-foreground);font-size:var(--text-sm)}
+</style>
+</head>
+<body>
+
+<nav class="top" aria-label="Seções do sistema de design">
+  <div class="wrap">
+    <a href="#ds-00">00 Visão geral</a><a href="#ds-01">01 Cor</a><a href="#ds-02">02 Tipografia</a><a href="#ds-03">03 Fundamentos</a><a href="#ds-04">04 Uso</a><a href="#ds-05">05 Componentes</a><a href="#ds-06">06 Iconografia</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="eyebrow">Ninho · Sistema de Design</span>
+    <h1>Domestic<br>Sanctuary<span class="num">.</span></h1>
+    <p>Um lar não é um painel de controle. O Ninho organiza tarefas, compras, finanças, avisos e agenda da família com uma estética quente, editorial e calma — feita para ser aberta todo dia, de pé na cozinha, com uma mão só.</p>
+  </div>
+</header>
+
+<main>
+<!-- ===================== 00 ===================== -->
+<section class="ds" id="ds-00"><div class="wrap">
+  <div class="ds-head"><span class="tag">DS — 00</span><h2>Visão Geral</h2><p>Princípios e regras gerais. Todos os valores desta página vêm de <code>src/index.css</code> (bloco <code>.dark</code>) e <code>tailwind.config.ts</code>. Onde o código não define, está marcado <span class="tbd">A DEFINIR</span>.</p></div>
+
+  <div class="grid g4">
+    <div class="panel"><span class="eyebrow">01</span><h3 style="margin-top:10px">Calor</h3><p class="muted" style="font-size:var(--text-sm)">Neutros de subtom marrom, nunca cinza frio. Superfícies suaves, cantos arredondados, ícones de argila.</p></div>
+    <div class="panel"><span class="eyebrow">02</span><h3 style="margin-top:10px">Clareza no dia a dia</h3><p class="muted" style="font-size:var(--text-sm)">Uma ação principal por tela. Texto curto, verbos claros. Quem está cansado entende de relance.</p></div>
+    <div class="panel"><span class="eyebrow">03</span><h3 style="margin-top:10px">Mobile primeiro</h3><p class="muted" style="font-size:var(--text-sm)">Tipografia e espaçamento fluidos (<code>clamp</code>), áreas de toque generosas, safe-area respeitada (<code>.pb-safe</code>).</p></div>
+    <div class="panel"><span class="eyebrow">04</span><h3 style="margin-top:10px">Acessibilidade</h3><p class="muted" style="font-size:var(--text-sm)">Contraste mínimo WCAG AA, foco visível, <code>prefers-reduced-motion</code> respeitado, estado nunca só por cor.</p></div>
+  </div>
+
+  <h3>Regras gerais de uso</h3>
+  <p class="sub">Normativas. As marcadas com ⚠ divergem do código atual e estão detalhadas abaixo.</p>
+  <ul class="rules">
+    <li><span>R1 ⚠</span><div><b>O acento aparece em exatamente três contextos:</b> (1) estado ativo da navegação, (2) rótulos <i>eyebrow</i>, (3) destaques numéricos. Em qualquer outro lugar, use neutros.</div></li>
+    <li><span>R2</span><div><b>Hierarquia por camadas tonais.</b> Quanto mais "perto" do usuário, mais clara a superfície (<code>surface-container-lowest → highest</code>). Bordas e sombras são reforço, não base.</div></li>
+    <li><span>R3</span><div><b>Sem azul como cor de marca.</b> Azul só em estados informativos do sistema (ex.: toast <i>info</i>, coluna "Em Andamento").</div></li>
+    <li><span>R4</span><div><b>Todo texto de interface passa por i18n</b> (<code>pt-BR</code>, <code>en-US</code>, <code>es-ES</code>). A fonte de verdade é pt-BR.</div></li>
+    <li><span>R5</span><div><b>Movimento discreto.</b> Easing <code>--ease-out-quart</code>, durações 150/250/400/600 ms. Sem bounce exagerado.</div></li>
+  </ul>
+
+  <h3>Reconciliação: briefing × código</h3>
+  <p class="sub">O briefing descreve valores que ainda não existem no código. Esta documentação usa o código; as diferenças ficam registradas aqui para decisão.</p>
+  <div class="tw"><table>
+    <thead><tr><th>Item</th><th>Briefing</th><th>Código hoje</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>Acento</td><td><code>#C8943A</code> âmbar</td><td><code>--primary</code> <code>#e07e59</code> (terracota). Âmbar mais próximo: <code>honey-500</code> <code>#e5a520</code></td><td><span class="tbd">A DEFINIR</span></td></tr>
+      <tr><td>Fundo base</td><td><code>#0A0908</code></td><td><code>--background</code> <code>#141312</code>; o mais escuro é <code>#0e0d0c</code></td><td><span class="tbd">A DEFINIR</span></td></tr>
+      <tr><td>Fundo mais claro</td><td><code>#1E1C19</code></td><td><code>--card</code> <code>#1e1c1a</code> (quase igual); topo da escala <code>#32302c</code></td><td>Próximo</td></tr>
+      <tr><td>Texto</td><td><code>#F0EDE6</code></td><td><code>--foreground</code> <code>#f5f5f4</code></td><td><span class="tbd">A DEFINIR</span></td></tr>
+      <tr><td>Uso do acento (R1)</td><td>3 contextos</td><td><code>--primary</code> também em botões, foco, badges "warm", checkbox hover e links</td><td>Código excede a regra</td></tr>
+      <tr><td>Bordas</td><td>Evitar</td><td>Cards, inputs e botões outline usam <code>border-border</code> (branco 9%)</td><td>Código excede a regra</td></tr>
+      <tr><td>Cores de módulo</td><td>6 cores de identidade</td><td>Não existem tokens de módulo</td><td><span class="tbd">A DEFINIR</span></td></tr>
+      <tr><td>Modo claro</td><td>Fora do escopo</td><td>Existe (<code>:root</code>, terracota <code>#c05621</code>); não documentado aqui</td><td>Fora do escopo</td></tr>
+    </tbody>
+  </table></div>
+</div></section>
+
+<!-- ===================== 01 ===================== -->
+<section class="ds" id="ds-01"><div class="wrap">
+  <div class="ds-head"><span class="tag">DS — 01</span><h2>Cor</h2><p>Duas camadas: a paleta primitiva (valores brutos) e as funções semânticas (o que cada valor faz). Componentes só devem consumir as funções semânticas.</p></div>
+
+  <h3>Paleta primitiva</h3>
+  <h4>Neutros quentes — modo escuro</h4>
+  <div class="grid g4" id="neutrals"></div>
+
+  <h4>Texto</h4>
+  <div class="grid g4" id="texts"></div>
+
+  <h4>Acento — terracota (<code>tailwind.config.ts</code>)</h4>
+  <div class="scale" id="sc-terracotta"></div>
+  <h4>Mel (honey) — avisos e prioridade</h4>
+  <div class="scale" id="sc-honey"></div>
+  <h4>Sálvia (sage) — sucesso e prioridade baixa</h4>
+  <div class="scale" id="sc-sage"></div>
+  <h4>Linho (linen) — neutros de apoio</h4>
+  <div class="scale" id="sc-linen"></div>
+
+  <h3>Funções semânticas</h3>
+  <p class="sub">Razão calculada ao vivo contra o fundo indicado. Alvo: texto normal ≥ 4.5:1, texto grande e componentes de UI ≥ 3:1.</p>
+  <div class="tw"><table id="sem">
+    <thead><tr><th>Função</th><th>Token</th><th>Valor</th><th>Sobre</th><th>Contraste</th><th>AA</th></tr></thead>
+    <tbody></tbody>
+  </table></div>
+
+  <div class="callout warn" style="margin-top:16px"><b>Atenção — placeholder.</b> O <code>placeholder</code> do input usa <code>muted-foreground</code> a 70% de opacidade. Veja a linha correspondente na tabela: se reprovar AA, o código precisa subir a opacidade.</div>
+
+  <h3>Cores de identidade de módulo</h3>
+  <p class="sub">Tarefas, Compras, Financeiro, Avisos, Calendário e Futuro. O código não define tokens de módulo — os valores abaixo estão <span class="tbd">A DEFINIR</span>. Ao lado, candidatas já existentes nas escalas acima, com contraste real sobre <code>#141312</code>, apenas para apoiar a decisão.</p>
+  <div class="grid g3" id="modules"></div>
+  <h4>Candidatas nas escalas existentes (não atribuídas)</h4>
+  <div class="tw"><table id="cands"><thead><tr><th>Candidata</th><th>Valor</th><th>Contraste sobre #141312</th><th>AA (texto / UI)</th></tr></thead><tbody></tbody></table></div>
+</div></section>
+
+<!-- ===================== 02 ===================== -->
+<section class="ds" id="ds-02"><div class="wrap">
+  <div class="ds-head"><span class="tag">DS — 02</span><h2>Tipografia</h2><p>Três famílias carregadas em <code>index.html</code>. Corpo e UI em <b>Inter</b>; títulos em <b>Plus Jakarta Sans</b> (<code>.font-display</code>); apoio editorial em <b>Manrope</b> (<code>.font-editorial</code>).</p></div>
+
+  <div class="grid g3">
+    <div class="panel"><span class="eyebrow">Corpo / UI</span><div style="font:600 2.5rem/1.1 var(--ui);margin:10px 0">Inter</div><p class="muted" style="font-size:var(--text-sm)">400 500 600 700 · <code>body</code>, <code>.font-ui</code></p></div>
+    <div class="panel"><span class="eyebrow">Display</span><div style="font:700 2.5rem/1.1 var(--display);margin:10px 0">Plus Jakarta Sans</div><p class="muted" style="font-size:var(--text-sm)">400–800 · <code>.font-display</code></p></div>
+    <div class="panel"><span class="eyebrow">Editorial</span><div style="font:700 2.5rem/1.1 var(--editorial);margin:10px 0">Manrope</div><p class="muted" style="font-size:var(--text-sm)">400–800 · <code>.font-editorial</code></p></div>
+  </div>
+
+  <h3>Escala</h3>
+  <p class="sub">Fluida via <code>clamp()</code>; os tokens são <code>--text-xs … --text-4xl</code>. Tamanhos abaixo mostram o mínimo → máximo. Pesos e entrelinhas por nível não são definidos no código: <span class="tbd">A DEFINIR</span> (a demonstração usa 700 + display para títulos).</p>
+  <div class="panel" style="padding-top:8px;padding-bottom:8px">
+    <div class="type-row"><div class="k"><b>H1</b>--text-4xl<br>1.875 → 2.5rem</div><div style="font:800 var(--text-4xl)/1.1 var(--display);letter-spacing:-.02em">Casa organizada, cabeça tranquila</div></div>
+    <div class="type-row"><div class="k"><b>H2</b>--text-3xl<br>1.5 → 2rem</div><div style="font:700 var(--text-3xl)/1.15 var(--display);letter-spacing:-.02em">O que fazer hoje</div></div>
+    <div class="type-row"><div class="k"><b>H3</b>--text-2xl<br>1.25 → 1.5rem</div><div style="font:700 var(--text-2xl)/1.2 var(--display)">Lista da feira de sábado</div></div>
+    <div class="type-row"><div class="k"><b>Título</b>--text-xl<br>1.1 → 1.25rem</div><div style="font:600 var(--text-xl)/1.3 var(--display)">Contas do mês</div></div>
+    <div class="type-row"><div class="k"><b>Destaque</b>--text-lg<br>1 → 1.125rem</div><div style="font:500 var(--text-lg)/1.5 var(--ui)">Faltam 3 itens para fechar a lista.</div></div>
+    <div class="type-row"><div class="k"><b>Corpo</b>--text-base<br>0.9 → 1rem</div><div style="font:400 var(--text-base)/1.6 var(--ui)">Tarefas, compras e contas ficam no mesmo lugar, para todo mundo da casa.</div></div>
+    <div class="type-row"><div class="k"><b>Secundário</b>--text-sm<br>0.8 → 0.875rem</div><div style="font:400 var(--text-sm)/1.5 var(--ui);color:var(--muted-foreground)">Atualizado hoje às 08:30 por Gabriel</div></div>
+    <div class="type-row"><div class="k"><b>Legenda</b>--text-xs<br>0.65 → 0.75rem</div><div style="font:500 var(--text-xs)/1.4 var(--ui);color:var(--muted-foreground)">Vence amanhã · 2 responsáveis</div></div>
+    <div class="type-row"><div class="k"><b>Eyebrow</b>10–11px, uppercase<br>tracking-wider</div><div><span class="eyebrow">Financeiro · Outubro</span></div></div>
+  </div>
+
+  <h3>Regras de escrita</h3>
+  <div class="grid g2">
+    <div class="panel">
+      <h4 style="margin-top:0">Tom</h4>
+      <ul class="rules">
+        <li><span>—</span><div>Caloroso e direto, como alguém da família falando. Sem jargão, sem "usuário".</div></li>
+        <li><span>—</span><div>Português do Brasil, tratamento por "você". Frases curtas, voz ativa.</div></li>
+        <li><span>—</span><div>Erros explicam o que fazer, não só o que falhou.</div></li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h4 style="margin-top:0">Rótulos de ação começam com verbo</h4>
+      <p style="margin-bottom:8px"><span class="do">Faça</span></p>
+      <p>Adicionar tarefa · Marcar como comprado · Salvar meta · Convidar alguém</p>
+      <p style="margin:16px 0 8px"><span class="dont">Evite</span></p>
+      <p class="muted">Nova tarefa · Comprado · Meta · Convite</p>
+    </div>
+  </div>
+</div></section>
+
+<!-- ===================== 03 ===================== -->
+<section class="ds" id="ds-03"><div class="wrap">
+  <div class="ds-head"><span class="tag">DS — 03</span><h2>Fundamentos</h2><p>Espaçamento, raios e elevação.</p></div>
+
+  <h3>Espaçamento</h3>
+  <p class="sub">Tokens fluidos <code>--space-*</code>. Barras abaixo mostram o valor máximo do <code>clamp</code>. O código também usa a escala padrão do Tailwind (ex.: <code>gap-3</code>, <code>px-4</code>).</p>
+  <div class="panel">
+    <div class="step"><span class="mono" style="width:90px">--space-xs</span><i style="width:6px"></i><span class="muted mono">.25 → .375rem</span></div>
+    <div class="step"><span class="mono" style="width:90px">--space-sm</span><i style="width:12px"></i><span class="muted mono">.5 → .75rem</span></div>
+    <div class="step"><span class="mono" style="width:90px">--space-md</span><i style="width:20px"></i><span class="muted mono">.75 → 1.25rem</span></div>
+    <div class="step"><span class="mono" style="width:90px">--space-lg</span><i style="width:24px"></i><span class="muted mono">1 → 1.5rem</span></div>
+    <div class="step"><span class="mono" style="width:90px">--space-xl</span><i style="width:40px"></i><span class="muted mono">1.5 → 2.5rem</span></div>
+    <div class="step"><span class="mono" style="width:90px">--space-2xl</span><i style="width:64px"></i><span class="muted mono">2 → 4rem</span></div>
+  </div>
+
+  <h3>Raios</h3>
+  <p class="sub">Concêntricos: o raio interno é sempre menor que o externo.</p>
+  <div class="grid g4">
+    <div class="rad" style="border-radius:var(--radius-xs)">xs · 4px</div>
+    <div class="rad" style="border-radius:var(--radius-sm)">sm · 6px</div>
+    <div class="rad" style="border-radius:var(--radius-md)">md · 8px<br>—</div>
+    <div class="rad" style="border-radius:var(--radius-lg)">lg · 12px · botões, inputs, cards</div>
+    <div class="rad" style="border-radius:var(--radius-xl)">xl · 16px · sheets, diálogos</div>
+    <div class="rad" style="border-radius:var(--radius-2xl)">2xl · 20px · modais grandes</div>
+    <div class="rad" style="border-radius:var(--radius-full);justify-content:center;align-items:center">full · pílulas</div>
+  </div>
+  <p class="muted" style="font-size:var(--text-sm);margin-top:10px">Nota: o comentário em <code>index.css</code> diz "md — controles", mas <code>Button</code> e <code>Input</code> usam <code>rounded-lg</code> (12px). Vale alinhar. <span class="tbd">A DEFINIR</span></p>
+
+  <h3>Elevação por camadas tonais</h3>
+  <p class="sub">Cada degrau é só uma superfície um pouco mais clara. A sombra, quando existe, apenas confirma o que a cor já diz.</p>
+  <div class="grid g2">
+    <div>
+      <div class="layers" style="border-radius:var(--radius-xl);overflow:hidden">
+        <div class="layer" style="background:#0e0d0c"><span>Lowest — sidebar, recuos</span><span class="mono muted">#0e0d0c</span></div>
+        <div class="layer" style="background:#141312"><span>Surface — fundo do app</span><span class="mono muted">#141312</span></div>
+        <div class="layer" style="background:#1e1c1a"><span>Low / Card — cartões</span><span class="mono muted">#1e1c1a</span></div>
+        <div class="layer" style="background:#22201e"><span>Container</span><span class="mono muted">#22201e</span></div>
+        <div class="layer" style="background:#282623"><span>High</span><span class="mono muted">#282623</span></div>
+        <div class="layer" style="background:#32302c"><span>Highest — hover forte</span><span class="mono muted">#32302c</span></div>
+      </div>
+    </div>
+    <div class="grid" style="align-content:start">
+      <div class="panel deep" style="box-shadow:var(--shadow-subtle)"><b>shadow-subtle</b><div class="muted mono" style="margin-top:4px">botões, inputs</div></div>
+      <div class="panel" style="box-shadow:var(--shadow-card)"><b>shadow-card</b><div class="muted mono" style="margin-top:4px">cards · inclui brilho interno de 1px (branco 5%)</div></div>
+      <div class="panel" style="background:var(--popover);box-shadow:var(--shadow-popover)"><b>shadow-popover</b><div class="muted mono" style="margin-top:4px">popover #252321</div></div>
+      <div class="panel" style="background:var(--popover);box-shadow:var(--shadow-modal)"><b>shadow-modal</b><div class="muted mono" style="margin-top:4px">modais e sheets</div></div>
+    </div>
+  </div>
+  <div class="callout" style="margin-top:16px">No escuro, o brilho interno <code>inset 0 1px 0 rgba(255,255,255,.05–.08)</code> faz o papel da borda superior: dá borda de luz sem linha pesada.</div>
+</div></section>
+
+<!-- ===================== 04 ===================== -->
+<section class="ds" id="ds-04"><div class="wrap">
+  <div class="ds-head"><span class="tag">DS — 04</span><h2>Uso de Componentes</h2><p>Comportamento e anatomia. Estados seguem o código: hover em 150 ms, foco com anel, desabilitado a 50% de opacidade, toque com <code>scale(.96)</code>.</p></div>
+
+  <div class="grid g2">
+    <div class="panel"><h3 style="margin-top:0">Botão</h3>
+      <ul class="rules">
+        <li><span>1</span><div><b>Uma primária por tela.</b> Ações de apoio usam secundário; ações discretas, ghost.</div></li>
+        <li><span>2</span><div><b>Anatomia:</b> ícone opcional (16px) + rótulo com verbo. Altura 36px (sm 32, lg 40). Raio lg.</div></li>
+        <li><span>3</span><div><b>Carregando:</b> troca o ícone por spinner e bloqueia clique (<code>aria-busy</code>).</div></li>
+        <li><span>4</span><div><b>Perigo:</b> variante <code>destructive</code>, sempre com confirmação.</div></li>
+      </ul>
+    </div>
+    <div class="panel"><h3 style="margin-top:0">Input</h3>
+      <ul class="rules">
+        <li><span>1</span><div><b>Rótulo sempre visível</b> acima, em caixa-alta pequena. Placeholder é exemplo, não rótulo.</div></li>
+        <li><span>2</span><div><b>Foco:</b> borda e anel no acento a 80%/20%.</div></li>
+        <li><span>3</span><div><b>Erro:</b> mensagem curta abaixo, com ícone; cor <code>--destructive</code>. Estilo de erro do input <span class="tbd">A DEFINIR</span></div></li>
+      </ul>
+    </div>
+    <div class="panel"><h3 style="margin-top:0">Badges</h3>
+      <ul class="rules">
+        <li><span>1</span><div><b>Prioridade</b> sempre com texto (Urgente/Alta/Média/Baixa) e ponto — nunca só cor.</div></li>
+        <li><span>2</span><div><b>Categoria</b> é neutra (pílula cinza-quente). Use a variante <i>warm</i> só para destacar uma categoria selecionada.</div></li>
+      </ul>
+    </div>
+    <div class="panel"><h3 style="margin-top:0">Navegação por tab</h3>
+      <ul class="rules">
+        <li><span>1</span><div><b>Ativo:</b> fundo do acento a 15%, texto e ícone no acento, peso 600. É um dos três usos do acento (R1).</div></li>
+        <li><span>2</span><div><b>Inativo:</b> texto a 70%, ícone a 50%. Hover clareia a superfície.</div></li>
+        <li><span>3</span><div>Item ativo também recebe <code>aria-current="page"</code>.</div></li>
+      </ul>
+    </div>
+    <div class="panel"><h3 style="margin-top:0">Card de tarefa</h3>
+      <ul class="rules">
+        <li><span>1</span><div><b>Anatomia:</b> checkbox circular → título → descrição (2 linhas) → linha de metadados (prioridade · categoria · responsáveis · prazo).</div></li>
+        <li><span>2</span><div><b>Concluída:</b> título riscado, opacidade 75%. <b>Atrasada:</b> prazo em terracota com ícone de alerta.</div></li>
+        <li><span>3</span><div>Checkbox desabilitado (tracejado) quando a pessoa não é responsável, com dica explicativa.</div></li>
+      </ul>
+    </div>
+    <div class="panel"><h3 style="margin-top:0">Item de compras</h3>
+      <ul class="rules">
+        <li><span>1</span><div><b>Anatomia:</b> checkbox circular 28px → nome → quantidade · categoria.</div></li>
+        <li><span>2</span><div><b>Estados:</b> pendente, comprado (verde, riscado), ignorado e não comprado (vermelho).</div></li>
+        <li><span>3</span><div>Linha inteira é clicável; o checkbox faz stop-propagation.</div></li>
+      </ul>
+    </div>
+  </div>
+</div></section>
+
+<!-- ===================== 05 ===================== -->
+<section class="ds" id="ds-05"><div class="wrap">
+  <div class="ds-head"><span class="tag">DS — 05</span><h2>Componentes</h2><p>Réplicas fiéis dos estilos em <code>src/components/ui</code> e dos módulos. Estados fixados por classe para documentação; o botão e os campos também respondem de verdade a hover e foco.</p></div>
+
+  <h3>Botões</h3>
+  <p class="sub">Código também tem <code>outline</code>, <code>destructive</code>, <code>link</code> e <code>warm</code>; aqui, as três pedidas.</p>
+  <div class="stage">
+    <div class="states"><div class="st"><small>Padrão</small></div><div class="st"><small>Hover</small></div><div class="st"><small>Foco</small></div><div class="st"><small>Desabilitado</small></div></div>
+    <div class="states">
+      <div class="st"><button class="btn primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5v14"/></svg>Adicionar tarefa</button></div>
+      <div class="st"><button class="btn primary is-hover">Adicionar tarefa</button></div>
+      <div class="st"><button class="btn primary is-focus">Adicionar tarefa</button></div>
+      <div class="st"><button class="btn primary" disabled>Adicionar tarefa</button></div>
+    </div>
+    <div class="states">
+      <div class="st"><button class="btn secondary">Cancelar</button></div>
+      <div class="st"><button class="btn secondary is-hover">Cancelar</button></div>
+      <div class="st"><button class="btn secondary is-focus">Cancelar</button></div>
+      <div class="st"><button class="btn secondary" disabled>Cancelar</button></div>
+    </div>
+    <div class="states">
+      <div class="st"><button class="btn ghost">Ver histórico</button></div>
+      <div class="st"><button class="btn ghost is-hover">Ver histórico</button></div>
+      <div class="st"><button class="btn ghost is-focus">Ver histórico</button></div>
+      <div class="st"><button class="btn ghost" disabled>Ver histórico</button></div>
+    </div>
+  </div>
+
+  <h3>Inputs</h3>
+  <div class="stage">
+    <div class="states">
+      <div class="st"><small>Padrão</small><div class="field"><label for="i1">Nome da lista</label><input id="i1" class="inp" placeholder="Feira de sábado"></div></div>
+      <div class="st"><small>Hover</small><div class="field"><label for="i2">Nome da lista</label><input id="i2" class="inp is-hover" placeholder="Feira de sábado"></div></div>
+      <div class="st"><small>Foco</small><div class="field"><label for="i3">Nome da lista</label><input id="i3" class="inp is-focus" value="Feira de sáb"></div></div>
+      <div class="st"><small>Desabilitado</small><div class="field"><label for="i4">Nome da lista</label><input id="i4" class="inp" placeholder="Feira de sábado" disabled></div></div>
+    </div>
+  </div>
+
+  <h3>Badges de prioridade</h3>
+  <p class="sub">Fonte: <code>PRIORITY_CONFIG</code>. O código tem 4 níveis; "Urgente" é extra ao briefing. Badges não são interativos, então hover/foco não se aplicam; estado desabilitado = 50% de opacidade.</p>
+  <div class="stage"><div class="states">
+    <div class="st"><small>Urgente</small><span class="pill urg"><i style="background:#a55c3a"></i>Urgente</span></div>
+    <div class="st"><small>Alta</small><span class="pill alta"><i style="background:#e5a520"></i>Alta</span></div>
+    <div class="st"><small>Média</small><span class="pill media"><i style="background:#fbd16b"></i>Média</span></div>
+    <div class="st"><small>Baixa</small><span class="pill baixa"><i style="background:#62a378"></i>Baixa</span></div>
+    <div class="st"><small>Desabilitado</small><span class="pill alta" style="opacity:.5"><i style="background:#e5a520"></i>Alta</span></div>
+  </div></div>
+
+  <h3>Badges de categoria</h3>
+  <div class="stage"><div class="states">
+    <div class="st"><small>Padrão</small><span class="cat">Mercearia</span></div>
+    <div class="st"><small>Selecionada (warm)</small><span class="cat warm">Limpeza</span></div>
+    <div class="st"><small>Contorno</small><span class="cat out">Hortifruti</span></div>
+    <div class="st"><small>Desabilitado</small><span class="cat" style="opacity:.5">Padaria</span></div>
+  </div></div>
+
+  <h3>Item de navegação por tab</h3>
+  <div class="stage"><div class="states">
+    <div class="st"><small>Padrão</small><button class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Tarefas</button></div>
+    <div class="st"><small>Hover</small><button class="tab is-hover"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Tarefas</button></div>
+    <div class="st"><small>Ativo</small><button class="tab on" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Tarefas</button></div>
+    <div class="st"><small>Foco</small><button class="tab is-focus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Tarefas</button></div>
+    <div class="st"><small>Desabilitado</small><button class="tab dis" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Tarefas</button></div>
+  </div></div>
+
+  <h3>Card de tarefa</h3>
+  <p class="sub">Réplica de <code>TaskCard.tsx</code>. Estado "desabilitado" = pessoa sem permissão (checkbox tracejado).</p>
+  <div class="stage"><div class="states" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">
+    <div class="st"><small>Padrão</small><div class="task"><div class="chk"></div><div><div class="t">Marcar dedetização</div><div class="m"><span class="pill alta"><i style="background:#e5a520"></i>Alta</span>·<span>Casa</span>·<span>Amanhã</span></div></div></div></div>
+    <div class="st"><small>Hover</small><div class="task is-hover"><div class="chk"></div><div><div class="t">Marcar dedetização</div><div class="m"><span class="pill alta"><i style="background:#e5a520"></i>Alta</span>·<span>Casa</span>·<span>Amanhã</span></div></div></div></div>
+    <div class="st"><small>Foco</small><div class="task is-focus" tabindex="-1"><div class="chk"></div><div><div class="t">Marcar dedetização</div><div class="m"><span class="pill alta"><i style="background:#e5a520"></i>Alta</span>·<span>Casa</span>·<span>Amanhã</span></div></div></div></div>
+    <div class="st"><small>Concluída</small><div class="task done"><div class="chk ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div><div><div class="t">Pagar condomínio</div><div class="m"><span class="pill baixa"><i style="background:#62a378"></i>Baixa</span>·<span>Financeiro</span></div></div></div></div>
+    <div class="st"><small>Desabilitado</small><div class="task dis"><div class="chk" style="border-style:dashed;opacity:.6"></div><div><div class="t">Trocar filtro de água</div><div class="m"><span class="pill media"><i style="background:#fbd16b"></i>Média</span>·<span>Casa</span></div></div></div></div>
+  </div></div>
+
+  <h3>Item de lista de compras</h3>
+  <div class="stage"><div class="states" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">
+    <div class="st"><small>Padrão</small><div class="shop"><div class="chk"></div><div style="flex:1"><div class="n">Arroz integral</div><div class="m" style="margin:2px 0 0;display:flex;gap:6px;align-items:center;font:500 12px var(--ui);color:var(--muted-foreground)"><span class="q" style="color:#f5f5f4">2 un</span>·<span class="cat">Mercearia</span></div></div></div></div>
+    <div class="st"><small>Hover</small><div class="shop is-hover"><div class="chk"></div><div style="flex:1"><div class="n">Arroz integral</div><div class="m" style="margin:2px 0 0;display:flex;gap:6px;align-items:center;font:500 12px var(--ui);color:var(--muted-foreground)"><span class="q" style="color:#f5f5f4">2 un</span>·<span class="cat">Mercearia</span></div></div></div></div>
+    <div class="st"><small>Foco</small><div class="shop is-focus"><div class="chk"></div><div style="flex:1"><div class="n">Arroz integral</div><div class="m" style="margin:2px 0 0;display:flex;gap:6px;align-items:center;font:500 12px var(--ui);color:var(--muted-foreground)"><span class="q" style="color:#f5f5f4">2 un</span>·<span class="cat">Mercearia</span></div></div></div></div>
+    <div class="st"><small>Comprado</small><div class="shop bought"><div class="chk ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div><div style="flex:1"><div class="n">Leite</div><div class="m" style="margin:2px 0 0;display:flex;gap:6px;align-items:center;font:500 12px var(--ui);color:var(--muted-foreground)"><span class="q">6 un</span>·<span class="cat">Laticínios</span></div></div></div></div>
+    <div class="st"><small>Desabilitado</small><div class="shop dis"><div class="chk"></div><div style="flex:1"><div class="n">Café</div><div class="m" style="margin:2px 0 0;display:flex;gap:6px;align-items:center;font:500 12px var(--ui);color:var(--muted-foreground)"><span class="q">1 un</span>·<span class="cat">Mercearia</span></div></div></div></div>
+  </div></div>
+</div></section>
+
+<!-- ===================== 06 ===================== -->
+<section class="ds" id="ds-06"><div class="wrap">
+  <div class="ds-head"><span class="tag">DS — 06</span><h2>Iconografia</h2><p>Dois sistemas, cada um com seu papel: ícones 3D de argila para identidade e momentos de acolhimento; Lucide para a interface funcional.</p></div>
+
+  <div class="grid g2">
+    <div class="panel">
+      <span class="eyebrow">Clay 3D</span>
+      <ul class="rules" style="margin-top:14px">
+        <li><span>1</span><div><b>Sempre voltados para a esquerda</b> (em direção ao conteúdo, no padrão de leitura LTR).</div></li>
+        <li><span>2</span><div><b>Sem rostos.</b> Objetos, não personagens.</div></li>
+        <li><span>3</span><div><b>Aparência de objeto real:</b> cesta, prancheta, cofrinho, sino — com volume e material de argila.</div></li>
+        <li><span>4</span><div>Arquivos WebP otimizados em <code>public/icons/clay-optimized/</code>. Decorativos: <code>alt=""</code>.</div></li>
+      </ul>
+    </div>
+    <div class="panel">
+      <span class="eyebrow">Lucide</span>
+      <ul class="rules" style="margin-top:14px">
+        <li><span>1</span><div>Para ações e estados funcionais: adicionar, concluir, excluir, alerta, navegação.</div></li>
+        <li><span>2</span><div>Traço de 2px, cantos arredondados, <code>currentColor</code>. Tamanho típico 14–16px.</div></li>
+        <li><span>3</span><div>Ícone sozinho precisa de <code>aria-label</code>.</div></li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Biblioteca clay (módulos)</h3>
+  <div class="clay">
+    <figure><img src="../public/icons/clay-optimized/tasks_clipboard.webp" alt="" loading="lazy"><figcaption>tasks_clipboard</figcaption></figure>
+    <figure><img src="../public/icons/clay-optimized/tasks_pencil.webp" alt="" loading="lazy"><figcaption>tasks_pencil</figcaption></figure>
+    <figure><img src="../public/icons/clay-optimized/shopping_basket.webp" alt="" loading="lazy"><figcaption>shopping_basket</figcaption></figure>
+    <figure><img src="../public/icons/clay-optimized/shopping_bag.webp" alt="" loading="lazy"><figcaption>shopping_bag</figcaption></figure>
+    <figure><img src="../public/icons/clay-optimized/basket_empty.webp" alt="" loading="lazy"><figcaption>basket_empty</figcaption></figure>
+    <figure><img src="../public/icons/clay-optimized/financial_piggy.webp" alt="" loading="lazy"><figcaption>financial_piggy</figcaption></figure>
+    <figure><img src="../public/icons/clay-optimized/financial_wallet.webp" alt="" loading="lazy"><figcaption>financial_wallet</figcaption></figure>
+    <figure><img src="../public/icons/clay-optimized/financial_receipt.webp" alt="" loading="lazy"><figcaption>financial_receipt</figcaption></figure>
+    <figure><img src="../public/icons/clay-optimized/credit_card.webp" alt="" loading="lazy"><figcaption>credit_card</figcaption></figure>
+    <figure><img src="../public/icons/clay-optimized/bulletin_board.webp" alt="" loading="lazy"><figcaption>bulletin_board</figcaption></figure>
+    <figure><img src="../public/icons/clay-optimized/bell.webp" alt="" loading="lazy"><figcaption>bell</figcaption></figure>
+    <figure><img src="../public/icons/clay-optimized/calendar_desk.webp" alt="" loading="lazy"><figcaption>calendar_desk</figcaption></figure>
+    <figure><img src="../public/icons/clay-optimized/nest_eggs.webp" alt="" loading="lazy"><figcaption>nest_eggs</figcaption></figure>
+    <figure><img src="../public/icons/clay-optimized/home.webp" alt="" loading="lazy"><figcaption>home</figcaption></figure>
+    <figure><img src="../public/icons/clay-optimized/cleaning_spray.webp" alt="" loading="lazy"><figcaption>cleaning_spray</figcaption></figure>
+    <figure><img src="../public/icons/clay-optimized/weather_sun.webp" alt="" loading="lazy"><figcaption>weather_sun</figcaption></figure>
+  </div>
+  <p class="muted" style="font-size:var(--text-sm);margin-top:10px">Mapeamento módulo → ícone clay, e ícone clay do módulo "Futuro": <span class="tbd">A DEFINIR</span>. O caminho das imagens é relativo a <code>docs/</code>; abra o arquivo a partir do repositório para vê-las.</p>
+
+  <h3>Lucide (interface)</h3>
+  <div class="lu">
+    <div><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>check</div>
+    <div><svg viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></svg>plus</div>
+    <div><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg>trash-2</div>
+    <div><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>alert-circle</div>
+    <div><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>calendar</div>
+    <div><svg viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/></svg>home</div>
+    <div><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>chevron-right</div>
+    <div><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>search</div>
+  </div>
+</div></section>
+</main>
+
+<footer><div class="wrap">Ninho · Domestic Sanctuary · fonte: <code>src/index.css</code>, <code>tailwind.config.ts</code>, <code>src/components/ui</code>, <code>src/components/modules</code>. Pendências marcadas <span class="tbd">A DEFINIR</span> exigem decisão de design antes de virarem tokens.</div></footer>
+
+<script>
+const BG='#141312';
+const hex2rgb=h=>{h=h.replace('#','');return[0,2,4].map(i=>parseInt(h.substr(i,2),16))};
+const lum=([r,g,b])=>{const f=v=>{v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)};return .2126*f(r)+.7152*f(g)+.0722*f(b)};
+const blend=(fg,bg,a)=>fg.map((v,i)=>Math.round(v*a+bg[i]*(1-a)));
+const ratio=(a,b)=>{const[x,y]=[lum(a),lum(b)].sort((p,q)=>q-p);return(x+.05)/(y+.05)};
+const C=(fg,bg,a=1)=>ratio(blend(hex2rgb(fg),hex2rgb(bg),a),hex2rgb(bg));
+const onColor=h=>ratio(hex2rgb(h),[0,0,0])>=ratio(hex2rgb(h),[255,255,255])?'#000':'#fff';
+const $=s=>document.querySelector(s);
+
+const neutrals=[
+ ['Lowest','--surface-container-lowest · --sidebar-background','#0e0d0c'],
+ ['Fundo','--background · --surface','#141312'],
+ ['Card','--card · --surface-container-low','#1e1c1a'],
+ ['Container','--surface-container','#22201e'],
+ ['Popover','--popover','#252321'],
+ ['Muted','--muted · --accent','#262422'],
+ ['High','--surface-container-high','#282623'],
+ ['Input','--input','#292724'],
+ ['Secondary','--secondary','#2a2724'],
+ ['Highest','--surface-container-highest','#32302c']];
+$('#neutrals').innerHTML=neutrals.map(([n,t,h])=>`<div class="sw"><div class="chip" style="background:${h};color:${onColor(h)}">${h}</div><div class="meta"><b>${n}</b><span class="mono">${t}</span></div></div>`).join('');
+const texts=[['Foreground','--foreground','#f5f5f4'],['Muted foreground','--muted-foreground','#a8a29e'],['Acento (primary)','--primary','#e07e59'],['Texto sobre acento','--primary-foreground','#260f04']];
+$('#texts').innerHTML=texts.map(([n,t,h])=>`<div class="sw"><div class="chip" style="background:${h};color:${onColor(h)}">${h}</div><div class="meta"><b>${n}</b><span class="mono">${t}</span></div></div>`).join('');
+
+const scales={
+ terracotta:{50:'#fdf4f0',100:'#fae5db',200:'#f4c9b3',300:'#eca487',400:'#e07e59',500:'#c1714d',600:'#a55c3a',700:'#8a4828',800:'#6f3519',900:'#54240e'},
+ honey:{50:'#fffbf0',100:'#fef3d0',200:'#fde49e',300:'#fbd16b',400:'#f8bc3a',500:'#e5a520',600:'#c28a10',700:'#9e6e08',800:'#7b5304',900:'#583b02'},
+ sage:{50:'#f2f7f4',100:'#e0ede5',200:'#bcd9c6',300:'#91c0a1',400:'#62a378',500:'#4a8a61',600:'#38714d',700:'#285839',800:'#1a4028',900:'#0e2a19'},
+ linen:{50:'#fffefb',100:'#fefcf5',200:'#fdf8ec',300:'#fbf3df',400:'#f5e9c8',500:'#ecd9a8',600:'#d4bc7a',700:'#b89a4e',800:'#957930',900:'#6e591c'}};
+for(const k in scales){$('#sc-'+k).innerHTML=Object.entries(scales[k]).map(([s,h])=>`<div style="background:${h};color:${onColor(h)}">${s}<small>${h}</small></div>`).join('')}
+
+const rows=[
+ ['Texto principal','--foreground','#f5f5f4',BG,1],
+ ['Texto secundário','--muted-foreground','#a8a29e',BG,1],
+ ['Texto secundário em card','--muted-foreground','#a8a29e','#1e1c1a',1],
+ ['Placeholder (70%)','muted-foreground/70','#a8a29e','#292724',.7],
+ ['Acento (nav ativa, eyebrow, número)','--primary','#e07e59',BG,1],
+ ['Texto sobre botão primário','--primary-foreground','#260f04','#e07e59',1],
+ ['Nav ativa: acento sobre fundo 15%','primary/15 sobre lowest','#e07e59','#32201a',1],
+ ['Sucesso','--success','#4ade80',BG,1],
+ ['Aviso (honey-300)','honey-300','#fbd16b',BG,1],
+ ['Erro','--destructive','#f87171',BG,1],
+ ['Foco (anel)','--ring','#e07e59',BG,1],
+ ['Prioridade Alta (texto)','honey-300 sobre honey-900/40','#fbd16b','#1f1812',1],
+ ['Prioridade Baixa (texto)','sage-300 sobre sage-900/40','#91c0a1','#14201a',1],
+ ['Prioridade Média (texto)','honey-200 sobre linen-900/30','#fde49e','#2b251a',1],
+ ['Prioridade Urgente (texto)','terracotta-300 sobre terracotta-900/40','#eca487','#2d1c15',1]];
+$('#sem tbody').innerHTML=rows.map(([n,t,fg,bg,a])=>{const r=C(fg,bg,a);const ok=r>=4.5;return`<tr><td>${n}</td><td class="mono">${t}</td><td><span class="dot" style="background:${fg}"></span><span class="mono">${fg}</span></td><td><span class="dot" style="background:${bg};outline:1px solid #555"></span><span class="mono">${bg}</span></td><td class="mono">${r.toFixed(2)}:1</td><td class="${ok?'pass':'fail'}">${ok?'AA ✓':(r>=3?'só UI/texto grande':'reprova')}</td></tr>`}).join('');
+
+const mods=['Tarefas','Compras','Financeiro','Avisos','Calendário','Futuro'];
+$('#modules').innerHTML=mods.map(m=>`<div class="panel" style="display:grid;gap:10px"><span class="eyebrow">Módulo</span><b style="font:700 var(--text-xl) var(--display)">${m}</b><div style="height:48px;border-radius:var(--radius-lg);border:2px dashed #a8a29e"></div><span><span class="tbd">A DEFINIR</span></span></div>`).join('');
+const cands=[['terracotta-400 (= acento)','#e07e59'],['terracotta-300','#eca487'],['honey-400','#f8bc3a'],['honey-300','#fbd16b'],['sage-400','#62a378'],['sage-300','#91c0a1'],['linen-600','#d4bc7a'],['linen-500','#ecd9a8']];
+$('#cands tbody').innerHTML=cands.map(([n,h])=>{const r=C(h,BG);return`<tr><td>${n}</td><td><span class="dot" style="background:${h}"></span><span class="mono">${h}</span></td><td class="mono">${r.toFixed(2)}:1</td><td class="${r>=4.5?'pass':'fail'}">${r>=4.5?'AA ✓ / ✓':(r>=3?'✗ / ✓':'✗ / ✗')}</td></tr>`}).join('');
+
+// nav: destaque da seção visível
+const links=[...document.querySelectorAll('.top a')];
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.classList.toggle('on',l.getAttribute('href')==='#'+e.target.id));}}),{rootMargin:'-40% 0px -55% 0px'});
+document.querySelectorAll('section.ds').forEach(s=>io.observe(s));
+</script>
+</body>
+</html>

@@ -40,6 +40,136 @@
         }
       }
     },
+    "/api/Version/current": {
+      "get": {
+        "tags": [
+          "Version"
+        ],
+        "summary": "Get current version information",
+        "responses": {
+          "200": {
+            "description": "Version information returned"
+          }
+        }
+      }
+    },
+    "/api/Version/changelog": {
+      "get": {
+        "tags": [
+          "Version"
+        ],
+        "summary": "Get changelog history with pagination",
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "description": "Number of records to skip (default: 0)",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "take",
+            "in": "query",
+            "description": "Number of records to take (default: 10)",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Changelog history returned"
+          }
+        }
+      }
+    },
+    "/api/Version": {
+      "post": {
+        "tags": [
+          "Version"
+        ],
+        "summary": "Create a new version release (admin only)",
+        "requestBody": {
+          "description": "The cancellation token",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateVersionRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateVersionRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateVersionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Version created successfully"
+          },
+          "400": {
+            "description": "Invalid request or version already exists",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/users/username/preview": {
       "post": {
         "tags": [
@@ -6648,6 +6778,25 @@
           }
         }
       },
+      "ChangelogEntryRequest": {
+        "required": [
+          "type",
+          "title",
+          "description"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      },
       "CreateBankAccountRequest": {
         "type": "object",
         "properties": {
@@ -6968,6 +7117,36 @@
               "string"
             ],
             "format": "date-time"
+          }
+        }
+      },
+      "CreateVersionRequest": {
+        "required": [
+          "version",
+          "releaseDate",
+          "environment",
+          "changelogs"
+        ],
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string"
+          },
+          "releaseDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "environment": {
+            "type": "string"
+          },
+          "changelogs": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ChangelogEntryRequest"
+            }
           }
         }
       },
@@ -8053,6 +8232,44 @@
       },
       "Priority": {
         "type": "integer"
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "detail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "instance": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
       },
       "ProfileResponse": {
         "type": "object",
@@ -9230,6 +9447,9 @@
   "tags": [
     {
       "name": "Health"
+    },
+    {
+      "name": "Version"
     },
     {
       "name": "User"

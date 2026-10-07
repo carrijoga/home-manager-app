@@ -212,6 +212,13 @@ export const ENDPOINTS = {
     weather: '/api/dashboard/weather',
   },
 
+  // Versão e Changelog
+  version: {
+    current: '/api/version/current',
+    changelog: (skip = 0, take = 10) => `/api/version/changelog?skip=${skip}&take=${take}`,
+  },
+
   // Health
   health: '/health',
 } as const;
+

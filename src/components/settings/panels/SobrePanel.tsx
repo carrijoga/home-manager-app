@@ -1,10 +1,23 @@
-import { ExternalLink, Heart, MessageSquare, ShieldCheck } from 'lucide-react';
+import { ExternalLink, Heart, History, MessageSquare, ShieldCheck } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 import { Badge, Button } from '@/components/ui';
 
 const APP_VERSION = import.meta.env.VITE_APP_VERSION ?? '1.0.0';
 
-export function SobrePanel() {
+interface SobrePanelProps {
+  onClose?: () => void;
+}
+
+export function SobrePanel({ onClose }: SobrePanelProps) {
+  const navigate = useNavigate();
+
+  const handleOpenChangelog = () => {
+    onClose?.();
+    navigate('/changelog');
+  };
+
+
   return (
     <div className="space-y-6">
       {/* Hero Header Banner */}
@@ -20,23 +33,36 @@ export function SobrePanel() {
 
       {/* App Information Card */}
       <section className="space-y-4 rounded-2xl border border-border/50 bg-card p-5 shadow-2xs">
-        <div className="flex items-center gap-4">
-          <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-terracotta-500 to-honey-400 text-2xl shadow-xs">
-            🪺
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-base font-bold text-foreground">Ninho</h3>
-              <Badge variant="secondary" className="rounded-md text-[10px]">
-                v{APP_VERSION}
-              </Badge>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-terracotta-500 to-honey-400 text-2xl shadow-xs">
+              🪺
             </div>
-            <p className="text-xs text-muted-foreground">
-              Seu lar, organizado. Gestão familiar completa de tarefas, compras e finanças.
-            </p>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-base font-bold text-foreground">Ninho</h3>
+                <Badge variant="secondary" className="rounded-md text-[10px]">
+                  v{APP_VERSION}
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Seu lar, organizado. Gestão familiar completa de tarefas, compras e finanças.
+              </p>
+            </div>
           </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleOpenChangelog}
+            className="gap-2 rounded-xl border-border/50 text-xs font-medium"
+          >
+            <History className="size-3.5 text-primary" />
+            <span>Ver Notas da Versão</span>
+          </Button>
         </div>
       </section>
+
 
       {/* Legal Documents Section Card */}
       <section className="space-y-3 rounded-2xl border border-border/50 bg-card p-5 shadow-2xs">

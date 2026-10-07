@@ -55,6 +55,8 @@ export const esES: UiDictionary = {
     financialGroup: 'Financiero',
     settingsGroup: 'Configuración',
     categories: 'Categorías',
+    changelog: 'Novedades y Versiones',
+
     financialModule: 'Módulo Financiero',
     collapseFinancial: 'Contraer Finanzas',
     expandFinancial: 'Expandir Finanzas',
@@ -127,6 +129,46 @@ export const esES: UiDictionary = {
   dashboard: {
     welcome: '¡Hola, {name}!',
     welcomeBack: 'Bienvenido de nuevo a tu nido',
+    greetings: {
+      g0: 'Bienvenido al hogar,',
+      g1: 'Qué bueno verte por aquí,',
+      g2: 'El nido te estaba esperando,',
+      g3: 'Una casa llena de buena energía para ti,',
+      g4: 'Otro día para cuidar del hogar,',
+      g5: 'Feliz de tenerte de vuelta,',
+      g6: 'Todo en orden en el nido,',
+      g7: 'Tu rincón favorito te llama,',
+      g8: 'Hora de poner la casa al día,',
+      g9: 'Un buen día de organización empieza ahora,',
+      g10: 'Que tu día sea ligero,',
+      g11: 'El hogar es más bonito contigo,',
+      g12: 'Cuidemos el nido juntos,',
+      g13: 'Respira hondo, estás en casa,',
+    },
     summaryTitle: 'Resumen General',
+  },
+  weather: {
+    conditions: {
+      sun: 'Soleado',
+      cloudSun: 'Parcialmente nublado',
+      cloud: 'Nublado',
+      rain: 'Lluvia',
+      lightning: 'Tormenta',
+      snow: 'Nieve',
+    },
+    status: {
+      updating: 'Actualizando...',
+      unavailable: 'Clima no disponible',
+    },
+    actions: {
+      refresh: 'Actualizar clima',
+      refreshShort: 'Actualizar',
+    },
+    onboarding: {
+      title: 'Activa el clima',
+      subtitle: 'Mira la temperatura aquí',
+      button: 'Usar mi ubicación',
+      waiting: 'Esperando...',
+    },
   },
 };

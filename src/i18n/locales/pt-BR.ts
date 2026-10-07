@@ -53,6 +53,8 @@ export const ptBR = {
     financialGroup: 'Financeiro',
     settingsGroup: 'Configurações',
     categories: 'Categorias',
+    changelog: 'Novidades & Versões',
+
     financialModule: 'Módulo Financeiro',
     collapseFinancial: 'Recolher Finanças',
     expandFinancial: 'Expandir Finanças',
@@ -125,7 +127,47 @@ export const ptBR = {
   dashboard: {
     welcome: 'Olá, {name}!',
     welcomeBack: 'Bem-vindo de volta ao seu ninho',
+    greetings: {
+      g0: 'Bem-vindo ao lar,',
+      g1: 'Que bom te ver por aqui,',
+      g2: 'O ninho estava te esperando,',
+      g3: 'Casa cheia de boas energias para você,',
+      g4: 'Mais um dia para cuidar do lar,',
+      g5: 'Feliz em ter você de volta,',
+      g6: 'Tudo em ordem no ninho,',
+      g7: 'Seu cantinho favorito te chama,',
+      g8: 'Hora de deixar a casa em dia,',
+      g9: 'Um bom dia de organização começa agora,',
+      g10: 'Que o dia seja leve,',
+      g11: 'O lar é mais bonito com você,',
+      g12: 'Vamos cuidar do ninho juntos,',
+      g13: 'Respira fundo, você está em casa,',
+    },
     summaryTitle: 'Resumo Geral',
+  },
+  weather: {
+    conditions: {
+      sun: 'Ensolarado',
+      cloudSun: 'Parcialmente nublado',
+      cloud: 'Nublado',
+      rain: 'Chuva',
+      lightning: 'Tempestade',
+      snow: 'Neve',
+    },
+    status: {
+      updating: 'Atualizando...',
+      unavailable: 'Clima indisponível',
+    },
+    actions: {
+      refresh: 'Atualizar clima',
+      refreshShort: 'Atualizar',
+    },
+    onboarding: {
+      title: 'Ative o clima',
+      subtitle: 'Veja a temperatura aqui',
+      button: 'Usar minha localização',
+      waiting: 'Aguardando...',
+    },
   },
 };
 

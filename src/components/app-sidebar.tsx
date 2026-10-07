@@ -4,7 +4,9 @@ import {
   ChevronDown,
   ChevronsUpDown,
   HelpCircle,
+  History,
   LogOut,
+
   MessageSquarePlus,
   Moon,
   Settings,
@@ -122,6 +124,8 @@ const MAIN_MODULE_CONFIG: ModuleConfig[] = [
 const SETTINGS_MODULE_CONFIG: ModuleConfig[] = [
   { id: 'settings-categories', labelKey: 'nav.categories', icon: LayoutPanelTopIcon, path: '/settings/categories' },
 ];
+
+
 
 function getInitials(name?: string | null) {
   if (!name) return 'U';
@@ -609,6 +613,18 @@ export function AppSidebar({ user }: AppSidebarProps) {
                   <Settings className="size-3.5 text-muted-foreground" />
                   <span>{t('nav.settings')}</span>
                 </DropdownMenuItem>
+
+                <DropdownMenuItem
+                  onClick={() => {
+                    navigate('/changelog');
+                    if (isMobile) setOpenMobile(false);
+                  }}
+                  className="cursor-pointer gap-2.5 rounded-xl px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-accent/60"
+                >
+                  <History className="size-3.5 text-muted-foreground" />
+                  <span>{t('nav.changelog')}</span>
+                </DropdownMenuItem>
+
 
                 <DropdownMenuItem
                   onSelect={(e) => {

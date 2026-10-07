@@ -41,6 +41,7 @@ import {
   MarketOnboardingModal,
 } from './MarketOnboardingModal';
 import { QuickPurchaseDrawer } from './QuickPurchaseDrawer';
+import { SwipeToUndoRow } from './SwipeToUndoRow';
 
 interface MarketModeViewProps {
   detailData: AppShoppingList | null;
@@ -195,18 +196,20 @@ export function MarketModeView({
       
       {/* ── BARRA SUPERIOR: Modo Mercado + Tela Ativa + Ajuda ───────────── */}
       <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-md border-b border-border/50 px-3 py-2.5 sm:px-6">
-        <div className="flex items-center justify-between gap-1.5 max-w-4xl mx-auto">
-          <button
-            onClick={onExit}
-            className="flex items-center gap-1 rounded-full border border-border/70 bg-card px-2.5 py-1 text-xs font-semibold text-muted-foreground shadow-xs transition-colors hover:bg-muted hover:text-foreground shrink-0"
-          >
-            <ArrowLeft size={13} />
-            <span>Sair</span>
-          </button>
+        <div className="flex flex-wrap items-center justify-between gap-1.5 max-w-4xl mx-auto">
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={onExit}
+              className="flex items-center gap-1 rounded-full border border-border/70 bg-card px-2.5 py-1 text-xs font-semibold text-muted-foreground shadow-xs transition-colors hover:bg-muted hover:text-foreground shrink-0"
+            >
+              <ArrowLeft size={13} />
+              <span>Sair</span>
+            </button>
 
-          <div className="flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-            <span>🛒 Modo Mercado</span>
+            <div className="flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+              <span>🛒 Modo Mercado</span>
+            </div>
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">
@@ -222,15 +225,13 @@ export function MarketModeView({
                 title="Mantém a tela do celular sempre acesa no supermercado"
               >
                 <Lightbulb size={13} className={wakeLockActive ? 'fill-amber-500 text-amber-500' : ''} />
-                <span className="hidden sm:inline">
-                  {wakeLockActive ? 'Tela Acesa' : 'Tela Acesa'}
-                </span>
+                <span>Tela Acesa</span>
               </button>
             )}
 
             <button
               onClick={() => setShowOnboarding(true)}
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-border/70 bg-card text-muted-foreground hover:bg-muted hover:text-foreground transition-colors shadow-2xs"
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-border/70 bg-card text-muted-foreground hover:bg-muted hover:text-foreground transition-colors shadow-2xs shrink-0"
               title="Como funciona o Modo Mercado"
               aria-label="Ajuda do Modo Mercado"
             >
@@ -241,10 +242,10 @@ export function MarketModeView({
               size="sm"
               variant="outline"
               onClick={() => setShowAddItem(true)}
-              className="h-8 rounded-full border-primary/30 bg-primary/5 px-2.5 sm:px-3 text-xs font-bold text-primary hover:bg-primary/10"
+              className="h-8 rounded-full border-primary/30 bg-primary/5 px-2.5 sm:px-3 text-xs font-bold text-primary hover:bg-primary/10 shrink-0"
             >
-              <Plus size={14} className="mr-0.5" />
-              <span>Item Extra</span>
+              <Plus size={14} className="sm:mr-0.5" />
+              <span className="hidden sm:inline">Item Extra</span>
             </Button>
           </div>
         </div>
@@ -496,11 +497,10 @@ export function MarketModeView({
                   const savings = getSavingsInfo(item);
 
                   return (
-                    <div
+                    <SwipeToUndoRow
                       key={item.shoppingItemId}
-                      onClick={() => onUnmarkAsPurchased(item)}
-                      className="group flex items-center justify-between gap-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-3 sm:p-3.5 transition-all hover:bg-emerald-500/10 cursor-pointer"
-                      title="Toque para devolver à lista de pendentes"
+                      onUndo={() => onUnmarkAsPurchased(item)}
+                      className="group flex items-center justify-between gap-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-3 sm:p-3.5 transition-colors hover:bg-emerald-500/10 cursor-grab active:cursor-grabbing"
                     >
                       <div className="flex items-center gap-3 min-w-0 flex-1">
                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white shadow-2xs">
@@ -522,7 +522,7 @@ export function MarketModeView({
                             )}
                             <span className="text-muted-foreground/40 font-bold">·</span>
                             <span className="text-muted-foreground/75 flex items-center gap-1">
-                              <Undo2 size={10} /> desfazer
+                              <Undo2 size={10} /> arraste p/ desfazer
                             </span>
                           </div>
                         </div>
@@ -545,7 +545,7 @@ export function MarketModeView({
                           </span>
                         )}
                       </div>
-                    </div>
+                    </SwipeToUndoRow>
                   );
                 })}
               </div>

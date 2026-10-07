@@ -92,7 +92,7 @@ export function BulletinBoard({
   return (
     <div
       className={cn(
-        'flex h-full flex-col gap-6 rounded-3xl border border-border bg-card p-6 outline-none',
+        'flex h-full flex-col gap-6 rounded-3xl border border-border bg-card p-6 outline-none @container',
         className
       )}
     >
@@ -151,7 +151,7 @@ export function BulletinBoard({
         </div>
       ) : (
         <motion.div
-          className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"
+          className="grid grid-cols-1 gap-4 @[480px]:grid-cols-2 @[840px]:grid-cols-3"
           initial="hidden"
           animate="show"
           variants={{ hidden: {}, show: { transition: { staggerChildren: 0.07 } } }}
@@ -253,11 +253,11 @@ function NoteCard({
 
   return (
     <motion.div
-      className="flex min-h-[10rem] flex-col justify-between overflow-hidden rounded-2xl pb-2.5 pt-4"
+      className="flex min-h-[10.5rem] flex-col justify-between overflow-hidden rounded-2xl pb-3 pt-3.5"
       style={{
         background: bgColor,
-        borderLeft: `2px solid ${accentColor}`,
-        paddingLeft: 'calc(1rem - 2px)',
+        borderLeft: `3px solid ${accentColor}`,
+        paddingLeft: 'calc(1rem - 3px)',
         paddingRight: '1rem',
       }}
       variants={{
@@ -272,13 +272,13 @@ function NoteCard({
       whileHover={{ y: -4, transition: { duration: 0.2, ease: [0.25, 1, 0.5, 1] } }}
     >
       {/* Topo: badge de prioridade + ações (editar, excluir, fixar) */}
-      <div className="flex items-start justify-between pb-2">
-        <div className="flex items-center gap-1.5">
+      <div className="flex flex-wrap items-center justify-between gap-1.5 pb-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
           <span
-            className="font-ui rounded-lg px-2.5 py-1 font-semibold uppercase tracking-[0.9px]"
+            className="font-ui inline-flex shrink-0 items-center rounded-md px-2 py-0.5 font-bold uppercase tracking-[0.6px]"
             style={{
-              fontSize: 'var(--text-xs)',
-              background: `color-mix(in srgb, ${priority.bgVar} 15%, var(--card))`,
+              fontSize: '10px',
+              background: `color-mix(in srgb, ${priority.bgVar} 18%, var(--card))`,
               color: priority.textVar,
             }}
           >
@@ -286,25 +286,24 @@ function NoteCard({
           </span>
           {note.isPinned && (
             <span
-              className="font-ui flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-destructive bg-destructive/10"
-              style={{ fontSize: 'var(--text-xs)' }}
+              className="font-ui inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-bold text-destructive bg-destructive/10 border border-destructive/20"
             >
-              <Pin size={12} className="fill-destructive" />
+              <Pin size={11} className="fill-destructive" />
               Fixado
             </span>
           )}
         </div>
 
-        <div className="-mr-1 flex items-center gap-1">
+        <div className="-mr-1 flex shrink-0 items-center gap-0.5">
           {canEdit && onEditNote && (
             <button
               type="button"
               onClick={() => onEditNote(note)}
               aria-label="Editar recado"
               title="Editar (Criador)"
-              className="inline-flex min-h-[36px] min-w-[36px] items-center justify-center rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="inline-flex size-7 items-center justify-center rounded-lg p-1 text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             >
-              <Pencil size={15} strokeWidth={1.75} aria-hidden="true" />
+              <Pencil size={14} strokeWidth={1.75} aria-hidden="true" />
             </button>
           )}
           {canDelete && onDeleteNote && (
@@ -313,9 +312,9 @@ function NoteCard({
               onClick={() => onDeleteNote(note.id)}
               aria-label="Excluir recado"
               title="Excluir (Admin/Criador)"
-              className="inline-flex min-h-[36px] min-w-[36px] items-center justify-center rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="inline-flex size-7 items-center justify-center rounded-lg p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             >
-              <Trash2 size={15} strokeWidth={1.75} aria-hidden="true" />
+              <Trash2 size={14} strokeWidth={1.75} aria-hidden="true" />
             </button>
           )}
           {canPin && onTogglePin && (
@@ -324,39 +323,40 @@ function NoteCard({
               onClick={() => onTogglePin(note.id, Boolean(note.isPinned))}
               aria-label={note.isPinned ? 'Desafixar nota' : 'Fixar nota'}
               title={note.isPinned ? 'Desafixar (Admin)' : 'Fixar (Admin)'}
-              className="inline-flex min-h-[36px] min-w-[36px] items-center justify-center rounded-lg p-1.5 transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="inline-flex size-7 items-center justify-center rounded-lg p-1 transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               style={{
                 color: note.isPinned ? 'var(--destructive)' : 'var(--muted-foreground)',
               }}
             >
-              <Pin size={16} strokeWidth={2} aria-hidden="true" />
+              <Pin size={14} strokeWidth={2} aria-hidden="true" />
             </button>
           )}
         </div>
       </div>
 
       {/* Mensagem */}
-      <div className="flex-1 overflow-hidden">
-        <div className="font-ui line-clamp-3 text-sm leading-snug text-foreground/80">
+      <div className="my-1.5 flex-1 min-w-0 overflow-hidden">
+        <div className="font-ui line-clamp-4 text-xs sm:text-sm leading-relaxed text-foreground/90 break-words whitespace-pre-wrap">
           {note.content}
         </div>
       </div>
 
       {/* Rodapé: autor + reações */}
-      <div className="flex min-w-0 flex-wrap items-center justify-between gap-2 pt-4">
-        <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
+      <div className="mt-auto flex min-w-0 flex-wrap items-center justify-between gap-2 pt-2.5 border-t border-foreground/5">
+        {/* Autor e data */}
+        <div className="flex min-w-0 items-center gap-1.5 overflow-hidden">
           {note.authorAvatar ? (
             <img
               src={note.authorAvatar}
               alt={note.authorName || 'Criador'}
-              className="h-6 w-6 shrink-0 rounded-full object-cover"
+              className="h-5 w-5 shrink-0 rounded-full object-cover ring-1 ring-border/50"
             />
           ) : (
             <div
-              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full font-bold"
+              className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full font-bold"
               aria-hidden="true"
               style={{
-                fontSize: 'var(--text-xs)',
+                fontSize: '9px',
                 background: accentColor,
                 color: 'var(--card)',
               }}
@@ -364,12 +364,11 @@ function NoteCard({
               {getInitials(note.authorName)}
             </div>
           )}
-          <div className="flex min-w-0 items-center gap-2 overflow-hidden">
+          <div className="flex min-w-0 items-baseline gap-1.5 overflow-hidden">
             {note.authorName && (
               <span
-                className="font-ui truncate font-semibold uppercase tracking-[1px]"
+                className="font-ui truncate font-bold uppercase tracking-[0.5px] text-[11px]"
                 style={{
-                  fontSize: 'var(--text-xs)',
                   color: note.isPinned ? accentColor : 'var(--foreground)',
                 }}
               >
@@ -378,17 +377,16 @@ function NoteCard({
             )}
             {note.timeLabel && (
               <span
-                className="font-ui shrink-0 text-muted-foreground"
-                style={{ fontSize: 'var(--text-xs)' }}
+                className="font-ui shrink-0 text-[10px] text-muted-foreground/80"
               >
-                {note.timeLabel}
+                • {note.timeLabel}
               </span>
             )}
           </div>
         </div>
 
         {/* Reações */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex shrink-0 items-center gap-1 flex-wrap">
           {groupedReactions.map((r, i) => (
             <button
               key={i}
@@ -401,14 +399,14 @@ function NoteCard({
               }
               aria-label={`Reagir com ${r.emoji}, ${r.count} reações`}
               className={cn(
-                'flex items-center gap-1 rounded-full px-2.5 py-1 text-xs transition-colors',
+                'flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] transition-colors',
                 r.userReacted
                   ? 'bg-primary/20 text-primary font-bold border border-primary/30'
                   : 'bg-muted/60 text-muted-foreground hover:bg-muted'
               )}
             >
               <span aria-hidden="true">{r.emoji}</span>
-              <span className="font-ui font-semibold">{r.count}</span>
+              <span className="font-ui font-semibold text-[10px]">{r.count}</span>
             </button>
           ))}
 
@@ -419,9 +417,9 @@ function NoteCard({
                   type="button"
                   aria-label="Adicionar reação"
                   title="Reagir"
-                  className="flex h-7 w-7 items-center justify-center rounded-full bg-muted/40 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  className="flex size-6 items-center justify-center rounded-full bg-muted/40 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                 >
-                  <Smile size={14} />
+                  <Smile size={13} />
                 </button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-1.5" side="top">
@@ -434,7 +432,7 @@ function NoteCard({
                         onReactNote(note.id, emoji);
                         setPickerOpen(false);
                       }}
-                      className="flex h-8 w-8 items-center justify-center rounded-md text-base transition-colors hover:bg-muted"
+                      className="flex size-7 items-center justify-center rounded-md text-sm transition-colors hover:bg-muted"
                     >
                       {emoji}
                     </button>

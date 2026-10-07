@@ -5,6 +5,7 @@ import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
 
 import { AppSidebar } from './components/app-sidebar';
 import { FadeIn } from './components/common/FadeIn';
+import { MobileBottomNav } from './components/common/MobileBottomNav';
 import RequireAuth from './components/common/RequireAuth';
 import { SplashScreen } from './components/common/SplashScreen';
 import { TopNavbar } from './components/common/TopNavbar';
@@ -30,6 +31,7 @@ import { useTheme } from './contexts/ThemeContext';
 
 // Lazy loading dos módulos para code splitting
 const DashboardModule = lazy(() => import('./components/modules/Dashboard'));
+const DashboardV2Module = lazy(() => import('./components/modules/DashboardV2'));
 const TasksModule = lazy(() => import('./components/modules/Tasks'));
 const ShoppingListModule = lazy(() => import('./components/modules/Shopping'));
 const FinancialModule = lazy(() => import('./components/modules/Financial'));
@@ -47,8 +49,10 @@ const NotificationCenterPageModule = lazy(
   () => import('./components/modules/notifications/NotificationCenterPage')
 );
 const CategoriesSettingsPage = lazy(() => import('./pages/settings/CategoriesSettings'));
+const ChangelogPage = lazy(() => import('./pages/Changelog'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
+
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const GoogleCallback = lazy(() => import('./pages/GoogleCallback'));
 const InviteAccept = lazy(() => import('./pages/InviteAccept'));
@@ -57,6 +61,10 @@ const NotFound = lazy(() => import('./pages/NotFound'));
 // Componentes wrapper que conectam o context aos módulos
 const Dashboard: FC = () => {
   return <DashboardModule />;
+};
+
+const DashboardV2: FC = () => {
+  return <DashboardV2Module />;
 };
 
 const Tasks: FC = () => {
@@ -116,11 +124,12 @@ const HomeLayout: FC = () => {
       <AppSidebar user={user ?? undefined} />
       <SidebarInset className="overflow-x-hidden">
         <TopNavbar />
-        <div className="flex flex-1 flex-col gap-4 overflow-x-hidden p-3 sm:p-4 md:p-6">
+        <div className="flex flex-1 flex-col gap-4 overflow-x-hidden p-3 sm:p-4 md:p-6 pb-20 md:pb-6">
           <div className="max-w-full flex-1">
             <Outlet />
           </div>
         </div>
+        <MobileBottomNav />
       </SidebarInset>
     </SidebarProvider>
   );
@@ -209,6 +218,16 @@ export const App: FC = () => {
                       <Suspense fallback={<DashboardSkeleton />}>
                         <FadeIn>
                           <Dashboard />
+                        </FadeIn>
+                      </Suspense>
+                    }
+                  />
+                  <Route
+                    path="dashboard-v2"
+                    element={
+                      <Suspense fallback={<DashboardSkeleton />}>
+                        <FadeIn>
+                          <DashboardV2 />
                         </FadeIn>
                       </Suspense>
                     }
@@ -323,7 +342,28 @@ export const App: FC = () => {
                       </Suspense>
                     }
                   />
+                  <Route
+                    path="changelog"
+                    element={
+                      <Suspense fallback={<TaskListSkeleton />}>
+                        <FadeIn>
+                          <ChangelogPage />
+                        </FadeIn>
+                      </Suspense>
+                    }
+                  />
+                  <Route
+                    path="settings/changelog"
+                    element={
+                      <Suspense fallback={<TaskListSkeleton />}>
+                        <FadeIn>
+                          <ChangelogPage />
+                        </FadeIn>
+                      </Suspense>
+                    }
+                  />
                 </Route>
+
 
                 {/* Página 404 e Fallback para rotas não encontradas */}
                 <Route

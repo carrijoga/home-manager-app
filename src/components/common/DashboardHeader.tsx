@@ -8,10 +8,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { isKoboyoAvatar, resolveUserAvatar } from '@/constants/koboyoAvatars';
+import { useTranslation } from '@/hooks/useTranslation';
 import { getIconComponent } from '@/lib/nestIcons';
 import { cn } from '@/lib/utils';
 import type { NestMember } from '@/schemas/nest';
 import type { AppUserNest } from '@/types';
+import { getDailyGreetingKey } from '@/utils/greetings';
 
 import WeatherWidget from './WeatherWidget';
 
@@ -66,6 +68,8 @@ export function DashboardHeader({
   isRefreshingDashboard = false,
   className,
 }: DashboardHeaderProps) {
+  const { t } = useTranslation();
+  const greeting = t(useMemo(() => getDailyGreetingKey(), []));
   const NestIcon = activeNest ? getIconComponent(activeNest.icon) : null;
   const sortedMembers = useMemo(() => {
     if (!members || members.length === 0) return [];
@@ -89,7 +93,7 @@ export function DashboardHeader({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: [0.25, 1, 0.5, 1] }}
         >
-          Bem-vindo ao lar,{' '}
+          {greeting}{' '}
           <span className="inline-block max-w-[320px] truncate align-bottom">{userName}</span>.
         </motion.h1>
 

@@ -55,6 +55,8 @@ export const enUS: UiDictionary = {
     financialGroup: 'Financial',
     settingsGroup: 'Settings',
     categories: 'Categories',
+    changelog: 'Changelog & Updates',
+
     financialModule: 'Financial Module',
     collapseFinancial: 'Collapse Finances',
     expandFinancial: 'Expand Finances',
@@ -127,6 +129,46 @@ export const enUS: UiDictionary = {
   dashboard: {
     welcome: 'Hello, {name}!',
     welcomeBack: 'Welcome back to your nest',
+    greetings: {
+      g0: 'Welcome home,',
+      g1: 'So good to see you here,',
+      g2: 'Your nest has been waiting for you,',
+      g3: 'A home full of good vibes for you,',
+      g4: 'Another day to take care of home,',
+      g5: 'Happy to have you back,',
+      g6: 'Everything is in order in the nest,',
+      g7: 'Your favorite corner is calling,',
+      g8: 'Time to get the house in shape,',
+      g9: 'A good day of organizing starts now,',
+      g10: 'May your day be light,',
+      g11: 'Home is lovelier with you,',
+      g12: "Let's take care of the nest together,",
+      g13: 'Take a deep breath, you are home,',
+    },
     summaryTitle: 'Overview',
+  },
+  weather: {
+    conditions: {
+      sun: 'Sunny',
+      cloudSun: 'Partly cloudy',
+      cloud: 'Cloudy',
+      rain: 'Rain',
+      lightning: 'Thunderstorm',
+      snow: 'Snow',
+    },
+    status: {
+      updating: 'Updating...',
+      unavailable: 'Weather unavailable',
+    },
+    actions: {
+      refresh: 'Update weather',
+      refreshShort: 'Update',
+    },
+    onboarding: {
+      title: 'Enable weather',
+      subtitle: 'See temperature here',
+      button: 'Use my location',
+      waiting: 'Waiting...',
+    },
   },
 };

@@ -11,10 +11,11 @@ import { TaskHistoryResponseSchema, TaskPagedResponseSchema, TaskResponseSchema 
 import type { PaginatedResponse, Task } from '@/types';
 import { ApiPriority } from '@/types';
 
-import { MOCK_USER_ID, mockCategoryTree, mockTasks } from '../mocks/data';
+import { MOCK_USER_ID, mockTasks } from '../mocks/data';
 import { DATA_MODE } from './api/config';
 import { ENDPOINTS } from './api/endpoints';
 import { httpClient } from './api/httpClient';
+import { getMockCategoryTree } from './categoryService';
 
 // ── Mappers ───────────────────────────────────────────────────────────────────
 
@@ -179,7 +180,7 @@ export async function createTask(payload: CreateTaskRequest, nestId?: string): P
       dueDate: payload.dueDate ?? null,
       priority: (payload.priority ?? ApiPriority.Baixa) as Task['priority'],
       priorityLabel: PRIORITY_LABELS[payload.priority ?? ApiPriority.Baixa],
-      category: toCategorySummary(mockCategoryTree, payload.categoryId),
+      category: toCategorySummary(getMockCategoryTree(), payload.categoryId),
       date: payload.date ?? now,
       isCompleted: false,
       completedAt: null,
@@ -243,7 +244,7 @@ export async function updateTask(
         dueDate: payload.dueDate ?? null,
         priority: (payload.priority ?? ApiPriority.Baixa) as Task['priority'],
         priorityLabel: PRIORITY_LABELS[payload.priority ?? ApiPriority.Baixa],
-        category: toCategorySummary(mockCategoryTree, payload.categoryId),
+        category: toCategorySummary(getMockCategoryTree(), payload.categoryId),
         assignees: payload.assigneeIds
           ? payload.assigneeIds.map((uId) => {
               const existing = _mockState[idx].assignees.find((a) => a.userId === uId);

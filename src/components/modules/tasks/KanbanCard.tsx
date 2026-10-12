@@ -1,7 +1,7 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { motion } from 'framer-motion';
-import { AlertCircle, CalendarDays, Check, Edit2, MoreHorizontal, Pencil, Trash2, User } from 'lucide-react';
+import { AlertCircle, CalendarDays, Check, Edit2, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { memo } from 'react';
 
 import {
@@ -10,14 +10,18 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui';
+import { formatTaskCategory } from '@/lib/taskCategories';
 import { cn } from '@/lib/utils';
 import type { Task } from '@/types';
 
+import { AssigneesPopover } from './AssigneesPopover';
 import { PRIORITY_CONFIG } from './constants';
+import { useToggleAssignee } from './TaskAssigneeActionsContext';
+import { getMyPart, NOT_ASSIGNEE_HINT } from './taskParts';
+import { useTaskViewer } from './useTaskViewer';
 
 interface KanbanCardProps {
   task: Task;
-  assignedName?: string;
   onEdit: (task: Task) => void;
   onDelete: (taskId: string, snap: Task) => void;
   isDragOverlay?: boolean;
@@ -25,11 +29,15 @@ interface KanbanCardProps {
 
 export const KanbanCard = memo(function KanbanCard({
   task,
-  assignedName,
   onEdit,
   onDelete,
   isDragOverlay,
 }: KanbanCardProps) {
+  const viewer = useTaskViewer();
+  const toggleAssignee = useToggleAssignee();
+  const myPart = getMyPart(task, viewer.userId);
+  const myDone = myPart?.isCompleted ?? false;
+
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.taskId,
   });
@@ -60,14 +68,17 @@ export const KanbanCard = memo(function KanbanCard({
       <div className="flex items-start gap-3">
         {/* Checkbox Visual Only (Kanban status drives completion) */}
         <div
+          title={!myPart ? NOT_ASSIGNEE_HINT : myDone ? 'Sua parte está concluída' : 'Sua parte está pendente'}
           className={cn(
             'mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition-colors',
-            task.isCompleted
-              ? 'bg-emerald-600 text-white shadow-2xs dark:bg-emerald-500'
-              : 'border-2 border-border/90 bg-card shadow-2xs'
+            !myPart
+              ? 'border-2 border-dashed border-border/70 bg-muted/40 opacity-60'
+              : myDone
+                ? 'bg-emerald-600 text-white shadow-2xs dark:bg-emerald-500'
+                : 'border-2 border-border/90 bg-card shadow-2xs'
           )}
         >
-          {task.isCompleted && (
+          {myDone && (
             <motion.span
               initial={{ scale: 0.3, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -104,16 +115,22 @@ export const KanbanCard = memo(function KanbanCard({
             <span className="text-muted-foreground/40 font-bold shrink-0">·</span>
             
             <span className="truncate text-muted-foreground/90 font-medium">
-              {task.categoryLabel}
+              {formatTaskCategory(task.category)}
             </span>
 
-            {assignedName && (
+            {task.assignees.length > 0 && (
               <>
                 <span className="text-muted-foreground/40 font-bold shrink-0">·</span>
-                <span className="inline-flex items-center gap-1 font-medium text-muted-foreground/90 truncate">
-                  <User size={10} className="shrink-0 opacity-70" />
-                  <span className="truncate">{assignedName}</span>
-                </span>
+                <AssigneesPopover
+                  task={task}
+                  currentUserId={viewer.userId}
+                  canCompleteOthers={viewer.canCompleteOthers}
+                  onToggleAssignee={
+                    toggleAssignee
+                      ? (assigneeUserId, done) => toggleAssignee(task.taskId, assigneeUserId, done)
+                      : undefined
+                  }
+                />
               </>
             )}
 

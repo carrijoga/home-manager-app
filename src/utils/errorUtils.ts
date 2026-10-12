@@ -1,4 +1,4 @@
-import { getDefaultErrorMessage, getErrorMessageByCode, getCurrentLanguage } from '@/i18n';
+import { getCurrentLanguage,getDefaultErrorMessage, getErrorMessageByCode } from '@/i18n';
 import type { SupportedLanguage } from '@/i18n/types';
 import { ApiError } from '@/services/api/httpClient';
 

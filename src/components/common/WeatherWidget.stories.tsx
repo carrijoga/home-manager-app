@@ -63,6 +63,7 @@ export const LongCityName: Story = {
     city: 'São José do Rio Preto',
     temperatureLabel: '31°',
     description: 'Ensolarado',
+    conditionCode: '800',
   },
 };
 
@@ -70,7 +71,23 @@ export const Sunny: Story = {
   args: {
     description: 'Ensolarado',
     temperatureLabel: '28°C',
-    conditionCode: 'sunny',
+    conditionCode: '800',
+  },
+};
+
+export const PartlyCloudy: Story = {
+  args: {
+    description: 'Parcialmente nublado',
+    temperatureLabel: '24°C',
+    conditionCode: '801',
+  },
+};
+
+export const Cloudy: Story = {
+  args: {
+    description: 'Nublado',
+    temperatureLabel: '21°C',
+    conditionCode: '804',
   },
 };
 
@@ -78,7 +95,7 @@ export const Rainy: Story = {
   args: {
     description: 'Chuva forte',
     temperatureLabel: '19°C',
-    conditionCode: 'rain',
+    conditionCode: '500',
   },
 };
 
@@ -86,30 +103,14 @@ export const Storm: Story = {
   args: {
     description: 'Tempestade com trovoada',
     temperatureLabel: '17°C',
-    conditionCode: 'thunderstorm',
+    conditionCode: '200',
   },
 };
 
-export const Windy: Story = {
+export const Snowy: Story = {
   args: {
-    description: 'Vento forte',
-    temperatureLabel: '15°C',
-    conditionCode: 'windy',
-  },
-};
-
-export const Hot: Story = {
-  args: {
-    description: 'Muito quente',
-    temperatureLabel: '37°C',
-    conditionCode: 'hot',
-  },
-};
-
-export const Cold: Story = {
-  args: {
-    description: 'Muito frio / Geada',
-    temperatureLabel: '-1°C',
-    conditionCode: 'snow',
+    description: 'Neve intensa',
+    temperatureLabel: '-2°C',
+    conditionCode: '600',
   },
 };

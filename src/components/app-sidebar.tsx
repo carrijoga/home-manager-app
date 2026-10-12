@@ -4,7 +4,9 @@ import {
   ChevronDown,
   ChevronsUpDown,
   HelpCircle,
+  History,
   LogOut,
+
   MessageSquarePlus,
   Moon,
   Settings,
@@ -17,8 +19,8 @@ import {
 import * as React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { RoleBadge } from '@/components/common/RoleBadge';
 import { AvatarWithPresence, OnlineStatusBadge } from '@/components/common/OnlineStatusBadge';
+import { RoleBadge } from '@/components/common/RoleBadge';
 import { NestManagerModal } from '@/components/modals/NestManagerModal';
 import { ProfileModal } from '@/components/modals/ProfileModal';
 import { SettingsModal } from '@/components/modals/SettingsModal';
@@ -31,6 +33,7 @@ import {
   type DollarSignIconHandle,
 } from '@/components/ui/animated-icons/dollar-sign';
 import { HomeIcon } from '@/components/ui/animated-icons/home';
+import { LayoutPanelTopIcon } from '@/components/ui/animated-icons/layout-panel-top';
 import { RefreshCWIcon } from '@/components/ui/animated-icons/refresh-cw';
 import { TrendingUpIcon } from '@/components/ui/animated-icons/trending-up';
 import { UserIcon as AnimatedUserIcon } from '@/components/ui/animated-icons/user';
@@ -117,6 +120,12 @@ const MAIN_MODULE_CONFIG: ModuleConfig[] = [
   { id: 'shopping', labelKey: 'nav.shopping', icon: CartIcon, path: '/shopping' },
   { id: 'calendar', labelKey: 'nav.calendar', icon: CalendarDaysIcon, path: '/calendar' },
 ];
+
+const SETTINGS_MODULE_CONFIG: ModuleConfig[] = [
+  { id: 'settings-categories', labelKey: 'nav.categories', icon: LayoutPanelTopIcon, path: '/settings/categories' },
+];
+
+
 
 function getInitials(name?: string | null) {
   if (!name) return 'U';
@@ -221,6 +230,17 @@ export function AppSidebar({ user }: AppSidebarProps) {
   const financasSubItems = React.useMemo<FinancasSubItem[]>(
     () =>
       FINANCAS_SUB_CONFIG.map((m) => ({
+        id: m.id,
+        name: t(m.labelKey),
+        icon: m.icon,
+        path: m.path,
+      })),
+    [t]
+  );
+
+  const settingsModules = React.useMemo<Module[]>(
+    () =>
+      SETTINGS_MODULE_CONFIG.map((m) => ({
         id: m.id,
         name: t(m.labelKey),
         icon: m.icon,
@@ -424,6 +444,29 @@ export function AppSidebar({ user }: AppSidebarProps) {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* GRUPO CONFIGURAÇÕES */}
+        <SidebarGroup className={cn('py-1', isCollapsed && 'px-0 py-1 items-center')}>
+          {!isCollapsed && (
+            <SidebarGroupLabel className="px-3 pb-1.5 pt-2 text-[10px] font-bold uppercase tracking-wider text-sidebar-foreground/40">
+              {t('nav.settingsGroup')}
+            </SidebarGroupLabel>
+          )}
+          <SidebarGroupContent>
+            <SidebarMenu className={cn('gap-1', isCollapsed && 'items-center')}>
+              {settingsModules.map((module) => (
+                <NavModuleItem
+                  key={module.id}
+                  module={module}
+                  isActive={isActive(module.path)}
+                  isCollapsed={isCollapsed}
+                  isMobile={isMobile}
+                  onNavigate={handleNavClick}
+                />
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
 
       {/* ── FOOTER: USER PROFILE & UTILITIES ── */}
@@ -570,6 +613,18 @@ export function AppSidebar({ user }: AppSidebarProps) {
                   <Settings className="size-3.5 text-muted-foreground" />
                   <span>{t('nav.settings')}</span>
                 </DropdownMenuItem>
+
+                <DropdownMenuItem
+                  onClick={() => {
+                    navigate('/changelog');
+                    if (isMobile) setOpenMobile(false);
+                  }}
+                  className="cursor-pointer gap-2.5 rounded-xl px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-accent/60"
+                >
+                  <History className="size-3.5 text-muted-foreground" />
+                  <span>{t('nav.changelog')}</span>
+                </DropdownMenuItem>
+
 
                 <DropdownMenuItem
                   onSelect={(e) => {

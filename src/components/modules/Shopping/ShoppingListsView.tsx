@@ -5,6 +5,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
+  CopyPlus,
   MoreVertical,
   Pencil,
   Plus,
@@ -15,6 +16,12 @@ import {
 import { useState } from 'react';
 
 import {
+  AnimatedCurrency,
+  AnimatedNumber,
+  AnimatedPercent,
+  SpringProgress,
+} from '@/components/ui';
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -24,12 +31,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import {
-  AnimatedCurrency,
-  AnimatedNumber,
-  AnimatedPercent,
-  SpringProgress,
-} from '@/components/ui';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -67,6 +68,7 @@ interface ShoppingListsViewProps {
   onEditListFromGrid: (data: ListFormData) => Promise<void>;
   onDeleteListFromGrid: () => Promise<void>;
   onUnfinishList: (id: string) => Promise<void>;
+  onReplicateList: (list: AppShoppingListSummary) => void;
 }
 
 export function ShoppingListsView(props: ShoppingListsViewProps) {
@@ -92,6 +94,7 @@ export function ShoppingListsView(props: ShoppingListsViewProps) {
     onEditListFromGrid,
     onDeleteListFromGrid,
     onUnfinishList,
+    onReplicateList,
   } = props;
 
   // Filtro de status mobile: 'all' | 'active' | 'completed'
@@ -433,6 +436,10 @@ export function ShoppingListsView(props: ShoppingListsViewProps) {
                           </DropdownMenuItem>
                         </>
                       )}
+                      <DropdownMenuItem className="gap-2" onClick={() => onReplicateList(list)}>
+                        <CopyPlus size={14} />
+                        Replicar para outro mês
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>

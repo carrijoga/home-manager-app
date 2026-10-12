@@ -8,7 +8,6 @@ import {
   Pencil,
   RotateCcw,
   Trash2,
-  User,
 } from 'lucide-react';
 import { forwardRef, memo } from 'react';
 
@@ -19,14 +18,18 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui';
+import { formatTaskCategory } from '@/lib/taskCategories';
 import { cn } from '@/lib/utils';
 import type { Task } from '@/types';
 
+import { AssigneesPopover } from './AssigneesPopover';
 import { PRIORITY_CONFIG } from './constants';
+import { useToggleAssignee } from './TaskAssigneeActionsContext';
+import { getMyPart, NOT_ASSIGNEE_HINT } from './taskParts';
+import { useTaskViewer } from './useTaskViewer';
 
 interface TaskCardProps {
   task: Task;
-  assignedName?: string;
   isBulkMode?: boolean;
   isSelected?: boolean;
   onToggleSelection?: (taskId: string) => void;
@@ -38,9 +41,13 @@ interface TaskCardProps {
 
 export const TaskCard = memo(
   forwardRef<HTMLDivElement, TaskCardProps>(function TaskCard(
-    { task, assignedName, isBulkMode, isSelected, onToggleSelection, onComplete, onUncomplete, onDelete, onEdit },
+    { task, isBulkMode, isSelected, onToggleSelection, onComplete, onUncomplete, onDelete, onEdit },
     ref
   ) {
+    const viewer = useTaskViewer();
+    const toggleAssignee = useToggleAssignee();
+    const myPart = getMyPart(task, viewer.userId);
+    const myDone = myPart?.isCompleted ?? false;
     const cfg = PRIORITY_CONFIG[task.priority as 0 | 1 | 2 | 3] ?? PRIORITY_CONFIG[3];
     const overdueDays =
       task.isOverdue && task.dueDate
@@ -69,7 +76,7 @@ export const TaskCard = memo(
             )}
           </div>
           <span className="text-xs font-semibold text-muted-foreground">
-            {task.categoryLabel}
+            {formatTaskCategory(task.category)}
           </span>
         </div>
       );
@@ -91,21 +98,32 @@ export const TaskCard = memo(
         {/* Tactile Circular Checkbox */}
         <motion.button
           type="button"
-          whileTap={{ scale: 0.85 }}
+          whileTap={myPart ? { scale: 0.85 } : undefined}
+          aria-disabled={!myPart}
+          title={!myPart ? NOT_ASSIGNEE_HINT : myDone ? 'Reabrir minha parte' : 'Concluir minha parte'}
           onClick={(e) => {
             e.stopPropagation();
-            if (task.isCompleted) onUncomplete(task.taskId);
+            if (!myPart) return;
+            if (myDone) onUncomplete(task.taskId);
             else onComplete(task.taskId);
           }}
           className={cn(
-            'mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition-colors active:scale-90',
-            task.isCompleted
-              ? 'bg-emerald-600 text-white shadow-2xs hover:bg-emerald-700 dark:bg-emerald-500'
-              : 'border-2 border-border/90 bg-card hover:border-primary hover:bg-primary/10 shadow-2xs'
+            'mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition-colors',
+            !myPart
+              ? 'cursor-not-allowed border-2 border-dashed border-border/70 bg-muted/40 opacity-60'
+              : myDone
+                ? 'bg-emerald-600 text-white shadow-2xs hover:bg-emerald-700 active:scale-90 dark:bg-emerald-500'
+                : 'border-2 border-border/90 bg-card shadow-2xs hover:border-primary hover:bg-primary/10 active:scale-90'
           )}
-          aria-label={task.isCompleted ? `Reabrir ${task.title}` : `Concluir ${task.title}`}
+          aria-label={
+            !myPart
+              ? `${NOT_ASSIGNEE_HINT}: ${task.title}`
+              : myDone
+                ? `Reabrir minha parte em ${task.title}`
+                : `Concluir minha parte em ${task.title}`
+          }
         >
-          {task.isCompleted && (
+          {myDone && (
             <motion.span
               initial={{ scale: 0.3, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -147,16 +165,22 @@ export const TaskCard = memo(
             
             {/* Category */}
             <span className="truncate text-muted-foreground/90 font-medium">
-              {task.categoryLabel}
+              {formatTaskCategory(task.category)}
             </span>
 
-            {assignedName && (
+            {task.assignees.length > 0 && (
               <>
                 <span className="text-muted-foreground/40 font-bold shrink-0">·</span>
-                <span className="inline-flex items-center gap-1 font-medium text-muted-foreground/90 truncate">
-                  <User size={10} className="shrink-0 opacity-70" />
-                  <span className="truncate">{assignedName}</span>
-                </span>
+                <AssigneesPopover
+                  task={task}
+                  currentUserId={viewer.userId}
+                  canCompleteOthers={viewer.canCompleteOthers}
+                  onToggleAssignee={
+                    toggleAssignee
+                      ? (assigneeUserId, done) => toggleAssignee(task.taskId, assigneeUserId, done)
+                      : undefined
+                  }
+                />
               </>
             )}
 
@@ -202,16 +226,16 @@ export const TaskCard = memo(
             >
               <Pencil size={13} />
             </button>
-          ) : (
+          ) : myPart ? (
             <button
               type="button"
               className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground active:scale-95"
               onClick={() => onUncomplete(task.taskId)}
-              title="Reabrir tarefa"
+              title="Reabrir minha parte"
             >
               <RotateCcw size={13} />
             </button>
-          )}
+          ) : null}
           <button
             type="button"
             className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive active:scale-95"
@@ -240,7 +264,7 @@ export const TaskCard = memo(
                   <Edit2 size={13} className="mr-2" /> Editar
                 </DropdownMenuItem>
               )}
-              {task.isCompleted && (
+              {task.isCompleted && myPart && (
                 <DropdownMenuItem onClick={() => onUncomplete(task.taskId)}>
                   <RotateCcw size={13} className="mr-2" /> Reabrir
                 </DropdownMenuItem>

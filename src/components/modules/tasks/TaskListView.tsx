@@ -1,13 +1,14 @@
 import type { Variants } from 'framer-motion';
 import { AnimatePresence, motion } from 'framer-motion';
-import { CheckCircle2, ChevronDown, ChevronUp, CheckSquare } from 'lucide-react';
+import { CheckCircle2, CheckSquare,ChevronDown, ChevronUp } from 'lucide-react';
 import { useState } from 'react';
 
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import type { Task } from '@/types';
-import { TaskSortOrder } from './TaskFilterBar';
+
 import { PRIORITY_CONFIG } from './constants';
 import { TaskCard } from './TaskCard';
+import { TaskSortOrder } from './TaskFilterBar';
 
 const cardSlide: Variants = {
   hidden: { opacity: 0, y: 24, scale: 0.97 },

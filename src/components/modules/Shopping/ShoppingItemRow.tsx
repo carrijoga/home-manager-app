@@ -34,6 +34,7 @@ import type { AppShoppingItem } from '@/types';
 import {
   getItemEstimatedTotal,
   getItemSpentTotal,
+  getQuantityDisplay,
   getSavingsInfo,
   quantityLabel,
 } from './helpers';
@@ -85,7 +86,7 @@ export function ShoppingItemRow(props: ShoppingItemRowProps) {
     onDelete,
   } = props;
 
-  const savings = getSavingsInfo(item.estimatedPrice, item.price, item.quantity, item.unitType);
+  const savings = getSavingsInfo(item);
 
   /* ── 1. Modo Edição Inline (Desktop) ── */
   if (isEditing) {
@@ -208,6 +209,7 @@ export function ShoppingItemRow(props: ShoppingItemRowProps) {
   const isIgnored = item.status === 2;
   const isNotPurchased = item.status === 3;
   const isPendingStatus = !isPurchased && !isIgnored && !isNotPurchased;
+  const qtyDisplay = getQuantityDisplay(item);
 
   /* ── 3. Estado Normal de Item (Design Limpo, Editorial e Tátil) ── */
   return (
@@ -314,14 +316,20 @@ export function ShoppingItemRow(props: ShoppingItemRowProps) {
         {/* Linha de Metadados Unificada com Separadores Pontilhados (Sem poluição de badges) */}
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground truncate">
           <span className="font-semibold text-foreground/85 shrink-0 tabular-nums">
-            {quantityLabel(item.quantity, item.unitType)}
+            {qtyDisplay.label}
           </span>
+          {qtyDisplay.plannedLabel && (
+            <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
+              {qtyDisplay.plannedLabel}
+            </span>
+          )}
 
-          {item.categoryName && (
+          {item.category?.parentCategoryId && (
             <>
               <span className="text-muted-foreground/40 font-bold shrink-0">·</span>
-              <span className="truncate text-muted-foreground/90 font-medium">
-                {item.categoryName}
+              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-muted/60 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                <span aria-hidden>{item.category.icon}</span>
+                {item.category.name}
               </span>
             </>
           )}
@@ -344,7 +352,7 @@ export function ShoppingItemRow(props: ShoppingItemRowProps) {
           <>
             <span className="text-xs sm:text-sm font-bold text-foreground tabular-nums">
               {item.price != null
-                ? formatCurrency(getItemSpentTotal(item.price, item.quantity, item.unitType))
+                ? formatCurrency(getItemSpentTotal(item))
                 : 'Comprado'}
             </span>
             {savings && savings.type === 'savings' && (

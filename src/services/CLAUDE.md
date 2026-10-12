@@ -45,7 +45,7 @@ All 16 services in this directory are fully typed TypeScript modules (`.ts`):
 | `authService.ts`        | Login, register, logout, Google OAuth, token refresh |
 | `bankAccountService.ts` | Bank accounts CRUD and balances                      |
 | `calendarService.ts`    | Calendar events                                      |
-| `categoryService.ts`    | Category management for shopping and finances        |
+| `categoryService.ts`    | Unified category tree (4 scopes: expense, income, shopping, task) |
 | `dashboardService.ts`   | Dashboard KPI summaries and activity feeds           |
 | `financialService.ts`   | Expenses, income transactions, and balances          |
 | `futureItemsService.ts` | Future purchase wish-list                            |
@@ -55,7 +55,7 @@ All 16 services in this directory are fully typed TypeScript modules (`.ts`):
 | `notificationService.ts`| User notifications management (list, read, delete)   |
 | `paymentCardService.ts` | Credit and debit card management and card statements |
 | `settingsService.ts`    | User and nest preferences                            |
-| `shoppingService.ts`    | Shopping lists and item CRUD                         |
+| `shoppingService.ts`    | Shopping lists and item CRUD (+ replicate list to another month) |
 | `taskService.ts`        | CRUD for tasks, subtasks, and status transitions     |
 | `userService.ts`        | User profile and credentials management              |
 | `weatherService.ts`     | Weather forecasts for home location                  |

@@ -4,7 +4,7 @@ import { ArrowDownRight, ArrowUpRight, CheckCircle2, Clock, Plus, Sparkles } fro
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { CreateCategoryModal } from '@/components/modals/CreateCategoryModal';
+import { AnimatedCurrency, AnimatedPercent } from '@/components/common/AnimatedNumber';
 import { PaymentModal } from '@/components/modals/PaymentModal';
 import { TransactionSheet } from '@/components/modals/TransactionSheet';
 import {
@@ -20,11 +20,13 @@ import {
 } from '@/components/ui';
 import { useApp } from '@/contexts/AppContext';
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
+import { useCategories } from '@/hooks/useCategories';
 import { useDebounce } from '@/hooks/useDebounce';
 import { usePolling } from '@/hooks/usePolling';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { matchesCategoryFilter, toCategoryOptions } from '@/lib/categories';
 import type { BankAccountResponse } from '@/schemas/bank-account';
-import type { CategoryResponse } from '@/schemas/category';
+import { CategoryScope } from '@/schemas/category';
 import { PaymentStatus, TransactionType } from '@/schemas/enums';
 import type {
   AddPaymentRequest,
@@ -37,11 +39,9 @@ import type {
 import type { NestMember } from '@/schemas/nest';
 import type { PaymentCardResponse } from '@/schemas/payment-card';
 import * as bankAccountService from '@/services/bankAccountService';
-import * as categoryService from '@/services/categoryService';
 import * as financialService from '@/services/financialService';
 import * as nestService from '@/services/nestService';
 import * as paymentCardService from '@/services/paymentCardService';
-import { AnimatedCurrency, AnimatedPercent } from '@/components/common/AnimatedNumber';
 import { getEffectiveAmount, getMonthLabel, getMonthRange } from '@/utils/financialUtils';
 
 import { MonthNavigator } from './financial/MonthNavigator';
@@ -89,7 +89,6 @@ export function FinancialV2() {
   const [dashboardData, setDashboardData] = useState<FinancialTransactionDashboardResponse | null>(
     null
   );
-  const [categories, setCategories] = useState<CategoryResponse[]>([]);
   const [bankAccounts, setBankAccounts] = useState<BankAccountResponse[]>([]);
   const [paymentCards, setPaymentCards] = useState<PaymentCardResponse[]>([]);
   const [members, setMembers] = useState<NestMember[]>([]);
@@ -97,7 +96,6 @@ export function FinancialV2() {
 
   // ── Modais ─────────────────────────────────────────────────────────────────
   const [formOpen, setFormOpen] = useState(false);
-  const [createCategoryOpen, setCreateCategoryOpen] = useState(false);
   const [editingTx, setEditingTx] = useState<FinancialTransactionResponse | null>(null);
   const [payingTx, setPayingTx] = useState<FinancialTransactionResponse | null>(null);
   const [deletingTx, setDeletingTx] = useState<FinancialTransactionResponse | null>(null);
@@ -131,19 +129,12 @@ export function FinancialV2() {
     { intervalMs: 10000, enabled: Boolean(nestId) }
   );
 
-  // Categorias — uma vez por nest
-  useEffect(() => {
-    let active = true;
-    categoryService
-      .listCategories({ pageSize: 100 }, nestId)
-      .then((res) => {
-        if (active) setCategories(res ?? []);
-      })
-      .catch(() => {});
-    return () => {
-      active = false;
-    };
-  }, [nestId]);
+  const { flat: expenseFlat } = useCategories(CategoryScope.Expense);
+  const { flat: incomeFlat } = useCategories(CategoryScope.Income);
+  const categoryOptions = useMemo(
+    () => toCategoryOptions([...expenseFlat, ...incomeFlat]),
+    [expenseFlat, incomeFlat]
+  );
 
   // Moradores — para filtro por responsável
   useEffect(() => {
@@ -179,15 +170,6 @@ export function FinancialV2() {
     };
   }, [nestId]);
 
-  const handleCreateCategory = async (payload: { name: string; type: number }) => {
-    const created = await categoryService.createCategory(
-      { name: payload.name, type: payload.type },
-      nestId
-    );
-    setCategories((prev) => [...prev, created]);
-    return created;
-  };
-
   // ── Derivados client-side ──────────────────────────────────────────────────
   const filteredTransactions = useMemo(() => {
     let result = monthTransactions;
@@ -207,7 +189,9 @@ export function FinancialV2() {
       result = result.filter(
         (t) => t.transactionType === TransactionType.Expense && t.isOverdue
       );
-    if (filters.categoryId) result = result.filter((t) => t.categoryId === filters.categoryId);
+    // Principal inclui as subs (mesma regra do backend para categoryIds).
+    if (filters.categoryId)
+      result = result.filter((t) => matchesCategoryFilter(t.category, filters.categoryId));
     if (filters.responsibleUserId)
       result = result.filter((t) => t.responsibleUserId === filters.responsibleUserId);
     if (debouncedSearch.trim()) {
@@ -560,10 +544,9 @@ export function FinancialV2() {
           <motion.div variants={cardSlide} className="hidden lg:block">
             <CategoryBreakdownCardV2
               expensesByCategory={dashboardData?.expensesByCategory ?? []}
-              categories={categories}
               selectedCategoryId={filters.categoryId}
               onSelectCategory={(catId) => setFilters((f) => ({ ...f, categoryId: catId }))}
-              onAddCategory={() => setCreateCategoryOpen(true)}
+              onAddCategory={() => navigate('/settings/categories?scope=expense')}
             />
           </motion.div>
         </div>
@@ -576,7 +559,7 @@ export function FinancialV2() {
           <TransactionFiltersV2
             value={filters}
             onChange={setFilters}
-            categories={categories}
+            categories={categoryOptions}
             members={members}
             monthTransactions={monthTransactions}
             filteredTransactions={filteredTransactions}
@@ -612,10 +595,9 @@ export function FinancialV2() {
         <motion.div variants={cardSlide} className="order-3 lg:hidden">
           <CategoryBreakdownCardV2
             expensesByCategory={dashboardData?.expensesByCategory ?? []}
-            categories={categories}
             selectedCategoryId={filters.categoryId}
             onSelectCategory={(catId) => setFilters((f) => ({ ...f, categoryId: catId }))}
-            onAddCategory={() => setCreateCategoryOpen(true)}
+            onAddCategory={() => navigate('/settings/categories?scope=expense')}
           />
         </motion.div>
       </motion.div>
@@ -636,21 +618,12 @@ export function FinancialV2() {
       </motion.div>
 
       {/* Modais Integrados */}
-      <CreateCategoryModal
-        open={createCategoryOpen}
-        onClose={() => setCreateCategoryOpen(false)}
-        nestId={nestId}
-        onCategoryCreated={(newCat) => setCategories((prev) => [...prev, newCat])}
-      />
-
       <TransactionSheet
         open={formOpen}
         onClose={closeForm}
-        categories={categories}
         nestId={nestId}
         currentUserId={currentUserId}
         onCreate={handleCreate}
-        onCreateCategory={handleCreateCategory}
         editingTransaction={editingTx}
         onUpdate={handleUpdate}
       />

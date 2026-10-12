@@ -75,13 +75,14 @@ export const ENDPOINTS = {
     delete: (id: string) => `/api/financial-transactions/${id}`,
   },
 
-  // Categorias
+  // Categorias unificadas (árvore por escopo: Expense/Income/Shopping/Task)
   categories: {
-    create: '/api/categories/create',
-    list: '/api/categories/list',
-    listOptions: '/api/categories/list-options',
-    getById: '/api/categories/get-by-id',
+    list: '/api/categories',
+    getById: (id: string) => `/api/categories/${id}`,
+    usage: (id: string) => `/api/categories/${id}/usage`,
+    create: '/api/categories',
     update: (id: string) => `/api/categories/${id}`,
+    move: (id: string) => `/api/categories/${id}/parent`,
     delete: (id: string) => `/api/categories/${id}`,
   },
 
@@ -128,6 +129,7 @@ export const ENDPOINTS = {
     delete: (id: string) => `/api/shopping-list/${id}`,
     finish: (id: string) => `/api/shopping-list/${id}/finish`,
     unfinish: (id: string) => `/api/shopping-list/${id}/unfinished`,
+    replicate: (id: string) => `/api/shopping-list/${id}/replicate`,
   },
 
   // Itens de compra
@@ -210,6 +212,13 @@ export const ENDPOINTS = {
     weather: '/api/dashboard/weather',
   },
 
+  // Versão e Changelog
+  version: {
+    current: '/api/version/current',
+    changelog: (skip = 0, take = 10) => `/api/version/changelog?skip=${skip}&take=${take}`,
+  },
+
   // Health
   health: '/health',
 } as const;
+

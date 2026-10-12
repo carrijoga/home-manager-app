@@ -5,8 +5,13 @@
  */
 
 import { getItemEstimatedTotal, getItemSpentTotal } from '@/components/modules/Shopping/helpers';
+import { toCategorySummary } from '@/lib/categories';
 import type { BankAccountResponse } from '@/schemas/bank-account';
-import type { CategoryResponse } from '@/schemas/category';
+import {
+  type CategoryResponse as UnifiedCategoryResponse,
+  CategoryScope,
+  type CategorySummaryResponse,
+} from '@/schemas/category';
 import type {
   FinancialTransactionPaymentResponse,
   FinancialTransactionResponse,
@@ -21,7 +26,7 @@ import type {
   Notice,
   Task,
 } from '@/types';
-import { ApiCategory, ApiPriority } from '@/types';
+import { ApiPriority } from '@/types';
 
 export const MOCK_USER_ID = 'user-mock-0001';
 
@@ -218,7 +223,31 @@ export const mockNotices: Notice[] = [
   },
 ];
 
-// ── Tarefas ───────────────────────────────────────────────────────────────────
+// Sumários espelhando o escopo Task de mockCategoryTree (declarado mais abaixo no arquivo).
+const TASK_CAT_LIMPEZA: CategorySummaryResponse = {
+  categoryId: 'c0000004-0000-4000-8000-000000000001',
+  name: 'Limpeza',
+  icon: '🧹',
+  color: '#06B6D4',
+  parentCategoryId: null,
+  parentName: null,
+};
+const TASK_CAT_MANUTENCAO: CategorySummaryResponse = {
+  categoryId: 'c0000004-0000-4000-8000-000000000003',
+  name: 'Manutenção',
+  icon: '🛠️',
+  color: '#64748B',
+  parentCategoryId: null,
+  parentName: null,
+};
+const TASK_CAT_CONTAS: CategorySummaryResponse = {
+  categoryId: 'c0000004-0000-4000-8000-000000000041',
+  name: 'Contas',
+  icon: '🧾',
+  color: '#3B82F6',
+  parentCategoryId: 'c0000004-0000-4000-8000-000000000004',
+  parentName: 'Casa',
+};
 
 export const mockTasks: Task[] = [
   // Pendentes — prioridades variadas
@@ -226,12 +255,19 @@ export const mockTasks: Task[] = [
     taskId: 'task-mock-0001',
     title: 'Limpar a geladeira',
     description: 'Remover itens vencidos e higienizar prateleiras',
-    assignedTo: null,
+    assignees: [
+      {
+        userId: MOCK_USER_ID,
+        name: 'Você',
+        photoUrl: null,
+        isCompleted: false,
+        completedAt: null,
+      },
+    ],
     dueDate: new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000).toISOString(),
     priority: ApiPriority.Alta,
     priorityLabel: 'Alta',
-    category: ApiCategory.Limpeza,
-    categoryLabel: 'Limpeza',
+    category: TASK_CAT_LIMPEZA,
     date: now.toISOString(),
     isCompleted: false,
     completedAt: null,
@@ -242,12 +278,26 @@ export const mockTasks: Task[] = [
   {
     taskId: 'task-mock-0002',
     title: 'Levar o lixo para fora',
-    assignedTo: null,
+    assignees: [
+      {
+        userId: MOCK_USER_ID,
+        name: 'Você',
+        photoUrl: null,
+        isCompleted: false,
+        completedAt: null,
+      },
+      {
+        userId: 'user-mock-0002',
+        name: 'Maria',
+        photoUrl: null,
+        isCompleted: false,
+        completedAt: null,
+      },
+    ],
     dueDate: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString(),
     priority: ApiPriority.Urgente,
     priorityLabel: 'Urgente',
-    category: ApiCategory.Limpeza,
-    categoryLabel: 'Limpeza',
+    category: TASK_CAT_LIMPEZA,
     date: now.toISOString(),
     isCompleted: false,
     completedAt: null,
@@ -258,12 +308,19 @@ export const mockTasks: Task[] = [
   {
     taskId: 'task-mock-0003',
     title: 'Limpar o banheiro',
-    assignedTo: null,
+    assignees: [
+      {
+        userId: MOCK_USER_ID,
+        name: 'Você',
+        photoUrl: null,
+        isCompleted: false,
+        completedAt: null,
+      },
+    ],
     dueDate: new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString(),
     priority: ApiPriority.Media,
     priorityLabel: 'Média',
-    category: ApiCategory.Limpeza,
-    categoryLabel: 'Limpeza',
+    category: TASK_CAT_LIMPEZA,
     date: now.toISOString(),
     isCompleted: false,
     completedAt: null,
@@ -275,28 +332,42 @@ export const mockTasks: Task[] = [
     taskId: 'task-mock-0004',
     title: 'Organizar a despensa',
     description: 'Verificar validades e organizar por categoria',
-    assignedTo: null,
+    assignees: [
+      {
+        userId: 'user-mock-0002',
+        name: 'Maria',
+        photoUrl: null,
+        isCompleted: false,
+        completedAt: null,
+      },
+    ],
     dueDate: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString(),
     priority: ApiPriority.Baixa,
     priorityLabel: 'Baixa',
-    category: ApiCategory.Geral,
-    categoryLabel: 'Geral',
+    category: null,
     date: now.toISOString(),
     isCompleted: false,
     completedAt: null,
     isOverdue: false,
-    createdBy: MOCK_USER_ID,
+    createdBy: 'user-mock-0002',
     createdAt: new Date(now.getTime() - 6 * 60 * 60 * 1000).toISOString(),
   },
   {
     taskId: 'task-mock-0005',
     title: 'Limpar quintal',
-    assignedTo: null,
+    assignees: [
+      {
+        userId: MOCK_USER_ID,
+        name: 'Você',
+        photoUrl: null,
+        isCompleted: false,
+        completedAt: null,
+      },
+    ],
     dueDate: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString(),
     priority: ApiPriority.Media,
     priorityLabel: 'Média',
-    category: ApiCategory.Limpeza,
-    categoryLabel: 'Limpeza',
+    category: TASK_CAT_LIMPEZA,
     date: now.toISOString(),
     isCompleted: false,
     completedAt: null,
@@ -308,12 +379,19 @@ export const mockTasks: Task[] = [
   {
     taskId: 'task-mock-0006',
     title: 'Pagar conta de luz',
-    assignedTo: null,
+    assignees: [
+      {
+        userId: MOCK_USER_ID,
+        name: 'Você',
+        photoUrl: null,
+        isCompleted: false,
+        completedAt: null,
+      },
+    ],
     dueDate: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
     priority: ApiPriority.Alta,
     priorityLabel: 'Alta',
-    category: ApiCategory.Financas,
-    categoryLabel: 'Finanças',
+    category: TASK_CAT_CONTAS,
     date: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(),
     isCompleted: true,
     completedAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
@@ -324,12 +402,19 @@ export const mockTasks: Task[] = [
   {
     taskId: 'task-mock-0007',
     title: 'Trocar lâmpada da sala',
-    assignedTo: null,
+    assignees: [
+      {
+        userId: MOCK_USER_ID,
+        name: 'Você',
+        photoUrl: null,
+        isCompleted: false,
+        completedAt: null,
+      },
+    ],
     dueDate: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000).toISOString(),
     priority: ApiPriority.Baixa,
     priorityLabel: 'Baixa',
-    category: ApiCategory.Manutencao,
-    categoryLabel: 'Manutenção',
+    category: TASK_CAT_MANUTENCAO,
     date: new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000).toISOString(),
     isCompleted: true,
     completedAt: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000).toISOString(),
@@ -340,12 +425,19 @@ export const mockTasks: Task[] = [
   {
     taskId: 'task-mock-0008',
     title: 'Fazer compras do mês',
-    assignedTo: null,
+    assignees: [
+      {
+        userId: MOCK_USER_ID,
+        name: 'Você',
+        photoUrl: null,
+        isCompleted: true,
+        completedAt: new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+      },
+    ],
     dueDate: new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-    priority: ApiPriority.Alta,
-    priorityLabel: 'Alta',
-    category: ApiCategory.Geral,
-    categoryLabel: 'Geral',
+    priority: ApiPriority.Media,
+    priorityLabel: 'Média',
+    category: null,
     date: new Date(now.getTime() - 20 * 24 * 60 * 60 * 1000).toISOString(),
     isCompleted: true,
     completedAt: new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000).toISOString(),
@@ -490,6 +582,41 @@ const getMonthLabel = (monthsAgo: number): string =>
 const getDateInMonth = (monthsAgo: number, day: number): string =>
   toIsoDate(new Date(now.getFullYear(), now.getMonth() - monthsAgo, day));
 
+const SHOP_CAT = {
+  mercearia: {
+    categoryId: 'c0000003-0000-4000-8000-000000000004',
+    name: 'Mercearia',
+    icon: '🥫',
+    color: '#F97316',
+    parentCategoryId: null,
+    parentName: null,
+  },
+  limpeza: {
+    categoryId: 'c0000003-0000-4000-8000-000000000002',
+    name: 'Limpeza',
+    icon: '🧼',
+    color: '#06B6D4',
+    parentCategoryId: null,
+    parentName: null,
+  },
+  lavanderia: {
+    categoryId: 'c0000003-0000-4000-8000-000000000021',
+    name: 'Lavanderia',
+    icon: '🧺',
+    color: '#06B6D4',
+    parentCategoryId: 'c0000003-0000-4000-8000-000000000002',
+    parentName: 'Limpeza',
+  },
+  higiene: {
+    categoryId: 'c0000003-0000-4000-8000-000000000005',
+    name: 'Higiene e beleza',
+    icon: '🧴',
+    color: '#EC4899',
+    parentCategoryId: null,
+    parentName: null,
+  },
+} satisfies Record<string, CategorySummaryResponse>;
+
 const mockShoppingItemsWeek1: AppShoppingItem[] = [
   {
     shoppingItemId: 'item-0001',
@@ -497,8 +624,8 @@ const mockShoppingItemsWeek1: AppShoppingItem[] = [
     name: 'Arroz',
     quantity: 5,
     unitType: 1,
-    shoppingCategoryId: 'cat-0001-0000-0000-000000000001',
-    categoryName: 'Alimentos',
+    category: SHOP_CAT.mercearia,
+    purchasedQuantity: 6,
     isPurchased: true,
     status: 1,
     price: 34,
@@ -512,8 +639,8 @@ const mockShoppingItemsWeek1: AppShoppingItem[] = [
     name: 'Feijão',
     quantity: 2,
     unitType: 1,
-    shoppingCategoryId: 'cat-0001-0000-0000-000000000001',
-    categoryName: 'Alimentos',
+    category: SHOP_CAT.mercearia,
+    purchasedQuantity: 2,
     isPurchased: true,
     status: 1,
     price: 19,
@@ -527,8 +654,8 @@ const mockShoppingItemsWeek1: AppShoppingItem[] = [
     name: 'Macarrão',
     quantity: 3,
     unitType: 7,
-    shoppingCategoryId: 'cat-0001-0000-0000-000000000001',
-    categoryName: 'Alimentos',
+    category: SHOP_CAT.mercearia,
+    purchasedQuantity: null,
     isPurchased: false,
     status: 3,
     price: null,
@@ -542,8 +669,8 @@ const mockShoppingItemsWeek1: AppShoppingItem[] = [
     name: 'Café',
     quantity: 500,
     unitType: 2,
-    shoppingCategoryId: 'cat-0001-0000-0000-000000000001',
-    categoryName: 'Alimentos',
+    category: SHOP_CAT.mercearia,
+    purchasedQuantity: null,
     isPurchased: false,
     status: 3,
     price: null,
@@ -557,8 +684,8 @@ const mockShoppingItemsWeek1: AppShoppingItem[] = [
     name: 'Detergente',
     quantity: 3,
     unitType: 0,
-    shoppingCategoryId: 'cat-0001-0000-0000-000000000002',
-    categoryName: 'Limpeza',
+    category: SHOP_CAT.limpeza,
+    purchasedQuantity: 3,
     isPurchased: true,
     status: 1,
     price: 11,
@@ -572,8 +699,8 @@ const mockShoppingItemsWeek1: AppShoppingItem[] = [
     name: 'Sabão em pó',
     quantity: 2,
     unitType: 0,
-    shoppingCategoryId: 'cat-0001-0000-0000-000000000002',
-    categoryName: 'Limpeza',
+    category: SHOP_CAT.lavanderia,
+    purchasedQuantity: null,
     isPurchased: false,
     status: 3,
     price: null,
@@ -587,8 +714,8 @@ const mockShoppingItemsWeek1: AppShoppingItem[] = [
     name: 'Papel higiênico',
     quantity: 12,
     unitType: 0,
-    shoppingCategoryId: 'cat-0001-0000-0000-000000000002',
-    categoryName: 'Limpeza',
+    category: SHOP_CAT.higiene,
+    purchasedQuantity: null,
     isPurchased: false,
     status: 3,
     price: null,
@@ -602,8 +729,8 @@ const mockShoppingItemsWeek1: AppShoppingItem[] = [
     name: 'Shampoo',
     quantity: 1,
     unitType: 0,
-    shoppingCategoryId: 'cat-0001-0000-0000-000000000003',
-    categoryName: 'Higiene',
+    category: SHOP_CAT.higiene,
+    purchasedQuantity: null,
     isPurchased: false,
     status: 3,
     price: null,
@@ -620,8 +747,8 @@ const mockShoppingItemsWeek2: AppShoppingItem[] = [
     name: 'Açúcar',
     quantity: 1,
     unitType: 1,
-    shoppingCategoryId: 'cat-0001-0000-0000-000000000001',
-    categoryName: 'Alimentos',
+    category: SHOP_CAT.mercearia,
+    purchasedQuantity: null,
     isPurchased: false,
     status: 0,
     price: null,
@@ -635,8 +762,8 @@ const mockShoppingItemsWeek2: AppShoppingItem[] = [
     name: 'Óleo de soja',
     quantity: 2,
     unitType: 0,
-    shoppingCategoryId: 'cat-0001-0000-0000-000000000001',
-    categoryName: 'Alimentos',
+    category: SHOP_CAT.mercearia,
+    purchasedQuantity: null,
     isPurchased: false,
     status: 0,
     price: null,
@@ -650,8 +777,8 @@ const mockShoppingItemsWeek2: AppShoppingItem[] = [
     name: 'Iogurte',
     quantity: 4,
     unitType: 0,
-    shoppingCategoryId: 'cat-0001-0000-0000-000000000001',
-    categoryName: 'Alimentos',
+    category: null,
+    purchasedQuantity: null,
     isPurchased: false,
     status: 0,
     price: null,
@@ -665,8 +792,8 @@ const mockShoppingItemsWeek2: AppShoppingItem[] = [
     name: 'Água sanitária',
     quantity: 2,
     unitType: 0,
-    shoppingCategoryId: 'cat-0001-0000-0000-000000000002',
-    categoryName: 'Limpeza',
+    category: SHOP_CAT.limpeza,
+    purchasedQuantity: null,
     isPurchased: false,
     status: 0,
     price: null,
@@ -694,7 +821,7 @@ export const mockShoppingLists: AppShoppingListSummary[] = [
     ),
     totalSpent: mockShoppingItemsWeek1
       .filter((i) => i.isPurchased)
-      .reduce((s, i) => s + getItemSpentTotal(i.price, i.quantity, i.unitType), 0),
+      .reduce((s, i) => s + getItemSpentTotal(i), 0),
   },
   {
     shoppingListId: 'list-0002',
@@ -881,60 +1008,71 @@ export const mockExpenses: MockExpense[] = monthlyExpenseSeeds
     id: String(index + 1),
   }));
 
-// ── Transações financeiras (FinancialTransactionResponse — modo mock) ─────────────
+// ── Categorias unificadas (árvore por escopo) ─────────────────────────────────
 
-// IDs de mock não são UUIDs reais (convenção do arquivo: 'nest-mock-0001' etc.);
-// os branches mock dos services não passam por safeParse.
-export const mockFinancialCategories = [
-  {
-    categoryId: 'fincat-0000-0000-0000-000000000001',
-    nestId: 'nest-mock-0001',
-    name: 'Moradia',
-    type: 1,
-  },
-  {
-    categoryId: 'fincat-0000-0000-0000-000000000002',
-    nestId: 'nest-mock-0001',
-    name: 'Contas fixas',
-    type: 1,
-  },
-  {
-    categoryId: 'fincat-0000-0000-0000-000000000003',
-    nestId: 'nest-mock-0001',
-    name: 'Mercado',
-    type: 1,
-  },
-  {
-    categoryId: 'fincat-0000-0000-0000-000000000004',
-    nestId: 'nest-mock-0001',
-    name: 'Saúde',
-    type: 1,
-  },
-  {
-    categoryId: 'fincat-0000-0000-0000-000000000005',
-    nestId: 'nest-mock-0001',
-    name: 'Família',
-    type: 1,
-  },
-  {
-    categoryId: 'fincat-0000-0000-0000-000000000006',
-    nestId: 'nest-mock-0001',
-    name: 'Manutenção',
-    type: 1,
-  },
-  {
-    categoryId: 'fincat-0000-0000-0000-000000000007',
-    nestId: 'nest-mock-0001',
-    name: 'Pet',
-    type: 1,
-  },
-  {
-    categoryId: 'fincat-0000-0000-0000-000000000008',
-    nestId: 'nest-mock-0001',
-    name: 'Renda',
-    type: 0,
-  },
-] satisfies CategoryResponse[];
+function mockCat(
+  id: string,
+  scope: CategoryScope,
+  name: string,
+  icon: string,
+  color: string,
+  children: Array<[string, string, string]> = []
+): UnifiedCategoryResponse {
+  return {
+    categoryId: id,
+    scope,
+    parentCategoryId: null,
+    name,
+    icon,
+    color,
+    children: children.map(([childId, childName, childIcon]) => ({
+      categoryId: childId,
+      scope,
+      parentCategoryId: id,
+      name: childName,
+      icon: childIcon,
+      color,
+      children: [],
+    })),
+  };
+}
+
+export const mockCategoryTree: UnifiedCategoryResponse[] = [
+  mockCat('c0000001-0000-4000-8000-000000000001', CategoryScope.Expense, 'Moradia', '🏠', '#3B82F6', [
+    ['c0000001-0000-4000-8000-000000000011', 'Aluguel', '🔑'],
+    ['c0000001-0000-4000-8000-000000000012', 'Energia', '💡'],
+    ['c0000001-0000-4000-8000-000000000013', 'Manutenção', '🛠️'],
+  ]),
+  mockCat('c0000001-0000-4000-8000-000000000002', CategoryScope.Expense, 'Alimentação', '🍽️', '#F97316', [
+    ['c0000001-0000-4000-8000-000000000021', 'Mercado', '🛒'],
+  ]),
+  mockCat('c0000001-0000-4000-8000-000000000003', CategoryScope.Expense, 'Transporte', '🚗', '#6366F1'),
+  mockCat('c0000001-0000-4000-8000-000000000004', CategoryScope.Expense, 'Família', '👪', '#EC4899'),
+  mockCat('c0000001-0000-4000-8000-000000000005', CategoryScope.Expense, 'Pet', '🐾', '#A855F7'),
+  mockCat('c0000002-0000-4000-8000-000000000001', CategoryScope.Income, 'Salário', '💼', '#22C55E'),
+  mockCat('c0000002-0000-4000-8000-000000000002', CategoryScope.Income, 'Extras', '💸', '#14B8A6', [
+    ['c0000002-0000-4000-8000-000000000021', 'Freelance', '🤝'],
+  ]),
+  mockCat('c0000003-0000-4000-8000-000000000001', CategoryScope.Shopping, 'Hortifruti', '🥦', '#84CC16'),
+  mockCat('c0000003-0000-4000-8000-000000000002', CategoryScope.Shopping, 'Limpeza', '🧼', '#06B6D4', [
+    ['c0000003-0000-4000-8000-000000000021', 'Lavanderia', '🧺'],
+  ]),
+  mockCat('c0000003-0000-4000-8000-000000000003', CategoryScope.Shopping, 'Padaria', '🍞', '#F59E0B'),
+  mockCat('c0000003-0000-4000-8000-000000000004', CategoryScope.Shopping, 'Mercearia', '🥫', '#F97316'),
+  mockCat('c0000003-0000-4000-8000-000000000005', CategoryScope.Shopping, 'Higiene e beleza', '🧴', '#EC4899'),
+  mockCat('c0000004-0000-4000-8000-000000000001', CategoryScope.Task, 'Limpeza', '🧹', '#06B6D4'),
+  mockCat('c0000004-0000-4000-8000-000000000002', CategoryScope.Task, 'Cozinha', '🍳', '#EF4444'),
+  mockCat('c0000004-0000-4000-8000-000000000003', CategoryScope.Task, 'Manutenção', '🛠️', '#64748B'),
+  mockCat('c0000004-0000-4000-8000-000000000004', CategoryScope.Task, 'Casa', '🏠', '#3B82F6', [
+    ['c0000004-0000-4000-8000-000000000041', 'Contas', '🧾'],
+  ]),
+  mockCat('c0000004-0000-4000-8000-000000000005', CategoryScope.Task, 'Pets', '🐾', '#F59E0B'),
+  mockCat('c0000004-0000-4000-8000-000000000006', CategoryScope.Task, 'Estudos', '📚', '#A855F7'),
+  mockCat('c0000004-0000-4000-8000-000000000007', CategoryScope.Task, 'Trabalho', '💼', '#6366F1'),
+  mockCat('c0000004-0000-4000-8000-000000000008', CategoryScope.Task, 'Família', '👪', '#EC4899'),
+  mockCat('c0000004-0000-4000-8000-000000000009', CategoryScope.Task, 'Pessoal', '🙂', '#22C55E'),
+  mockCat('c0000004-0000-4000-8000-000000000010', CategoryScope.Task, 'Outros', '📦', '#84CC16'),
+];
 
 const FIN_NEST_ID = 'nest-mock-0001';
 const FIN_JOAO = { id: 'user-mock-0001', name: 'João (Você)' };
@@ -967,14 +1105,15 @@ function makeFinPayment(
 }
 
 interface FinTxSeed {
-  type: 0 | 1;
+  type: 0 | 1 | 2 | 3;
   description: string;
   value: number;
   monthsAgo: number;
   day: number;
   /** Dia do vencimento (default: mesmo dia da transação) */
   dueDay?: number;
-  categoryId: string;
+  /** null para Transferência (3) e Ajuste (2), que não têm categoria. */
+  categoryId: string | null;
   /** true = quitada; número = valor pago parcial */
   paid?: boolean | number;
   shoppingListId?: string | null;
@@ -988,7 +1127,9 @@ function makeFinTx(seed: FinTxSeed): FinancialTransactionResponse {
   const id = `fintx-${String(finSeq).padStart(4, '0')}`;
   const dateIso = getDateInMonth(seed.monthsAgo, seed.day);
   const dueIso = getDateInMonth(seed.monthsAgo, seed.dueDay ?? seed.day);
-  const category = mockFinancialCategories.find((c) => c.categoryId === seed.categoryId)!;
+  const category = toCategorySummary(mockCategoryTree, seed.categoryId);
+  // Ajuste e transferência não geram cobrança: saem quitados e nunca vencidos.
+  const isMovement = seed.type === 2 || seed.type === 3;
   // Quitação total é datada no vencimento; pagamento parcial na data da transação.
   const payments =
     seed.paid === true
@@ -997,7 +1138,7 @@ function makeFinTx(seed: FinTxSeed): FinancialTransactionResponse {
         ? [makeFinPayment(id, seed.paid, dateIso)]
         : [];
   const paidSum = payments.reduce((sum, p) => sum + p.amount, 0);
-  const paymentStatus = paidSum === 0 ? 0 : paidSum >= seed.value ? 2 : 1; // Open | Paid | PartiallyPaid
+  const paymentStatus = isMovement ? 2 : paidSum === 0 ? 0 : paidSum >= seed.value ? 2 : 1; // Open | Paid | PartiallyPaid
   const isPaid = paymentStatus === 2;
   return {
     financialTransactionId: id,
@@ -1009,8 +1150,7 @@ function makeFinTx(seed: FinTxSeed): FinancialTransactionResponse {
     dueDate: `${dueIso}T12:00:00.000Z`,
     responsibleUserId: FIN_JOAO.id,
     responsibleUserName: FIN_JOAO.name,
-    categoryId: category.categoryId,
-    categoryName: category.name,
+    category,
     origin: seed.origin ?? (seed.shoppingListId ? 2 : 0),
     originName: seed.originName ?? (seed.shoppingListId ? 'Lista de Compras' : 'Financeiro'),
     observation:
@@ -1025,14 +1165,14 @@ function makeFinTx(seed: FinTxSeed): FinancialTransactionResponse {
 }
 
 const CAT = {
-  moradia: 'fincat-0000-0000-0000-000000000001',
-  contas: 'fincat-0000-0000-0000-000000000002',
-  mercado: 'fincat-0000-0000-0000-000000000003',
-  saude: 'fincat-0000-0000-0000-000000000004',
-  familia: 'fincat-0000-0000-0000-000000000005',
-  manutencao: 'fincat-0000-0000-0000-000000000006',
-  pet: 'fincat-0000-0000-0000-000000000007',
-  renda: 'fincat-0000-0000-0000-000000000008',
+  moradia: 'c0000001-0000-4000-8000-000000000001',
+  aluguel: 'c0000001-0000-4000-8000-000000000011',
+  energia: 'c0000001-0000-4000-8000-000000000012',
+  manutencao: 'c0000001-0000-4000-8000-000000000013',
+  mercado: 'c0000001-0000-4000-8000-000000000021',
+  familia: 'c0000001-0000-4000-8000-000000000004',
+  pet: 'c0000001-0000-4000-8000-000000000005',
+  salario: 'c0000002-0000-4000-8000-000000000001',
 };
 
 export const mockTransactions: FinancialTransactionResponse[] = (
@@ -1044,7 +1184,7 @@ export const mockTransactions: FinancialTransactionResponse[] = (
       value: 8500,
       monthsAgo: 0,
       day: 1,
-      categoryId: CAT.renda,
+      categoryId: CAT.salario,
       paid: true,
     },
     {
@@ -1054,7 +1194,7 @@ export const mockTransactions: FinancialTransactionResponse[] = (
       monthsAgo: 0,
       day: 5,
       dueDay: 15,
-      categoryId: CAT.moradia,
+      categoryId: CAT.aluguel,
     },
     {
       type: 1,
@@ -1063,7 +1203,7 @@ export const mockTransactions: FinancialTransactionResponse[] = (
       monthsAgo: 0,
       day: 2,
       dueDay: 5,
-      categoryId: CAT.contas,
+      categoryId: CAT.energia,
     },
     {
       type: 1,
@@ -1071,7 +1211,7 @@ export const mockTransactions: FinancialTransactionResponse[] = (
       value: 90,
       monthsAgo: 0,
       day: 12,
-      categoryId: CAT.contas,
+      categoryId: CAT.moradia,
       paid: true,
     },
     {
@@ -1081,7 +1221,7 @@ export const mockTransactions: FinancialTransactionResponse[] = (
       monthsAgo: 0,
       day: 3,
       dueDay: 20,
-      categoryId: CAT.contas,
+      categoryId: CAT.moradia,
     },
     {
       type: 1,
@@ -1093,6 +1233,22 @@ export const mockTransactions: FinancialTransactionResponse[] = (
       paid: 370,
       shoppingListId: 'list-0001',
     },
+    {
+      type: 3,
+      description: 'Transferência para poupança',
+      value: 500,
+      monthsAgo: 0,
+      day: 2,
+      categoryId: null,
+    },
+    {
+      type: 2,
+      description: 'Ajuste de saldo',
+      value: 35.9,
+      monthsAgo: 0,
+      day: 4,
+      categoryId: null,
+    },
     // ── Mês anterior: tudo quitado ───────────────────────────────────────────────
     {
       type: 0,
@@ -1100,7 +1256,7 @@ export const mockTransactions: FinancialTransactionResponse[] = (
       value: 8500,
       monthsAgo: 1,
       day: 1,
-      categoryId: CAT.renda,
+      categoryId: CAT.salario,
       paid: true,
     },
     {
@@ -1109,7 +1265,7 @@ export const mockTransactions: FinancialTransactionResponse[] = (
       value: 1850,
       monthsAgo: 1,
       day: 5,
-      categoryId: CAT.moradia,
+      categoryId: CAT.aluguel,
       paid: true,
     },
     {
@@ -1118,7 +1274,7 @@ export const mockTransactions: FinancialTransactionResponse[] = (
       value: 301,
       monthsAgo: 1,
       day: 10,
-      categoryId: CAT.contas,
+      categoryId: CAT.energia,
       paid: true,
     },
     {
@@ -1127,7 +1283,7 @@ export const mockTransactions: FinancialTransactionResponse[] = (
       value: 88,
       monthsAgo: 1,
       day: 12,
-      categoryId: CAT.contas,
+      categoryId: CAT.moradia,
       paid: true,
     },
     {
@@ -1136,7 +1292,7 @@ export const mockTransactions: FinancialTransactionResponse[] = (
       value: 129,
       monthsAgo: 1,
       day: 15,
-      categoryId: CAT.contas,
+      categoryId: CAT.moradia,
       paid: true,
     },
     {
@@ -1164,7 +1320,7 @@ export const mockTransactions: FinancialTransactionResponse[] = (
       value: 8500,
       monthsAgo: 2,
       day: 1,
-      categoryId: CAT.renda,
+      categoryId: CAT.salario,
       paid: true,
     },
     {
@@ -1173,7 +1329,7 @@ export const mockTransactions: FinancialTransactionResponse[] = (
       value: 1800,
       monthsAgo: 2,
       day: 5,
-      categoryId: CAT.moradia,
+      categoryId: CAT.aluguel,
       paid: true,
     },
     {
@@ -1182,7 +1338,7 @@ export const mockTransactions: FinancialTransactionResponse[] = (
       value: 264,
       monthsAgo: 2,
       day: 10,
-      categoryId: CAT.contas,
+      categoryId: CAT.energia,
       paid: true,
     },
     {
@@ -1191,7 +1347,7 @@ export const mockTransactions: FinancialTransactionResponse[] = (
       value: 82,
       monthsAgo: 2,
       day: 12,
-      categoryId: CAT.contas,
+      categoryId: CAT.moradia,
       paid: true,
     },
     {
@@ -1200,7 +1356,7 @@ export const mockTransactions: FinancialTransactionResponse[] = (
       value: 119,
       monthsAgo: 2,
       day: 15,
-      categoryId: CAT.contas,
+      categoryId: CAT.moradia,
       paid: true,
     },
     {

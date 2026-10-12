@@ -1,0 +1,318 @@
+import { MoreHorizontal, Plus, Search } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useCategories } from '@/hooks/useCategories';
+import { useTranslation } from '@/hooks/useTranslation';
+import { filterTree } from '@/lib/categories';
+import { cn } from '@/lib/utils';
+import { type CategoryResponse, CategoryScope } from '@/schemas/category';
+
+import { CategoryFormDialog } from './categories/CategoryFormDialog';
+import { DeleteCategoryDialog } from './categories/DeleteCategoryDialog';
+import { MoveCategoryDialog } from './categories/MoveCategoryDialog';
+
+const SCOPES: Array<{ key: string; scope: CategoryScope; labelKey: string }> = [
+  { key: 'expense', scope: CategoryScope.Expense, labelKey: 'categoriesSettings.scopeExpense' },
+  { key: 'income', scope: CategoryScope.Income, labelKey: 'categoriesSettings.scopeIncome' },
+  { key: 'shopping', scope: CategoryScope.Shopping, labelKey: 'categoriesSettings.scopeShopping' },
+  { key: 'task', scope: CategoryScope.Task, labelKey: 'categoriesSettings.scopeTask' },
+];
+
+export type DialogState =
+  | { kind: 'none' }
+  | { kind: 'form'; mode: 'create'; parent: CategoryResponse | null }
+  | { kind: 'form'; mode: 'edit'; category: CategoryResponse; parent: CategoryResponse | null }
+  | { kind: 'move'; category: CategoryResponse; parent: CategoryResponse | null }
+  | { kind: 'delete'; category: CategoryResponse };
+
+export default function CategoriesSettings() {
+  const { t } = useTranslation();
+  const [params, setParams] = useSearchParams();
+  const current = SCOPES.find((s) => s.key === params.get('scope')) ?? SCOPES[0];
+  const { tree, loading, error, reload, create, update, move, remove } = useCategories(current.scope);
+  const [search, setSearch] = useState('');
+  const [dialog, setDialog] = useState<DialogState>({ kind: 'none' });
+
+  const visible = useMemo(() => filterTree(tree, search), [tree, search]);
+
+  const changeScope = (key: string) => {
+    setSearch('');
+    setParams({ scope: key }, { replace: true });
+  };
+
+  return (
+    <div className="mx-auto w-full max-w-3xl space-y-4 p-4 sm:p-6">
+      {/* Cabeçalho */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-0.5">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+            {t('categoriesSettings.title')}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {t('categoriesSettings.subtitle')}
+          </p>
+        </div>
+        <Button
+          type="button"
+          onClick={() => setDialog({ kind: 'form', mode: 'create', parent: null })}
+          className="h-10 rounded-xl px-3.5 gap-1.5 self-start sm:self-auto font-medium shadow-xs"
+        >
+          <Plus className="size-4" />
+          {t('categoriesSettings.newCategory')}
+        </Button>
+      </div>
+
+      {/* Abas de escopo */}
+      <div
+        role="tablist"
+        aria-label={t('categoriesSettings.scopeAria')}
+        className="flex gap-1 overflow-x-auto rounded-xl border border-border/50 bg-muted/40 p-1"
+      >
+        {SCOPES.map((s) => (
+          <button
+            key={s.key}
+            type="button"
+            role="tab"
+            aria-selected={current.key === s.key}
+            onClick={() => changeScope(s.key)}
+            className={cn(
+              'shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition-all',
+              current.key === s.key
+                ? 'bg-background font-semibold text-foreground shadow-xs border border-border/30'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            {t(s.labelKey)}
+          </button>
+        ))}
+      </div>
+
+      {/* Busca */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={t('categoriesSettings.searchPlaceholder')}
+          className="h-10 rounded-xl bg-muted/30 border-border/40 pl-9 hover:border-border/80 focus-visible:ring-1 focus-visible:ring-primary/50 transition-colors"
+        />
+      </div>
+
+      {/* Conteúdo */}
+      {loading ? (
+        <div className="space-y-2.5">
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-16 rounded-xl" />
+          ))}
+        </div>
+      ) : error ? (
+        <div className="rounded-xl border border-dashed border-border/60 p-8 text-center">
+          <p className="text-sm text-muted-foreground">{t('categoriesSettings.loadError')}</p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => reload().catch(() => {})}
+            className="mt-3 h-9 rounded-xl border-border/60"
+          >
+            {t('categoriesSettings.retry')}
+          </Button>
+        </div>
+      ) : tree.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-border/60 p-8 text-center">
+          <p className="text-sm text-muted-foreground">
+            {t('categoriesSettings.emptyScope', { scope: t(current.labelKey) })}
+          </p>
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => setDialog({ kind: 'form', mode: 'create', parent: null })}
+            className="mt-3 h-9 rounded-xl font-medium shadow-xs"
+          >
+            {t('categoriesSettings.createCategory')}
+          </Button>
+        </div>
+      ) : visible.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-border/60 p-8 text-center">
+          <p className="text-sm text-muted-foreground">
+            {t('categoriesSettings.noResults', { search })}
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-2.5">
+          {visible.map((root) => (
+            <div
+              key={root.categoryId}
+              className="rounded-xl border border-border/50 bg-card/70 p-3"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex min-w-0 items-center gap-3">
+                  <span
+                    className="flex size-9 shrink-0 items-center justify-center rounded-xl text-base"
+                    style={{ backgroundColor: root.color }}
+                  >
+                    {root.icon}
+                  </span>
+                  <div className="min-w-0 flex-1 truncate">
+                    <p className="truncate text-sm font-semibold text-foreground">{root.name}</p>
+                    {root.children.length > 0 && (
+                      <p className="truncate text-xs text-muted-foreground">
+                        {t(
+                          root.children.length > 1
+                            ? 'categoriesSettings.subcategoriesOther'
+                            : 'categoriesSettings.subcategoriesOne',
+                          { count: root.children.length }
+                        )}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-7 shrink-0 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
+                      aria-label={t('categoriesSettings.moreActions')}
+                    >
+                      <MoreHorizontal className="size-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      onClick={() =>
+                        setDialog({ kind: 'form', mode: 'edit', category: root, parent: null })
+                      }
+                    >
+                      {t('categoriesSettings.edit')}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => setDialog({ kind: 'form', mode: 'create', parent: root })}
+                    >
+                      {t('categoriesSettings.addSubcategory')}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => setDialog({ kind: 'move', category: root, parent: null })}
+                    >
+                      {t('categoriesSettings.move')}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive"
+                      onClick={() => setDialog({ kind: 'delete', category: root })}
+                    >
+                      {t('categoriesSettings.delete')}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+
+              {root.children.length > 0 && (
+                <div className="ml-6 mt-2 space-y-1 border-l pl-3">
+                  {root.children.map((child) => (
+                    <div
+                      key={child.categoryId}
+                      className="flex items-center justify-between gap-2 rounded-lg py-1"
+                    >
+                      <div className="flex min-w-0 items-center gap-2">
+                        <span className="shrink-0 text-sm">{child.icon}</span>
+                        <p className="truncate text-sm text-foreground">{child.name}</p>
+                      </div>
+
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="size-7 shrink-0 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
+                            aria-label={t('categoriesSettings.moreActions')}
+                          >
+                            <MoreHorizontal className="size-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() =>
+                              setDialog({
+                                kind: 'form',
+                                mode: 'edit',
+                                category: child,
+                                parent: root,
+                              })
+                            }
+                          >
+                            {t('categoriesSettings.edit')}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() =>
+                              setDialog({ kind: 'move', category: child, parent: root })
+                            }
+                          >
+                            {t('categoriesSettings.move')}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={() => setDialog({ kind: 'delete', category: child })}
+                          >
+                            {t('categoriesSettings.delete')}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {dialog.kind === 'form' && (
+        <CategoryFormDialog
+          open
+          onOpenChange={(o) => !o && setDialog({ kind: 'none' })}
+          scope={current.scope}
+          tree={tree}
+          mode={dialog.mode}
+          category={dialog.mode === 'edit' ? dialog.category : undefined}
+          parent={dialog.parent}
+          onSubmitCreate={create}
+          onSubmitUpdate={update}
+        />
+      )}
+      {dialog.kind === 'move' && (
+        <MoveCategoryDialog
+          open
+          onOpenChange={(o) => !o && setDialog({ kind: 'none' })}
+          tree={tree}
+          category={dialog.category}
+          parent={dialog.parent}
+          onSubmit={move}
+        />
+      )}
+      {dialog.kind === 'delete' && (
+        <DeleteCategoryDialog
+          open
+          onOpenChange={(o) => !o && setDialog({ kind: 'none' })}
+          category={dialog.category}
+          onConfirm={remove}
+        />
+      )}
+    </div>
+  );
+}

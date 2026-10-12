@@ -13,13 +13,19 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 
 import Logo from '@/components/common/Logo';
+import { TurnstileWidget, type TurnstileWidgetRef } from '@/components/common/TurnstileWidget';
 import { EyeIcon, EyeOffIcon } from '@/components/ui';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { getCurrentLanguage, languageToApiLocale } from '@/i18n';
 import { RegisterRequestSchema } from '@/schemas/auth';
+import { DATA_MODE } from '@/services/api/config';
 import * as authService from '@/services/authService';
+
+// O Turnstile só é exigido contra a API real; o modo mock dispensa o captcha.
+const isApiMode = DATA_MODE === 'api';
 
 const RegisterFormSchema = RegisterRequestSchema.extend({
   confirmPassword: z.string().min(1, 'Confirme a senha'),
@@ -62,6 +68,10 @@ function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [activeSlide, setActiveSlide] = useState(0);
+
+  // Turnstile Widget Ref & State
+  const turnstileRef = useRef<TurnstileWidgetRef>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string>('');
 
   // Auto-rotate showcase slides every 7 seconds
   useEffect(() => {
@@ -144,7 +154,12 @@ function Register() {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { confirmPassword: _, ...payload } = data;
     try {
-      const response = await authService.register(payload);
+      const activeToken = turnstileToken || turnstileRef.current?.getResponse();
+      const response = await authService.register({
+        ...payload,
+        turnstileToken: activeToken,
+        locale: languageToApiLocale(getCurrentLanguage()),
+      });
       const message = response?.message || 'Conta criada com sucesso!';
       toast.success(message);
 
@@ -164,6 +179,8 @@ function Register() {
 
       setTimeout(() => navigate(loginUrl, { replace: true }), 1200);
     } catch (err) {
+      turnstileRef.current?.reset();
+      setTurnstileToken('');
       const message = err instanceof Error ? err.message : 'Não foi possível finalizar o registro.';
       toast.error(message);
     }
@@ -414,10 +431,18 @@ function Register() {
                 )}
               </div>
 
+              {/* Cloudflare Turnstile */}
+              <TurnstileWidget
+                ref={turnstileRef}
+                action="register"
+                onVerify={(token) => setTurnstileToken(token)}
+                onExpire={() => setTurnstileToken('')}
+              />
+
               {/* Submit CTA Button */}
               <Button
                 type="submit"
-                disabled={!isValid || isSubmitting}
+                disabled={!isValid || isSubmitting || (isApiMode && !turnstileToken)}
                 className="mt-2.5 h-9.5 sm:h-10 w-full text-sm font-semibold transition-opacity disabled:opacity-50"
               >
                 {isSubmitting ? (

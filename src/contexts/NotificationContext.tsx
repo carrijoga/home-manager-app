@@ -6,6 +6,7 @@ import { useApp } from '@/contexts/AppContext';
 import { useNotificationRealtime } from '@/hooks/useNotificationRealtime';
 import { DATA_MODE } from '@/services/api/config';
 import * as notificationService from '@/services/notificationService';
+import * as taskService from '@/services/taskService';
 import type { AppNotification, NotificationAction } from '@/types';
 
 interface NotificationContextValue {
@@ -137,7 +138,19 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       }
 
       if (action.actionType === 'complete_task') {
-        toast.success('Tarefa concluída com sucesso!');
+        const taskId = action.payload?.taskId as string | undefined;
+        if (taskId) {
+          try {
+            await taskService.completeTask(taskId);
+            toast.success('Sua parte na tarefa foi marcada como concluída!');
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : 'Erro ao concluir tarefa';
+            toast.error(msg);
+            return;
+          }
+        } else {
+          toast.success('Sua parte na tarefa foi marcada como concluída!');
+        }
         setNotifications((prev) =>
           prev.map((n) =>
             n.notificationId === notificationId

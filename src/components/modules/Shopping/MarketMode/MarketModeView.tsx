@@ -22,12 +22,15 @@ import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useWakeLock } from '@/hooks/useWakeLock';
 import { cn } from '@/lib/utils';
+import type { CategoryResponse } from '@/schemas/category';
 import type { AppShoppingItem, AppShoppingList } from '@/types';
 
 import { ItemFormDialog } from '../dialogs/ItemFormDialog';
+import { getMainCategoryKey, groupItemsByMainCategory } from '../grouping';
 import {
   getItemEstimatedTotal,
   getItemSpentTotal,
+  getQuantityDisplay,
   getSavingsInfo,
   quantityLabel,
 } from '../helpers';
@@ -38,10 +41,11 @@ import {
   MarketOnboardingModal,
 } from './MarketOnboardingModal';
 import { QuickPurchaseDrawer } from './QuickPurchaseDrawer';
+import { SwipeToUndoRow } from './SwipeToUndoRow';
 
 interface MarketModeViewProps {
   detailData: AppShoppingList | null;
-  uniqueCategories: Array<{ shoppingCategoryId: string; name: string; isDefault: boolean }>;
+  categoryTree: CategoryResponse[];
   onExit: () => void;
   onMarkAsPurchased: (item: AppShoppingItem, data: PurchaseFormData) => Promise<void>;
   onUnmarkAsPurchased: (item: AppShoppingItem) => Promise<void>;
@@ -52,7 +56,7 @@ interface MarketModeViewProps {
 
 export function MarketModeView({
   detailData,
-  uniqueCategories,
+  categoryTree,
   onExit,
   onMarkAsPurchased,
   onUnmarkAsPurchased,
@@ -101,10 +105,7 @@ export function MarketModeView({
 
   const totalSpent = useMemo(
     () =>
-      cartItems.reduce(
-        (acc, i) => acc + getItemSpentTotal(i.price, i.quantity, i.unitType),
-        0
-      ),
+      cartItems.reduce((acc, i) => acc + getItemSpentTotal(i), 0),
     [cartItems]
   );
 
@@ -123,27 +124,24 @@ export function MarketModeView({
   // Filtragem por corredor/categoria
   const displayedPendingItems = useMemo(() => {
     if (!selectedCategory) return pendingItems;
-    return pendingItems.filter(
-      (i) => (i.categoryName || 'Sem Categoria') === selectedCategory
-    );
+    return pendingItems.filter((i) => getMainCategoryKey(i) === selectedCategory);
   }, [pendingItems, selectedCategory]);
 
   const displayedCartItems = useMemo(() => {
     if (!selectedCategory) return cartItems;
-    return cartItems.filter(
-      (i) => (i.categoryName || 'Sem Categoria') === selectedCategory
-    );
+    return cartItems.filter((i) => getMainCategoryKey(i) === selectedCategory);
   }, [cartItems, selectedCategory]);
 
-  // Contagem por categoria de itens pendentes
-  const categoriesWithCounts = useMemo(() => {
-    const map = new Map<string, number>();
-    pendingItems.forEach((i) => {
-      const cat = i.categoryName || 'Sem Categoria';
-      map.set(cat, (map.get(cat) ?? 0) + 1);
-    });
-    return Array.from(map.entries()).map(([name, count]) => ({ name, count }));
-  }, [pendingItems]);
+  // Corredores = categorias principais com itens pendentes
+  const corridors = useMemo(
+    () =>
+      groupItemsByMainCategory(pendingItems, categoryTree).map((s) => ({
+        key: s.key,
+        label: s.icon ? `${s.icon} ${s.label}` : s.label,
+        count: s.items.length,
+      })),
+    [pendingItems, categoryTree]
+  );
 
   const handleConfirmPurchase = async (data: {
     quantity: string;
@@ -162,9 +160,9 @@ export function MarketModeView({
       ) {
         await onEditItem(purchaseItem, {
           name: purchaseItem.name,
-          quantity: data.quantity,
+          quantity: String(purchaseItem.quantity),
           unitType: String(data.unitType),
-          categoryId: purchaseItem.shoppingCategoryId ?? '',
+          categoryId: purchaseItem.category?.categoryId ?? '',
           estimatedPrice: purchaseItem.estimatedPrice ?? null,
           notes: purchaseItem.notes ?? '',
         });
@@ -187,7 +185,7 @@ export function MarketModeView({
       name: editingItem.name,
       quantity: String(editingItem.quantity),
       unitType: String(editingItem.unitType),
-      categoryId: editingItem.shoppingCategoryId ?? '',
+      categoryId: editingItem.category?.categoryId ?? '',
       estimatedPrice: editingItem.estimatedPrice ?? null,
       notes: editingItem.notes ?? '',
     };
@@ -198,18 +196,20 @@ export function MarketModeView({
       
       {/* ── BARRA SUPERIOR: Modo Mercado + Tela Ativa + Ajuda ───────────── */}
       <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-md border-b border-border/50 px-3 py-2.5 sm:px-6">
-        <div className="flex items-center justify-between gap-1.5 max-w-4xl mx-auto">
-          <button
-            onClick={onExit}
-            className="flex items-center gap-1 rounded-full border border-border/70 bg-card px-2.5 py-1 text-xs font-semibold text-muted-foreground shadow-xs transition-colors hover:bg-muted hover:text-foreground shrink-0"
-          >
-            <ArrowLeft size={13} />
-            <span>Sair</span>
-          </button>
+        <div className="flex flex-wrap items-center justify-between gap-1.5 max-w-4xl mx-auto">
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={onExit}
+              className="flex items-center gap-1 rounded-full border border-border/70 bg-card px-2.5 py-1 text-xs font-semibold text-muted-foreground shadow-xs transition-colors hover:bg-muted hover:text-foreground shrink-0"
+            >
+              <ArrowLeft size={13} />
+              <span>Sair</span>
+            </button>
 
-          <div className="flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-            <span>🛒 Modo Mercado</span>
+            <div className="flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+              <span>🛒 Modo Mercado</span>
+            </div>
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">
@@ -225,15 +225,13 @@ export function MarketModeView({
                 title="Mantém a tela do celular sempre acesa no supermercado"
               >
                 <Lightbulb size={13} className={wakeLockActive ? 'fill-amber-500 text-amber-500' : ''} />
-                <span className="hidden sm:inline">
-                  {wakeLockActive ? 'Tela Acesa' : 'Tela Acesa'}
-                </span>
+                <span>Tela Acesa</span>
               </button>
             )}
 
             <button
               onClick={() => setShowOnboarding(true)}
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-border/70 bg-card text-muted-foreground hover:bg-muted hover:text-foreground transition-colors shadow-2xs"
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-border/70 bg-card text-muted-foreground hover:bg-muted hover:text-foreground transition-colors shadow-2xs shrink-0"
               title="Como funciona o Modo Mercado"
               aria-label="Ajuda do Modo Mercado"
             >
@@ -244,10 +242,10 @@ export function MarketModeView({
               size="sm"
               variant="outline"
               onClick={() => setShowAddItem(true)}
-              className="h-8 rounded-full border-primary/30 bg-primary/5 px-2.5 sm:px-3 text-xs font-bold text-primary hover:bg-primary/10"
+              className="h-8 rounded-full border-primary/30 bg-primary/5 px-2.5 sm:px-3 text-xs font-bold text-primary hover:bg-primary/10 shrink-0"
             >
-              <Plus size={14} className="mr-0.5" />
-              <span>Item Extra</span>
+              <Plus size={14} className="sm:mr-0.5" />
+              <span className="hidden sm:inline">Item Extra</span>
             </Button>
           </div>
         </div>
@@ -338,22 +336,22 @@ export function MarketModeView({
             Todos ({pendingItems.length})
           </button>
 
-          {categoriesWithCounts.map(({ name, count }) => (
+          {corridors.map(({ key, label, count }) => (
             <button
-              key={name}
-              onClick={() => setSelectedCategory(name === selectedCategory ? null : name)}
+              key={key}
+              onClick={() => setSelectedCategory(key === selectedCategory ? null : key)}
               className={cn(
                 'shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium transition-all shadow-2xs flex items-center gap-1.5',
-                selectedCategory === name
+                selectedCategory === key
                   ? 'bg-primary text-primary-foreground font-bold'
                   : 'border border-border/70 bg-card text-muted-foreground hover:bg-muted hover:text-foreground'
               )}
             >
-              <span>{name}</span>
+              <span>{label}</span>
               <span
                 className={cn(
                   'rounded-full px-1.5 py-0.2 text-[10px] font-bold tabular-nums',
-                  selectedCategory === name
+                  selectedCategory === key
                     ? 'bg-white/20 text-white'
                     : 'bg-muted text-muted-foreground'
                 )}
@@ -383,7 +381,7 @@ export function MarketModeView({
               </div>
               <p className="text-sm font-bold text-foreground">
                 {selectedCategory
-                  ? `Nenhum item pendente no corredor "${selectedCategory}"!`
+                  ? `Nenhum item pendente no corredor "${corridors.find((c) => c.key === selectedCategory)?.label ?? ''}"!`
                   : 'Tudo pronto! Todos os itens foram para o carrinho!'}
               </p>
               <p className="text-xs text-muted-foreground">
@@ -415,10 +413,12 @@ export function MarketModeView({
                         <span className="font-bold text-primary shrink-0 tabular-nums">
                           {quantityLabel(item.quantity, item.unitType)}
                         </span>
-                        {item.categoryName && (
+                        {item.category && (
                           <>
                             <span className="text-muted-foreground/40 font-bold">·</span>
-                            <span className="truncate">{item.categoryName}</span>
+                            <span className="truncate">
+                              {item.category.icon} {item.category.name}
+                            </span>
                           </>
                         )}
                         {item.notes && (
@@ -494,19 +494,13 @@ export function MarketModeView({
             {!isCartCollapsed && (
               <div className="space-y-1.5">
                 {displayedCartItems.map((item) => {
-                  const savings = getSavingsInfo(
-                    item.estimatedPrice,
-                    item.price,
-                    item.quantity,
-                    item.unitType
-                  );
+                  const savings = getSavingsInfo(item);
 
                   return (
-                    <div
+                    <SwipeToUndoRow
                       key={item.shoppingItemId}
-                      onClick={() => onUnmarkAsPurchased(item)}
-                      className="group flex items-center justify-between gap-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-3 sm:p-3.5 transition-all hover:bg-emerald-500/10 cursor-pointer"
-                      title="Toque para devolver à lista de pendentes"
+                      onUndo={() => onUnmarkAsPurchased(item)}
+                      className="group flex items-center justify-between gap-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-3 sm:p-3.5 transition-colors hover:bg-emerald-500/10 cursor-grab active:cursor-grabbing"
                     >
                       <div className="flex items-center gap-3 min-w-0 flex-1">
                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white shadow-2xs">
@@ -519,11 +513,16 @@ export function MarketModeView({
                           </span>
                           <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                             <span className="font-semibold text-foreground/80 tabular-nums">
-                              {quantityLabel(item.quantity, item.unitType)} colocado
+                              {getQuantityDisplay(item).label} colocado
                             </span>
+                            {getQuantityDisplay(item).plannedLabel && (
+                              <span className="text-muted-foreground/75 tabular-nums">
+                                {getQuantityDisplay(item).plannedLabel}
+                              </span>
+                            )}
                             <span className="text-muted-foreground/40 font-bold">·</span>
                             <span className="text-muted-foreground/75 flex items-center gap-1">
-                              <Undo2 size={10} /> desfazer
+                              <Undo2 size={10} /> arraste p/ desfazer
                             </span>
                           </div>
                         </div>
@@ -532,9 +531,7 @@ export function MarketModeView({
                       <div className="text-right shrink-0 pl-2">
                         <span className="font-display text-sm font-bold text-emerald-600 dark:text-emerald-400 tabular-nums block">
                           {item.price != null
-                            ? formatCurrency(
-                                getItemSpentTotal(item.price, item.quantity, item.unitType)
-                              )
+                            ? formatCurrency(getItemSpentTotal(item))
                             : 'Comprado'}
                         </span>
                         {savings && savings.type === 'savings' && (
@@ -548,7 +545,7 @@ export function MarketModeView({
                           </span>
                         )}
                       </div>
-                    </div>
+                    </SwipeToUndoRow>
                   );
                 })}
               </div>
@@ -617,7 +614,6 @@ export function MarketModeView({
         open={showAddItem}
         onClose={() => setShowAddItem(false)}
         title="Adicionar Item Extra no Mercado"
-        categories={uniqueCategories}
         onSubmit={async (data) => {
           await onAddItem(data);
           setShowAddItem(false);
@@ -630,7 +626,6 @@ export function MarketModeView({
         onClose={() => setEditingItem(null)}
         title="Editar Item"
         initialData={editItemInitialData}
-        categories={uniqueCategories}
         onSubmit={async (data) => {
           if (editingItem && onEditItem) {
             await onEditItem(editingItem, data);

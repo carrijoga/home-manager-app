@@ -6,11 +6,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import type { AppShoppingItem } from '@/types';
 
+import { type ItemSection, NO_CATEGORY_KEY } from './grouping';
 import { ShoppingItemRow } from './ShoppingItemRow';
 
 interface CategorySectionProps {
-  category: string;
-  items: AppShoppingItem[];
+  section: ItemSection;
   isCollapsed: boolean;
   isBulkMode: boolean;
   isFinished: boolean;
@@ -38,8 +38,7 @@ interface CategorySectionProps {
 
 export function CategorySection(props: CategorySectionProps) {
   const {
-    category,
-    items,
+    section,
     isCollapsed,
     isBulkMode,
     isFinished,
@@ -62,6 +61,7 @@ export function CategorySection(props: CategorySectionProps) {
     onSaveInlineEdit,
     onDelete,
   } = props;
+  const { items } = section;
 
   const purchasedCount = items.filter((i) => i.isPurchased).length;
   const unpurchased = items.filter((i) => !i.isPurchased);
@@ -70,13 +70,13 @@ export function CategorySection(props: CategorySectionProps) {
     unpurchased.length > 0 && unpurchased.every((i) => selectedItemIds.has(i.shoppingItemId));
   const someGroupSelected = unpurchased.some((i) => selectedItemIds.has(i.shoppingItemId));
 
-  const isNoneCategory = category === 'Sem categoria';
+  const isNoneCategory = section.key === NO_CATEGORY_KEY;
 
   return (
     <div className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-subtle transition-all duration-200 hover:border-border/90 hover:shadow-card">
       {/* Category header - Tappable with thumb */}
       <div
-        onClick={() => onToggleCollapse(category)}
+        onClick={() => onToggleCollapse(section.key)}
         className="flex cursor-pointer items-center justify-between border-b border-border/40 bg-muted/25 px-4 py-3 sm:px-5 sm:py-3.5 select-none transition-colors hover:bg-muted/40 active:bg-muted/60"
       >
         <div className="flex items-center gap-3 min-w-0">
@@ -102,17 +102,31 @@ export function CategorySection(props: CategorySectionProps) {
 
           <div
             className={cn(
-              'flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-colors',
+              'flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-base transition-colors',
               allPurchased
                 ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
                 : 'bg-primary/10 text-primary'
             )}
           >
-            {isNoneCategory ? <FolderMinus size={15} /> : <Tag size={15} />}
+            {section.icon ? (
+              <span aria-hidden>{section.icon}</span>
+            ) : isNoneCategory ? (
+              <FolderMinus size={15} />
+            ) : (
+              <Tag size={15} />
+            )}
           </div>
 
+          {section.color && (
+            <span
+              className="h-2 w-2 shrink-0 rounded-full"
+              style={{ backgroundColor: section.color }}
+              aria-hidden
+            />
+          )}
+
           <span className="truncate text-sm sm:text-base font-bold tracking-tight text-foreground font-display">
-            {category}
+            {section.label}
           </span>
 
           <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[11px] font-bold text-muted-foreground shrink-0 tabular-nums">

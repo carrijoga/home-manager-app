@@ -10,6 +10,7 @@ import {
   X,
 } from 'lucide-react';
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import {
   DropdownMenu,
@@ -21,6 +22,8 @@ import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 
+import type { SectionOption } from './grouping';
+
 interface DetailFilterBarProps {
   isBulkMode: boolean;
   selectedCount: number;
@@ -28,7 +31,7 @@ interface DetailFilterBarProps {
   setSortOrder: (v: 'name' | 'count' | 'purchased') => void;
   categoryFilter: string | null;
   setCategoryFilter: (v: string | null) => void;
-  categoriesInDetail: string[];
+  sectionOptions: SectionOption[];
   searchTerm: string;
   setSearchTerm: (v: string) => void;
   isSearchPending: boolean;
@@ -37,7 +40,6 @@ interface DetailFilterBarProps {
   detailDataLoaded: boolean;
   categoryScrollRef: React.RefObject<HTMLDivElement | null>;
   onExitBulkMode: () => void;
-  onShowCategories: () => void;
   onUploadClick: () => void;
   onEnterBulkMode: () => void;
   onAddItem: () => void;
@@ -68,7 +70,7 @@ export function DetailFilterBar(props: DetailFilterBarProps) {
     setSortOrder,
     categoryFilter,
     setCategoryFilter,
-    categoriesInDetail,
+    sectionOptions,
     searchTerm,
     setSearchTerm,
     isSearchPending,
@@ -77,7 +79,6 @@ export function DetailFilterBar(props: DetailFilterBarProps) {
     detailDataLoaded,
     categoryScrollRef,
     onExitBulkMode,
-    onShowCategories,
     onUploadClick,
     onEnterBulkMode,
     onScrollCategories,
@@ -85,6 +86,8 @@ export function DetailFilterBar(props: DetailFilterBarProps) {
     onCategoryPointerMove,
     onCategoryPointerUp,
   } = props;
+
+  const navigate = useNavigate();
 
   /* ── Barra de Modo de Seleção em Massa ── */
   if (isBulkMode) {
@@ -188,7 +191,7 @@ export function DetailFilterBar(props: DetailFilterBarProps) {
       <div className="flex items-center justify-between gap-2 border-b border-border/40 pb-2">
         {/* Chips de Categorias em Scroll Horizontal */}
         <div className="flex items-center gap-1.5 min-w-0 flex-1">
-          {categoriesInDetail.length > 0 && (
+          {sectionOptions.length > 0 && (
             <>
               <button
                 type="button"
@@ -223,13 +226,13 @@ export function DetailFilterBar(props: DetailFilterBarProps) {
                   Todas
                 </button>
 
-                {categoriesInDetail.map((cat) => {
-                  const isSelected = categoryFilter === cat;
+                {sectionOptions.map((opt) => {
+                  const isSelected = categoryFilter === opt.key;
                   return (
                     <button
-                      key={cat}
+                      key={opt.key}
                       type="button"
-                      onClick={() => setCategoryFilter(isSelected ? null : cat)}
+                      onClick={() => setCategoryFilter(isSelected ? null : opt.key)}
                       className={cn(
                         'shrink-0 rounded-xl px-3 py-1 text-xs font-semibold transition-all active:scale-95',
                         isSelected
@@ -237,7 +240,8 @@ export function DetailFilterBar(props: DetailFilterBarProps) {
                           : 'border border-border/60 bg-card text-muted-foreground hover:bg-muted hover:text-foreground'
                       )}
                     >
-                      {cat}
+                      {opt.icon ? `${opt.icon} ` : ''}
+                      {opt.label}
                     </button>
                   );
                 })}
@@ -291,8 +295,8 @@ export function DetailFilterBar(props: DetailFilterBarProps) {
           <button
             type="button"
             className="flex h-8 items-center gap-1.5 rounded-xl border border-border/70 bg-card px-2.5 text-xs font-semibold text-muted-foreground shadow-subtle transition-colors hover:bg-muted hover:text-foreground"
-            onClick={onShowCategories}
-            title="Gerenciar categorias da lista"
+            onClick={() => navigate('/settings/categories?scope=shopping')}
+            title="Gerenciar categorias de compras"
           >
             <Tag size={12} />
             <span className="hidden sm:inline">Categorias</span>

@@ -17,7 +17,6 @@ import {
   Search,
   Shield,
   Star,
-  Tag,
   Trash2,
   UserMinus,
   Users,
@@ -27,12 +26,11 @@ import * as React from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
-import { RoleBadge } from '@/components/common/RoleBadge';
 import {
   AvatarWithPresence,
   OnlineStatusPill,
 } from '@/components/common/OnlineStatusBadge';
-import { useNestPresence } from '@/hooks/useNestPresence';
+import { RoleBadge } from '@/components/common/RoleBadge';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -54,6 +52,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { resolveUserAvatar } from '@/constants/koboyoAvatars';
 import { useApp } from '@/contexts/AppContext';
+import { useNestPresence } from '@/hooks/useNestPresence';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { cardVariants, pageVariants, transitions } from '@/lib/animations';
 import { CURATED_NEST_ICONS, getIconComponent, KOBOYO_NEST_ICONS } from '@/lib/nestIcons';
@@ -64,13 +63,12 @@ import { CreateNestRequestSchema, type UpdateNestRequest } from '@/schemas/nest'
 import * as nestService from '@/services/nestService';
 import type { AppUserNest } from '@/types';
 
-import { CategoriesPanel } from './CategoriesPanel';
 import { NestConfigurationPanel } from './NestConfigurationPanel';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type Mode = 'list' | 'create' | 'edit' | 'join_code';
-type EditSection = 'info' | 'members' | 'categories' | 'permissions';
+type EditSection = 'info' | 'members' | 'permissions';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -134,7 +132,6 @@ function formatDate(iso: string): string {
 const EDIT_SECTIONS: { id: EditSection; label: string; icon: React.ElementType }[] = [
   { id: 'info', label: 'Informações', icon: Info },
   { id: 'members', label: 'Membros', icon: Users },
-  { id: 'categories', label: 'Categorias', icon: Tag },
   { id: 'permissions', label: 'Configurações', icon: Shield },
 ];
 
@@ -1862,7 +1859,6 @@ export function NestManagerModal({ open, onClose, onOpenChange, initialMode = 'l
                     />
                   )}
                   {editSection === 'members' && <MembersPanel nest={editingNest} />}
-                  {editSection === 'categories' && <CategoriesPanel nest={editingNest} />}
                   {editSection === 'permissions' && <NestConfigurationPanel nest={editingNest} />}
                 </div>
               ) : (
@@ -1887,7 +1883,6 @@ export function NestManagerModal({ open, onClose, onOpenChange, initialMode = 'l
                       />
                     )}
                     {editSection === 'members' && <MembersPanel nest={editingNest} />}
-                    {editSection === 'categories' && <CategoriesPanel nest={editingNest} />}
                     {editSection === 'permissions' && <NestConfigurationPanel nest={editingNest} />}
                   </motion.div>
                 </AnimatePresence>

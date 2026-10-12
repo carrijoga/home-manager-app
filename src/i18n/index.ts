@@ -1,9 +1,9 @@
 export * from './errors';
 export * from './language';
 export {
-  UI_DICTIONARIES,
-  type TranslationKey,
   translateUiKey,
+  type TranslationKey,
+  UI_DICTIONARIES,
   type UiDictionary,
 } from './locales';
 export * from './types';

@@ -2,22 +2,9 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { useApp } from '@/contexts/AppContext';
 import * as shoppingService from '@/services/shoppingService';
-import type {
-  AppShoppingCategory,
-  AppShoppingItem,
-  AppShoppingList,
-  AppShoppingListSummary,
-} from '@/types';
+import type { AppShoppingItem, AppShoppingList, AppShoppingListSummary } from '@/types';
 
 import { getItemEstimatedTotal, getItemSpentTotal } from '../helpers';
-
-function dedupeCategories(cats: AppShoppingCategory[]): AppShoppingCategory[] {
-  const map = new Map<string, AppShoppingCategory>();
-  cats.forEach((c) => {
-    if (!map.has(c.shoppingCategoryId)) map.set(c.shoppingCategoryId, c);
-  });
-  return Array.from(map.values());
-}
 
 function buildSummaryFromDetail(detail: AppShoppingList): AppShoppingListSummary {
   const totals = detail.items.reduce(
@@ -30,7 +17,11 @@ function buildSummaryFromDetail(detail: AppShoppingList): AppShoppingListSummary
         item.unitType
       );
       if (item.isPurchased)
-        acc.totalSpent += getItemSpentTotal(item.price, item.quantity, item.unitType);
+        acc.totalSpent += getItemSpentTotal({
+          price: item.price,
+          purchasedQuantity: item.purchasedQuantity,
+          unitType: item.unitType,
+        });
       return acc;
     },
     { totalItems: 0, purchasedItems: 0, totalEstimated: 0, totalSpent: 0 }
@@ -54,18 +45,13 @@ export function useShoppingData() {
   const nestId = activeNestId ?? undefined;
 
   const [shoppingLists, setShoppingLists] = useState<AppShoppingListSummary[]>([]);
-  const [shoppingCategories, setShoppingCategories] = useState<AppShoppingCategory[]>([]);
   const [loading, setLoading] = useState(true);
 
   const refreshShoppingData = useCallback(async () => {
     if (!activeNestId) return;
     try {
-      const [lists, cats] = await Promise.all([
-        shoppingService.getShoppingLists(undefined, activeNestId),
-        shoppingService.getShoppingCategories(activeNestId),
-      ]);
+      const lists = await shoppingService.getShoppingLists(undefined, activeNestId);
       setShoppingLists(lists);
-      setShoppingCategories(dedupeCategories(cats));
     } catch {
       // Silent catch for background polling
     }
@@ -171,7 +157,7 @@ export function useShoppingData() {
           name,
           quantity,
           unitType,
-          shoppingCategoryId: categoryId,
+          categoryId,
           estimatedPrice,
           notes,
         },
@@ -207,7 +193,7 @@ export function useShoppingData() {
     ) => {
       await shoppingService.updateShoppingItem(
         id,
-        { name, quantity, unitType, shoppingCategoryId: categoryId, estimatedPrice, notes },
+        { name, quantity, unitType, categoryId, estimatedPrice, notes },
         nestId
       );
     },
@@ -222,11 +208,12 @@ export function useShoppingData() {
       unitType: number,
       estimatedPrice?: number | null,
       isPurchased?: boolean,
-      price?: number | null
+      price?: number | null,
+      purchasedQuantity?: number | null
     ) => {
       await shoppingService.deleteShoppingItem(id, nestId);
       const estimatedContrib = getItemEstimatedTotal(estimatedPrice, quantity, unitType);
-      const spentContrib = getItemSpentTotal(price, quantity, unitType);
+      const spentContrib = getItemSpentTotal({ price, purchasedQuantity, unitType });
       setShoppingLists((prev) =>
         prev.map((l) =>
           l.shoppingListId === listId
@@ -256,7 +243,7 @@ export function useShoppingData() {
       purchasedAt: string
     ) => {
       await shoppingService.markItemAsPurchased(id, { quantity, price, purchasedAt }, nestId);
-      const spentContrib = getItemSpentTotal(price, quantity, unitType);
+      const spentContrib = getItemSpentTotal({ price, purchasedQuantity: quantity, unitType });
       setShoppingLists((prev) =>
         prev.map((l) =>
           l.shoppingListId === listId
@@ -273,9 +260,15 @@ export function useShoppingData() {
   );
 
   const unmarkItemAsPurchased = useCallback(
-    async (id: string, listId: string, quantity: number, unitType: number, price: number) => {
+    async (
+      id: string,
+      listId: string,
+      purchasedQuantity: number | null,
+      unitType: number,
+      price: number
+    ) => {
       await shoppingService.unmarkItemAsPurchased(listId, id, nestId);
-      const spentContrib = getItemSpentTotal(price, quantity, unitType);
+      const spentContrib = getItemSpentTotal({ price, purchasedQuantity, unitType });
       setShoppingLists((prev) =>
         prev.map((l) =>
           l.shoppingListId === listId
@@ -294,11 +287,7 @@ export function useShoppingData() {
   const uploadShoppingItems = useCallback(
     async (listId: string, file: File): Promise<AppShoppingList> => {
       await shoppingService.uploadShoppingItems(listId, file, nestId);
-      const [detail, categories] = await Promise.all([
-        shoppingService.getShoppingListById(listId, nestId),
-        shoppingService.getShoppingCategories(nestId),
-      ]);
-      setShoppingCategories(dedupeCategories(categories));
+      const detail = await shoppingService.getShoppingListById(listId, nestId);
       const summary = buildSummaryFromDetail(detail);
       setShoppingLists((prev) => {
         const hasList = prev.some((l) => l.shoppingListId === listId);
@@ -306,23 +295,6 @@ export function useShoppingData() {
         return prev.map((l) => (l.shoppingListId === listId ? summary : l));
       });
       return detail;
-    },
-    [nestId]
-  );
-
-  const createShoppingCategory = useCallback(
-    async (name: string, description?: string): Promise<AppShoppingCategory> => {
-      const cat = await shoppingService.createShoppingCategory({ name, description }, nestId);
-      setShoppingCategories((prev) => dedupeCategories([...prev, cat]));
-      return cat;
-    },
-    [nestId]
-  );
-
-  const deleteShoppingCategory = useCallback(
-    async (id: string) => {
-      await shoppingService.deleteShoppingCategory(id, nestId);
-      setShoppingCategories((prev) => prev.filter((c) => c.shoppingCategoryId !== id));
     },
     [nestId]
   );
@@ -341,10 +313,18 @@ export function useShoppingData() {
     [nestId]
   );
 
+  const replicateShoppingList = useCallback(
+    async (id: string, monthYear: string): Promise<string> => {
+      const newId = await shoppingService.replicateShoppingList(id, monthYear, nestId);
+      await refreshShoppingData();
+      return newId;
+    },
+    [nestId, refreshShoppingData]
+  );
+
   return {
     shoppingLists,
     setShoppingLists,
-    shoppingCategories,
     loading,
     refreshShoppingData,
     loadShoppingListDetail,
@@ -353,6 +333,7 @@ export function useShoppingData() {
     deleteShoppingList,
     finishShoppingList,
     unfinishShoppingList,
+    replicateShoppingList,
     addShoppingItem,
     updateShoppingItem,
     deleteShoppingItem,
@@ -361,7 +342,5 @@ export function useShoppingData() {
     ignoreShoppingItem,
     unignoreShoppingItem,
     uploadShoppingItems,
-    createShoppingCategory,
-    deleteShoppingCategory,
   };
 }

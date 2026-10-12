@@ -10,7 +10,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { UNIT_TYPE_LABELS } from '@/schemas/enums';
 import type { AppShoppingItem } from '@/types';
 
-import { emptyPurchaseForm } from '../helpers';
+import { emptyPurchaseForm, quantityLabel } from '../helpers';
 import type { PurchaseFormData } from '../types';
 
 interface MarkAsPurchasedDialogProps {
@@ -88,6 +88,11 @@ export function MarkAsPurchasedDialog({
                 required
                 className="h-12 rounded-2xl bg-muted/30 px-4 text-base font-medium shadow-none focus-visible:ring-2 focus-visible:ring-primary"
               />
+              {item && (
+                <p className="text-xs text-muted-foreground">
+                  Planejado: {quantityLabel(item.quantity, item.unitType)}
+                </p>
+              )}
             </div>
 
             <div className="space-y-1.5">

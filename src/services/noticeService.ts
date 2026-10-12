@@ -3,11 +3,11 @@
  * Suporta API real e modo mock (DATA_MODE === 'mock').
  */
 
+import { resolveUserAvatar } from '@/constants/koboyoAvatars';
 import type { CreateNoticeRequest, UpdateNoticeRequest } from '@/schemas/notices';
 import { NoticeHistoryResponseSchema, NoticeResponseSchema } from '@/schemas/notices';
 import type { Notice, NoticeReaction, PaginatedResponse } from '@/types';
 import { ApiPriority } from '@/types';
-import { resolveUserAvatar } from '@/constants/koboyoAvatars';
 
 import { MOCK_USER_ID, mockNotices } from '../mocks/data';
 import { DATA_MODE } from './api/config';

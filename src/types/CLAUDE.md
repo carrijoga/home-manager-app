@@ -10,7 +10,7 @@
 
 - `Priority` — task priority (`alta`, `média`, `baixa`)
 - `ApiPriority` — numeric API priority levels (0-3)
-- `ApiCategory` — task category enum (Geral, Limpeza, etc.)
+- Task categories now come from the unified category tree (`Task.category: CategorySummaryResponse | null`, scope `Task`)
 - `ModuleId` — route identifiers (DASHBOARD, TASKS, SHOPPING, etc.)
 - `FutureItemStatus` — purchase status (planned, purchased)
 

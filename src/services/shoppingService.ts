@@ -1,15 +1,14 @@
 /**
- * Serviço para gerenciar listas de compras, itens e categorias.
+ * Serviço para gerenciar listas de compras e itens (inclui replicação de lista).
  * Dual-mode: DATA_MODE === 'mock' usa dados locais; 'api' usa httpClient.
  */
 
 import { getItemEstimatedTotal, getItemSpentTotal } from '@/components/modules/Shopping/helpers';
+import { toCategorySummary } from '@/lib/categories';
 import type {
-  CreateShoppingCategoryRequest,
   CreateShoppingItemRequest,
   CreateShoppingListRequest,
   MarkAsPurchasedRequest,
-  ShoppingCategoryResponse,
   ShoppingItemResponse,
   ShoppingListResponse,
   ShoppingListSummaryResponse,
@@ -19,19 +18,19 @@ import type {
 import {
   CreateShoppingItemRequestSchema,
   MarkAsPurchasedRequestSchema,
-  ShoppingCategoryResponseSchema,
+  ReplicateShoppingListRequestSchema,
   ShoppingListResponseSchema,
   ShoppingListSummaryResponseSchema,
   UpdateShoppingItemRequestSchema,
 } from '@/schemas/shopping';
+import { getMockCategoryTree } from '@/services/categoryService';
 import type {
-  AppShoppingCategory,
   AppShoppingItem,
   AppShoppingList,
   AppShoppingListSummary,
 } from '@/types';
 
-import { mockShoppingCategories, mockShoppingListDetails, mockShoppingLists } from '../mocks/data';
+import { mockShoppingListDetails, mockShoppingLists } from '../mocks/data';
 import { DATA_MODE } from './api/config';
 import { ENDPOINTS } from './api/endpoints';
 import { ApiError, httpClient } from './api/httpClient';
@@ -76,16 +75,6 @@ function validateRequest<T>(
 
 // ── Mappers (API response → app-internal type) ────────────────────────────────
 
-function mapCategory(r: ShoppingCategoryResponse): AppShoppingCategory {
-  return {
-    shoppingCategoryId: r.shoppingCategoryId,
-    nestId: r.nestId ?? null,
-    name: r.name,
-    description: r.description,
-    isDefault: r.isDefault,
-  };
-}
-
 export function mapItem(r: ShoppingItemResponse): AppShoppingItem {
   const status = r.status ?? (r.isPurchased ? 1 : 0);
   return {
@@ -94,8 +83,8 @@ export function mapItem(r: ShoppingItemResponse): AppShoppingItem {
     name: r.name,
     quantity: Number(r.quantity),
     unitType: Number(r.unitType),
-    shoppingCategoryId: r.shoppingCategoryId ?? null,
-    categoryName: r.categoryName ?? null,
+    purchasedQuantity: r.purchasedQuantity != null ? Number(r.purchasedQuantity) : null,
+    category: r.category ?? null,
     isPurchased: status === 1 || Boolean(r.isPurchased),
     status,
     price: r.price != null ? Number(r.price) : null,
@@ -142,57 +131,6 @@ let _mockLists: AppShoppingListSummary[] = [...mockShoppingLists];
 const _mockDetails: Record<string, AppShoppingList> = Object.fromEntries(
   Object.entries(mockShoppingListDetails).map(([k, v]) => [k, { ...v, items: [...v.items].reverse() }])
 );
-let _mockCategories: AppShoppingCategory[] = [...mockShoppingCategories];
-
-// ── ShoppingCategory ──────────────────────────────────────────────────────────
-
-export async function getShoppingCategories(nestId?: string): Promise<AppShoppingCategory[]> {
-  if (DATA_MODE === 'mock') {
-    return new Promise((resolve) => setTimeout(() => resolve([..._mockCategories]), 100));
-  }
-
-  const raw = await httpClient.get<unknown[]>(ENDPOINTS.shoppingCategories.list, nestId);
-  const parsed = (Array.isArray(raw) ? raw : []).map((item) =>
-    mapCategory(safeParse(ShoppingCategoryResponseSchema, item, 'getShoppingCategories'))
-  );
-  return parsed;
-}
-
-export async function createShoppingCategory(
-  data: CreateShoppingCategoryRequest,
-  nestId?: string
-): Promise<AppShoppingCategory> {
-  if (DATA_MODE === 'mock') {
-    const newCat: AppShoppingCategory = {
-      shoppingCategoryId: crypto.randomUUID(),
-      nestId: nestId ?? null,
-      name: data.name,
-      description: data.description ?? null,
-      isDefault: false,
-    };
-    _mockCategories = [..._mockCategories, newCat];
-    return new Promise((resolve) => setTimeout(() => resolve(newCat), 100));
-  }
-
-  // Backend requires description (even when empty) despite the OpenAPI spec marking it optional
-  const payload = { ...data, description: data.description ?? '' };
-  const newId = await httpClient.post<string>(ENDPOINTS.shoppingCategories.create, payload, {
-    nestId,
-  });
-  const allCats = await getShoppingCategories(nestId);
-  const found = allCats.find((c) => c.shoppingCategoryId === newId);
-  if (!found) throw new Error('Categoria não encontrada após criação');
-  return found;
-}
-
-export async function deleteShoppingCategory(id: string, nestId?: string): Promise<void> {
-  if (DATA_MODE === 'mock') {
-    _mockCategories = _mockCategories.filter((c) => c.shoppingCategoryId !== id);
-    return new Promise((resolve) => setTimeout(resolve, 100));
-  }
-
-  await httpClient.del<void>(ENDPOINTS.shoppingCategories.delete(id), nestId);
-}
 
 // ── ShoppingList ──────────────────────────────────────────────────────────────
 
@@ -346,6 +284,66 @@ export async function unfinishShoppingList(id: string, nestId?: string): Promise
   await httpClient.patch<void>(ENDPOINTS.shoppingLists.unfinish(id), undefined, nestId);
 }
 
+/** Replica a lista (todos os itens, como pendentes) para outro mês. Devolve o id da nova lista. */
+export async function replicateShoppingList(
+  id: string,
+  monthYear: string,
+  nestId?: string
+): Promise<string> {
+  if (DATA_MODE === 'mock') {
+    const source = _mockDetails[id];
+    if (!source) throw new ApiError('Lista não encontrada', 404, 'ShoppingList_NotFound');
+    const newId = crypto.randomUUID();
+    const items: AppShoppingItem[] = source.items.map((i) => ({
+      shoppingItemId: crypto.randomUUID(),
+      shoppingListId: newId,
+      name: i.name,
+      quantity: i.quantity,
+      unitType: i.unitType,
+      category: i.category,
+      estimatedPrice: i.estimatedPrice ?? null,
+      notes: i.notes ?? null,
+      purchasedQuantity: null,
+      isPurchased: false,
+      status: 0,
+      price: null,
+      purchasedAt: null,
+    }));
+    _mockDetails[newId] = {
+      shoppingListId: newId,
+      name: source.name,
+      monthYear,
+      notes: source.notes ?? null,
+      finished: false,
+      finishedAt: null,
+      finishedBy: null,
+      items,
+    };
+    _mockLists = [
+      {
+        shoppingListId: newId,
+        name: source.name,
+        monthYear,
+        notes: source.notes ?? null,
+        finished: false,
+        finishedAt: null,
+        finishedBy: null,
+        isFinished: false,
+        totalItems: 0,
+        purchasedItems: 0,
+        totalEstimated: 0,
+        totalSpent: 0,
+      },
+      ..._mockLists,
+    ];
+    _recomputeSummary(newId);
+    return new Promise((resolve) => setTimeout(() => resolve(newId), 100));
+  }
+
+  validateRequest(ReplicateShoppingListRequestSchema, { monthYear });
+  return httpClient.post<string>(ENDPOINTS.shoppingLists.replicate(id), { monthYear }, { nestId });
+}
+
 // ── ShoppingItem ──────────────────────────────────────────────────────────────
 
 export async function addShoppingItem(
@@ -353,16 +351,14 @@ export async function addShoppingItem(
   nestId?: string
 ): Promise<AppShoppingItem> {
   if (DATA_MODE === 'mock') {
-    const catName =
-      _mockCategories.find((c) => c.shoppingCategoryId === data.shoppingCategoryId)?.name ?? null;
     const newItem: AppShoppingItem = {
       shoppingItemId: crypto.randomUUID(),
       shoppingListId: data.shoppingListId,
       name: data.name,
       quantity: Number(data.quantity),
       unitType: data.unitType,
-      shoppingCategoryId: data.shoppingCategoryId ?? null,
-      categoryName: catName,
+      category: toCategorySummary(getMockCategoryTree(), data.categoryId ?? null),
+      purchasedQuantity: null,
       isPurchased: false,
       status: 0,
       price: null,
@@ -411,13 +407,15 @@ export async function updateShoppingItem(
     for (const listId of Object.keys(_mockDetails)) {
       const idx = _mockDetails[listId].items.findIndex((i) => i.shoppingItemId === id);
       if (idx !== -1) {
-        const catName =
-          _mockCategories.find((c) => c.shoppingCategoryId === data.shoppingCategoryId)?.name ??
-          null;
+        const current = _mockDetails[listId].items[idx];
         const updated: AppShoppingItem = {
-          ..._mockDetails[listId].items[idx],
-          ...data,
-          categoryName: catName,
+          ...current,
+          name: data.name,
+          quantity: Number(data.quantity),
+          unitType: data.unitType,
+          estimatedPrice: data.estimatedPrice != null ? Number(data.estimatedPrice) : null,
+          notes: data.notes ?? null,
+          category: toCategorySummary(getMockCategoryTree(), data.categoryId ?? null),
         };
         _mockDetails[listId].items = _mockDetails[listId].items.map((item, n) =>
           n === idx ? updated : item
@@ -466,7 +464,7 @@ export async function markItemAsPurchased(
                 ...item,
                 isPurchased: true,
                 status: 1,
-                quantity: Number(data.quantity),
+                purchasedQuantity: Number(data.quantity),
                 price: Number(data.price),
                 purchasedAt: data.purchasedAt,
               }
@@ -492,7 +490,9 @@ export async function unmarkItemAsPurchased(
     const idx = _mockDetails[listId]?.items.findIndex((i) => i.shoppingItemId === itemId) ?? -1;
     if (idx !== -1) {
       _mockDetails[listId].items = _mockDetails[listId].items.map((item, n) =>
-        n === idx ? { ...item, isPurchased: false, status: 0, price: null, purchasedAt: null } : item
+        n === idx
+          ? { ...item, isPurchased: false, status: 0, price: null, purchasedAt: null, purchasedQuantity: null }
+          : item
       );
       _recomputeSummary(listId);
     }
@@ -515,7 +515,9 @@ export async function ignoreShoppingItem(
     const idx = _mockDetails[listId]?.items.findIndex((i) => i.shoppingItemId === itemId) ?? -1;
     if (idx !== -1) {
       _mockDetails[listId].items = _mockDetails[listId].items.map((item, n) =>
-        n === idx ? { ...item, isPurchased: false, status: 2, price: null, purchasedAt: null } : item
+        n === idx
+          ? { ...item, isPurchased: false, status: 2, price: null, purchasedAt: null, purchasedQuantity: null }
+          : item
       );
       _recomputeSummary(listId);
     }
@@ -538,7 +540,9 @@ export async function unignoreShoppingItem(
     const idx = _mockDetails[listId]?.items.findIndex((i) => i.shoppingItemId === itemId) ?? -1;
     if (idx !== -1) {
       _mockDetails[listId].items = _mockDetails[listId].items.map((item, n) =>
-        n === idx ? { ...item, isPurchased: false, status: 0, price: null, purchasedAt: null } : item
+        n === idx
+          ? { ...item, isPurchased: false, status: 0, price: null, purchasedAt: null, purchasedQuantity: null }
+          : item
       );
       _recomputeSummary(listId);
     }
@@ -569,7 +573,7 @@ function _recomputeSummary(listId: string): void {
       ),
       totalSpent: detail.items
         .filter((i) => i.isPurchased)
-        .reduce((acc, i) => acc + getItemSpentTotal(i.price, i.quantity, i.unitType), 0),
+        .reduce((acc, i) => acc + getItemSpentTotal(i), 0),
     };
   });
 }

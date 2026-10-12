@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui';
-import type { CategoryResponse } from '@/schemas/category';
+import { type CategoryOption, formatCategorySummary } from '@/lib/categories';
 import { PaymentStatus, TransactionType } from '@/schemas/enums';
 import type { FinancialTransactionResponse } from '@/schemas/financial';
 import type { NestMember } from '@/schemas/nest';
@@ -35,7 +35,7 @@ export const DEFAULT_FILTERS_V2: TransactionFiltersV2State = {
 interface TransactionFiltersV2Props {
   value: TransactionFiltersV2State;
   onChange: (value: TransactionFiltersV2State) => void;
-  categories: CategoryResponse[];
+  categories: CategoryOption[];
   members: NestMember[];
   monthTransactions: FinancialTransactionResponse[];
   filteredTransactions: FinancialTransactionResponse[];
@@ -172,7 +172,7 @@ function exportToCSV(transactions: FinancialTransactionResponse[], monthLabel: s
     `"${formatCSVDate(t.transactionDate)}"`,
     `"${getCSVTransactionType(t.transactionType)}"`,
     `"${t.description.replace(/"/g, '""')}"`,
-    `"${t.categoryName || ''}"`,
+    `"${(formatCategorySummary(t.category) ?? '').replace(/"/g, '""')}"`,
     `"${t.responsibleUserName || ''}"`,
     `"${Number(t.value).toFixed(2).replace('.', ',')}"`,
     `"${getCSVPaymentStatus(t.paymentStatus)}"`,
@@ -350,8 +350,12 @@ export function TransactionFiltersV2({
           <SelectContent>
             <SelectItem value={ALL_CATEGORIES}>Todas as categorias</SelectItem>
             {categories.map((c) => (
-              <SelectItem key={c.categoryId} value={c.categoryId}>
-                {c.name}
+              <SelectItem
+                key={c.categoryId}
+                value={c.categoryId}
+                className={c.depth === 1 ? 'pl-6' : undefined}
+              >
+                {c.label}
               </SelectItem>
             ))}
           </SelectContent>

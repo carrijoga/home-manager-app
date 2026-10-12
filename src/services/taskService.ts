@@ -3,16 +3,19 @@
  * Suporta API real e modo mock (DATA_MODE === 'mock').
  */
 
-import { CATEGORY_LABELS, PRIORITY_LABELS } from '@/schemas/enums';
+import { toCategorySummary } from '@/lib/taskCategories';
+import { CategorySummaryResponseSchema } from '@/schemas/category';
+import { PRIORITY_LABELS } from '@/schemas/enums';
 import type { CreateQuickTaskRequest, CreateTaskRequest, UpdateTaskRequest } from '@/schemas/tasks';
 import { TaskHistoryResponseSchema, TaskPagedResponseSchema, TaskResponseSchema } from '@/schemas/tasks';
 import type { PaginatedResponse, Task } from '@/types';
-import { ApiCategory, ApiPriority } from '@/types';
+import { ApiPriority } from '@/types';
 
-import { mockTasks } from '../mocks/data';
+import { MOCK_USER_ID, mockTasks } from '../mocks/data';
 import { DATA_MODE } from './api/config';
 import { ENDPOINTS } from './api/endpoints';
 import { httpClient } from './api/httpClient';
+import { getMockCategoryTree } from './categoryService';
 
 // ── Mappers ───────────────────────────────────────────────────────────────────
 
@@ -24,48 +27,96 @@ function apiToTask(raw: unknown): Task {
       taskId: d.taskId,
       title: d.title,
       description: d.description ?? null,
-      details: d.details ?? null,
-      assignedTo: d.assignedTo ?? null,
       dueDate: d.dueDate ?? null,
       priority: d.priority as Task['priority'],
       priorityLabel: d.priorityLabel,
-      category: d.category as Task['category'],
-      categoryLabel: d.categoryLabel,
+      category: d.category ?? null,
       date: d.date,
       isCompleted: d.isCompleted,
       completedAt: d.completedAt ?? null,
       isOverdue: d.isOverdue,
       createdBy: d.createdBy,
       createdAt: d.createdAt,
+      assignees: d.assignees ?? [],
     };
   }
   // fallback permissivo
   const r = raw as Record<string, unknown>;
   const priority = Number(r.priority ?? 3);
-  const category = Number(r.category ?? 0);
+  const rawAssignees = Array.isArray(r.assignees) ? r.assignees : [];
   return {
     taskId: String(r.taskId ?? ''),
     title: String(r.title ?? ''),
     description: (r.description as string) ?? null,
-    details: (r.details as string) ?? null,
-    assignedTo: (r.assignedTo as string) ?? null,
     dueDate: (r.dueDate as string) ?? null,
     priority: priority as Task['priority'],
     priorityLabel: (r.priorityLabel as string) ?? PRIORITY_LABELS[priority] ?? 'Baixa',
-    category: category as Task['category'],
-    categoryLabel: (r.categoryLabel as string) ?? CATEGORY_LABELS[category] ?? 'Geral',
+    category: (() => {
+      const c = CategorySummaryResponseSchema.safeParse(r.category);
+      return c.success ? c.data : null;
+    })(),
     date: String(r.date ?? new Date().toISOString()),
     isCompleted: Boolean(r.isCompleted ?? false),
     completedAt: (r.completedAt as string) ?? null,
     isOverdue: Boolean(r.isOverdue ?? false),
     createdBy: String(r.createdBy ?? ''),
     createdAt: String(r.createdAt ?? new Date().toISOString()),
+    assignees: rawAssignees.map((a: any) => ({
+      userId: String(a.userId ?? ''),
+      name: String(a.name ?? 'Membro'),
+      photoUrl: (a.photoUrl as string) ?? null,
+      isCompleted: Boolean(a.isCompleted ?? false),
+      completedAt: (a.completedAt as string) ?? null,
+    })),
+  };
+}
+
+/** Request de update a partir de uma tarefa carregada. `assigneeIds: null` mantém os responsáveis. */
+export function taskToUpdateRequest(
+  task: Task,
+  overrides: Partial<UpdateTaskRequest> = {}
+): UpdateTaskRequest {
+  return {
+    title: task.title,
+    description: task.description ?? null,
+    assigneeIds: null,
+    dueDate: task.dueDate ?? null,
+    priority: task.priority,
+    categoryId: task.category?.categoryId ?? null,
+    date: task.date,
+    ...overrides,
   };
 }
 
 // ── Mock state ────────────────────────────────────────────────────────────────
 
 const _mockState = [...mockTasks];
+
+/** Espelha Task.RecalculateCompletion do backend: fecha só quando todos concluíram. */
+function recalcMockCompletion(task: Task): void {
+  const all = task.assignees.length > 0 && task.assignees.every((a) => a.isCompleted);
+  task.isCompleted = all;
+  task.completedAt = all
+    ? task.assignees.reduce<string>(
+        (max, a) => (a.completedAt && a.completedAt > max ? a.completedAt : max),
+        ''
+      ) || new Date().toISOString()
+    : null;
+  if (all) task.isOverdue = false;
+}
+
+/** Sem `assigneeId`, age sobre o usuário mock (como o backend age sobre quem chama). */
+function applyMockPart(task: Task, assigneeId: string | undefined, done: boolean): void {
+  const target = assigneeId ?? MOCK_USER_ID;
+  if (!task.assignees.some((a) => a.userId === target)) {
+    throw new Error('Você não é responsável por esta tarefa.');
+  }
+  const nowIso = new Date().toISOString();
+  task.assignees = task.assignees.map((a) =>
+    a.userId === target ? { ...a, isCompleted: done, completedAt: done ? nowIso : null } : a
+  );
+  recalcMockCompletion(task);
+}
 
 // ── API ───────────────────────────────────────────────────────────────────────
 
@@ -126,19 +177,23 @@ export async function createTask(payload: CreateTaskRequest, nestId?: string): P
       taskId: crypto.randomUUID(),
       title: payload.title,
       description: payload.description ?? null,
-      details: payload.details ?? null,
-      assignedTo: payload.assignedTo ?? null,
       dueDate: payload.dueDate ?? null,
       priority: (payload.priority ?? ApiPriority.Baixa) as Task['priority'],
       priorityLabel: PRIORITY_LABELS[payload.priority ?? ApiPriority.Baixa],
-      category: (payload.category ?? ApiCategory.Geral) as Task['category'],
-      categoryLabel: CATEGORY_LABELS[payload.category ?? ApiCategory.Geral],
+      category: toCategorySummary(getMockCategoryTree(), payload.categoryId),
       date: payload.date ?? now,
       isCompleted: false,
       completedAt: null,
       isOverdue: false,
-      createdBy: 'user-mock-0001',
+      createdBy: MOCK_USER_ID,
       createdAt: now,
+      assignees: (payload.assigneeIds?.length ? payload.assigneeIds : [MOCK_USER_ID]).map((id) => ({
+        userId: id,
+        name: 'Usuário Mock',
+        photoUrl: null,
+        isCompleted: false,
+        completedAt: null,
+      })),
     };
     _mockState.unshift(task);
     return new Promise((resolve) => setTimeout(() => resolve(task), 100));
@@ -153,7 +208,7 @@ export async function createQuickTask(title: string, nestId?: string): Promise<T
       {
         title,
         priority: ApiPriority.Baixa,
-        category: ApiCategory.Geral,
+        categoryId: null,
       },
       nestId
     );
@@ -186,14 +241,26 @@ export async function updateTask(
         ..._mockState[idx],
         title: payload.title,
         description: payload.description ?? null,
-        details: payload.details ?? null,
-        assignedTo: payload.assignedTo ?? null,
         dueDate: payload.dueDate ?? null,
         priority: (payload.priority ?? ApiPriority.Baixa) as Task['priority'],
         priorityLabel: PRIORITY_LABELS[payload.priority ?? ApiPriority.Baixa],
-        category: (payload.category ?? ApiCategory.Geral) as Task['category'],
-        categoryLabel: CATEGORY_LABELS[payload.category ?? ApiCategory.Geral],
+        category: toCategorySummary(getMockCategoryTree(), payload.categoryId),
+        assignees: payload.assigneeIds
+          ? payload.assigneeIds.map((uId) => {
+              const existing = _mockState[idx].assignees.find((a) => a.userId === uId);
+              return (
+                existing ?? {
+                  userId: uId,
+                  name: 'Usuário Mock',
+                  photoUrl: null,
+                  isCompleted: false,
+                  completedAt: null,
+                }
+              );
+            })
+          : _mockState[idx].assignees,
       };
+      recalcMockCompletion(_mockState[idx]);
     }
     return new Promise((resolve) => setTimeout(resolve, 100));
   }
@@ -209,34 +276,47 @@ export async function deleteTask(id: string, nestId?: string): Promise<void> {
   await httpClient.del<void>(ENDPOINTS.tasks.delete(id), nestId);
 }
 
-export async function completeTask(id: string, nestId?: string): Promise<Task> {
+export async function completeTask(id: string, nestId?: string, assigneeId?: string): Promise<Task> {
   if (DATA_MODE === 'mock') {
     const task = _mockState.find((t) => t.taskId === id);
-    if (task) {
-      task.isCompleted = true;
-      task.completedAt = new Date().toISOString();
-      task.isOverdue = false;
-    }
     return new Promise((resolve, reject) =>
-      setTimeout(() => (task ? resolve({ ...task }) : reject(new Error('Task not found'))), 100)
+      setTimeout(() => {
+        if (!task) return reject(new Error('Task not found'));
+        try {
+          applyMockPart(task, assigneeId, true);
+          resolve({ ...task });
+        } catch (err) {
+          reject(err);
+        }
+      }, 100)
     );
   }
-  await httpClient.patch<void>(ENDPOINTS.tasks.complete(id), undefined, nestId);
+  const url = assigneeId
+    ? `${ENDPOINTS.tasks.complete(id)}?assigneeId=${encodeURIComponent(assigneeId)}`
+    : ENDPOINTS.tasks.complete(id);
+  await httpClient.patch<void>(url, undefined, nestId);
   return getTaskById(id, nestId);
 }
 
-export async function uncompleteTask(id: string, nestId?: string): Promise<Task> {
+export async function uncompleteTask(id: string, nestId?: string, assigneeId?: string): Promise<Task> {
   if (DATA_MODE === 'mock') {
     const task = _mockState.find((t) => t.taskId === id);
-    if (task) {
-      task.isCompleted = false;
-      task.completedAt = null;
-    }
     return new Promise((resolve, reject) =>
-      setTimeout(() => (task ? resolve({ ...task }) : reject(new Error('Task not found'))), 100)
+      setTimeout(() => {
+        if (!task) return reject(new Error('Task not found'));
+        try {
+          applyMockPart(task, assigneeId, false);
+          resolve({ ...task });
+        } catch (err) {
+          reject(err);
+        }
+      }, 100)
     );
   }
-  await httpClient.patch<void>(ENDPOINTS.tasks.uncomplete(id), undefined, nestId);
+  const url = assigneeId
+    ? `${ENDPOINTS.tasks.uncomplete(id)}?assigneeId=${encodeURIComponent(assigneeId)}`
+    : ENDPOINTS.tasks.uncomplete(id);
+  await httpClient.patch<void>(url, undefined, nestId);
   return getTaskById(id, nestId);
 }
 

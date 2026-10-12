@@ -1,19 +1,16 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
-import type {
-  AppShoppingCategory,
-  AppShoppingItem,
-  AppShoppingList,
-  AppShoppingListSummary,
-} from '@/types';
+import { toCategorySummary } from '@/lib/categories';
+import type { CategoryResponse } from '@/schemas/category';
+import type { AppShoppingItem, AppShoppingList, AppShoppingListSummary } from '@/types';
 
-import { fromISOMonthYear, todayISO, toISOMonthYear } from '../helpers';
+import { formatMonthYearPT, fromISOMonthYear, todayISO, toISOMonthYear } from '../helpers';
 import type { BulkEditPatch, ItemFormData, ListFormData, PurchaseFormData } from '../types';
 
 interface ShoppingActionsDeps {
   shoppingLists: AppShoppingListSummary[];
-  shoppingCategories: AppShoppingCategory[];
+  categoryTree: CategoryResponse[];
   createShoppingList: (name: string, monthYear: string, notes?: string) => Promise<void>;
   updateShoppingList: (
     id: string,
@@ -24,6 +21,7 @@ interface ShoppingActionsDeps {
   deleteShoppingList: (id: string) => Promise<void>;
   finishShoppingList: (id: string) => Promise<void>;
   unfinishShoppingList: (id: string) => Promise<void>;
+  replicateShoppingList: (id: string, monthYear: string) => Promise<string>;
   addShoppingItem: (
     listId: string,
     name: string,
@@ -50,7 +48,8 @@ interface ShoppingActionsDeps {
     unitType: number,
     estimatedPrice?: number | null,
     isPurchased?: boolean,
-    price?: number | null
+    price?: number | null,
+    purchasedQuantity?: number | null
   ) => Promise<void>;
   markItemAsPurchased: (
     id: string,
@@ -63,15 +62,13 @@ interface ShoppingActionsDeps {
   unmarkItemAsPurchased: (
     id: string,
     listId: string,
-    quantity: number,
+    purchasedQuantity: number | null,
     unitType: number,
     price: number
   ) => Promise<void>;
   ignoreShoppingItem: (listId: string, itemId: string) => Promise<void>;
   unignoreShoppingItem: (listId: string, itemId: string) => Promise<void>;
   uploadShoppingItems: (listId: string, file: File) => Promise<AppShoppingList>;
-  createShoppingCategory: (name: string, description?: string) => Promise<AppShoppingCategory>;
-  deleteShoppingCategory: (id: string) => Promise<void>;
 }
 
 export function useShoppingActions(
@@ -81,12 +78,13 @@ export function useShoppingActions(
 ) {
   const {
     shoppingLists,
-    shoppingCategories,
+    categoryTree,
     createShoppingList,
     updateShoppingList,
     deleteShoppingList,
     finishShoppingList,
     unfinishShoppingList,
+    replicateShoppingList,
     addShoppingItem,
     updateShoppingItem,
     deleteShoppingItem,
@@ -95,8 +93,6 @@ export function useShoppingActions(
     ignoreShoppingItem,
     unignoreShoppingItem,
     uploadShoppingItems,
-    createShoppingCategory,
-    deleteShoppingCategory,
   } = deps;
   const { showSuccess, showError } = useToastNotifications();
 
@@ -106,7 +102,6 @@ export function useShoppingActions(
   const [showAddItem, setShowAddItem] = useState(false);
   const [showEditItem, setShowEditItem] = useState(false);
   const [showPurchase, setShowPurchase] = useState(false);
-  const [showCategories, setShowCategories] = useState(false);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [showBulkEdit, setShowBulkEdit] = useState(false);
   const [showBulkDelete, setShowBulkDelete] = useState(false);
@@ -119,7 +114,6 @@ export function useShoppingActions(
   const [isFinishingList, setIsFinishingList] = useState(false);
   const [isUnfinishingList, setIsUnfinishingList] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const uploadInputRef = useRef<HTMLInputElement | null>(null);
 
   // ── Bulk state ────────────────────────────────────────────────────────────
   const [isBulkMode, setIsBulkMode] = useState(false);
@@ -139,14 +133,6 @@ export function useShoppingActions(
   const [inlineSaving, setInlineSaving] = useState(false);
 
   // ── Derived ───────────────────────────────────────────────────────────────
-  const uniqueCategories = useMemo(() => {
-    const map = new Map<string, { shoppingCategoryId: string; name: string; isDefault: boolean }>();
-    shoppingCategories.forEach((c) => {
-      if (!map.has(c.shoppingCategoryId)) map.set(c.shoppingCategoryId, c);
-    });
-    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
-  }, [shoppingCategories]);
-
   // editingListSummaryData for lists-view edit
   const editingListSummaryData = useMemo((): ListFormData | undefined => {
     if (!editingListId) return undefined;
@@ -161,7 +147,7 @@ export function useShoppingActions(
       name: selectedItem.name,
       quantity: String(selectedItem.quantity),
       unitType: String(selectedItem.unitType),
-      categoryId: selectedItem.shoppingCategoryId ?? '',
+      categoryId: selectedItem.category?.categoryId ?? '',
       estimatedPrice: selectedItem.estimatedPrice ?? null,
       notes: selectedItem.notes ?? '',
     };
@@ -210,7 +196,7 @@ export function useShoppingActions(
           item.name,
           newQty,
           item.unitType,
-          item.shoppingCategoryId ?? null,
+          item.category?.categoryId ?? null,
           newEstimated,
           item.notes ?? null
         );
@@ -234,7 +220,9 @@ export function useShoppingActions(
                           quantity: newQty,
                           estimatedPrice: newEstimated,
                           isPurchased: true,
+                          status: 1,
                           price: newPaid,
+                          purchasedQuantity: newQty,
                         }
                       : i
                   ),
@@ -418,6 +406,21 @@ export function useShoppingActions(
     }
   }, [editingListId, deleteShoppingList, showSuccess, showError]);
 
+  const handleReplicateList = useCallback(
+    async (sourceId: string, ym: string): Promise<string> => {
+      try {
+        const iso = toISOMonthYear(ym);
+        const newId = await replicateShoppingList(sourceId, iso);
+        showSuccess(`Lista replicada para ${formatMonthYearPT(iso)}.`);
+        return newId;
+      } catch (err) {
+        showError(err instanceof Error && err.message ? err.message : 'Erro ao replicar lista.');
+        throw err;
+      }
+    },
+    [replicateShoppingList, showSuccess, showError]
+  );
+
   // ── Item CRUD ─────────────────────────────────────────────────────────────
   const handleAddItem = useCallback(
     async (data: ItemFormData) => {
@@ -470,8 +473,6 @@ export function useShoppingActions(
           data.estimatedPrice ?? null,
           data.notes || null
         );
-        const catName =
-          shoppingCategories.find((c) => c.shoppingCategoryId === data.categoryId)?.name ?? null;
         setDetailData((prev) => {
           if (!prev) return prev;
           return {
@@ -483,8 +484,7 @@ export function useShoppingActions(
                     name: data.name,
                     quantity: qty,
                     unitType: unit,
-                    shoppingCategoryId: data.categoryId || null,
-                    categoryName: catName,
+                    category: toCategorySummary(categoryTree, data.categoryId || null),
                     estimatedPrice: data.estimatedPrice ?? null,
                     notes: data.notes || null,
                   }
@@ -501,7 +501,7 @@ export function useShoppingActions(
     [
       selectedListId,
       updateShoppingItem,
-      shoppingCategories,
+      categoryTree,
       showSuccess,
       showError,
       setDetailData,
@@ -530,7 +530,8 @@ export function useShoppingActions(
           item.unitType,
           item.estimatedPrice,
           item.isPurchased,
-          item.price
+          item.price,
+          item.purchasedQuantity
         );
         setDetailData((prev) =>
           prev
@@ -568,7 +569,7 @@ export function useShoppingActions(
             ...prev,
             items: prev.items.map((i) =>
               i.shoppingItemId === item.shoppingItemId
-                ? { ...i, quantity: qty, isPurchased: true, status: 1, price, purchasedAt }
+                ? { ...i, purchasedQuantity: qty, isPurchased: true, status: 1, price, purchasedAt }
                 : i
             ),
           };
@@ -598,7 +599,7 @@ export function useShoppingActions(
         await unmarkItemAsPurchased(
           item.shoppingItemId,
           selectedListId!,
-          item.quantity,
+          item.purchasedQuantity,
           item.unitType,
           item.price ?? 0
         );
@@ -608,7 +609,14 @@ export function useShoppingActions(
             ...prev,
             items: prev.items.map((i) =>
               i.shoppingItemId === item.shoppingItemId
-                ? { ...i, isPurchased: false, status: 0, price: null, purchasedAt: null }
+                ? {
+                    ...i,
+                    isPurchased: false,
+                    status: 0,
+                    price: null,
+                    purchasedAt: null,
+                    purchasedQuantity: null,
+                  }
                 : i
             ),
           };
@@ -635,7 +643,14 @@ export function useShoppingActions(
             ...prev,
             items: prev.items.map((i) =>
               i.shoppingItemId === item.shoppingItemId
-                ? { ...i, isPurchased: false, status: 2, price: null, purchasedAt: null }
+                ? {
+                    ...i,
+                    isPurchased: false,
+                    status: 2,
+                    price: null,
+                    purchasedAt: null,
+                    purchasedQuantity: null,
+                  }
                 : i
             ),
           };
@@ -662,7 +677,14 @@ export function useShoppingActions(
             ...prev,
             items: prev.items.map((i) =>
               i.shoppingItemId === item.shoppingItemId
-                ? { ...i, isPurchased: false, status: 0, price: null, purchasedAt: null }
+                ? {
+                    ...i,
+                    isPurchased: false,
+                    status: 0,
+                    price: null,
+                    purchasedAt: null,
+                    purchasedQuantity: null,
+                  }
                 : i
             ),
           };
@@ -678,9 +700,7 @@ export function useShoppingActions(
   );
 
   const handleUploadFile = useCallback(
-    async (event: React.ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0];
-      event.target.value = '';
+    async (file: File) => {
       if (!file || !selectedListId) return;
       setIsUploading(true);
       try {
@@ -705,12 +725,11 @@ export function useShoppingActions(
           item.name,
           patch.quantity ?? item.quantity,
           patch.unitType ?? item.unitType,
-          'categoryId' in patch ? (patch.categoryId ?? null) : (item.shoppingCategoryId ?? null),
+          'categoryId' in patch ? (patch.categoryId ?? null) : (item.category?.categoryId ?? null),
           patch.estimatedPrice ?? item.estimatedPrice ?? null,
           item.notes ?? null
         );
       }
-      const catMap = new Map(shoppingCategories.map((c) => [c.shoppingCategoryId, c.name]));
       const patchedIds = new Set(selectedItems.map((i) => i.shoppingItemId));
       setDetailData((prev) => {
         if (!prev) return prev;
@@ -718,14 +737,12 @@ export function useShoppingActions(
           ...prev,
           items: prev.items.map((i) => {
             if (!patchedIds.has(i.shoppingItemId)) return i;
-            const newCategoryId =
-              'categoryId' in patch ? (patch.categoryId ?? null) : (i.shoppingCategoryId ?? null);
             return {
               ...i,
               quantity: patch.quantity ?? i.quantity,
               unitType: patch.unitType ?? i.unitType,
-              shoppingCategoryId: newCategoryId,
-              categoryName: newCategoryId ? (catMap.get(newCategoryId) ?? null) : null,
+              category:
+                'categoryId' in patch ? toCategorySummary(categoryTree, patch.categoryId ?? null) : i.category,
               estimatedPrice: patch.estimatedPrice ?? i.estimatedPrice,
             };
           }),
@@ -739,7 +756,7 @@ export function useShoppingActions(
     [
       selectedListId,
       updateShoppingItem,
-      shoppingCategories,
+      categoryTree,
       showSuccess,
       exitBulkMode,
       setDetailData,
@@ -756,7 +773,8 @@ export function useShoppingActions(
           item.unitType,
           item.estimatedPrice,
           item.isPurchased,
-          item.price
+          item.price,
+          item.purchasedQuantity
         );
       }
       const deletedIds = new Set(selectedItems.map((i) => i.shoppingItemId));
@@ -785,8 +803,6 @@ export function useShoppingActions(
     setShowEditItem,
     showPurchase,
     setShowPurchase,
-    showCategories,
-    setShowCategories,
     showDeleteAlert,
     setShowDeleteAlert,
     showBulkEdit,
@@ -805,7 +821,6 @@ export function useShoppingActions(
     isFinishingList,
     isUnfinishingList,
     isUploading,
-    uploadInputRef,
     // bulk
     isBulkMode,
     setIsBulkMode,
@@ -817,7 +832,6 @@ export function useShoppingActions(
     setInlineForm,
     inlineSaving,
     // derived
-    uniqueCategories,
     editingListSummaryData,
     editItemInitialData,
     // helpers
@@ -832,6 +846,7 @@ export function useShoppingActions(
     handleDeleteList,
     handleFinishList,
     handleUnfinishList,
+    handleReplicateList,
     handleEditListFromGrid,
     handleDeleteListFromGrid,
     handleAddItem,
@@ -846,8 +861,5 @@ export function useShoppingActions(
     handleUploadFile,
     handleBulkEdit,
     handleBulkDelete,
-    // category management
-    createShoppingCategory,
-    deleteShoppingCategory,
   };
 }

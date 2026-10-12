@@ -44,7 +44,13 @@ const SECTION_HEADER_META: Record<SettingsSectionId, { title: string; descriptio
   },
 };
 
-function PanelContent({ section }: { section: SettingsSectionId }) {
+function PanelContent({
+  section,
+  onClose,
+}: {
+  section: SettingsSectionId;
+  onClose?: () => void;
+}) {
   switch (section) {
     case 'notificacoes':
       return <ProfileNotificationsPanel />;
@@ -57,9 +63,10 @@ function PanelContent({ section }: { section: SettingsSectionId }) {
     case 'dados-privacidade':
       return <DadosPrivacidadePanel />;
     case 'sobre':
-      return <SobrePanel />;
+      return <SobrePanel onClose={onClose} />;
   }
 }
+
 
 export function SettingsModal({
   open,
@@ -120,7 +127,8 @@ export function SettingsModal({
             </button>
           </div>
 
-          <PanelContent section={activeSection} />
+          <PanelContent section={activeSection} onClose={() => onOpenChange(false)} />
+
         </main>
       </DialogContent>
     </Dialog>

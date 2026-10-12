@@ -184,7 +184,7 @@ export function TopNavbar({ className }: { className?: string }) {
     >
       {/* ── ESQUERDA: TRIGGER + BREADCRUMBS ── */}
       <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-        <SidebarTrigger className="-ml-1 text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground" />
+        <SidebarTrigger className="-ml-1 hidden md:inline-flex text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground" />
         <div className="hidden h-4 w-px bg-border/60 sm:block" aria-hidden="true" />
 
         <nav aria-label={t('nav.structuralNavAria')} className="hidden sm:flex items-center gap-1.5 text-xs font-medium min-w-0">

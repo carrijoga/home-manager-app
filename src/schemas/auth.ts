@@ -6,12 +6,15 @@ export const RegisterRequestSchema = z.object({
   email: z.string().email('E-mail inválido'),
   username: z.string().min(3, 'Username deve ter pelo menos 3 caracteres'),
   password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
+  locale: z.number().int().optional(),
+  turnstileToken: z.string().optional(),
 });
 export type RegisterRequest = z.infer<typeof RegisterRequestSchema>;
 
 export const LoginRequestSchema = z.object({
   usernameOrEmail: z.string().min(1, 'Usuário ou e-mail é obrigatório'),
   password: z.string().min(1, 'Senha é obrigatória'),
+  turnstileToken: z.string().optional(),
 });
 export type LoginRequest = z.infer<typeof LoginRequestSchema>;
 
@@ -23,6 +26,7 @@ export type AuthTokenResponse = z.infer<typeof AuthTokenResponseSchema>;
 
 export const RequestPasswordRecoverySchema = z.object({
   userEmail: z.string().email('E-mail inválido'),
+  turnstileToken: z.string().optional(),
 });
 export type RequestPasswordRecovery = z.infer<typeof RequestPasswordRecoverySchema>;
 

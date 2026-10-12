@@ -9,4 +9,6 @@ export * from './payment-card';
 export * from './shared';
 export * from './shopping';
 export * from './user';
+export * from './version';
 export * from './weather';
+

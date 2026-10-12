@@ -3,20 +3,22 @@ import { useSearchParams } from 'react-router-dom';
 
 import { useToastNotifications } from '@/hooks/use-toast-notifications';
 import { useDebounce } from '@/hooks/useDebounce';
-import type { AppShoppingCategory, AppShoppingList, AppShoppingListSummary } from '@/types';
+import type { CategoryResponse } from '@/schemas/category';
+import type { AppShoppingList, AppShoppingListSummary } from '@/types';
 
+import { getMainCategoryKey, groupItemsByMainCategory, type ItemSection, type SectionOption } from '../grouping';
 import { addMonths, currentMonthValue, fromISOMonthYear } from '../helpers';
 import type { ViewMode } from '../types';
 
 interface ShoppingNavigationDeps {
   remoteShoppingLists: AppShoppingListSummary[];
-  shoppingCategories: AppShoppingCategory[];
+  categoryTree: CategoryResponse[];
   loadShoppingListDetail: (id: string) => Promise<AppShoppingList>;
 }
 
 export function useShoppingNavigation({
   remoteShoppingLists,
-  shoppingCategories,
+  categoryTree,
   loadShoppingListDetail,
 }: ShoppingNavigationDeps) {
   const [shoppingLists, setShoppingLists] = useState(remoteShoppingLists);
@@ -43,14 +45,6 @@ export function useShoppingNavigation({
   const categoryScrollRef = useRef<HTMLDivElement | null>(null);
   const categoryDragRef = useRef({ startX: 0, scrollLeft: 0, isDragging: false });
 
-  const uniqueCategories = useMemo(() => {
-    const map = new Map<string, { shoppingCategoryId: string; name: string; isDefault: boolean }>();
-    shoppingCategories.forEach((c) => {
-      if (!map.has(c.shoppingCategoryId)) map.set(c.shoppingCategoryId, c);
-    });
-    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
-  }, [shoppingCategories]);
-
   const [filterYear, filterMonthNum] = filterMonth.split('-').map(Number);
   const filteredLists = useMemo(
     () =>
@@ -61,57 +55,40 @@ export function useShoppingNavigation({
     [shoppingLists, filterYear, filterMonthNum]
   );
 
-  const categoriesInDetail = useMemo((): string[] => {
+  const sectionOptions = useMemo((): SectionOption[] => {
     if (!detailData) return [];
-    const set = new Set<string>();
-    detailData.items.forEach((i) => {
-      if (i.categoryName) set.add(i.categoryName);
-    });
-    return Array.from(set).sort((a, b) => {
-      if (a === 'Sem categoria') return 1;
-      if (b === 'Sem categoria') return -1;
-      return a.localeCompare(b, 'pt-BR');
-    });
-  }, [detailData]);
+    return groupItemsByMainCategory(detailData.items, categoryTree).map(({ key, label, icon }) => ({
+      key,
+      label,
+      icon,
+    }));
+  }, [detailData, categoryTree]);
 
-  const groupedItems = useMemo(() => {
-    if (!detailData) return {};
+  const itemSections = useMemo((): ItemSection[] => {
+    if (!detailData) return [];
     let items = detailData.items;
-    if (categoryFilter === '__unpurchased__') items = items.filter((i) => i.status === 0 || (!i.isPurchased && i.status !== 2));
-    else if (categoryFilter === '__purchased__') items = items.filter((i) => i.status === 1 || i.isPurchased);
+    if (categoryFilter === '__unpurchased__')
+      items = items.filter((i) => i.status === 0 || (!i.isPurchased && i.status !== 2));
+    else if (categoryFilter === '__purchased__')
+      items = items.filter((i) => i.status === 1 || i.isPurchased);
     else if (categoryFilter === '__ignored__') items = items.filter((i) => i.status === 2);
-    else if (categoryFilter) items = items.filter((i) => i.categoryName === categoryFilter);
+    else if (categoryFilter) items = items.filter((i) => getMainCategoryKey(i) === categoryFilter);
     if (debouncedSearch.trim()) {
       const q = debouncedSearch.trim().toLowerCase();
       items = items.filter((i) => i.name.toLowerCase().includes(q));
     }
-    return items.reduce<Record<string, typeof items>>((acc, item) => {
-      const key = item.categoryName ?? 'Sem categoria';
-      acc[key] = acc[key] ?? [];
-      acc[key].push(item);
-      return acc;
-    }, {});
-  }, [detailData, categoryFilter, debouncedSearch]);
-
-  const groupedItemEntries = useMemo(() => {
-    const entries = Object.entries(groupedItems);
+    const sections = groupItemsByMainCategory(items, categoryTree);
     switch (sortOrder) {
       case 'name':
-        return entries.sort(([a], [b]) => {
-          if (a === 'Sem categoria') return 1;
-          if (b === 'Sem categoria') return -1;
-          return a.localeCompare(b, 'pt-BR');
-        });
+        return sections;
       case 'count':
-        return entries.sort(([, a], [, b]) => b.length - a.length);
-      case 'purchased':
-        return entries.sort(([, a], [, b]) => {
-          const unpurchasedA = a.filter((i) => !i.isPurchased).length;
-          const unpurchasedB = b.filter((i) => !i.isPurchased).length;
-          return unpurchasedB - unpurchasedA;
-        });
+        return [...sections].sort((a, b) => b.items.length - a.items.length);
+      case 'purchased': {
+        const pending = (s: ItemSection) => s.items.filter((i) => !i.isPurchased).length;
+        return [...sections].sort((a, b) => pending(b) - pending(a));
+      }
     }
-  }, [groupedItems, sortOrder]);
+  }, [detailData, categoryFilter, debouncedSearch, sortOrder, categoryTree]);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const urlListId = searchParams.get('listId') || searchParams.get('id');
@@ -262,13 +239,12 @@ export function useShoppingNavigation({
     collapsedCategories,
     shoppingLists,
     setShoppingLists,
-    uniqueCategories,
     // refs
     categoryScrollRef,
     // computed
     filteredLists,
-    categoriesInDetail,
-    groupedItemEntries,
+    sectionOptions,
+    itemSections,
     // actions
     openListDetail,
     backToLists,

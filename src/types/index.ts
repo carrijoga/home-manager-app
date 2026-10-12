@@ -3,6 +3,8 @@
  * Para tipos derivados da API, use `src/schemas/`.
  */
 
+import type { CategorySummaryResponse } from '@/schemas/category';
+
 // ==================== ENUMS ====================
 
 /** Níveis de prioridade — usados em Task e FutureItem (legado) */
@@ -20,14 +22,7 @@ export enum ApiPriority {
   Baixa = 3,
 }
 
-/** Categoria de tarefa — enum numérico conforme API */
-export enum ApiCategory {
-  Geral = 0,
-  Limpeza = 1,
-  Manutencao = 2,
-  Financas = 3,
-  Outros = 4,
-}
+
 
 /** Status de tarefa no board (client-side — o backend usa isCompleted) */
 export enum TaskStatus {
@@ -180,18 +175,25 @@ export interface Notice {
   reactions?: NoticeReaction[];
 }
 
+/** Responsável individual de uma Task (vem da API) */
+export interface TaskAssignee {
+  userId: string;
+  name: string;
+  photoUrl: string | null;
+  isCompleted: boolean;
+  completedAt: string | null;
+}
+
 /** Tarefa (módulo Tasks) */
 export interface Task {
   taskId: string;
   title: string;
   description?: string | null;
-  details?: string | null;
-  assignedTo?: string | null; // UUID do usuário ou null = Geral
   dueDate?: string | null;
   priority: ApiPriority;
   priorityLabel: string;
-  category: ApiCategory;
-  categoryLabel: string;
+  /** Categoria unificada (escopo Task) ou null = "Sem categoria". */
+  category: CategorySummaryResponse | null;
   date: string;
   /** Status no board Kanban — derivado de isCompleted na ausência de campo da API */
   status?: TaskStatus;
@@ -200,6 +202,7 @@ export interface Task {
   isOverdue: boolean;
   createdBy: string;
   createdAt: string;
+  assignees: TaskAssignee[];
 }
 
 /** Resposta paginada genérica */
@@ -226,8 +229,14 @@ export interface AppShoppingItem {
   name: string;
   quantity: number;
   unitType: number;
+  /** @deprecated legado de /api/shopping-category — removido na Tarefa 8 do Bloco 2 */
   shoppingCategoryId?: string | null;
+  /** @deprecated legado de /api/shopping-category — removido na Tarefa 8 do Bloco 2 */
   categoryName?: string | null;
+  /** Categoria unificada (escopo Compras); sub traz parentCategoryId/parentName */
+  category: CategorySummaryResponse | null;
+  /** Quantidade comprada; `quantity` é sempre a planejada */
+  purchasedQuantity: number | null;
   isPurchased: boolean;
   status: number; // 0=Pending, 1=Purchased, 2=Ignored, 3=NotPurchased
   price?: number | null;

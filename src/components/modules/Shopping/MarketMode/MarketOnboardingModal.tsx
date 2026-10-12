@@ -6,7 +6,6 @@ import {
   Pencil,
   Scale,
   ShoppingBag,
-  X,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -136,19 +135,11 @@ export function MarketOnboardingModal({ open, onClose }: MarketOnboardingModalPr
   return (
     <Dialog open={open} onOpenChange={(v) => !v && handleFinish()}>
       <DialogContent className="max-w-sm rounded-3xl border border-border/80 bg-card p-6 shadow-2xl dark:bg-[#1B1A18] overflow-hidden">
-        <div className="flex items-center justify-between pb-2">
-          <div className="flex items-center gap-1.5">
-            <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${step.badgeColor}`}>
-              <StepIcon size={12} />
-              {step.badge}
-            </span>
-          </div>
-          <button
-            onClick={handleFinish}
-            className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-          >
-            <X size={15} />
-          </button>
+        <div className="flex items-center pb-2">
+          <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${step.badgeColor}`}>
+            <StepIcon size={12} />
+            {step.badge}
+          </span>
         </div>
 
         <DialogTitle className="sr-only">Onboarding do Modo Mercado</DialogTitle>

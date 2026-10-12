@@ -14,6 +14,7 @@ export type { ButtonProps } from './button';
 export { Button, buttonVariants } from './button';
 export { Input } from './input';
 export { Label } from './label';
+export { MemberMultiSelect } from './member-multi-select';
 export {
   Select,
   SelectContent,
@@ -138,16 +139,19 @@ export { Collapsible, CollapsibleContent, CollapsibleTrigger } from './collapsib
 
 // Animated Numbers & Text
 export {
-  AnimatedNumber,
   AnimatedCurrency,
-  AnimatedPercent,
-  AnimatedText,
-  type AnimatedNumberProps,
   type AnimatedCurrencyProps,
-  type AnimatedPercentProps,
-  type AnimatedTextProps,
+  AnimatedNumber,
+  type AnimatedNumberProps,
   type AnimatedNumberVariant,
+  AnimatedPercent,
+  type AnimatedPercentProps,
+  AnimatedText,
+  type AnimatedTextProps,
 } from './animated-number';
 
 // Spring Progress
 export { SpringProgress, type SpringProgressProps } from './spring-progress';
+
+// File Upload
+export { FileUpload, type FileUploadProps } from './file-upload';

@@ -13,7 +13,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Ninho** — a Brazilian Portuguese PWA for family home management (tasks, shopping, finances, bank accounts, credit cards, calendar). UI text is in Brazilian Portuguese; code comments/variable names can be mixed.
+**Ninho** — a Brazilian Portuguese PWA for family home management (tasks, shopping, finances, bank accounts, credit cards, calendar). UI text is translated via i18n (pt-BR, en-US, es-ES — see Internationalization below); code comments/variable names can be mixed.
 
 ## Commands
 
@@ -76,6 +76,15 @@ Routes:
 ### TypeScript Migration
 
 The codebase is almost fully migrated to TypeScript (`allowJs: true`, `checkJs: false`). All services, schemas, types, contexts, hooks, utilities, and pages are `.ts`/`.tsx`. Several feature modules under `src/components/modules/` (e.g. `Financial.tsx`, `FinancialV2.tsx`, `Tasks.tsx`) are `.tsx`, while a few remain `.jsx` — migrate gradually.
+
+## Internationalization (Mandatory)
+
+Every user-facing string (labels, titles, buttons, placeholders, toasts, tooltips, aria-labels, empty states, greetings, etc.) MUST go through i18n — never hardcode text in components.
+
+- Add each new key to **all three** dictionaries: `src/i18n/locales/pt-BR.ts`, `en-US.ts` and `es-ES.ts` (`pt-BR` is the source of truth and defines `UiDictionary`; the others must have the same keys).
+- In components, use `const { t } = useTranslation()` from `@/hooks/useTranslation` and call `t('section.key', { param })`. Outside React, use `translateUiKey`.
+- Keep pt-BR fallback in mind, but do not rely on it: a missing key in `en-US`/`es-ES` is a bug.
+- When touching a component that still has hardcoded text, migrate it if the change is small; otherwise mention it.
 
 ## Adding a New Feature
 

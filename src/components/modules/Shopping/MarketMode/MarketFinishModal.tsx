@@ -1,8 +1,8 @@
-import { AnimatedCurrency, AnimatedNumber } from '@/components/common/AnimatedNumber';
 import { CheckCircle2, DollarSign, ShoppingBag, TrendingDown, TrendingUp, X } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 
+import { AnimatedCurrency, AnimatedNumber } from '@/components/common/AnimatedNumber';
 import {
   AlertDialog,
   AlertDialogContent,

@@ -11,7 +11,6 @@ import {
   Plus,
   RotateCcw,
   ShoppingCart,
-  Tag,
   Trash2,
   TrendingDown,
   TrendingUp,
@@ -20,6 +19,7 @@ import {
 } from 'lucide-react';
 import React from 'react';
 
+import { UploadModal } from '@/components/modals/UploadModal';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,6 +34,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useSidebar } from '@/components/ui/sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
+import { formatCategoryLabel } from '@/lib/categories';
 import { cn } from '@/lib/utils';
 import { ShoppingItemStatus } from '@/schemas/enums';
 import type { AppShoppingItem, AppShoppingList } from '@/types';
@@ -44,14 +45,15 @@ import { DetailHeader } from './DetailHeader';
 import { BulkEditDialog } from './dialogs/BulkEditDialog';
 import { ItemFormDialog } from './dialogs/ItemFormDialog';
 import { ListFormDialog } from './dialogs/ListFormDialog';
-import { ManageCategoriesDialog } from './dialogs/ManageCategoriesDialog';
 import { MarkAsPurchasedDialog } from './dialogs/MarkAsPurchasedDialog';
+import type { ItemSection, SectionOption } from './grouping';
 import {
   emptyItemForm,
   getItemEstimatedTotal,
   getItemSpentTotal,
+  getQuantityDisplay,
   getSavingsInfo,
-  quantityLabel,
+  getSpentQuantity,
   unitPriceLabel,
 } from './helpers';
 import { QuickAddItemBar } from './QuickAddItemBar';
@@ -62,9 +64,8 @@ interface ShoppingDetailViewProps {
   isLoadingDetail: boolean;
   isFinished: boolean;
   editListInitialData: ListFormData | undefined;
-  uniqueCategories: Array<{ shoppingCategoryId: string; name: string; isDefault: boolean }>;
-  categoriesInDetail: string[];
-  groupedItemEntries: [string, AppShoppingItem[]][];
+  sectionOptions: SectionOption[];
+  itemSections: ItemSection[];
   categoryFilter: string | null;
   setCategoryFilter: (v: string | null) => void;
   sortOrder: 'name' | 'count' | 'purchased';
@@ -90,7 +91,6 @@ interface ShoppingDetailViewProps {
   isFinishingList?: boolean;
   isUnfinishingList?: boolean;
   isUploading: boolean;
-  uploadInputRef: React.RefObject<HTMLInputElement | null>;
   showEditList: boolean;
   setShowEditList: (v: boolean) => void;
   showAddItem: boolean;
@@ -99,8 +99,6 @@ interface ShoppingDetailViewProps {
   setShowEditItem: (v: boolean) => void;
   showPurchase: boolean;
   setShowPurchase: (v: boolean) => void;
-  showCategories: boolean;
-  setShowCategories: (v: boolean) => void;
   showDeleteAlert: boolean;
   setShowDeleteAlert: (v: boolean) => void;
   showBulkEdit: boolean;
@@ -135,11 +133,10 @@ interface ShoppingDetailViewProps {
   onUnmarkAsPurchased: (item: AppShoppingItem) => Promise<void>;
   onIgnoreItem: (item: AppShoppingItem) => Promise<void>;
   onUnignoreItem: (item: AppShoppingItem) => Promise<void>;
-  onUploadFile: (event: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
+  onUploadFile: (file: File) => Promise<void>;
   onBulkEdit: (patch: BulkEditPatch) => Promise<void>;
   onBulkDelete: () => Promise<void>;
-  onCreateCategory: (name: string) => Promise<void>;
-  onDeleteCategory: (id: string) => Promise<void>;
+  onReplicateList?: () => void;
   onStartMarketMode?: () => void;
 }
 
@@ -150,9 +147,8 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
     isLoadingDetail,
     isFinished,
     editListInitialData,
-    uniqueCategories,
-    categoriesInDetail,
-    groupedItemEntries,
+    sectionOptions,
+    itemSections,
     categoryFilter,
     setCategoryFilter,
     sortOrder,
@@ -176,7 +172,6 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
     isFinishingList = false,
     isUnfinishingList = false,
     isUploading,
-    uploadInputRef,
     showEditList,
     setShowEditList,
     showAddItem,
@@ -185,8 +180,6 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
     setShowEditItem,
     showPurchase,
     setShowPurchase,
-    showCategories,
-    setShowCategories,
     showDeleteAlert,
     setShowDeleteAlert,
     showBulkEdit,
@@ -224,11 +217,11 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
     onUploadFile,
     onBulkEdit,
     onBulkDelete,
-    onCreateCategory,
-    onDeleteCategory,
+    onReplicateList,
     onStartMarketMode,
   } = props;
 
+  const [showUploadModal, setShowUploadModal] = React.useState(false);
   const [addItemInitialData, setAddItemInitialData] = React.useState<ItemFormData | undefined>(
     undefined
   );
@@ -245,7 +238,7 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
   const totalSpent =
     detailData?.items
       .filter((i) => i.isPurchased)
-      .reduce((s, i) => s + getItemSpentTotal(i.price, i.quantity, i.unitType), 0) ?? 0;
+      .reduce((s, i) => s + getItemSpentTotal(i), 0) ?? 0;
   const remaining = Math.max(0, totalEstimated - totalSpent);
 
   if (isLoadingDetail || !detailData) {
@@ -327,6 +320,7 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
         onBack={onBack}
         onEditList={() => setShowEditList(true)}
         onDeleteList={() => setShowDeleteAlert(true)}
+        onReplicateList={onReplicateList}
         onStartMarketMode={onStartMarketMode}
       />
 
@@ -340,7 +334,6 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
             );
             setShowAddItem(true);
           }}
-          categories={uniqueCategories}
           disabled={!detailData}
         />
       )}
@@ -353,7 +346,7 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
         setSortOrder={setSortOrder}
         categoryFilter={categoryFilter}
         setCategoryFilter={setCategoryFilter}
-        categoriesInDetail={categoriesInDetail}
+        sectionOptions={sectionOptions}
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
         isSearchPending={isSearchPending}
@@ -362,8 +355,7 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
         detailDataLoaded={!!detailData}
         categoryScrollRef={categoryScrollRef}
         onExitBulkMode={onExitBulkMode}
-        onShowCategories={() => setShowCategories(true)}
-        onUploadClick={() => uploadInputRef.current?.click()}
+        onUploadClick={() => setShowUploadModal(true)}
         onEnterBulkMode={() => setIsBulkMode(true)}
         onAddItem={() => setShowAddItem(true)}
         onScrollCategories={onScrollCategories}
@@ -371,15 +363,18 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
         onCategoryPointerMove={onCategoryPointerMove}
         onCategoryPointerUp={onCategoryPointerUp}
       />
-
-      <input
-        ref={uploadInputRef}
-        type="file"
+      <UploadModal
+        open={showUploadModal}
+        onOpenChange={setShowUploadModal}
+        onConfirm={async (file: File) => {
+          await onUploadFile(file);
+          setShowUploadModal(false);
+        }}
+        isLoading={isUploading}
         accept=".csv,.txt"
-        onChange={onUploadFile}
-        className="hidden"
+        title="Importar Itens"
+        description="Selecione ou arraste um arquivo CSV ou TXT para importar produtos para sua lista de compras."
       />
-
       {/* Item list */}
       {isLoadingDetail ? (
         <div className="space-y-4">
@@ -428,12 +423,11 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
         </div>
       ) : (
         <div className="space-y-4">
-          {groupedItemEntries.map(([category, items]) => (
+          {itemSections.map((section) => (
             <CategorySection
-              key={category}
-              category={category}
-              items={items}
-              isCollapsed={collapsedCategories.has(category)}
+              key={section.key}
+              section={section}
+              isCollapsed={collapsedCategories.has(section.key)}
               isBulkMode={isBulkMode}
               isFinished={isFinished}
               selectedItemIds={selectedItemIds}
@@ -466,7 +460,7 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
       {selectedItem && (() => {
         const itemSpent =
           selectedItem.isPurchased && selectedItem.price != null
-            ? getItemSpentTotal(selectedItem.price, selectedItem.quantity, selectedItem.unitType)
+            ? getItemSpentTotal(selectedItem)
             : null;
 
         const itemEstimated =
@@ -478,16 +472,10 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
               )
             : null;
 
-        const itemSavings = selectedItem.isPurchased
-          ? getSavingsInfo(
-              selectedItem.estimatedPrice,
-              selectedItem.price,
-              selectedItem.quantity,
-              selectedItem.unitType
-            )
-          : null;
+        const itemSavings = selectedItem.isPurchased ? getSavingsInfo(selectedItem) : null;
 
-        const isMultiQty = selectedItem.quantity > 1;
+        const isMultiQty =
+          (selectedItem.isPurchased ? getSpentQuantity(selectedItem) : selectedItem.quantity) > 1;
 
         return (
           <Sheet
@@ -527,10 +515,12 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
                       Pendente
                     </span>
                   )}
-                  {selectedItem.categoryName && (
+                  {selectedItem.category && (
                     <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-muted/50 px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                      <Tag size={11} />
-                      {selectedItem.categoryName}
+                      {formatCategoryLabel(
+                        selectedItem.category,
+                        selectedItem.category.parentName ? { name: selectedItem.category.parentName } : null
+                      )}
                     </span>
                   )}
                 </div>
@@ -546,8 +536,13 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
                   {/* Quantidade */}
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Quantidade</span>
-                    <span className="font-bold text-foreground">
-                      {quantityLabel(selectedItem.quantity, selectedItem.unitType)}
+                    <span className="text-right font-bold text-foreground">
+                      {getQuantityDisplay(selectedItem).label}
+                      {getQuantityDisplay(selectedItem).plannedLabel && (
+                        <span className="block text-xs font-normal text-muted-foreground">
+                          {getQuantityDisplay(selectedItem).plannedLabel}
+                        </span>
+                      )}
                     </span>
                   </div>
 
@@ -787,7 +782,6 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
         open={showBulkEdit}
         onClose={() => setShowBulkEdit(false)}
         selectedItems={selectedItems}
-        categories={uniqueCategories}
         onSubmit={onBulkEdit}
       />
       <AlertDialog
@@ -830,8 +824,6 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
         initialData={addItemInitialData}
         onSubmit={onAddItem}
         title="Adicionar Item"
-        categories={uniqueCategories}
-        onCreateCategory={onCreateCategory}
       />
       <ItemFormDialog
         open={showEditItem}
@@ -842,8 +834,6 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
         initialData={editItemInitialData}
         onSubmit={onEditItem}
         title="Editar Item"
-        categories={uniqueCategories}
-        onCreateCategory={onCreateCategory}
       />
       <MarkAsPurchasedDialog
         open={showPurchase}
@@ -853,13 +843,6 @@ export function ShoppingDetailView(props: ShoppingDetailViewProps) {
         }}
         item={selectedItem}
         onSubmit={onSubmitPurchase}
-      />
-      <ManageCategoriesDialog
-        open={showCategories}
-        onClose={() => setShowCategories(false)}
-        categories={uniqueCategories}
-        onCreateCategory={onCreateCategory}
-        onDeleteCategory={onDeleteCategory}
       />
 
       {/* Delete list alert */}

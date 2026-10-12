@@ -23,7 +23,7 @@ import { formatCurrency } from '@/utils/formatters';
 
 import { PaymentCardDetails } from './payment-card/PaymentCardDetails';
 import { PaymentCardList } from './payment-card/PaymentCardList';
-import { FinancialFilterPills, type FilterPillItem } from './shared/FinancialFilterPills';
+import { type FilterPillItem,FinancialFilterPills } from './shared/FinancialFilterPills';
 import { FinancialHudCard } from './shared/FinancialHudCard';
 import { FinancialPageHeader } from './shared/FinancialPageHeader';
 

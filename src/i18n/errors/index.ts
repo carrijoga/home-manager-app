@@ -15,6 +15,12 @@ const DEFAULT_ERROR_MESSAGES: Record<SupportedLanguage, string> = {
   'es-ES': 'Ocurrió un error inesperado. Por favor, inténtelo de nuevo más tarde.',
 };
 
+const RATE_LIMIT_MESSAGES: Record<SupportedLanguage, string> = {
+  'pt-BR': 'Muitas tentativas. Aguarde alguns segundos e tente novamente.',
+  'en-US': 'Too many attempts. Please wait a few seconds and try again.',
+  'es-ES': 'Demasiados intentos. Espere unos segundos e inténtelo de nuevo.',
+};
+
 /**
  * Retorna a mensagem traduzida correspondente ao código estável fornecido.
  * Se o código não existir no idioma requisitado, tenta fallback para 'pt-BR'.
@@ -47,6 +53,13 @@ export function getErrorMessageByCode(
  */
 export function getDefaultErrorMessage(language: SupportedLanguage = 'pt-BR'): string {
   return DEFAULT_ERROR_MESSAGES[language] ?? DEFAULT_ERROR_MESSAGES['pt-BR'];
+}
+
+/**
+ * Retorna a mensagem de rate limit (HTTP 429) no idioma selecionado.
+ */
+export function getRateLimitMessage(language: SupportedLanguage = 'pt-BR'): string {
+  return RATE_LIMIT_MESSAGES[language] ?? RATE_LIMIT_MESSAGES['pt-BR'];
 }
 
 export { enUS, esES, ptBR };

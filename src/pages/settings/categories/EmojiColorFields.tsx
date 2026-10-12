@@ -1,4 +1,5 @@
 import { Input } from '@/components/ui/input';
+import { useTranslation } from '@/hooks/useTranslation';
 import { CATEGORY_COLORS, CATEGORY_EMOJIS, isHexColor, isSingleEmoji } from '@/lib/categories';
 import { cn } from '@/lib/utils';
 import type { CategoryScope } from '@/schemas/category';
@@ -12,6 +13,7 @@ export function EmojiPicker({
   value: string;
   onChange: (v: string) => void;
 }) {
+  const { t } = useTranslation();
   const invalid = value !== '' && !isSingleEmoji(value);
   return (
     <div className="space-y-2">
@@ -20,7 +22,7 @@ export function EmojiPicker({
           <button
             key={emoji}
             type="button"
-            aria-label={`Ícone ${emoji}`}
+            aria-label={t('categoriesSettings.pickers.iconAria', { emoji })}
             aria-pressed={value === emoji}
             onClick={() => onChange(emoji)}
             className={cn(
@@ -35,16 +37,17 @@ export function EmojiPicker({
       <Input
         value={value}
         onChange={(e) => onChange(e.target.value.trim())}
-        placeholder="Ou cole um emoji"
+        placeholder={t('categoriesSettings.pickers.pasteEmoji')}
         aria-invalid={invalid}
         className="w-40"
       />
-      {invalid && <p className="text-xs text-destructive">Use exatamente um emoji.</p>}
+      {invalid && <p className="text-xs text-destructive">{t('categoriesSettings.pickers.oneEmoji')}</p>}
     </div>
   );
 }
 
 export function ColorPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const { t } = useTranslation();
   const invalid = value !== '' && !isHexColor(value);
   return (
     <div className="space-y-2">
@@ -53,7 +56,7 @@ export function ColorPicker({ value, onChange }: { value: string; onChange: (v: 
           <button
             key={color}
             type="button"
-            aria-label={`Cor ${color}`}
+            aria-label={t('categoriesSettings.pickers.colorAria', { color })}
             aria-pressed={value.toUpperCase() === color}
             onClick={() => onChange(color)}
             className={cn(
@@ -71,7 +74,7 @@ export function ColorPicker({ value, onChange }: { value: string; onChange: (v: 
         aria-invalid={invalid}
         className="w-32 font-mono"
       />
-      {invalid && <p className="text-xs text-destructive">Use o formato #RRGGBB.</p>}
+      {invalid && <p className="text-xs text-destructive">{t('categoriesSettings.pickers.hexFormat')}</p>}
     </div>
   );
 }

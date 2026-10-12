@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useTranslation } from '@/hooks/useTranslation';
 import {
   CATEGORY_EMOJIS,
   CATEGORY_NAME_MAX,
@@ -53,6 +54,7 @@ export function CategoryFormDialog({
   onSubmitCreate: (req: Omit<CreateCategoryRequest, 'scope'>) => Promise<unknown>;
   onSubmitUpdate: (id: string, req: UpdateCategoryRequest) => Promise<void>;
 }) {
+  const { t } = useTranslation();
   const isMobile = useIsMobile();
   const [name, setName] = useState('');
   const [icon, setIcon] = useState('');
@@ -82,19 +84,19 @@ export function CategoryFormDialog({
 
   const nameError =
     name.trim() === ''
-      ? 'Informe um nome.'
+      ? t('categoriesSettings.form.nameRequired')
       : name.length > CATEGORY_NAME_MAX
-        ? 'Máximo de 100 caracteres.'
+        ? t('categoriesSettings.form.nameMax', { max: CATEGORY_NAME_MAX })
         : null;
 
   const valid = !nameError && isSingleEmoji(icon) && (!isRoot || isHexColor(color));
 
   const title =
     mode === 'edit'
-      ? 'Editar categoria'
+      ? t('categoriesSettings.form.editTitle')
       : parent
-        ? `Nova subcategoria de ${parent.name}`
-        : 'Nova categoria';
+        ? t('categoriesSettings.form.newSubTitle', { parent: parent.name })
+        : t('categoriesSettings.form.newTitle');
 
   const handleSubmit = async () => {
     if (!valid || saving) return;
@@ -107,18 +109,18 @@ export function CategoryFormDialog({
           icon,
           color: isRoot ? color : null,
         });
-        toast.success('Categoria criada.');
+        toast.success(t('categoriesSettings.form.created'));
       } else if (category) {
         await onSubmitUpdate(category.categoryId, {
           name: name.trim(),
           icon,
           color: isRoot ? color : null,
         });
-        toast.success('Categoria atualizada.');
+        toast.success(t('categoriesSettings.form.updated'));
       }
       onOpenChange(false);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Não foi possível salvar a categoria.';
+      const message = err instanceof Error ? err.message : t('categoriesSettings.form.saveError');
       toast.error(message);
     } finally {
       setSaving(false);
@@ -128,7 +130,7 @@ export function CategoryFormDialog({
   const body = (
     <div className="space-y-4">
       <div className="space-y-1.5">
-        <Label htmlFor="category-name">Nome</Label>
+        <Label htmlFor="category-name">{t('categoriesSettings.form.name')}</Label>
         <Input
           id="category-name"
           value={name}
@@ -149,13 +151,13 @@ export function CategoryFormDialog({
       </div>
 
       <div className="space-y-1.5">
-        <Label>Ícone</Label>
+        <Label>{t('categoriesSettings.form.icon')}</Label>
         <EmojiPicker scope={scope} value={icon} onChange={setIcon} />
       </div>
 
       {mode === 'create' && (
         <div className="space-y-1.5">
-          <Label>Categoria pai</Label>
+          <Label>{t('categoriesSettings.form.parent')}</Label>
           <Select
             value={parentId ?? ROOT_VALUE}
             onValueChange={(v) => setParentId(v === ROOT_VALUE ? null : v)}
@@ -164,7 +166,7 @@ export function CategoryFormDialog({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ROOT_VALUE}>Nenhuma (categoria principal)</SelectItem>
+              <SelectItem value={ROOT_VALUE}>{t('categoriesSettings.form.noParent')}</SelectItem>
               {tree.map((root) => (
                 <SelectItem key={root.categoryId} value={root.categoryId}>
                   {root.icon} {root.name}
@@ -177,18 +179,18 @@ export function CategoryFormDialog({
 
       {isRoot ? (
         <div className="space-y-1.5">
-          <Label>Cor</Label>
+          <Label>{t('categoriesSettings.form.color')}</Label>
           <ColorPicker value={color} onChange={setColor} />
         </div>
       ) : (
         <div className="space-y-1.5">
-          <Label>Cor</Label>
+          <Label>{t('categoriesSettings.form.color')}</Label>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span
               className="size-4 shrink-0 rounded-full border border-border/50"
               style={{ backgroundColor: inheritedColor }}
             />
-            Cor herdada da categoria principal
+            {t('categoriesSettings.form.inheritedColor')}
           </div>
         </div>
       )}
@@ -197,7 +199,7 @@ export function CategoryFormDialog({
 
   const footer = (
     <Button type="button" onClick={() => void handleSubmit()} disabled={!valid || saving} className="w-full sm:w-auto">
-      {saving ? 'Salvando…' : 'Salvar'}
+      {saving ? t('categoriesSettings.form.saving') : t('categoriesSettings.form.save')}
     </Button>
   );
 

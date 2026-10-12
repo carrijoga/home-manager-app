@@ -13,6 +13,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCategories } from '@/hooks/useCategories';
+import { useTranslation } from '@/hooks/useTranslation';
 import { filterTree } from '@/lib/categories';
 import { cn } from '@/lib/utils';
 import { type CategoryResponse, CategoryScope } from '@/schemas/category';
@@ -21,11 +22,11 @@ import { CategoryFormDialog } from './categories/CategoryFormDialog';
 import { DeleteCategoryDialog } from './categories/DeleteCategoryDialog';
 import { MoveCategoryDialog } from './categories/MoveCategoryDialog';
 
-const SCOPES: Array<{ key: string; scope: CategoryScope; label: string }> = [
-  { key: 'expense', scope: CategoryScope.Expense, label: 'Despesas' },
-  { key: 'income', scope: CategoryScope.Income, label: 'Receitas' },
-  { key: 'shopping', scope: CategoryScope.Shopping, label: 'Compras' },
-  { key: 'task', scope: CategoryScope.Task, label: 'Tarefas' },
+const SCOPES: Array<{ key: string; scope: CategoryScope; labelKey: string }> = [
+  { key: 'expense', scope: CategoryScope.Expense, labelKey: 'categoriesSettings.scopeExpense' },
+  { key: 'income', scope: CategoryScope.Income, labelKey: 'categoriesSettings.scopeIncome' },
+  { key: 'shopping', scope: CategoryScope.Shopping, labelKey: 'categoriesSettings.scopeShopping' },
+  { key: 'task', scope: CategoryScope.Task, labelKey: 'categoriesSettings.scopeTask' },
 ];
 
 export type DialogState =
@@ -36,6 +37,7 @@ export type DialogState =
   | { kind: 'delete'; category: CategoryResponse };
 
 export default function CategoriesSettings() {
+  const { t } = useTranslation();
   const [params, setParams] = useSearchParams();
   const current = SCOPES.find((s) => s.key === params.get('scope')) ?? SCOPES[0];
   const { tree, loading, error, reload, create, update, move, remove } = useCategories(current.scope);
@@ -55,10 +57,10 @@ export default function CategoriesSettings() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-0.5">
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-            Categorias
+            {t('categoriesSettings.title')}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Organize as categorias do ninho usadas em finanças, compras e tarefas.
+            {t('categoriesSettings.subtitle')}
           </p>
         </div>
         <Button
@@ -67,14 +69,14 @@ export default function CategoriesSettings() {
           className="h-10 rounded-xl px-3.5 gap-1.5 self-start sm:self-auto font-medium shadow-xs"
         >
           <Plus className="size-4" />
-          Nova categoria
+          {t('categoriesSettings.newCategory')}
         </Button>
       </div>
 
       {/* Abas de escopo */}
       <div
         role="tablist"
-        aria-label="Escopo de categorias"
+        aria-label={t('categoriesSettings.scopeAria')}
         className="flex gap-1 overflow-x-auto rounded-xl border border-border/50 bg-muted/40 p-1"
       >
         {SCOPES.map((s) => (
@@ -91,7 +93,7 @@ export default function CategoriesSettings() {
                 : 'text-muted-foreground hover:text-foreground'
             )}
           >
-            {s.label}
+            {t(s.labelKey)}
           </button>
         ))}
       </div>
@@ -102,7 +104,7 @@ export default function CategoriesSettings() {
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar categoria…"
+          placeholder={t('categoriesSettings.searchPlaceholder')}
           className="h-10 rounded-xl bg-muted/30 border-border/40 pl-9 hover:border-border/80 focus-visible:ring-1 focus-visible:ring-primary/50 transition-colors"
         />
       </div>
@@ -116,7 +118,7 @@ export default function CategoriesSettings() {
         </div>
       ) : error ? (
         <div className="rounded-xl border border-dashed border-border/60 p-8 text-center">
-          <p className="text-sm text-muted-foreground">Não foi possível carregar as categorias.</p>
+          <p className="text-sm text-muted-foreground">{t('categoriesSettings.loadError')}</p>
           <Button
             type="button"
             variant="outline"
@@ -124,13 +126,13 @@ export default function CategoriesSettings() {
             onClick={() => reload().catch(() => {})}
             className="mt-3 h-9 rounded-xl border-border/60"
           >
-            Tentar novamente
+            {t('categoriesSettings.retry')}
           </Button>
         </div>
       ) : tree.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border/60 p-8 text-center">
           <p className="text-sm text-muted-foreground">
-            Nenhuma categoria de {current.label.toLowerCase()} ainda.
+            {t('categoriesSettings.emptyScope', { scope: t(current.labelKey) })}
           </p>
           <Button
             type="button"
@@ -138,12 +140,14 @@ export default function CategoriesSettings() {
             onClick={() => setDialog({ kind: 'form', mode: 'create', parent: null })}
             className="mt-3 h-9 rounded-xl font-medium shadow-xs"
           >
-            Criar categoria
+            {t('categoriesSettings.createCategory')}
           </Button>
         </div>
       ) : visible.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border/60 p-8 text-center">
-          <p className="text-sm text-muted-foreground">Nada encontrado para &ldquo;{search}&rdquo;.</p>
+          <p className="text-sm text-muted-foreground">
+            {t('categoriesSettings.noResults', { search })}
+          </p>
         </div>
       ) : (
         <div className="space-y-2.5">
@@ -164,7 +168,12 @@ export default function CategoriesSettings() {
                     <p className="truncate text-sm font-semibold text-foreground">{root.name}</p>
                     {root.children.length > 0 && (
                       <p className="truncate text-xs text-muted-foreground">
-                        {root.children.length} subcategoria{root.children.length > 1 ? 's' : ''}
+                        {t(
+                          root.children.length > 1
+                            ? 'categoriesSettings.subcategoriesOther'
+                            : 'categoriesSettings.subcategoriesOne',
+                          { count: root.children.length }
+                        )}
                       </p>
                     )}
                   </div>
@@ -177,7 +186,7 @@ export default function CategoriesSettings() {
                       variant="ghost"
                       size="icon"
                       className="size-7 shrink-0 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
-                      aria-label="Mais ações"
+                      aria-label={t('categoriesSettings.moreActions')}
                     >
                       <MoreHorizontal className="size-4" />
                     </Button>
@@ -188,24 +197,24 @@ export default function CategoriesSettings() {
                         setDialog({ kind: 'form', mode: 'edit', category: root, parent: null })
                       }
                     >
-                      Editar
+                      {t('categoriesSettings.edit')}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => setDialog({ kind: 'form', mode: 'create', parent: root })}
                     >
-                      Adicionar subcategoria
+                      {t('categoriesSettings.addSubcategory')}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => setDialog({ kind: 'move', category: root, parent: null })}
                     >
-                      Mover
+                      {t('categoriesSettings.move')}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       className="text-destructive focus:text-destructive"
                       onClick={() => setDialog({ kind: 'delete', category: root })}
                     >
-                      Excluir
+                      {t('categoriesSettings.delete')}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -230,7 +239,7 @@ export default function CategoriesSettings() {
                             variant="ghost"
                             size="icon"
                             className="size-7 shrink-0 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
-                            aria-label="Mais ações"
+                            aria-label={t('categoriesSettings.moreActions')}
                           >
                             <MoreHorizontal className="size-4" />
                           </Button>
@@ -246,21 +255,21 @@ export default function CategoriesSettings() {
                               })
                             }
                           >
-                            Editar
+                            {t('categoriesSettings.edit')}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() =>
                               setDialog({ kind: 'move', category: child, parent: root })
                             }
                           >
-                            Mover
+                            {t('categoriesSettings.move')}
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             className="text-destructive focus:text-destructive"
                             onClick={() => setDialog({ kind: 'delete', category: child })}
                           >
-                            Excluir
+                            {t('categoriesSettings.delete')}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

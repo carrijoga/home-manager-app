@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useTranslation } from '@/hooks/useTranslation';
 import { isHexColor } from '@/lib/categories';
 import { cn } from '@/lib/utils';
 import type { CategoryResponse, MoveCategoryRequest } from '@/schemas/category';
@@ -26,6 +27,7 @@ export function MoveCategoryDialog({
   parent: CategoryResponse | null;
   onSubmit: (id: string, req: MoveCategoryRequest) => Promise<void>;
 }) {
+  const { t } = useTranslation();
   const isMobile = useIsMobile();
   const [targetId, setTargetId] = useState<string | null | undefined>(undefined);
   const [color, setColor] = useState('');
@@ -62,10 +64,10 @@ export function MoveCategoryDialog({
         parentCategoryId: targetId ?? null,
         color: targetIsRoot ? color : null,
       });
-      toast.success('Categoria movida.');
+      toast.success(t('categoriesSettings.moveDialog.moved'));
       onOpenChange(false);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Não foi possível mover a categoria.';
+      const message = err instanceof Error ? err.message : t('categoriesSettings.moveDialog.error');
       toast.error(message);
     } finally {
       setSaving(false);
@@ -76,7 +78,7 @@ export function MoveCategoryDialog({
     <div className="space-y-3">
       {hasChildren && (
         <p className="text-xs text-muted-foreground">
-          Mova ou exclua as subcategorias primeiro.
+          {t('categoriesSettings.moveDialog.subcategoriesFirst')}
         </p>
       )}
       <div className="space-y-1.5">
@@ -90,7 +92,7 @@ export function MoveCategoryDialog({
               targetId === null ? 'border-primary bg-primary/10' : 'border-border/50'
             )}
           >
-            Tornar categoria principal
+            {t('categoriesSettings.moveDialog.makeRoot')}
           </button>
         )}
         {rootOptions.map((root) => {
@@ -120,7 +122,7 @@ export function MoveCategoryDialog({
 
       {targetIsRoot && (
         <div className="space-y-1.5">
-          <p className="text-sm font-medium">Cor</p>
+          <p className="text-sm font-medium">{t('categoriesSettings.form.color')}</p>
           <ColorPicker value={color} onChange={setColor} />
         </div>
       )}
@@ -134,7 +136,7 @@ export function MoveCategoryDialog({
       disabled={!valid || saving || !anyEnabled}
       className="w-full sm:w-auto"
     >
-      {saving ? 'Salvando…' : 'Mover'}
+      {saving ? t('categoriesSettings.form.saving') : t('categoriesSettings.moveDialog.submit')}
     </Button>
   );
 
@@ -143,7 +145,7 @@ export function MoveCategoryDialog({
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent side="bottom" className="flex max-h-[92dvh] flex-col overflow-y-auto rounded-t-3xl">
           <SheetHeader className="text-left">
-            <SheetTitle>Mover categoria</SheetTitle>
+            <SheetTitle>{t('categoriesSettings.moveDialog.title')}</SheetTitle>
           </SheetHeader>
           <div className="flex-1 overflow-y-auto py-2">{body}</div>
           <div className="border-t border-border/40 pt-4">{footer}</div>
@@ -156,7 +158,7 @@ export function MoveCategoryDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Mover categoria</DialogTitle>
+          <DialogTitle>{t('categoriesSettings.moveDialog.title')}</DialogTitle>
         </DialogHeader>
         {body}
         <DialogFooter>{footer}</DialogFooter>

@@ -13,16 +13,12 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Spinner } from '@/components/ui/spinner';
 import { useApp } from '@/contexts/AppContext';
+import { useTranslation } from '@/hooks/useTranslation';
 import { getCurrentLanguage, getDefaultErrorMessage, getErrorMessageByCode } from '@/i18n';
 import type { CategoryResponse, CategoryUsageResponse } from '@/schemas/category';
 import * as categoryService from '@/services/categoryService';
 
-const MODULE_LABELS: Record<string, string> = {
-  FinancialTransactions: 'transações',
-  NestConfiguration: 'configuração do ninho',
-  ShoppingItems: 'itens de compra',
-  Tasks: 'tarefas',
-};
+const KNOWN_MODULES = ['FinancialTransactions', 'NestConfiguration', 'ShoppingItems', 'Tasks'];
 
 export function DeleteCategoryDialog({
   open,
@@ -35,6 +31,7 @@ export function DeleteCategoryDialog({
   category: CategoryResponse;
   onConfirm: (id: string) => Promise<void>;
 }) {
+  const { t } = useTranslation();
   const { activeNestId } = useApp();
   const [usage, setUsage] = useState<CategoryUsageResponse | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -48,7 +45,7 @@ export function DeleteCategoryDialog({
       .getCategoryUsage(activeNestId ?? undefined, category.categoryId)
       .then(setUsage)
       .catch((err) => {
-        const message = err instanceof Error ? err.message : 'Não foi possível verificar o uso da categoria.';
+        const message = err instanceof Error ? err.message : t('categoriesSettings.deleteDialog.usageError');
         setLoadError(message);
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -59,10 +56,10 @@ export function DeleteCategoryDialog({
     setSaving(true);
     try {
       await onConfirm(category.categoryId);
-      toast.success('Categoria excluída.');
+      toast.success(t('categoriesSettings.deleteDialog.deleted'));
       onOpenChange(false);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Não foi possível excluir a categoria.';
+      const message = err instanceof Error ? err.message : t('categoriesSettings.deleteDialog.deleteError');
       toast.error(message);
     } finally {
       setSaving(false);
@@ -78,17 +75,19 @@ export function DeleteCategoryDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Excluir categoria</AlertDialogTitle>
+          <AlertDialogTitle>{t('categoriesSettings.deleteDialog.title')}</AlertDialogTitle>
           <AlertDialogDescription asChild>
             <div className="space-y-2 text-sm text-muted-foreground">
               <p>
-                Tem certeza que deseja excluir &ldquo;{category.icon} {category.name}&rdquo;?
+                {t('categoriesSettings.deleteDialog.confirm', {
+                  label: `${category.icon} ${category.name}`,
+                })}
               </p>
 
               {!usage && !loadError && (
                 <div className="flex items-center gap-2">
                   <Spinner size="sm" />
-                  <span>Verificando uso…</span>
+                  <span>{t('categoriesSettings.deleteDialog.checking')}</span>
                 </div>
               )}
 
@@ -100,7 +99,12 @@ export function DeleteCategoryDialog({
                     <ul className="list-inside list-disc">
                       {usagesWithCount.map((u) => (
                         <li key={u.module}>
-                          Usada em {u.count} {MODULE_LABELS[u.module] ?? u.module}
+                          {t('categoriesSettings.deleteDialog.usedIn', {
+                            count: u.count,
+                            module: KNOWN_MODULES.includes(u.module)
+                              ? t(`categoriesSettings.modules.${u.module}`)
+                              : u.module,
+                          })}
                         </li>
                       ))}
                     </ul>
@@ -116,11 +120,11 @@ export function DeleteCategoryDialog({
                   )}
 
                   {usage.canDelete && hasSoftUsage && (
-                    <p>Esses itens ficarão sem categoria.</p>
+                    <p>{t('categoriesSettings.deleteDialog.softUsage')}</p>
                   )}
 
                   {usage.canDelete && usagesWithCount.length === 0 && (
-                    <p>Esta ação não pode ser desfeita.</p>
+                    <p>{t('categoriesSettings.deleteDialog.irreversible')}</p>
                   )}
                 </>
               )}
@@ -128,7 +132,7 @@ export function DeleteCategoryDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={saving}>Cancelar</AlertDialogCancel>
+          <AlertDialogCancel disabled={saving}>{t('categoriesSettings.cancel')}</AlertDialogCancel>
           <AlertDialogAction
             onClick={(e) => {
               e.preventDefault();
@@ -137,7 +141,7 @@ export function DeleteCategoryDialog({
             disabled={saving || !usage?.canDelete}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            {saving ? 'Salvando…' : 'Excluir'}
+            {saving ? t('categoriesSettings.form.saving') : t('categoriesSettings.delete')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

@@ -423,13 +423,16 @@ function Tasks() {
 
           {/* ── Quick Add Bar ──────────────────────────────────────────── */}
           <QuickAddTaskBar
-            onAddTask={async (title, _detectedCategory, pri) => {
+            onAddTask={async (title, detectedCategory, pri) => {
               const nestId = activeNestId ?? undefined;
               let created = await taskService.createQuickTask(title, nestId);
-              if (pri !== null) {
+              if (pri !== null || detectedCategory !== null) {
                 await taskService.updateTask(
                   created.taskId,
-                  taskService.taskToUpdateRequest(created, { priority: pri }),
+                  taskService.taskToUpdateRequest(created, {
+                    ...(pri !== null && { priority: pri }),
+                    ...(detectedCategory !== null && { categoryId: detectedCategory }),
+                  }),
                   nestId
                 );
                 created = await taskService.getTaskById(created.taskId, nestId);

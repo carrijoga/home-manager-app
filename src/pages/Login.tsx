@@ -32,8 +32,11 @@ import { Spinner } from '@/components/ui/spinner';
 import { useApp } from '@/contexts/AppContext';
 import type { LoginRequest } from '@/schemas/auth';
 import { LoginRequestSchema, RequestPasswordRecoverySchema } from '@/schemas/auth';
+import { DATA_MODE } from '@/services/api/config';
 import { login as loginRequest, requestPasswordRecovery } from '@/services/authService';
 
+// O Turnstile só é exigido contra a API real; o modo mock dispensa o captcha.
+const isApiMode = DATA_MODE === 'api';
 const GOOGLE_ENABLED = import.meta.env.VITE_GOOGLE_ENABLED !== 'false';
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 const GOOGLE_REDIRECT_URI = import.meta.env.VITE_GOOGLE_REDIRECT_URI;
@@ -450,7 +453,7 @@ function Login() {
               {/* Submit CTA Button */}
               <Button
                 type="submit"
-                disabled={!isValid || isSubmitting || isGoogleLoading || !turnstileToken}
+                disabled={!isValid || isSubmitting || isGoogleLoading || (isApiMode && !turnstileToken)}
                 className="mt-2 h-10 w-full text-sm font-semibold transition-opacity disabled:opacity-50"
               >
                 {isSubmitting ? (
@@ -579,7 +582,7 @@ function Login() {
                 <Button
                   type="submit"
                   size="sm"
-                  disabled={isRecoverySubmitting || !recoveryTurnstileToken}
+                  disabled={isRecoverySubmitting || (isApiMode && !recoveryTurnstileToken)}
                   className="text-xs font-semibold"
                 >
                   {isRecoverySubmitting ? <Spinner className="h-3.5 w-3.5" /> : 'Enviar'}

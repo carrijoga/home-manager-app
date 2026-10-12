@@ -21,7 +21,11 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { getCurrentLanguage, languageToApiLocale } from '@/i18n';
 import { RegisterRequestSchema } from '@/schemas/auth';
+import { DATA_MODE } from '@/services/api/config';
 import * as authService from '@/services/authService';
+
+// O Turnstile só é exigido contra a API real; o modo mock dispensa o captcha.
+const isApiMode = DATA_MODE === 'api';
 
 const RegisterFormSchema = RegisterRequestSchema.extend({
   confirmPassword: z.string().min(1, 'Confirme a senha'),
@@ -438,7 +442,7 @@ function Register() {
               {/* Submit CTA Button */}
               <Button
                 type="submit"
-                disabled={!isValid || isSubmitting || !turnstileToken}
+                disabled={!isValid || isSubmitting || (isApiMode && !turnstileToken)}
                 className="mt-2.5 h-9.5 sm:h-10 w-full text-sm font-semibold transition-opacity disabled:opacity-50"
               >
                 {isSubmitting ? (
